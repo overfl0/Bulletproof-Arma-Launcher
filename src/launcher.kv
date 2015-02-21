@@ -10,7 +10,7 @@
 #             dash_length: 3
 
 
-<MyButton>
+<HoverButton>
     border: 1,1,1,1
     size_hint_x: None
     size_hint_y: None
@@ -27,6 +27,14 @@
         size: root.width, root.height
         pos: root.x, root.y
 
+    Image:
+        source: app.resource_path('images/logo.png')
+        height: 300
+        width: 500
+        pos: root.x + 22, 410
+        size_hint_x: None
+        size_hint_y: None
+
     BoxLayout:
         id: main_box
         size: root.width, root.height
@@ -39,17 +47,17 @@
             orientation: 'rl-tb'
             spacing: 10
 
-            MyButton:
+            HoverButton:
                 Image:
                     source: app.resource_path('images/button-hammer.png')
                     allow_stretch: False
                     pos: self.parent.pos
-            MyButton:
+            HoverButton:
                 Image:
                     source: app.resource_path('images/button-com.png')
                     allow_stretch: False
                     pos: self.parent.pos
-            MyButton:
+            HoverButton:
                 Image:
                     source: app.resource_path('images/button-intel.png')
                     allow_stretch: False
@@ -65,8 +73,9 @@
                     cap: 'square'
 
         # filler
-        Image:
-            source: app.resource_path('images/logo.png')
+        Label:
+            id: filler
+
 
         StackLayout:
             id: bullet_stack
@@ -77,10 +86,10 @@
                 source: app.resource_path('images/gun.png')
 
 
-        MyButton:
+        HoverButton:
             id: install_button
             width: 300
-            on_release: root.on_install_button_release(install_button, install_image)
+            on_release: root.controller.on_install_button_release(install_button, install_image)
             Image:
                 id: install_image
                 source: app.resource_path('images/install.png')
