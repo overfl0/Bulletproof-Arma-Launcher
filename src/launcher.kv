@@ -1,0 +1,88 @@
+﻿#:kivy 1.4
+
+# <Widget>:
+#     canvas.after:
+#         Color:
+#             rgb: 0,1,0
+#         Line:
+#             rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+#             dash_offset: 5
+#             dash_length: 3
+
+
+<MyButton>
+    border: 1,1,1,1
+    size_hint_x: None
+    size_hint_y: None
+    width: 100
+    background_normal: app.resource_path('images/borderimage.png')
+    background_down: app.resource_path('images/borderimage.png')
+    background_hover: app.resource_path('images/borderimage-hover.png')
+
+<MainWidget>
+    id: main_widget
+    size: 1000, 1000
+    Image:
+        source: app.resource_path('images/back.png')
+        size: root.width, root.height
+        pos: root.x, root.y
+
+    BoxLayout:
+        id: main_box
+        size: root.width, root.height
+        pos: root.x, root.y
+        orientation: 'vertical'
+        padding: 20
+        spacing: 12
+        StackLayout:
+            size_hint_y: None
+            orientation: 'rl-tb'
+            spacing: 10
+
+            MyButton:
+                Image:
+                    source: app.resource_path('images/button-hammer.png')
+                    allow_stretch: False
+                    pos: self.parent.pos
+            MyButton:
+                Image:
+                    source: app.resource_path('images/button-com.png')
+                    allow_stretch: False
+                    pos: self.parent.pos
+            MyButton:
+                Image:
+                    source: app.resource_path('images/button-intel.png')
+                    allow_stretch: False
+                    pos: self.parent.pos
+
+        Label:
+            height: 10
+            size_hint_y: None
+            canvas:
+                Line:
+                    points: [self.x + 5, self.y, self.x + self.width - 4.5, self.y]
+                    width: 3
+                    cap: 'square'
+
+        # filler
+        Image:
+            source: app.resource_path('images/logo.png')
+
+        StackLayout:
+            id: bullet_stack
+            size_hint_y: None
+            Image:
+                size_hint_x: None
+                width: 500
+                source: app.resource_path('images/gun.png')
+
+
+        MyButton:
+            id: install_button
+            width: 300
+            on_release: root.on_install_button_release(install_button, install_image)
+            Image:
+                id: install_image
+                source: app.resource_path('images/install.png')
+                allow_stretch: False
+                pos: self.parent.x + 20, self.parent.y
