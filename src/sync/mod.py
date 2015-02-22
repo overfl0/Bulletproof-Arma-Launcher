@@ -3,6 +3,7 @@ class Mod(object):
     """encapsulate data needed for a mod"""
     def __init__(
             self,
+            name='@noname',
             clientlocation=None,
             synctype='http',
             downloadurl=None):
@@ -11,3 +12,4 @@ class Mod(object):
         self.clientlocation = clientlocation
         self.synctype = synctype
         self.downloadurl = downloadurl
+        self.name = name

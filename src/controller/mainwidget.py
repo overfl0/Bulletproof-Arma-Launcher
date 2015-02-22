@@ -17,15 +17,23 @@ class MainWidgetController(object):
     def on_install_button_release(self, btn, image):
         app = kivy.app.App.get_running_app()
         print 'button clicked', str(btn), str(image)
+        height = image.height
+        btn.disabled = True
         image.source = app.resource_path('images/installing.png')
+        image.height = height
         print 'MainWidget ids:', self.view.ids
         self.test_file_download()
 
     def test_file_download(self):
 
+        self.view.ids.status_label.text = 'Downloading...'
+
         mod = Mod(
+            name='@kivybattle',
             clientlocation=os.getcwd(),
             downloadurl='http://kivy.org/downloads/1.8.0/Kivy-1.8.0-py2.7-win32.zip')
+
+        self.view.ids.status_label.text = 'Downloading mod ' + mod.name + ' ...'
 
         s = HttpSyncer()
         future, q = s.sync(mod)
@@ -39,8 +47,16 @@ class MainWidgetController(object):
         if future.exception():
             raise future.exception()
 
+        self.view.ids.status_label.text = 'Download finished.'
+        self.view.ids.progress_bar.value = 100
+
+        Clock.unschedule(self.on_progress)
+
+
     def on_progress(self, dt):
         if not self.progress_queue.empty():
-            print self.progress_queue.get_nowait()
+            progress = self.progress_queue.get_nowait()
+
+            self.view.ids.progress_bar.value = progress[0] * 100
         else:
             print "queue is empty"
