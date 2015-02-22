@@ -20,9 +20,12 @@ if __name__ == "__main__":
     from kivy.properties import NumericProperty, ObjectProperty, BooleanProperty, StringProperty
     from kivy.core.window import Window
     from kivy.clock import Clock
+    from kivy.logger import Logger
 
     from view.hoverbutton import HoverButton
     from controller.mainwidget import MainWidgetController
+    import logging
+
 
 
     class MainWidget(Widget):
@@ -37,7 +40,9 @@ if __name__ == "__main__":
 
         def build(self):
 
-            # basic
+            logger = logging.getLogger('concurrent.futures')
+            logger.addHandler(logging.StreamHandler())
+
             return MainWidget()
 
         def resource_path(self, relative):
