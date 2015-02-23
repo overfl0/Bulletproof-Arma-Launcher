@@ -5,14 +5,17 @@ import os
 from time import sleep
 
 import requests
-
 import kivy
 from kivy.clock import Clock
+
+from sync.modmanager import ModManager
 
 class MainWidgetController(object):
     def __init__(self, widget):
         super(MainWidgetController, self).__init__()
         self.view = widget
+
+        self.mod_manager = ModManager()
 
     def on_install_button_release(self, btn, image):
         app = kivy.app.App.get_running_app()
@@ -31,13 +34,13 @@ class MainWidgetController(object):
         mod = Mod(
             name='@kivybattle',
             clientlocation=os.getcwd(),
-            downloadurl='http://kivy.org/downloads/1.8.0/Kivy-1.8.0-py2.7-win32.zip')
+            downloadurl='http://kivy.org/downloads/1.8.0/Kivy-1.8.0-py2.7-win32.zip',
+            synctype='http')
 
         self.view.ids.status_label.text = 'Downloading mod ' + mod.name + ' ...'
 
-        s = HttpSyncer()
-        q = s.sync(mod)
-        self.progress_queue = q
+        self.mod_manager._sync_single_mod(mod)
+
         Clock.schedule_interval(self.on_progress, 0.5)
 
     def on_download_finish(self):
@@ -49,10 +52,9 @@ class MainWidgetController(object):
 
         Clock.unschedule(self.on_progress)
 
-
     def on_progress(self, dt):
-        if not self.progress_queue.empty():
-            progress = self.progress_queue.get_nowait()
+        progress = self.mod_manager.query_status()
+        if progress:
             self.view.ids.progress_bar.value = progress[0] * 100
 
             if progress[2] == 'finished':

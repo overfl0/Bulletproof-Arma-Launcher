@@ -10,16 +10,19 @@ from datetime import datetime
 
 from utils.process import Process
 
-class DownloadProcess(Process):
-    def __init__(self, dest, url, resultQueue):
-        self.resultQueue = resultQueue
-        self.dest = dest
+class HttpSyncer(object):
+    """
+    example syncer implementation
+
+    takes a mod as parameter. See mod class
+    """
+    def __init__(self, dest, url, result_queue):
+        super(HttpSyncer, self).__init__()
         self.url = url
+        self.dest = dest
+        self.result_queue = result_queue
 
-        multiprocessing.Process.__init__(self)
-        self.start()
-
-    def run(self):
+    def sync(self):
         """
         helper function to download. It needs to be
         on module level since multiprocessing needs
@@ -27,13 +30,13 @@ class DownloadProcess(Process):
         """
         #print "downloading ", url, "to:", dest
         sleep(2)
-        self.resultQueue.put((0.1, 400, 'downloading'))
+        self.result_queue.put((0.1, 400, 'downloading'))
         sleep(2)
-        self.resultQueue.put((0.3, 400, 'downloading'))
+        self.result_queue.put((0.3, 400, 'downloading'))
         sleep(2)
-        self.resultQueue.put((0.7, 400, 'downloading'))
+        self.result_queue.put((0.7, 400, 'downloading'))
         sleep(2)
-        self.resultQueue.put((1.0, 400, 'downloading'))
+        self.result_queue.put((1.0, 400, 'downloading'))
         # with o    pen(os.path.join(dest, 'kivy.zip'), 'wb') as handle:
         #
         #     #print "get request"
@@ -70,27 +73,4 @@ class DownloadProcess(Process):
         #
         #         counter += 1
 
-        self.resultQueue.put((100, 0, 'finished'))
-
-class HttpSyncer(object):
-    """
-    example syncer implementation
-
-    takes a mod as parameter. See mod class
-    """
-    def __init__(self):
-        super(HttpSyncer, self).__init__()
-
-    def sync(self, mod):
-
-        loc = mod.clientlocation
-        url = mod.downloadurl
-
-        print "using clientlocation: ", loc
-
-        q = Queue()
-        # process = Process(target=download, args=(loc, url, q,))
-        # process.start()
-        DownloadProcess(loc, url, q);
-
-        return q
+        self.result_queue.put((100, 0, 'finished'))
