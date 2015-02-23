@@ -20,7 +20,7 @@ from inside cmd.
 # Build
 
 From the project root
-execute: `pyinstaller tblauncher.spec`
+execute: `python <path/to/kivy/installation>\Python27\Scripts\pyinstaller-script.py tblauncher.spec`
 to build a single executable
 
 If necessary execute the following command to
