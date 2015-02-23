@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="13.1">
+  <zoom_level>6</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>126</x>
+      <y>564</y>
+      <w>102</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>zsync wrapper</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>186</x>
+      <y>342</y>
+      <w>156</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>Launcher
+--
+holds mvc stuff for gui</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>180</x>
+      <y>522</y>
+      <w>114</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>uses</panel_attributes>
+    <additional_attributes>10.0;70.0;170.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>282</x>
+      <y>612</y>
+      <w>168</w>
+      <h>204</h>
+    </coordinates>
+    <panel_attributes>ModSyncerBase
+--
++ setMod()
++ getMod()
++ registerCallback(eventName, function)
+
+/+ getCurrentModVersion()/
+/+ isUpdateAvailable()/
+/+ sync()/
+
+--
+*Events:*
+updatastart
+progress
+updatefinish
+
+(events are needed, so the gui can
+register and react on them)
+
+should act like a basclass with
+abstract methods
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>282</x>
+      <y>486</y>
+      <w>150</w>
+      <h>78</h>
+    </coordinates>
+    <panel_attributes>GenericModSyncer
+--
+--
+should handle 90 percent
+of the mods</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>354</x>
+      <y>558</y>
+      <w>18</w>
+      <h>66</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;90.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>270</x>
+      <y>408</y>
+      <w>90</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1..n</panel_attributes>
+    <additional_attributes>120.0;130.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>474</x>
+      <y>492</y>
+      <w>150</w>
+      <h>78</h>
+    </coordinates>
+    <panel_attributes>SomeSpecialSyncer
+--
+--
+In case with have a bitchy
+mod where we have to do extrawork
+i.e. a syncer which uses
+torrent protocol</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>426</x>
+      <y>564</y>
+      <w>144</w>
+      <h>60</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;80.0;220.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLGeneric</id>
+    <coordinates>
+      <x>120</x>
+      <y>258</y>
+      <w>534</w>
+      <h>222</h>
+    </coordinates>
+    <panel_attributes>App Layer
+halign=left</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLUseCase</id>
+    <coordinates>
+      <x>234</x>
+      <y>78</y>
+      <w>90</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Install and
+update all mods</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLActor</id>
+    <coordinates>
+      <x>120</x>
+      <y>90</y>
+      <w>36</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>Client
+User</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLUseCase</id>
+    <coordinates>
+      <x>204</x>
+      <y>150</y>
+      <w>108</w>
+      <h>78</h>
+    </coordinates>
+    <panel_attributes>Get automatic
+updates for the
+launcher or
+a notification</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>156</x>
+      <y>96</y>
+      <w>90</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+</panel_attributes>
+    <additional_attributes>130.0;20.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>156</x>
+      <y>126</y>
+      <w>66</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+</panel_attributes>
+    <additional_attributes>90.0;70.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLGeneric</id>
+    <coordinates>
+      <x>120</x>
+      <y>480</y>
+      <w>534</w>
+      <h>372</h>
+    </coordinates>
+    <panel_attributes>Domain Layer
+halign=left</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>
