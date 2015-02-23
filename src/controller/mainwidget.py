@@ -36,16 +36,13 @@ class MainWidgetController(object):
         self.view.ids.status_label.text = 'Downloading mod ' + mod.name + ' ...'
 
         s = HttpSyncer()
-        future, q = s.sync(mod)
-        future.add_done_callback(self.on_download_finish)
-        Clock.schedule_interval(self.on_progress, 0.5)
+        q = s.sync(mod)
         self.progress_queue = q
+        Clock.schedule_interval(self.on_progress, 0.5)
 
-    def on_download_finish(self, future):
+    def on_download_finish(self):
         print "download finished"
         print 'hello'
-        if future.exception():
-            raise future.exception()
 
         self.view.ids.status_label.text = 'Download finished.'
         self.view.ids.progress_bar.value = 100
@@ -56,7 +53,9 @@ class MainWidgetController(object):
     def on_progress(self, dt):
         if not self.progress_queue.empty():
             progress = self.progress_queue.get_nowait()
-
             self.view.ids.progress_bar.value = progress[0] * 100
+
+            if progress[2] == 'finished':
+                self.on_download_finish()
         else:
             print "queue is empty"

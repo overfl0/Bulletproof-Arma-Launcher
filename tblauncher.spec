@@ -4,7 +4,7 @@ install_hooks(globals())
 
 a = Analysis(['src\\launcher.py'],
              pathex=['H:\\projects\\tacbf-launcher'],
-             hiddenimports=[],
+             hiddenimports=['concurrent', 'concurrent.futures'],
              runtime_hooks=None)
 pyz = PYZ(a.pure)
 exe = EXE(pyz,

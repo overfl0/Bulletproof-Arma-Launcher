@@ -3,6 +3,8 @@ import sys
 import os
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
     from kivy.config import Config
     Config.set('graphics','resizable',0)
     Config.set('graphics', 'width', '1000')
