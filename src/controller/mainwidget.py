@@ -55,9 +55,9 @@ class MainWidgetController(object):
     def on_progress(self, dt):
         progress = self.mod_manager.query_status()
         if progress:
-            self.view.ids.progress_bar.value = progress[0] * 100
+            self.view.ids.progress_bar.value = progress['progress'] * 100
 
-            if progress[2] == 'finished':
+            if progress['status'] == 'finished':
                 self.on_download_finish()
         else:
             print "queue is empty"

@@ -9,17 +9,16 @@ from sync.httpsyncer import HttpSyncer
 
 
 class SubProcess(Process):
-    def __init__(self, syncclass, dest, url, resultQueue):
+    def __init__(self, syncclass, resultQueue, mod):
         self.resultQueue = resultQueue
-        self.dest = dest
-        self.url = url
         self.syncclass = syncclass
+        self.mod = mod
 
         multiprocessing.Process.__init__(self)
         self.start()
 
     def run(self):
-        syncer = self.syncclass(self.dest, self.url, self.resultQueue)
+        syncer = self.syncclass(self.resultQueue, self.mod)
         syncer.sync()
 
 
@@ -39,7 +38,7 @@ class ModManager(object):
         Logger.debug('ModManager: syncing mod:' + mod.name)
 
         self.current_queue = Queue()
-        SubProcess(syncclass, loc, url, self.current_queue);
+        SubProcess(syncclass, self.current_queue, mod);
 
     def query_status(self):
         if not self.current_queue.empty():
