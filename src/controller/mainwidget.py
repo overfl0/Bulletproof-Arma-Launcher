@@ -1,5 +1,6 @@
 from multiprocessing import Pool
 from sync.httpsyncer import HttpSyncer
+from sync.torrentsyncer import TorrentSyncer
 from sync.mod import Mod
 import os
 from time import sleep
@@ -28,14 +29,19 @@ class MainWidgetController(object):
 
         self.view.ids.status_label.text = 'Downloading...'
 
-        mod = Mod(
+        """mod = Mod(
             name='@kivybattle',
             clientlocation=os.getcwd(),
-            downloadurl='http://kivy.org/downloads/1.8.0/Kivy-1.8.0-py2.7-win32.zip')
+            downloadurl='http://kivy.org/downloads/1.8.0/Kivy-1.8.0-py2.7-win32.zip')"""
+
+        mod = Mod(
+            name='@debussybattle',
+            clientlocation=os.getcwd(),
+            downloadurl='test.torrent')
 
         self.view.ids.status_label.text = 'Downloading mod ' + mod.name + ' ...'
 
-        s = HttpSyncer()
+        s = TorrentSyncer()
         future, q = s.sync(mod)
         future.add_done_callback(self.on_download_finish)
         Clock.schedule_interval(self.on_progress, 0.5)
