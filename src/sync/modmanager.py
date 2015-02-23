@@ -6,8 +6,6 @@ from kivy.logger import Logger
 from utils.process import Process
 from sync.httpsyncer import HttpSyncer
 
-
-
 class SubProcess(Process):
     def __init__(self, syncclass, resultQueue, mod):
         self.resultQueue = resultQueue
@@ -20,7 +18,6 @@ class SubProcess(Process):
     def run(self):
         syncer = self.syncclass(self.resultQueue, self.mod)
         syncer.sync()
-
 
 class ModManager(object):
     """docstring for ModManager"""
@@ -39,6 +36,18 @@ class ModManager(object):
 
         self.current_queue = Queue()
         SubProcess(syncclass, self.current_queue, mod);
+
+    def _check_already_installed_with_six(self, mod):
+        pass
+
+    def _get_arma_folders(self):
+        pass
+
+    def _get_remote_mod_list(self):
+        pass
+
+    def sync_all(self):
+        pass
 
     def query_status(self):
         if not self.current_queue.empty():
