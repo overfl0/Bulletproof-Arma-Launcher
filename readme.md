@@ -17,12 +17,29 @@ cd into the src directory and run
 
 from inside cmd.
 
+# Running The Tests
+
+You have to install the nose package.
+To run the Tests cd into the src dir and run,
+
+for unit test
+
+`nosetests ../tests -a '!integration' --nocapture`
+
+for integration tests
+
+`nosetests ../tests -a 'integration' --nocapture`
+
 # Build
 
 From the project root
-execute: `python <path/to/kivy/installation>\Python27\Scripts\pyinstaller-script.py tblauncher.spec`
+execute:
+
+`python <path/to/kivy/installation>\Python27\Scripts\pyinstaller-script.py tblauncher.spec`
+
 to build a single executable
 
 If necessary execute the following command to
 rebuild the spec file. A newly spec file will not work, see kivy packaging wiki:
+
 `pyinstaller --name tblauncher --onefile src\launcher.py`
