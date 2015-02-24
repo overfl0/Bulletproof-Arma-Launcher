@@ -1,13 +1,13 @@
 ﻿#:kivy 1.4
 
-<Widget>:
-    canvas.after:
-        Color:
-            rgb: 0,1,0
-        Line:
-            rectangle: self.x+1,self.y+1,self.width-1,self.height-1
-            dash_offset: 5
-            dash_length: 3
+# <Widget>:
+#     canvas.after:
+#         Color:
+#             rgb: 0,1,0
+#         Line:
+#             rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+#             dash_offset: 5
+#             dash_length: 3
 
 
 <HoverButton>
@@ -84,7 +84,7 @@
                 id: status_label
                 halign: 'left'
                 text: 'test'
-                text_size: self.width - 20, self.height 
+                text_size: self.width - 20, self.height
                 size_hint: (1, 1)
 
         BoxLayout:

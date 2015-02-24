@@ -1,5 +1,7 @@
 build
 dist
 kivy-*
+kivy.*
 *.pyc
 *.sublime-*
+@*
