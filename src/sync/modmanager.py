@@ -46,6 +46,15 @@ class ModManager(object):
     def _get_remote_mod_list(self):
         pass
 
+    def _get_syncer(self, type):
+        """
+        gets a syncer CLASS by type
+        """
+        if type == 'http':
+            return HttpSyncer
+
+        return None
+
     def sync_all(self):
         pass
 
