@@ -2,7 +2,11 @@
 import os
 import requests
 from datetime import datetime
+import re
+import tempfile
+import shutil
 
+from utils.sevenzfile import SevenZFile
 from utils.process import Process
 
 class HttpSyncer(object):
@@ -45,6 +49,16 @@ class HttpSyncer(object):
         self.result_queue = result_queue
         self.mod = mod
 
+    def _get_filename(self, response):
+
+        if 'content-disposition' in response.headers:
+            cd = response.headers['content-disposition']
+            m = re.match(r'.*filename="(CBA_A3_RC4.7z)".*', cd)
+            if m.group(1):
+                return m.group(1)
+
+        return 'unknown.dat'
+
     def sync(self):
         """
         implement this function
@@ -52,17 +66,22 @@ class HttpSyncer(object):
         do your download stuff here and report status over the message queue
 
         """
-        print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
         print self.mod.name, self.mod
 
-        # open file
-        with open(os.path.join(self.mod.clientlocation, 'kivy.zip'), 'wb') as handle:
 
-            # get file over http using requests stream mode
-            response = requests.get(
-                self.mod.downloadurl,
-                stream=True
-            )
+        # get file over http using requests stream mode
+        response = requests.get(
+            self.mod.downloadurl,
+            stream=True
+        )
+
+        fname = self._get_filename(response)
+        downloaddir = tempfile.mkdtemp(prefix='tacbflauncher')
+
+        print "downloading ", self.mod.downloadurl, "to:", downloaddir
+
+        # open file
+        with open(os.path.join(downloaddir, fname), 'wb') as handle:
 
             # we can check the eventhandlers
             if not response.ok:
@@ -86,6 +105,7 @@ class HttpSyncer(object):
                     percent = downloaded / length
                     td = datetime.now() - start_time
                     kbpersec = (downloaded / 1024) / td.total_seconds()
+                    print kbpersec
 
                     # here it reports back to the modmanager
                     self.result_queue.put({
@@ -99,5 +119,12 @@ class HttpSyncer(object):
 
         self.result_queue.put({
             'progress': 1.0,
-            'kbpersec': kbpersec,
+            'kbpersec': 0,
             'status': 'finished'})
+
+
+        zfile = SevenZFile(os.path.join(downloaddir, fname))
+        zfile.extractall(downloaddir)
+
+        shutil.move(os.path.join(downloaddir, self.mod.name), self.mod.clientlocation)
+        shutil.rmtree(downloaddir)

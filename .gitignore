@@ -4,3 +4,4 @@ kivy-*
 kivy.*
 *.pyc
 *.sublime-*
+@*

@@ -32,10 +32,10 @@ class MainWidgetController(object):
         self.view.ids.status_label.text = 'Downloading...'
 
         mod = Mod(
-            name='@kivybattle',
+            name='@CBA_A3',
             clientlocation=os.getcwd(),
-            downloadurl='http://kivy.org/downloads/1.8.0/Kivy-1.8.0-py2.7-win32.zip',
-            synctype='http')
+            synctype='http',
+            downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
 
         self.view.ids.status_label.text = 'Downloading mod ' + mod.name + ' ...'
 
