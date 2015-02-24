@@ -5,6 +5,7 @@ from kivy.logger import Logger
 
 from utils.process import Process
 from sync.httpsyncer import HttpSyncer
+from sync.torrentsyncer import TorrentSyncer
 
 class SubProcess(Process):
     def __init__(self, syncclass, resultQueue, mod):
@@ -31,6 +32,10 @@ class ModManager(object):
 
         if mod.synctype == 'http':
             syncclass = HttpSyncer
+        elif mod.synctype == 'torrent':
+            syncclass = TorrentSyncer
+        else:
+            Logger.error('ModManager: unknown syncing type: {}'.format(mod.synctype))
 
         Logger.debug('ModManager: syncing mod:' + mod.name)
 
@@ -52,6 +57,8 @@ class ModManager(object):
         """
         if type == 'http':
             return HttpSyncer
+        if type == 'torrent':
+            return TorrentSyncer
 
         return None
 

@@ -32,16 +32,16 @@ class MainWidgetController(object):
 
         self.view.ids.status_label.text = 'Downloading...'
 
-        mod = Mod(
+        """mod = Mod(
             name='@CBA_A3',
             clientlocation=os.getcwd(),
             synctype='http',
-            downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
-		"""mod = Mod(
+            downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');"""
+        mod = Mod(
             name='@debussybattle',
             clientlocation=os.getcwd(),
-			synctype='torrent',
-            downloadurl='test.torrent')"""
+            synctype='torrent',
+            downloadurl='test.torrent')
 
         self.view.ids.status_label.text = 'Downloading mod ' + mod.name + ' ...'
 
