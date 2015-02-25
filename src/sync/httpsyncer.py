@@ -123,8 +123,8 @@ class HttpSyncer(object):
             'status': 'finished'})
 
 
-        zfile = SevenZFile(os.path.join(downloaddir, fname))
-        zfile.extractall(downloaddir)
+        with SevenZFile(os.path.join(downloaddir, fname)) as zfile:
+            zfile.extractall(downloaddir)
 
         shutil.move(os.path.join(downloaddir, self.mod.name), self.mod.clientlocation)
         shutil.rmtree(downloaddir)
