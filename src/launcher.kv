@@ -28,6 +28,7 @@
         pos: root.x, root.y
 
     Image:
+
         source: app.resource_path('images/logo.png')
         height: 300
         width: 500
@@ -48,6 +49,7 @@
             spacing: 10
 
             HoverButton:
+                on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
                 Image:
                     source: app.resource_path('images/button-hammer.png')
                     allow_stretch: False
@@ -58,6 +60,7 @@
                     allow_stretch: False
                     pos: self.parent.pos
             HoverButton:
+                on_release: app.root.ids.main_screen_manager.current = 'install_screen'
                 Image:
                     source: app.resource_path('images/button-intel.png')
                     allow_stretch: False
@@ -72,6 +75,16 @@
                     width: 3
                     cap: 'square'
 
+        MainScreenManager:
+            id: main_screen_manager
+            InstallScreen:
+            PrefScreen:
+
+<InstallScreen>:
+    name: 'install_screen'
+
+    BoxLayout:
+        orientation: 'vertical'
 
         Label:
             id: filler
@@ -109,9 +122,19 @@
         HoverButton:
             id: install_button
             width: 300
-            on_release: root.controller.on_install_button_release(install_button, install_image)
             Image:
                 id: install_image
                 source: app.resource_path('images/install.png')
                 allow_stretch: False
                 pos: self.parent.x + 20, self.parent.y
+
+<PrefScreen>:
+    name: 'pref_screen'
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        Label:
+            text: 'hello'
+        Button:
+            text: 'oi oi'

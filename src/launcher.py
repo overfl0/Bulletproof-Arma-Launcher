@@ -23,6 +23,7 @@ if __name__ == "__main__":
     from kivy.core.window import Window
     from kivy.clock import Clock
     from kivy.logger import Logger
+    from kivy.uix.screenmanager import ScreenManager, Screen
 
     from view.hoverbutton import HoverButton
     from controller.mainwidget import MainWidgetController
@@ -37,6 +38,15 @@ if __name__ == "__main__":
         def __init__(self, **kwargs):
             super(MainWidget, self).__init__(**kwargs)
             self.controller = MainWidgetController(self)
+
+    class InstallScreen(Screen):
+        pass
+
+    class PrefScreen(Screen):
+        pass
+
+    class MainScreenManager(ScreenManager):
+        pass
 
     class LauncherApp(App):
 
