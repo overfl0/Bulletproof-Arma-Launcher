@@ -1,3 +1,5 @@
+# Import hacks ################################################################
+
 # import Windows registry package while ensuring cygwin compatibility
 try:
     import cygwinreg as _winreg
@@ -6,13 +8,16 @@ except ImportError:
     import _winreg
     WindowsErrorPortable = WindowsError
 
-import os
-import sys
-
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
-    sys.path.append(os.path.dirname(sys.path[0]))
+    import site
+    import os
+    file_directory = os.path.dirname(os.path.realpath(__file__))
+    site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
+# Import hacks end ############################################################
+
+import os
 from utils.singleton import Singleton
 
 
@@ -76,21 +81,4 @@ class Arma(object):
         pass  # Stub
 
 if __name__ == "__main__":
-    a = Arma()
-    b = Arma()
-    c = Arma()
-    Arma.set_custom_path("asd")
-    print a.get_custom_path()
-    print b.get_custom_path()
-    print c.get_custom_path()
-    print Arma.get_custom_path()
-
-    b.set_custom_path("bsd")
-    print a.get_custom_path()
-    print b.get_custom_path()
-    print c.get_custom_path()
-    print Arma.get_custom_path()
-
-
-    #print Arma.get_executable_path()
     pass
