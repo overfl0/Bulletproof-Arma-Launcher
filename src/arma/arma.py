@@ -1,13 +1,3 @@
-# Import hacks ################################################################
-
-# import Windows registry package while ensuring cygwin compatibility
-try:
-    import cygwinreg as _winreg
-    WindowsErrorPortable = _winreg.WindowsError
-except ImportError:
-    import _winreg
-    WindowsErrorPortable = WindowsError
-
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
     import site
@@ -15,11 +5,12 @@ if __name__ == "__main__":
     file_directory = os.path.dirname(os.path.realpath(__file__))
     site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
-# Import hacks end ############################################################
 
 import os
-from utils.singleton import Singleton
+import subprocess
 
+from utils.singleton import Singleton
+from utils.registry import Registry
 
 # Exceptions:
 class ArmaNotInstalled(Exception):
@@ -58,10 +49,8 @@ class Arma(object):
 
         path = None
         try:
-            key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, Arma._arma_registry_path, 0, _winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)
-            (path, valuetype) = _winreg.QueryValueEx(key, 'main')
-            key.Close()
-        except WindowsErrorPortable:
+            path = Registry.ReadValueMachine(Arma._arma_registry_path, 'main')
+        except Registry.Error:
             raise ArmaNotInstalled()
 
         return path
@@ -73,12 +62,26 @@ class Arma(object):
         return os.path.join(Arma.get_installation_path(), "arma3.exe")
 
     @staticmethod
-    def run_game(modlist, profile):
+    def run_game(mod_list=None, profile_name=None):
         """Run the game in a separate process.
-        All mods in modlist are applied as command line parameters. The profile is also used.
-        Raises ArmaNotInstalled if Arma is not installed."""
 
-        pass  # Stub
+        All mods in mod_list are applied as command line parameters. The profile_name is also used.
+        Raises ArmaNotInstalled if Arma is not installed.
+        Raises WindowsError (or OSError in Linux) if running the executable fails."""
+
+        arma_path = Arma.get_executable_path()
+        game_args = [arma_path, '-nosplash', '-skipIntro']
+
+        if mod_list:
+            modlist_argument = '-mod=' + ';'.join(mod_list)
+            game_args.extend([modlist_argument])
+
+        if profile_name:
+            game_args.extend(['-name=' + profile_name])
+
+        #print game_args
+        popen_object = subprocess.Popen(game_args)  # May raise WindowsError (or OSError on Linux)
+
 
 if __name__ == "__main__":
     pass
