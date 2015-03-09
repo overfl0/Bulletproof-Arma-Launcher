@@ -2,7 +2,7 @@
 import platform
 import sys
 
-if platform.system() is not 'Linux':
+if platform.system() != 'Linux':
     # Regular Windows version
     try:
         import cygwinreg as _winreg
