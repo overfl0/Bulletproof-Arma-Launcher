@@ -37,6 +37,7 @@ if __name__ == "__main__":
     from kivy.logger import Logger
     from kivy.uix.screenmanager import ScreenManager, Screen
 
+    from utils.app import BaseApp
     from view.hoverbutton import HoverButton
     from controller.mainwidget import MainWidgetController
     import logging
@@ -58,24 +59,13 @@ if __name__ == "__main__":
     class MainScreenManager(ScreenManager):
         pass
 
-    class LauncherApp(App):
+    class LauncherApp(BaseApp):
         """Main class for the normal app"""
 
         def build(self):
-
             logger = logging.getLogger('concurrent.futures')
             logger.addHandler(logging.StreamHandler())
-
             return MainWidget()
-
-        def resource_path(self, relative):
-            """
-            This method makes sure that the app can access resource path
-            also if packed within a single executable
-            """
-            if hasattr(sys, "_MEIPASS"):
-                return os.path.join(sys._MEIPASS, relative)
-            return os.path.join('../resources', relative)
 
     if __name__ == '__main__':
         launcher_app = LauncherApp().run()
