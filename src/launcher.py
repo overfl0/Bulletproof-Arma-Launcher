@@ -12,12 +12,26 @@ if __name__ == "__main__":
     import multiprocessing
     multiprocessing.freeze_support()
 
+    # initilize settings class
+    from utils.settings import Settings
+    settings = Settings(sys.argv[1:])
+
+    # HACK: clear sys.argv for kivy
+    sys.argv = ['launcher.py']
+
     # configure kivy
     from kivy.config import Config
-    Config.set('graphics','resizable',0)
-    Config.set('graphics', 'width', '1000')
-    Config.set('graphics', 'height', '666')
-    Config.set('graphics','borderless',1)
+
+    if not settings.get('self_update'):
+        Config.set('graphics','resizable',0)
+        Config.set('graphics', 'width', '1000')
+        Config.set('graphics', 'height', '666')
+        Config.set('graphics','borderless',1)
+    else:
+        Config.set('graphics','resizable',0)
+        Config.set('graphics', 'width', '400')
+        Config.set('graphics', 'height', '150')
+        Config.set('graphics','borderless',1)
 
     #
     # other imports
@@ -37,8 +51,10 @@ if __name__ == "__main__":
     from kivy.logger import Logger
     from kivy.uix.screenmanager import ScreenManager, Screen
 
+    from utils.app import BaseApp
     from view.hoverbutton import HoverButton
     from controller.mainwidget import MainWidgetController
+    from controller.updatermainwidget import UpdaterMainWidgetController
     import logging
 
     class MainWidget(Widget):
@@ -49,6 +65,12 @@ if __name__ == "__main__":
             super(MainWidget, self).__init__(**kwargs)
             self.controller = MainWidgetController(self)
 
+    class UpdaterMainWidget(Widget):
+
+        def __init__(self, **kwargs):
+            super(UpdaterMainWidget, self).__init__(**kwargs)
+            self.controller = UpdaterMainWidgetController(self)
+
     class InstallScreen(Screen):
         pass
 
@@ -58,24 +80,32 @@ if __name__ == "__main__":
     class MainScreenManager(ScreenManager):
         pass
 
-    class LauncherApp(App):
+    class LauncherApp(BaseApp):
         """Main class for the normal app"""
+        def __init__(self, settings):
+            super(LauncherApp, self).__init__()
 
         def build(self):
-
             logger = logging.getLogger('concurrent.futures')
             logger.addHandler(logging.StreamHandler())
-
             return MainWidget()
 
-        def resource_path(self, relative):
-            """
-            This method makes sure that the app can access resource path
-            also if packed within a single executable
-            """
-            if hasattr(sys, "_MEIPASS"):
-                return os.path.join(sys._MEIPASS, relative)
-            return os.path.join('../resources', relative)
+    class SelfUpdaterApp(BaseApp):
+        """app which starts the self updater"""
+
+        def __init__(self, settings):
+            super(SelfUpdaterApp, self).__init__()
+
+        def build(self):
+            logger = logging.getLogger('concurrent.futures')
+            logger.addHandler(logging.StreamHandler())
+            return UpdaterMainWidget()
 
     if __name__ == '__main__':
-        launcher_app = LauncherApp().run()
+        launcher_app = None
+
+        if settings.get('self_update'):
+            print 'launching self updater'
+            launcher_app = SelfUpdaterApp(settings).run()
+        else:
+            launcher_app = LauncherApp(settings).run()
