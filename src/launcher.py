@@ -1,17 +1,29 @@
-
 import sys
 import os
 
+#
+# we have to protect the instantiation of the kivy app, cause
+# of the use of multiprocessing. If you spawn a new thread or process
+# it loads this file again. So there is the need of the __main__ guard.
+#
 if __name__ == "__main__":
+
+    # import multiprocessing and enable freeze_support which is neeeded on win
     import multiprocessing
     multiprocessing.freeze_support()
+
+    # configure kivy
     from kivy.config import Config
     Config.set('graphics','resizable',0)
     Config.set('graphics', 'width', '1000')
     Config.set('graphics', 'height', '666')
     Config.set('graphics','borderless',1)
+
+    #
+    # other imports
+    #
     import kivy
-    kivy.require('1.8.0') # replace with your current kivy version !
+    kivy.require('1.8.0')
     from kivy.app import App
     from kivy.uix.label import Label
     from kivy.uix.widget import Widget
@@ -28,8 +40,6 @@ if __name__ == "__main__":
     from view.hoverbutton import HoverButton
     from controller.mainwidget import MainWidgetController
     import logging
-
-
 
     class MainWidget(Widget):
         """
@@ -49,6 +59,7 @@ if __name__ == "__main__":
         pass
 
     class LauncherApp(App):
+        """Main class for the normal app"""
 
         def build(self):
 
