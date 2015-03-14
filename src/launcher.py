@@ -28,8 +28,8 @@ if __name__ == "__main__":
     from utils.settings import Settings
     settings = Settings(sys.argv[1:])
 
-    # HACK: clear sys.argv for kivy
-    sys.argv = ['launcher.py']
+    # HACK: clear sys.argv for kivy. Keep only the first element
+    sys.argv = sys.argv[0:1]
 
     # configure kivy
     from kivy.config import Config
