@@ -62,10 +62,11 @@ class Arma(object):
         return os.path.join(Arma.get_installation_path(), "arma3.exe")
 
     @staticmethod
-    def run_game(mod_list=None, profile_name=None):
+    def run_game(mod_list=None, profile_name=None, custom_args=None):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
+        Custom_args are appended as is and special care must be taken when using spaces.
         Raises ArmaNotInstalled if Arma is not installed.
         Raises WindowsError (or OSError in Linux) if running the executable fails."""
 
@@ -79,7 +80,9 @@ class Arma(object):
         if profile_name:
             game_args.extend(['-name=' + profile_name])
 
-        #print game_args
+        if custom_args:
+            game_args.extend(custom_args)
+
         popen_object = subprocess.Popen(game_args)  # May raise WindowsError (or OSError on Linux)
 
 
