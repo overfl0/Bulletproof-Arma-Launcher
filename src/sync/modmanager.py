@@ -91,9 +91,14 @@ class ModManager(object):
 
         return None
 
-    def sync_all(self):
+    def sync_all(self, messagequeue):
         # download mod descriptions first
-        pass
+        messagequeue.put({
+            'action': 'moddescdownload',
+            'status': 'downloading',
+            'progress': 0.3,
+            'kbpersec': 0.0,})
+        get_mod_descriptions(messagequeue)
 
     def query_status(self):
         if not self.current_queue.empty():

@@ -48,14 +48,9 @@ class Controller(object):
 
         # download mod descriptions
         self.messagequeue = Queue()
-        self.messagequeue.put({
-            'action': 'moddescdownload',
-            'status': 'downloading',
-            'progress': 0.3,
-            'kbpersec': 0.0,})
-
-        p = Process(target=get_mod_descriptions, args=(self.messagequeue,))
+        p = Process(target=self.mod_manager.sync_all, args=(self.messagequeue,))
         p.start()
+        self.current_child_process = p
 
         Clock.schedule_interval(self.on_progress, 1.0)
 
@@ -109,6 +104,7 @@ class Controller(object):
             elif progress['status'] == 'finished':
                 self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'
                 Clock.unschedule(self.on_progress)
+                self.current_child_process.join()
 
                 if 'data' in progress:
                     print 'we got data', progress['data']
