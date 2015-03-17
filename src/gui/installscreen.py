@@ -35,6 +35,7 @@ class InstallScreen(Screen):
 
         self.statusmessage_map = {
             'moddescdownload': 'Retreiving Mod Descriptions',
+            'checkmods': 'Checking Mods',
             'moddownload': 'Retreiving Mod'
         }
 
@@ -99,12 +100,12 @@ class Controller(object):
             print 'Got progress: ', progress
             self.view.ids.progress_bar.value = progress['progress'] * 100
 
-            if progress['status'] == 'downloading':
+            if progress['status'] == 'inprogress':
                 self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']]
             elif progress['status'] == 'finished':
                 self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'
-                Clock.unschedule(self.on_progress)
-                self.current_child_process.join()
+                # Clock.unschedule(self.on_progress)
+                # self.current_child_process.join()
 
                 if 'data' in progress:
                     print 'we got data', progress['data']

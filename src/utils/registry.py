@@ -55,6 +55,14 @@ if platform.system() != 'Linux':
 
             return Registry.ReadValue(_winreg.HKEY_LOCAL_MACHINE, key_path, value_name, force_32bit)
 
+        @staticmethod
+        def ReadValueCurrentUser(key_path, value_name, force_32bit=True):
+            """Read the value value_name from the key key_path from Local Machine in the Registry.
+
+            If force_32bit is set, it will force 32bit view of the registry."""
+
+            return Registry.ReadValue(_winreg.HKEY_CURRENT_USER, key_path, value_name, force_32bit)
+
 else:  # Linux dummy implementation. Works ONLY inside unit tests!
 
     # Don't allow the use of this module on linux outside of unit tests

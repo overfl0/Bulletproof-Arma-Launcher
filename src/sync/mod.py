@@ -17,10 +17,23 @@ class Mod(object):
             name='@noname',
             clientlocation=None,
             synctype='http',
-            downloadurl=None):
+            downloadurl=None,
+            version=""):
         super(Mod, self).__init__()
 
         self.clientlocation = clientlocation
         self.synctype = synctype
         self.downloadurl = downloadurl
         self.name = name
+
+    @classmethod
+    def fromDict(cls, d):
+        """return a new mod instance constructed from dictionary"""
+
+        if 'version' in d:
+            version = d['version']
+        if 'name' in d:
+            name = d['name']
+
+        m = Mod(name=name, version=version)
+        return m

@@ -36,6 +36,7 @@ class Arma(object):
     # Registry paths
     _arma_registry_path = r"software\bohemia interactive\arma 3"
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
+    _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
 
     @staticmethod
     def get_user_path():
@@ -62,6 +63,18 @@ class Arma(object):
         path = None
         try:
             path = Registry.ReadValueMachine(Arma._arma_registry_path, 'main')
+        except Registry.Error:
+            raise ArmaNotInstalled()
+
+        return path
+
+    @staticmethod
+    def get_user_path():
+
+        path = None
+        try:
+            user_docs = Registry.ReadValueCurrentUser(Arma._user_document_path, 'Personal')
+            path = os.path.join(user_docs, 'Arma 3')
         except Registry.Error:
             raise ArmaNotInstalled()
 

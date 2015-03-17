@@ -18,11 +18,20 @@ import requests
 
 from utils.process import Process
 from sync.httpsyncer import HttpSyncer
+from sync.mod import Mod
+from arma.arma import Arma
 
 def get_mod_descriptions(messagequeue):
-    """helper function to get the moddescriptions from the server"""
+    """
+    helper function to get the moddescriptions from the server
+
+    this function is ment be used threaded or multiprocesses, you have
+    to pass in a queue
+    """
     url = 'https://gist.githubusercontent.com/Sighter/adbce21192d0413cfbad/raw/074c5227b54ca7cb2abce918f08ce4b6a8362f66/moddesc.json'
     res = requests.get(url)
+    data = None
+    mods = []
 
     if res.status_code != 200:
         messagequeue.put({
@@ -34,12 +43,15 @@ def get_mod_descriptions(messagequeue):
     else:
         data = res.json()
 
+        for md in data:
+            mods.append(Mod.fromDict(md))
+
         messagequeue.put({
             'action': 'moddescdownload',
             'status': 'finished',
             'progress': 1.0,
             'kbpersec': 0.0,
-            'data': data})
+            'data': mods})
     return
 
 class SubProcess(Process):
@@ -95,10 +107,21 @@ class ModManager(object):
         # download mod descriptions first
         messagequeue.put({
             'action': 'moddescdownload',
-            'status': 'downloading',
+            'status': 'inprogress',
             'progress': 0.3,
             'kbpersec': 0.0,})
-        get_mod_descriptions(messagequeue)
+        md = get_mod_descriptions(messagequeue)
+
+        path = Arma.get_user_path()
+
+        messagequeue.put({
+            'action': 'checkmods',
+            'status': 'finished',
+            'progress': 0.3,
+            'kbpersec': 0.0,
+            'data': path})
+
+        return
 
     def query_status(self):
         if not self.current_queue.empty():
