@@ -12,6 +12,7 @@
 
 import multiprocessing
 from multiprocessing import Queue
+import os
 
 from kivy.logger import Logger
 import requests
@@ -52,7 +53,7 @@ def get_mod_descriptions(messagequeue):
             'progress': 1.0,
             'kbpersec': 0.0,
             'data': mods})
-    return
+    return mods
 
 class SubProcess(Process):
     def __init__(self, syncclass, resultQueue, mod):
@@ -86,7 +87,15 @@ class ModManager(object):
         SubProcess(syncclass, self.current_queue, mod);
 
     def _check_already_installed_with_six(self, mod):
-        pass
+        install_path = Arma.get_user_path()
+        mod_path = os.path.join(install_path, mod.name, '.synqinfo')
+        print mod_path
+
+        if os.path.isfile(mod_path):
+            return True
+        else:
+            return False
+
 
     def _get_arma_folders(self):
         pass
@@ -110,16 +119,24 @@ class ModManager(object):
             'status': 'inprogress',
             'progress': 0.3,
             'kbpersec': 0.0,})
-        md = get_mod_descriptions(messagequeue)
+        mod_list = get_mod_descriptions(messagequeue)
 
-        path = Arma.get_user_path()
+        # check if any oth the mods is installed with withSix
+        for m in mod_list:
+            r = self._check_already_installed_with_six(m)
+            if r:
+                messagequeue.put({
+                    'action': 'checkmods',
+                    'status': 'inprogress',
+                    'progress': 0.3,
+                    'kbpersec': 0.0,
+                    'msg': 'Mod ' + m.name + ' already installed with withSix'})
 
         messagequeue.put({
             'action': 'checkmods',
             'status': 'finished',
-            'progress': 0.3,
-            'kbpersec': 0.0,
-            'data': path})
+            'progress': 0.1,
+            'kbpersec': 0.0})
 
         return
 
@@ -129,3 +146,8 @@ class ModManager(object):
             return progress
         else:
             return None
+
+if __name__ == '__main__':
+
+    m = ModManager()
+    m.sync_all(Queue())

@@ -101,7 +101,15 @@ class Controller(object):
             self.view.ids.progress_bar.value = progress['progress'] * 100
 
             if progress['status'] == 'inprogress':
-                self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']]
+                text = ""
+
+                if 'msg' in progress:
+                    text = progress['msg']
+                else:
+                    text = self.view.statusmessage_map[progress['action']]
+
+                self.view.ids.status_label.text = text
+
             elif progress['status'] == 'finished':
                 self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'
                 # Clock.unschedule(self.on_progress)
