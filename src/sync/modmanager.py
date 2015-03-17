@@ -50,6 +50,7 @@ def get_mod_descriptions(messagequeue):
     return mods
 
 class SubProcess(Process):
+    # TODO think about removing this
     def __init__(self, syncclass, resultQueue, mod):
         self.resultQueue = resultQueue
         self.syncclass = syncclass
@@ -70,7 +71,7 @@ class ModManager(object):
     def _sync_single_mod(self, mod):
 
         # TODO do not thread of here
-        
+
         loc = mod.clientlocation
         url = mod.downloadurl
         syncclass = None
@@ -99,12 +100,6 @@ class ModManager(object):
 
         return os.path.isfile(mod_path)
 
-    def _get_arma_folders(self):
-        pass
-
-    def _get_remote_mod_list(self):
-        pass
-
     def _get_syncer(self, type):
         """
         gets a syncer CLASS by type
@@ -115,12 +110,12 @@ class ModManager(object):
         return None
 
     def sync_all(self, messagequeue):
+        """do everything which is needed to get all mods in sync"""
+
         # download mod descriptions first
         messagequeue.put({
-            'action': 'moddescdownload',
-            'status': 'inprogress',
-            'progress': 0.3,
-            'kbpersec': 0.0,})
+            'action': 'moddescdownload', 'status': 'inprogress',
+            'progress': 0.3, 'kbpersec': 0.0,})
         mod_list = get_mod_descriptions(messagequeue)
 
         # check if any oth the mods is installed with withSix
@@ -128,17 +123,15 @@ class ModManager(object):
             r = self._check_already_installed_with_six(m)
             if r:
                 messagequeue.put({
-                    'action': 'checkmods',
-                    'status': 'inprogress',
-                    'progress': 0.3,
-                    'kbpersec': 0.0,
+                    'action': 'checkmods', 'status': 'inprogress',
+                    'progress': 0.3, 'kbpersec': 0.0,
                     'msg': 'Mod ' + m.name + ' already installed with withSix'})
 
         messagequeue.put({
-            'action': 'checkmods',
-            'status': 'finished',
-            'progress': 0.1,
-            'kbpersec': 0.0})
+            'action': 'checkmods', 'status': 'finished',
+            'progress': 0.1, 'kbpersec': 0.0})
+
+        # TODO: Sync via libtorrent
 
         return
 
