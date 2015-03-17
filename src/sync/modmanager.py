@@ -35,11 +35,8 @@ def get_mod_descriptions(messagequeue):
     mods = []
 
     if res.status_code != 200:
-        messagequeue.put({
-            'action': 'moddescdownload',
-            'status': 'failed',
-            'progress': 0.0,
-            'kbpersec': 0.0,})
+        messagequeue.put({'action': 'moddescdownload', 'status': 'failed',
+                          'progress': 0.0, 'kbpersec': 0.0,})
         return
     else:
         data = res.json()
@@ -47,12 +44,9 @@ def get_mod_descriptions(messagequeue):
         for md in data:
             mods.append(Mod.fromDict(md))
 
-        messagequeue.put({
-            'action': 'moddescdownload',
-            'status': 'finished',
-            'progress': 1.0,
-            'kbpersec': 0.0,
-            'data': mods})
+        messagequeue.put({'action': 'moddescdownload', 'status': 'finished',
+            'progress': 1.0, 'kbpersec': 0.0, 'data': mods})
+            
     return mods
 
 class SubProcess(Process):

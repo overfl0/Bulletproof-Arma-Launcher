@@ -39,11 +39,6 @@ class Arma(object):
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
 
     @staticmethod
-    def get_user_path():
-        """Returns the place where mods can be installed in the user folder."""
-        return os.path.expanduser('~')
-
-    @staticmethod
     def get_custom_path():
         """Returns a custom mod installation path set by the user.
         If no path has been set beforehand, returns None"""
