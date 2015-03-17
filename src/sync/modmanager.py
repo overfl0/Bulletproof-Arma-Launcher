@@ -46,7 +46,7 @@ def get_mod_descriptions(messagequeue):
 
         messagequeue.put({'action': 'moddescdownload', 'status': 'finished',
             'progress': 1.0, 'kbpersec': 0.0, 'data': mods})
-            
+
     return mods
 
 class SubProcess(Process):
@@ -68,6 +68,9 @@ class ModManager(object):
         super(ModManager, self).__init__()
 
     def _sync_single_mod(self, mod):
+
+        # TODO do not thread of here
+        
         loc = mod.clientlocation
         url = mod.downloadurl
         syncclass = None
@@ -81,15 +84,20 @@ class ModManager(object):
         SubProcess(syncclass, self.current_queue, mod);
 
     def _check_already_installed_with_six(self, mod):
+        """returns true if mod is installed already with withsix, otherwise false"""
+
+        # check user path
         install_path = Arma.get_user_path()
         mod_path = os.path.join(install_path, mod.name, '.synqinfo')
-        print mod_path
 
         if os.path.isfile(mod_path):
             return True
-        else:
-            return False
 
+        # check system path
+        install_path = Arma.get_installation_path()
+        mod_path = os.path.join(install_path, mod.name, '.synqinfo')
+
+        return os.path.isfile(mod_path)
 
     def _get_arma_folders(self):
         pass
