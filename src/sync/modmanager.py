@@ -14,9 +14,33 @@ import multiprocessing
 from multiprocessing import Queue
 
 from kivy.logger import Logger
+import requests
 
 from utils.process import Process
 from sync.httpsyncer import HttpSyncer
+
+def get_mod_descriptions(messagequeue):
+    """helper function to get the moddescriptions from the server"""
+    url = 'https://gist.githubusercontent.com/Sighter/adbce21192d0413cfbad/raw/074c5227b54ca7cb2abce918f08ce4b6a8362f66/moddesc.json'
+    res = requests.get(url)
+
+    if res.status_code != 200:
+        messagequeue.put({
+            'action': 'moddescdownload',
+            'status': 'failed',
+            'progress': 0.0,
+            'kbpersec': 0.0,})
+        return
+    else:
+        data = res.json()
+
+        messagequeue.put({
+            'action': 'moddescdownload',
+            'status': 'finished',
+            'progress': 1.0,
+            'kbpersec': 0.0,
+            'data': data})
+    return
 
 class SubProcess(Process):
     def __init__(self, syncclass, resultQueue, mod):
@@ -68,6 +92,7 @@ class ModManager(object):
         return None
 
     def sync_all(self):
+        # download mod descriptions first
         pass
 
     def query_status(self):

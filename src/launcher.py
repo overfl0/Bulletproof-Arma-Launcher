@@ -65,26 +65,10 @@ if __name__ == "__main__":
 
     from utils.app import BaseApp
     from view.hoverbutton import HoverButton
-    from controller.mainwidget import MainWidgetController
-    from controller.updatermainwidget import UpdaterMainWidgetController
+    from gui.mainwidget import MainWidget
+    from gui.updatermainwidget import UpdaterMainWidget
+    from gui.installscreen import InstallScreen
     import logging
-
-    class MainWidget(Widget):
-        """
-        root widget of the app
-        """
-        def __init__(self, **kwargs):
-            super(MainWidget, self).__init__(**kwargs)
-            self.controller = MainWidgetController(self)
-
-    class UpdaterMainWidget(Widget):
-
-        def __init__(self, **kwargs):
-            super(UpdaterMainWidget, self).__init__(**kwargs)
-            self.controller = UpdaterMainWidgetController(self)
-
-    class InstallScreen(Screen):
-        pass
 
     class PrefScreen(Screen):
         pass

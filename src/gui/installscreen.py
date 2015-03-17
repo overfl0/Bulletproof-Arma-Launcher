@@ -19,15 +19,45 @@ from time import sleep
 import requests
 import kivy
 from kivy.clock import Clock
+from kivy.uix.widget import Widget
+from kivy.uix.screenmanager import ScreenManager, Screen
 
 from sync.modmanager import ModManager
+from sync.modmanager import get_mod_descriptions
+from multiprocessing import Queue, Process
 
-class MainWidgetController(object):
+class InstallScreen(Screen):
+    """
+    View Class
+    """
+    def __init__(self, **kwargs):
+        super(InstallScreen, self).__init__(**kwargs)
+
+        self.statusmessage_map = {
+            'moddescdownload': 'Retreiving Mod Descriptions',
+            'moddownload': 'Retreiving Mod'
+        }
+
+        self.controller = Controller(self)
+
+class Controller(object):
     def __init__(self, widget):
-        super(MainWidgetController, self).__init__()
+        super(Controller, self).__init__()
         self.view = widget
-
         self.mod_manager = ModManager()
+
+        # download mod descriptions
+        self.messagequeue = Queue()
+        self.messagequeue.put({
+            'action': 'moddescdownload',
+            'status': 'downloading',
+            'progress': 0.3,
+            'kbpersec': 0.0,})
+
+        p = Process(target=get_mod_descriptions, args=(self.messagequeue,))
+        p.start()
+
+        Clock.schedule_interval(self.on_progress, 1.0)
 
     def on_install_button_release(self, btn, image):
         app = kivy.app.App.get_running_app()
@@ -62,14 +92,26 @@ class MainWidgetController(object):
         self.view.ids.status_label.text = 'Download finished.'
         self.view.ids.progress_bar.value = 100
 
-        Clock.unschedule(self.on_progress)
 
     def on_progress(self, dt):
-        progress = self.mod_manager.query_status()
+        queue = self.messagequeue
+        progress = None
+
+        if not queue.empty():
+            progress = queue.get_nowait()
+
         if progress:
+            print 'Got progress: ', progress
             self.view.ids.progress_bar.value = progress['progress'] * 100
 
-            if progress['status'] == 'finished':
-                self.on_download_finish()
+            if progress['status'] == 'downloading':
+                self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']]
+            elif progress['status'] == 'finished':
+                self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'
+                Clock.unschedule(self.on_progress)
+
+                if 'data' in progress:
+                    print 'we got data', progress['data']
+
         else:
             print "queue is empty"

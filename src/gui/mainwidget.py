@@ -10,15 +10,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-class UpdaterMainWidgetController(object):
+from kivy.uix.widget import Widget
 
-    """docstring for UpdaterMainWidgetController"""
-    def __init__(self, view):
-        super(UpdaterMainWidgetController, self).__init__()
-        self.view = view
-        print 'init UpdaterMainWidgetController'
-
-
-    def on_abort_button_release(self, button):
-        print 'aborting', self.view.ids
-        self.view.ids.status_label.text = 'Aborting ...'
+class MainWidget(Widget):
+    """
+    View Class
+    """
+    pass
