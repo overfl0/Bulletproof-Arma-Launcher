@@ -21,6 +21,7 @@ import kivy
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.image import Image
 
 from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
@@ -46,6 +47,7 @@ class Controller(object):
         super(Controller, self).__init__()
         self.view = widget
         self.mod_manager = ModManager()
+        self.loading_gif = None
 
         # download mod descriptions
         self.messagequeue = Queue()
@@ -54,6 +56,29 @@ class Controller(object):
         self.current_child_process = p
 
         Clock.schedule_interval(self.on_progress, 1.0)
+
+    def show_loading_gif(self, show):
+        """
+        show the loading gif besides the status_label
+
+        the show parameter should be true to show the image otherwise False
+        """
+        # TODO: detect image in container
+        # see http://stackoverflow.com/questions/24781248/kivy-how-to-get-widget-by-id-without-kv
+        # write helper function for this
+        app = kivy.app.App.get_running_app()
+        image_source = app.resource_path('images/ajax-loader.gif')
+        image_container = self.view.ids.loading_image_container
+
+        if show == True and not self.loading_gif:
+            image = Image(source=image_source, id='loading_gif')
+            image_container.add_widget(image)
+            self.loading_gif = image
+        elif show == False:
+            image_container.remove_widget(self.loading_gif)
+            self.loading_gif = None
+
+        print 'added widget', image_container.children
 
     def on_install_button_release(self, btn, image):
         app = kivy.app.App.get_running_app()
@@ -109,6 +134,7 @@ class Controller(object):
                     text = self.view.statusmessage_map[progress['action']]
 
                 self.view.ids.status_label.text = text
+                self.show_loading_gif(True)
 
             elif progress['status'] == 'finished':
                 self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'

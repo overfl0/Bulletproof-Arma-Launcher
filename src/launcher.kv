@@ -1,13 +1,13 @@
 ﻿#:kivy 1.4
 
-# <Widget>:
-#     canvas.after:
-#         Color:
-#             rgb: 0,1,0
-#         Line:
-#             rectangle: self.x+1,self.y+1,self.width-1,self.height-1
-#             dash_offset: 5
-#             dash_length: 3
+<Widget>:
+    canvas.after:
+        Color:
+            rgb: 0,1,0
+        Line:
+            rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+            dash_offset: 5
+            dash_length: 3
 
 
 <HoverButton>
@@ -89,13 +89,20 @@
         Label:
             id: filler
 
-        StackLayout:
+        BoxLayout:
+            orientation: 'horizontal'
             size_hint_y: None
             height: 20
 
+            BoxLayout:
+                id: loading_image_container
+                width: 40
+                size_hint_x: None
+                # Image:
+                #     source: app.resource_path('images/ajax-loader.gif')
+
             Label:
                 id: status_label
-                halign: 'left'
                 text: 'test'
                 text_size: self.width - 20, self.height
                 size_hint: (1, 1)
