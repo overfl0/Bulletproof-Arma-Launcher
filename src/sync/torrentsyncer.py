@@ -1,34 +1,30 @@
-from time import sleep
+# Tactical Battlefield Installer/Updater/Launcher
+# Copyright (C) 2015 TacBF Installer Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
 import libtorrent
+import os
+import shutil
+
+from time import sleep
 
 class TorrentSyncer(object):
-    """
-    Bittorrent Proof Of Concept syncer implementation
-
-    the class basically gets a message queue where it has to communicate
-    its status back. This is done via an dict object looking like:
-
-    msg = {
-        status: 'downloading',
-        progress: 0.5,
-        kbpersec: 280
-    }
-
-    status:
-        could be: 'downloading', 'finished', 'error'
-
-    progress:
-        percentage progress from 0 to 1 as float
-        or None to indicate that progress bar is not possible
-
-    kbpersec:
-        download rate in kilobyte per seconds or None if
-        its not possible to calculate the rate
-
-    The reason for the message queue is multiprocessing
-    """
-
     _update_interval = 1
+    torrent_metadata = None
+    torrent_info = None
+    session = None
+
+    file_paths = set()
+    dirs = set()
+    top_dirs = set()
 
     def __init__(self, result_queue, mod):
         """
@@ -41,6 +37,23 @@ class TorrentSyncer(object):
         super(TorrentSyncer, self).__init__()
         self.result_queue = result_queue
         self.mod = mod
+
+    def init_libtorrent(self):
+        self.session = libtorrent.session()
+        self.session.listen_on(6881, 6891)  # TODO: check if this is necessary (maybe rely on automatic port selection?)
+
+    def init_metadata_from_string(self, bencoded):
+        """Initialize torrent metadata from a bencoded string."""
+
+        self.torrent_metadata = libtorrent.bdecode(bencoded)
+        self.torrent_info = libtorrent.torrent_info(self.torrent_metadata)
+
+    def init_metadata_from_file(self, filename):
+        """Initialize torrent metadata from a file."""
+        with open(filename, 'rb') as file_handle:
+            file_contents = file_handle.read()
+
+            self.init_metadata_from_string(file_contents)
 
     def sync(self):
         """
@@ -56,18 +69,17 @@ class TorrentSyncer(object):
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
         print "TODO: Download this to a temporary location and copy/move afterwards"
 
-        session = libtorrent.session()
-        session.listen_on(6881, 6891)
+        if not self.session:
+            self.init_libtorrent()
 
-        torrent_data = libtorrent.bdecode(open(self.mod.downloadurl, 'rb').read())
-        torrent_info = libtorrent.torrent_info(torrent_data)
+        self.init_metadata_from_file(self.mod.downloadurl)
 
         params = {
             'save_path': self.mod.clientlocation,
             'storage_mode': libtorrent.storage_mode_t.storage_mode_sparse,
-            'ti': torrent_info
+            'ti': self.torrent_info
         }
-        torrent_handle = session.add_torrent(params)
+        torrent_handle = self.session.add_torrent(params)
 
         while (not torrent_handle.is_seed()):
             s = torrent_handle.status()
@@ -90,3 +102,22 @@ class TorrentSyncer(object):
             'progress': 1.0,
             'kbpersec': 0,
             'status': 'finished'})
+
+if __name__ == '__main__':
+    class DummyMod:
+        downloadurl = "test.torrent"
+        clientlocation = ""
+    class DummyQueue:
+        def put(self, d):
+            print str(d)
+
+    mod = DummyMod()
+    queue = DummyQueue()
+
+    ts = TorrentSyncer(queue, mod)
+    ts.init_metadata_from_file("test.torrent")
+
+    num_files = ts.torrent_info.num_files()
+    print num_files
+
+    ts.sync()
