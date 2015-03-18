@@ -55,6 +55,94 @@ class TorrentSyncer(object):
 
             self.init_metadata_from_string(file_contents)
 
+    def parse_torrent_inodes(self):
+        """Computes the file paths, directories and top directories contained in a torrent."""
+
+        self.file_paths = set()
+        self.dirs = set()
+        self.top_dirs = set()
+
+        for torrent_file in self.torrent_info.files():
+            self.file_paths.add(torrent_file.path)
+            dir_path = os.path.dirname(torrent_file.path)
+
+            while dir_path:  # Go up the directory structure until the end
+                if dir_path in self.dirs:  # If already processed for another file
+                    break
+
+                self.dirs.add(dir_path)
+                parent_dir = os.path.dirname(dir_path)
+                if not parent_dir:
+                    self.top_dirs.add(dir_path)
+
+                dir_path = parent_dir
+
+    def cleanup_mod_directories(self):
+        """Remove files or directories that do not belong to the torrent file
+        and were probably removed in an update.
+        To prevent accidental file removal, this function will only remove files
+        that are at least one directory deep in the file structure!
+        This will skip files or directories that match file_whitelist.
+
+        Returns if the directory has been cleaned sucessfully. Do not ignore this value!
+        If unsuccessful at removing files, the mod should NOT be considered ready to play."""
+
+        #TODO: Handle unicode file names
+        def raiser(exception):  # I'm sure there must be some builtin to do this :-/
+            raise exception
+
+        whitelist = ('.tbfmetadata',)
+        base_directory = ""  # TODO: Fill me
+        base_directory = os.path.realpath(base_directory)
+        success = True
+
+        try:
+            for directory in self.top_dirs:
+                if directory in whitelist:
+                    continue
+
+                full_base_path = os.path.join(base_directory, directory)
+                for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=raiser, followlinks=False):
+                    relative_path = os.path.relpath(dirpath, base_directory)
+                    print 'In directory: {}'.format(relative_path)
+
+                    # First check files in this directory
+                    for file_name in filenames:
+                        if file_name in whitelist:
+                            print 'File {} in whitelist, skipping...'.format(file_name)
+                            continue
+
+                        relative_file_name = os.path.join(relative_path, file_name)
+                        print 'Checking file: {}'.format(relative_file_name)
+                        if relative_file_name in self.file_paths:
+                            continue  # File present in the torrent, nothing to see here
+
+                        full_file_path = os.path.join(dirpath, file_name)
+                        print 'Removing file: {}'.format(full_file_path)
+                        #os.unlink(full_file_path)
+
+                    # Now check directories
+                    # Remove directories that match whitelist from checking and descending into them
+                    dirnames[:] = [d for d in dirnames if d not in whitelist]
+                    # Iterate over a copy because we'll be deleting items from the original
+                    for dir_name in dirnames[:]:
+                        relative_dir_path = os.path.join(relative_path, dir_name)
+                        print 'Checking dir: {}'.format(relative_dir_path)
+
+                        if relative_dir_path in self.dirs:
+                            continue  # Directory present in the torrent, nothing to see here
+
+                        full_directory_path = os.path.join(dirpath, dir_name)
+                        print 'Removing directory: {}'.format(full_directory_path)
+                        dirnames.remove(dir_name)
+
+                        #shutil.rmtree(full_directory_path)
+
+        except (OSError, WindowsError) as exception:
+            success = False
+
+        return success
+
     def sync(self):
         """
         helper function to download. It needs to be
@@ -117,7 +205,12 @@ if __name__ == '__main__':
     ts = TorrentSyncer(queue, mod)
     ts.init_metadata_from_file("test.torrent")
 
-    num_files = ts.torrent_info.num_files()
-    print num_files
+    #num_files = ts.torrent_info.num_files()
+    ts.parse_torrent_inodes()
+    ts.cleanup_mod_directories()
 
-    ts.sync()
+    #print "File paths: ", ts.file_paths
+    #print "Dirs: ", ts.dirs
+    #print "Top dirs", ts.top_dirs
+
+    #ts.sync()
