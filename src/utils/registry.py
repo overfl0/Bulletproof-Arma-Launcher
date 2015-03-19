@@ -66,8 +66,8 @@ if platform.system() != 'Linux':
 else:  # Linux dummy implementation. Works ONLY inside unit tests!
 
     # Don't allow the use of this module on linux outside of unit tests
-    if "unittest" not in sys.modules.keys():
-        raise Exception("Registry not implemented on Linux. Dummy class for unit tests only!")
+    # if "unittest" not in sys.modules.keys():
+    #     raise Exception("Registry not implemented on Linux. Dummy class for unit tests only!")
 
     # Dummy class with fake methods
     class Registry(object):
