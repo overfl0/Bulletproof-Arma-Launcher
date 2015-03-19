@@ -70,11 +70,11 @@ class Controller(object):
         # see http://stackoverflow.com/questions/24781248/kivy-how-to-get-widget-by-id-without-kv
         # write helper function for this
         app = kivy.app.App.get_running_app()
-        image_source = app.resource_path('images/ajax-loader.gif')
+        image_source = app.resource_path('images/ajax-loader2_20x20.gif')
         image_container = self.view.ids.loading_image_container
 
         if show == True and not self.loading_gif:
-            image = Image(source=image_source, id='loading_gif')
+            image = Image(source=image_source, id='loading_gif', anim_delay=0.05)
             image_container.add_widget(image)
             self.loading_gif = image
         elif show == False:
