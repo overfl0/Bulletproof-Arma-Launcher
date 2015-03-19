@@ -20,6 +20,7 @@ They serve as workarounds, for windows issues regarding multiprocessing
 """
 
 import multiprocessing.forking
+import multiprocessing
 import os
 import sys
 
@@ -41,6 +42,9 @@ class _Popen(multiprocessing.forking.Popen):
                     os.unsetenv('_MEIPASS2')
                 else:
                     os.putenv('_MEIPASS2', '')
+
+        # fix for request finding the certificates
+        # see http://stackoverflow.com/questions/17158529/fixing-ssl-certificate-error-in-exe-compiled-with-py2exe-or-pyinstaller
 
 class Process(multiprocessing.Process):
     _Popen = _Popen

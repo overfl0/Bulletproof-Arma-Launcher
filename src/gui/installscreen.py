@@ -10,9 +10,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from multiprocessing import Pool
-from sync.httpsyncer import HttpSyncer
-from sync.mod import Mod
+from multiprocessing import Queue
+
+
 import os
 from time import sleep
 
@@ -25,7 +25,9 @@ from kivy.uix.image import Image
 
 from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
-from multiprocessing import Queue, Process
+from sync.httpsyncer import HttpSyncer
+from sync.mod import Mod
+from utils.process import Process
 
 class InstallScreen(Screen):
     """
@@ -37,7 +39,8 @@ class InstallScreen(Screen):
         self.statusmessage_map = {
             'moddescdownload': 'Retreiving Mod Descriptions',
             'checkmods': 'Checking Mods',
-            'moddownload': 'Retreiving Mod'
+            'moddownload': 'Retreiving Mod',
+            'syncing': 'Syncing Mods'
         }
 
         self.controller = Controller(self)
@@ -51,11 +54,11 @@ class Controller(object):
 
         # download mod descriptions
         self.messagequeue = Queue()
-        p = Process(target=self.mod_manager.sync_all, args=(self.messagequeue,))
+        p = Process(target=self.mod_manager.prepare_and_check, args=(self.messagequeue,))
         p.start()
         self.current_child_process = p
 
-        Clock.schedule_interval(self.on_progress, 1.0)
+        Clock.schedule_interval(self.handle_messagequeue, 1.0)
 
     def show_loading_gif(self, show):
         """
@@ -81,40 +84,28 @@ class Controller(object):
         print 'added widget', image_container.children
 
     def on_install_button_release(self, btn, image):
-        app = kivy.app.App.get_running_app()
-        print 'button clicked', str(btn), str(image)
-        height = image.height
-        btn.disabled = True
-        image.source = app.resource_path('images/installing.png')
-        image.height = height
-        print 'MainWidget ids:', self.view.ids
-        self.test_file_download()
+        self.messagequeue = Queue()
+        p = Process(target=self.mod_manager.sync_all, args=(self.messagequeue,))
+        p.start()
+        self.current_child_process = p
 
-    def test_file_download(self):
+    def on_checkmods_inprogress(self, progress):
+        print 'checkmods in progress'
 
-        self.view.ids.status_label.text = 'Downloading...'
+    def on_checkmods_finished(self, progress):
+        print 'checkmods finshed'
+        self.current_child_process.join()
+        self.view.ids.install_button.disabled = False
 
-        mod = Mod(
-            name='@CBA_A3',
-            clientlocation=os.getcwd(),
-            synctype='http',
-            downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
+    def on_syncing_inprogress(self, progress):
+        print 'syncing in progress'
 
-        self.view.ids.status_label.text = 'Downloading mod ' + mod.name + ' ...'
+    def on_syncing_finished(self, progress):
+        print 'syncing finshed'
+        self.current_child_process.join()
+        Clock.unschedule(self.handle_messagequeue)
 
-        self.mod_manager._sync_single_mod(mod)
-
-        Clock.schedule_interval(self.on_progress, 0.5)
-
-    def on_download_finish(self):
-        print "download finished"
-        print 'hello'
-
-        self.view.ids.status_label.text = 'Download finished.'
-        self.view.ids.progress_bar.value = 100
-
-
-    def on_progress(self, dt):
+    def handle_messagequeue(self, dt):
         queue = self.messagequeue
         progress = None
 
@@ -136,10 +127,18 @@ class Controller(object):
                 self.view.ids.status_label.text = text
                 self.show_loading_gif(True)
 
+                funcname = 'on_' + progress['action'] + '_inprogress'
+                func = getattr(self, funcname , None)
+                if callable(func):
+                    func(progress)
+
             elif progress['status'] == 'finished':
                 self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'
-                # Clock.unschedule(self.on_progress)
-                # self.current_child_process.join()
+                funcname = 'on_' + progress['action'] + '_finished'
+                func = getattr(self, funcname , None)
+                print 'calling function', funcname, func
+                if callable(func):
+                    func(progress)
 
                 if 'data' in progress:
                     print 'we got data', progress['data']
