@@ -23,6 +23,9 @@ import multiprocessing.forking
 import multiprocessing
 import os
 import sys
+from multiprocessing.queues import SimpleQueue
+from kivy.clock import Clock
+import time
 
 class _Popen(multiprocessing.forking.Popen):
     def __init__(self, *args, **kw):
@@ -48,3 +51,96 @@ class _Popen(multiprocessing.forking.Popen):
 
 class Process(multiprocessing.Process):
     _Popen = _Popen
+
+
+# TODO: comment and treat failure and join process
+
+class ParaQueue(SimpleQueue):
+    def __init__(self, action_name):
+        SimpleQueue.__init__(self)
+        self.action_name = action_name
+
+    def reject(self, data=None):
+        msg = {'action': self.action_name, 'status': 'reject',
+               'data': data}
+        self.put(msg)
+
+    def resolve(self, data=None):
+        msg = {'action': self.action_name, 'status': 'resolve',
+               'data': data}
+        self.put(msg)
+
+    def progress(self, data=None, percentage=0.0):
+        msg = {'action': self.action_name, 'status': 'progress',
+               'data': data, 'percentage': percentage}
+        self.put(msg)
+
+class Para(object):
+    def __init__(self, func, args, target, action_name):
+        super(Para, self).__init__()
+        self.messagequeue = None
+        self.func = func
+        self.args = args
+        self.target = target
+        self.action_name = action_name
+        self.current_child_process = None
+
+    def _call_progress_handler(self, progress):
+        funcname = 'on_' + progress['action'] + '_progress'
+        print funcname
+        func = getattr(self.target, funcname , None)
+        if callable(func):
+            func(progress['data'], progress['percentage'])
+
+    def _call_resolve_handler(self, progress):
+        funcname = 'on_' + progress['action'] + '_resolve'
+        func = getattr(self.target, funcname , None)
+        if callable(func):
+            func(progress['data'])
+
+    def _call_reject_handler(self, progress):
+        pass
+
+    def run(self):
+        self.messagequeue = ParaQueue(self.action_name)
+        print 'starting process'
+        p = Process(target=self.func, args=(self.messagequeue,) + self.args)
+        p.start()
+        self.current_child_process = p
+        Clock.schedule_interval(self.handle_messagequeue, 1.0)
+
+    def handle_messagequeue(self, dt):
+        queue = self.messagequeue
+        progress = None
+
+        if queue and not queue.empty():
+            progress = queue.get()
+
+        if progress:
+            if progress['status'] == 'progress':
+                print 'para in progress', progress['data']
+                self._call_progress_handler(progress)
+
+            elif progress['status'] == 'resolve':
+                print 'para resolved', progress['data']
+                self._call_resolve_handler(progress)
+
+
+                # if 'data' in progress:
+                #     print 'we got data', progress['data']
+
+        else:
+            print "queue is empty"
+
+if __name__ == '__main__':
+
+    def test_func(pq):
+        pq.progress({'msg': 'test_func_has_started'})
+        time.sleep(2)
+        pq.progress({'msg': 'test_func in progress'})
+        time.sleep(2)
+        pq.resolve({'msg': 'test_func ready'})
+
+
+    para = Para(test_func, (), None, 'testaction')
+    para.run()

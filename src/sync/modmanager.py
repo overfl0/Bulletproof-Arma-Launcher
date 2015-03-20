@@ -20,7 +20,7 @@ import requests
 from utils.process import Process
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
-from arma.arma import Arma
+from arma.arma import Arma, ArmaNotInstalled
 
 def get_mod_descriptions(messagequeue):
     """
@@ -29,6 +29,7 @@ def get_mod_descriptions(messagequeue):
     this function is ment be used threaded or multiprocesses, you have
     to pass in a queue
     """
+    messagequeue.progress({'msg': 'Downloading mod descriptions'})
     url = 'https://gist.githubusercontent.com/Sighter/adbce21192d0413cfbad/raw/074c5227b54ca7cb2abce918f08ce4b6a8362f66/moddesc.json'
     res = requests.get(url, verify=False)
     data = None
@@ -45,8 +46,7 @@ def get_mod_descriptions(messagequeue):
         for md in data:
             mods.append(Mod.fromDict(md))
 
-        messagequeue.put({'action': 'moddescdownload', 'status': 'finished',
-            'progress': 1.0, 'kbpersec': 0.0, 'data': mods})
+        messagequeue.progress({'msg': 'Downloading mod descriptions finished', 'mods': mods})
 
     return mods
 
@@ -75,23 +75,19 @@ class ModManager(object):
         """do everything which is needed to get all mods in sync"""
 
         # download mod descriptions first
-        messagequeue.put({
-            'action': 'moddescdownload', 'status': 'inprogress',
-            'progress': 0.3, 'kbpersec': 0.0,})
         mod_list = get_mod_descriptions(messagequeue)
 
         # check if any oth the mods is installed with withSix
+        messagequeue.progress({'msg': 'Checking mods'})
         for m in mod_list:
-            r = self._check_already_installed_with_six(m)
+            try:
+                r = self._check_already_installed_with_six(m)
+            except ArmaNotInstalled:
+                r = False
             if r:
-                messagequeue.put({
-                    'action': 'checkmods', 'status': 'inprogress',
-                    'progress': 0.3, 'kbpersec': 0.0,
-                    'msg': 'Mod ' + m.name + ' already installed with withSix'})
+                messagequeue.progress({'msg': 'Mod ' + m.name + ' already installed with withSix'})
 
-        messagequeue.put({
-            'action': 'checkmods', 'status': 'finished',
-            'progress': 0.1, 'kbpersec': 0.0})
+        messagequeue.resolve({'msg': 'Checking mods finished'})
 
 
     def sync_all(self, messagequeue):

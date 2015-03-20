@@ -28,6 +28,7 @@ from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
 from utils.process import Process
+from utils.process import Para
 
 class InstallScreen(Screen):
     """
@@ -53,12 +54,15 @@ class Controller(object):
         self.loading_gif = None
 
         # download mod descriptions
-        self.messagequeue = Queue()
-        p = Process(target=self.mod_manager.prepare_and_check, args=(self.messagequeue,))
-        p.start()
-        self.current_child_process = p
+        self.para = Para(self.mod_manager.prepare_and_check, (), self, 'checkmods')
+        self.para.run()
 
-        Clock.schedule_interval(self.handle_messagequeue, 1.0)
+        # self.messagequeue = Queue()
+        # p = Process(target=self.mod_manager.prepare_and_check, args=(self.messagequeue,))
+        # p.start()
+        # self.current_child_process = p
+
+        #Clock.schedule_interval(self.handle_messagequeue, 1.0)
 
     def on_install_button_release(self, btn, image):
         self.messagequeue = Queue()
@@ -66,13 +70,17 @@ class Controller(object):
         p.start()
         self.current_child_process = p
 
-    def on_checkmods_inprogress(self, progress):
-        print 'checkmods in progress'
+    def on_checkmods_progress(self, progress, speed):
+        self.view.ids.status_image.hidden = False
+        self.view.ids.status_label.text = progress['msg']
 
-    def on_checkmods_finished(self, progress):
+
+    def on_checkmods_resolve(self, progress):
         print 'checkmods finshed'
-        self.current_child_process.join()
         self.view.ids.install_button.disabled = False
+        self.view.ids.status_image.hidden = True
+        self.view.ids.status_label.text = progress['msg']
+
 
     def on_syncing_inprogress(self, progress):
         print 'syncing in progress'
