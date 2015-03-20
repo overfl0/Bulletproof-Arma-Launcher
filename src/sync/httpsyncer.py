@@ -83,12 +83,9 @@ class HttpSyncer(object):
         do your download stuff here and report status over the message queue
 
         """
-        self.result_queue.put({
-            'action': 'syncing', 'status': 'inprogress',
-            'progress': 0.1, 'kbpersec': 0.0})
+        self.result_queue.progress({'msg': 'Downloading mod: ' + self.mod.name})
 
         print self.mod.name, self.mod
-
 
         # get file over http using requests stream mode
         response = requests.get(
@@ -129,18 +126,13 @@ class HttpSyncer(object):
                     print kbpersec
 
                     # here it reports back to the modmanager
-                    self.result_queue.put({ 'progress': percent,
-                        'kbpersec': kbpersec, 'status': 'inprogress',
-                        'action': 'syncing'})
+                    self.result_queue.progress({'msg': 'Downloading mod: ' + str(percent)}, percent)
 
                     counter = 0
 
                 counter += 1
 
-        self.result_queue.put({
-            'progress': 1.0, 'action': 'syncing',
-            'kbpersec': 0,
-            'status': 'finished'})
+            self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
 
 
         # with SevenZFile(os.path.join(downloaddir, fname)) as zfile:

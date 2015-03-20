@@ -87,7 +87,6 @@ class Para(object):
 
     def _call_progress_handler(self, progress):
         funcname = 'on_' + progress['action'] + '_progress'
-        print funcname
         func = getattr(self.target, funcname , None)
         if callable(func):
             func(progress['data'], progress['percentage'])
@@ -97,13 +96,22 @@ class Para(object):
         func = getattr(self.target, funcname , None)
         if callable(func):
             func(progress['data'])
+        self._reset()
 
     def _call_reject_handler(self, progress):
-        pass
+        funcname = 'on_' + progress['action'] + '_reject'
+        func = getattr(self.target, funcname , None)
+        if callable(func):
+            func(progress['data'])
+        self._reset()
+
+    def _reset(self):
+        self.current_child_process.join()
+        self.current_child_process = None
+        Clock.unschedule(self.handle_messagequeue)
 
     def run(self):
         self.messagequeue = ParaQueue(self.action_name)
-        print 'starting process'
         p = Process(target=self.func, args=(self.messagequeue,) + self.args)
         p.start()
         self.current_child_process = p
@@ -118,19 +126,13 @@ class Para(object):
 
         if progress:
             if progress['status'] == 'progress':
-                print 'para in progress', progress['data']
                 self._call_progress_handler(progress)
 
             elif progress['status'] == 'resolve':
-                print 'para resolved', progress['data']
                 self._call_resolve_handler(progress)
 
-
-                # if 'data' in progress:
-                #     print 'we got data', progress['data']
-
-        else:
-            print "queue is empty"
+            elif progress['status'] == 'reject':
+                self._call_reject_handler(progress)
 
 if __name__ == '__main__':
 

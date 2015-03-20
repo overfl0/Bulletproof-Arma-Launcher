@@ -22,6 +22,7 @@ from kivy.clock import Clock
 from kivy.uix.widget import Widget
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
+from kivy.logger import Logger
 
 from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
@@ -57,78 +58,28 @@ class Controller(object):
         self.para = Para(self.mod_manager.prepare_and_check, (), self, 'checkmods')
         self.para.run()
 
-        # self.messagequeue = Queue()
-        # p = Process(target=self.mod_manager.prepare_and_check, args=(self.messagequeue,))
-        # p.start()
-        # self.current_child_process = p
-
-        #Clock.schedule_interval(self.handle_messagequeue, 1.0)
-
     def on_install_button_release(self, btn, image):
-        self.messagequeue = Queue()
-        p = Process(target=self.mod_manager.sync_all, args=(self.messagequeue,))
-        p.start()
-        self.current_child_process = p
+        self.para = Para(self.mod_manager.sync_all, (), self, 'sync')
+        self.para.run()
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.hidden = False
         self.view.ids.status_label.text = progress['msg']
 
-
     def on_checkmods_resolve(self, progress):
-        print 'checkmods finshed'
+        Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
 
+    def on_sync_progress(self, progress, speed):
+        Logger.debug('InstallScreen: syncing in progress')
+        self.view.ids.install_button.disabled = True
+        self.view.ids.status_image.hidden = False
+        self.view.ids.status_label.text = progress['msg']
 
-    def on_syncing_inprogress(self, progress):
-        print 'syncing in progress'
-
-    def on_syncing_finished(self, progress):
-        print 'syncing finshed'
-        self.current_child_process.join()
-        Clock.unschedule(self.handle_messagequeue)
-
-    def handle_messagequeue(self, dt):
-        queue = self.messagequeue
-        progress = None
-
-        if not queue.empty():
-            progress = queue.get_nowait()
-
-        if progress:
-            print 'Got progress: ', progress
-            self.view.ids.progress_bar.value = progress['progress'] * 100
-
-            if progress['status'] == 'inprogress':
-                text = ""
-
-                self.view.ids.status_image.hidden = False
-
-                if 'msg' in progress:
-                    text = progress['msg']
-                else:
-                    text = self.view.statusmessage_map[progress['action']]
-
-                self.view.ids.status_label.text = text
-
-                funcname = 'on_' + progress['action'] + '_inprogress'
-                func = getattr(self, funcname , None)
-                if callable(func):
-                    func(progress)
-
-            elif progress['status'] == 'finished':
-                self.view.ids.status_image.hidden = True
-                self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'
-                funcname = 'on_' + progress['action'] + '_finished'
-                func = getattr(self, funcname , None)
-                print 'calling function', funcname, func
-                if callable(func):
-                    func(progress)
-
-                if 'data' in progress:
-                    print 'we got data', progress['data']
-
-        else:
-            print "queue is empty"
+    def on_sync_resolve(self, progress):
+        Logger.debug('InstallScreen: syncing finished')
+        self.view.ids.install_button.disabled = False
+        self.view.ids.status_image.hidden = True
+        self.view.ids.status_label.text = progress['msg']
