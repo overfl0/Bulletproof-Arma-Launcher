@@ -94,12 +94,12 @@
             size_hint_y: None
             height: 20
 
-            BoxLayout:
-                id: loading_image_container
-                width: 40
+            StatusImage:
+                id: status_image
+                source: app.resource_path('images/ajax-loader2_20x20.gif')
+                width: 20
                 size_hint_x: None
-                # Image:
-                #     source: app.resource_path('images/ajax-loader.gif')
+                hidden: True
 
             Label:
                 id: status_label
@@ -144,6 +144,4 @@
         orientation: 'vertical'
 
         Label:
-            text: 'hello'
-        Button:
-            text: 'oi oi'
+            text: 'In Beta, this will be a place for Settings'

@@ -65,6 +65,7 @@ if __name__ == "__main__":
 
     from utils.app import BaseApp
     from view.hoverbutton import HoverButton
+    from view.statusimage import StatusImage
     from gui.mainwidget import MainWidget
     from gui.updatermainwidget import UpdaterMainWidget
     from gui.installscreen import InstallScreen

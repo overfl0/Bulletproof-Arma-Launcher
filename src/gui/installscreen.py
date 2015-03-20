@@ -60,29 +60,6 @@ class Controller(object):
 
         Clock.schedule_interval(self.handle_messagequeue, 1.0)
 
-    def show_loading_gif(self, show):
-        """
-        show the loading gif besides the status_label
-
-        the show parameter should be true to show the image otherwise False
-        """
-        # TODO: detect image in container
-        # see http://stackoverflow.com/questions/24781248/kivy-how-to-get-widget-by-id-without-kv
-        # write helper function for this
-        app = kivy.app.App.get_running_app()
-        image_source = app.resource_path('images/ajax-loader.gif')
-        image_container = self.view.ids.loading_image_container
-
-        if show == True and not self.loading_gif:
-            image = Image(source=image_source, id='loading_gif')
-            image_container.add_widget(image)
-            self.loading_gif = image
-        elif show == False:
-            image_container.remove_widget(self.loading_gif)
-            self.loading_gif = None
-
-        print 'added widget', image_container.children
-
     def on_install_button_release(self, btn, image):
         self.messagequeue = Queue()
         p = Process(target=self.mod_manager.sync_all, args=(self.messagequeue,))
@@ -119,13 +96,14 @@ class Controller(object):
             if progress['status'] == 'inprogress':
                 text = ""
 
+                self.view.ids.status_image.hidden = False
+
                 if 'msg' in progress:
                     text = progress['msg']
                 else:
                     text = self.view.statusmessage_map[progress['action']]
 
                 self.view.ids.status_label.text = text
-                self.show_loading_gif(True)
 
                 funcname = 'on_' + progress['action'] + '_inprogress'
                 func = getattr(self, funcname , None)
@@ -133,6 +111,7 @@ class Controller(object):
                     func(progress)
 
             elif progress['status'] == 'finished':
+                self.view.ids.status_image.hidden = True
                 self.view.ids.status_label.text = self.view.statusmessage_map[progress['action']] + ' Finished'
                 funcname = 'on_' + progress['action'] + '_finished'
                 func = getattr(self, funcname , None)
