@@ -67,7 +67,6 @@ class TorrentSyncer(object):
         """
 
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
-        print "TODO: Download this to a temporary location and copy/move afterwards"
 
         if not self.session:
             self.init_libtorrent()
@@ -81,10 +80,11 @@ class TorrentSyncer(object):
         }
         torrent_handle = self.session.add_torrent(params)
 
+        #print "Is seed:", torrent_handle.is_seed()
         while (not torrent_handle.is_seed()):
             s = torrent_handle.status()
 
-            download_percent = s.progress * 100.0
+            download_fraction = s.progress
             download_kbs = s.download_rate / 1024
 
             state_str = ['queued', 'checking', 'downloading metadata', 'downloading', 'finished', 'seeding', 'allocating']
@@ -92,11 +92,15 @@ class TorrentSyncer(object):
                 (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, \
                 s.num_peers, s.state)
 
-            self.result_queue.progress({'msg': '%s: %.2f%%' % (str(s.state), download_percent)}, download_percent)
+            self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.name, str(s.state), download_fraction * 100.0)}, download_fraction)
             sleep(self._update_interval)
 
-        print "Torrent: DONE!"
-        self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
+        #print "Torrent: DONE!"
+        #print "Is seed:", torrent_handle.is_seed()
+        #print "State:", s.state
+        # TODO: make sure files have been fully checked before exiting
+        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, str(s.state))}, download_fraction)
+        # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
 
 
 if __name__ == '__main__':

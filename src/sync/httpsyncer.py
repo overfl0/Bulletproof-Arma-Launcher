@@ -118,21 +118,21 @@ class HttpSyncer(object):
                 handle.write(block)
                 downloaded = downloaded + 1024
 
-
                 if counter >= 1000 and not downloaded < 1:
-                    percent = downloaded / length
+                    fraction = downloaded / length
                     td = datetime.now() - start_time
                     kbpersec = (downloaded / 1024) / td.total_seconds()
                     print kbpersec
 
                     # here it reports back to the modmanager
-                    self.result_queue.progress({'msg': 'Downloading mod: ' + str(percent)}, percent)
+                    self.result_queue.progress({'msg': '[%s] Downloading: %.2f%%' % (self.mod.name, fraction * 100.0)}, fraction)
 
                     counter = 0
 
                 counter += 1
 
-            self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
+            self.result_queue.progress({'msg': '[%s] Downloading finished.' % self.mod.name}, 100)
+            # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
 
 
         # with SevenZFile(os.path.join(downloaddir, fname)) as zfile:

@@ -18,6 +18,7 @@ from kivy.logger import Logger
 import requests
 
 from utils.process import Process
+from utils.app import BaseApp
 from sync.httpsyncer import HttpSyncer
 from sync.torrentsyncer import TorrentSyncer
 from sync.mod import Mod
@@ -96,20 +97,25 @@ class ModManager(object):
         # TODO: Sync via libtorrent
         # The following is just test code
 
-        mod = Mod(
+        cba_mod = Mod(
             name='@CBA_A3',
             clientlocation='../tests/',
             synctype='http',
             downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
-        
-        mod = Mod(
-            name='@debussybattle',
-            clientlocation=os.getcwd(),
-            synctype='torrent',
-            downloadurl='test.torrent')
 
-        syncer = TorrentSyncer(messagequeue, mod)
-        syncer.sync()
+        cba_syncer = HttpSyncer(messagequeue, cba_mod)
+        cba_syncer.sync()
+
+        debussy_mod = Mod(
+            name='@debussybattle',
+            clientlocation=os.getcwd(),  # TODO: Change me
+            synctype='torrent',
+            downloadurl=BaseApp.resource_path('debussy.torrent'))
+
+        debussy_syncer = TorrentSyncer(messagequeue, debussy_mod)
+        debussy_syncer.sync()
+
+        messagequeue.resolve({'msg': 'Downloading mods finished.'})
 
         return
 

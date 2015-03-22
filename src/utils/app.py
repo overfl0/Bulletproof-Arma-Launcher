@@ -19,11 +19,14 @@ class BaseApp(App):
     def __init__(self):
         super(BaseApp, self).__init__()
 
-    def resource_path(self, relative):
+    @staticmethod
+    def resource_path(relative):
         """
         This method makes sure that the app can access resource path
         also if packed within a single executable
         """
         if hasattr(sys, "_MEIPASS"):
             return os.path.join(sys._MEIPASS, relative)
-        return os.path.join('../resources', relative)
+
+        base_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+        return os.path.realpath(os.path.join(base_path, '../resources', relative))
