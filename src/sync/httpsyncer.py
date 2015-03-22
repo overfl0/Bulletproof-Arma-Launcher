@@ -1,3 +1,14 @@
+# Tactical Battlefield Installer/Updater/Launcher
+# Copyright (C) 2015 TacBF Installer Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 
 import os
 import requests
@@ -17,13 +28,19 @@ class HttpSyncer(object):
     its status back. This is done via an dict object looking like:
 
     msg = {
-        status: 'downloading',
-        progress: 0.5,
-        kbpersec: 280
+        'status': 'inprogress',
+        'progress': 0.5,
+        'kbpersec': 280,
+        'action': 'syncing'
     }
 
+    action:
+        should describe what you are doing
+        only use alphanumeric characters here and no whitespace
+        preferably everything lowercase
+
     status:
-        could be: 'downloading', 'finished', 'error'
+        could be: 'inprogress', 'finished', 'error'
 
     progress:
         percenttage progress from 0 to 1 as float
@@ -66,8 +83,9 @@ class HttpSyncer(object):
         do your download stuff here and report status over the message queue
 
         """
-        print self.mod.name, self.mod
+        self.result_queue.progress({'msg': 'Downloading mod: ' + self.mod.name})
 
+        print self.mod.name, self.mod
 
         # get file over http using requests stream mode
         response = requests.get(
@@ -108,23 +126,17 @@ class HttpSyncer(object):
                     print kbpersec
 
                     # here it reports back to the modmanager
-                    self.result_queue.put({
-                        'progress': percent,
-                        'kbpersec': kbpersec,
-                        'status': 'downloading'})
+                    self.result_queue.progress({'msg': 'Downloading mod: ' + str(percent)}, percent)
 
                     counter = 0
 
                 counter += 1
 
-        self.result_queue.put({
-            'progress': 1.0,
-            'kbpersec': 0,
-            'status': 'finished'})
+            self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
 
 
-        zfile = SevenZFile(os.path.join(downloaddir, fname))
-        zfile.extractall(downloaddir)
-
-        shutil.move(os.path.join(downloaddir, self.mod.name), self.mod.clientlocation)
-        shutil.rmtree(downloaddir)
+        # with SevenZFile(os.path.join(downloaddir, fname)) as zfile:
+        #     zfile.extractall(downloaddir)
+        #
+        # shutil.move(os.path.join(downloaddir, self.mod.name), self.mod.clientlocation)
+        # shutil.rmtree(downloaddir)

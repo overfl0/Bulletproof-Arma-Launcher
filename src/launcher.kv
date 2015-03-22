@@ -28,6 +28,7 @@
         pos: root.x, root.y
 
     Image:
+
         source: app.resource_path('images/logo.png')
         height: 300
         width: 500
@@ -48,6 +49,7 @@
             spacing: 10
 
             HoverButton:
+                on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
                 Image:
                     source: app.resource_path('images/button-hammer.png')
                     allow_stretch: False
@@ -58,6 +60,7 @@
                     allow_stretch: False
                     pos: self.parent.pos
             HoverButton:
+                on_release: app.root.ids.main_screen_manager.current = 'install_screen'
                 Image:
                     source: app.resource_path('images/button-intel.png')
                     allow_stretch: False
@@ -72,17 +75,34 @@
                     width: 3
                     cap: 'square'
 
+        MainScreenManager:
+            id: main_screen_manager
+            InstallScreen:
+            PrefScreen:
+
+<InstallScreen>:
+    name: 'install_screen'
+
+    BoxLayout:
+        orientation: 'vertical'
 
         Label:
             id: filler
 
-        StackLayout:
+        BoxLayout:
+            orientation: 'horizontal'
             size_hint_y: None
             height: 20
 
+            StatusImage:
+                id: status_image
+                source: app.resource_path('images/ajax-loader2_20x20.gif')
+                width: 20
+                size_hint_x: None
+                hidden: True
+
             Label:
                 id: status_label
-                halign: 'left'
                 text: 'test'
                 text_size: self.width - 20, self.height
                 size_hint: (1, 1)
@@ -108,10 +128,20 @@
 
         HoverButton:
             id: install_button
+            disabled: True
             width: 300
-            on_release: root.controller.on_install_button_release(install_button, install_image)
+            on_release: root.controller.on_install_button_release(self, install_image)
             Image:
                 id: install_image
                 source: app.resource_path('images/install.png')
                 allow_stretch: False
                 pos: self.parent.x + 20, self.parent.y
+
+<PrefScreen>:
+    name: 'pref_screen'
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        Label:
+            text: 'In Beta, this will be a place for Settings'

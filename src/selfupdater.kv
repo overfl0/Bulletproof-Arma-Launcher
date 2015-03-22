@@ -1,0 +1,44 @@
+﻿#:kivy 1.4
+
+# <Widget>:
+#     canvas.after:
+#         Color:
+#             rgb: 0,1,0
+#         Line:
+#             rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+#             dash_offset: 5
+#             dash_length: 3
+
+
+<HoverButton>
+    border: 1,1,1,1
+    size_hint_x: None
+    size_hint_y: None
+    width: 100
+    background_normal: app.resource_path('images/borderimage.png')
+    background_down: app.resource_path('images/borderimage.png')
+    background_hover: app.resource_path('images/borderimage-hover.png')
+
+<UpdaterMainWidget>
+    id: main_widget
+    Image:
+        allow_stretch: True
+        keep_ratio: False
+        source: app.resource_path('images/back.png')
+        size: root.width, root.height
+        pos: root.x, root.y
+
+    BoxLayout:
+        orientation: 'vertical'
+        size: root.width, root.height
+        padding: 0, 10
+        Label:
+            id: status_label
+            text: 'Updating the launcher'
+
+        HoverButton:
+            size_hint_x: 0.6
+            text: 'Abort'
+            height: 40
+            pos_hint: {'center_x': 0.5}
+            on_release: root.controller.on_abort_button_release(self)

@@ -84,7 +84,7 @@ class TorrentSyncer(object):
         while (not torrent_handle.is_seed()):
             s = torrent_handle.status()
 
-            download_fraction = s.progress
+            download_percent = s.progress * 100.0
             download_kbs = s.download_rate / 1024
 
             state_str = ['queued', 'checking', 'downloading metadata', 'downloading', 'finished', 'seeding', 'allocating']
@@ -92,16 +92,12 @@ class TorrentSyncer(object):
                 (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, \
                 s.num_peers, s.state)
 
-            self.result_queue.put({
-                'progress': download_fraction,
-                'kbpersec': download_kbs,
-                'status': str(s.state)})
+            self.result_queue.progress({'msg': '%s: %.2f%%' % (str(s.state), download_percent)}, download_percent)
             sleep(self._update_interval)
 
-        self.result_queue.put({
-            'progress': 1.0,
-            'kbpersec': 0,
-            'status': 'finished'})
+        print "Torrent: DONE!"
+        self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
+
 
 if __name__ == '__main__':
     class DummyMod:

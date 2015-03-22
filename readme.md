@@ -24,11 +24,14 @@ To run the Tests cd into the src dir and run,
 
 for unit test
 
-`nosetests ../tests -a '!integration' --nocapture`
+`nosetests ../tests -a "!integration" --nocapture`
 
 for integration tests
 
-`nosetests ../tests -a 'integration' --nocapture`
+`nosetests ../tests -a "integration" --nocapture`
+
+*Important:* To run those tests under Linux or Cygwin, replace the double
+quotes (") with single quotes (').
 
 # Build
 
