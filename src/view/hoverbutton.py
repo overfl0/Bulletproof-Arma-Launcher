@@ -43,9 +43,7 @@ class HoverButton(Button):
             self.mouse_hover = False
 
     def _on_mouse_hover(self, instance, value):
-        print 'mouse_hover changed', value
         if (value == True):
-            print 'switching to bg hover', self.background_hover
             self.background_normal_orig = self.background_normal
             self.background_normal = self.background_hover
         else:

@@ -25,15 +25,12 @@ class StatusImage(BoxLayout):
 
     def on_hidden_set(self, instance, hidden):
         if self._hidden == hidden:
-            print 'doin nothing', hidden
             return
 
         if hidden == True:
             self.remove_widget(self.image)
-            print 'hiding'
         else:
             self.add_widget(self.image)
-            print 'showing'
 
         self._hidden = hidden
 
