@@ -60,6 +60,16 @@ class ParaQueue(SimpleQueue):
         SimpleQueue.__init__(self)
         self.action_name = action_name
 
+    # the following methods have to be overwritten for the queue to work
+    # under windows, since pickling is needed. Check link:
+    # http://stackoverflow.com/questions/18906575/how-to-inherit-from-a-multiprocessing-queue
+    def __getstate__(self):
+        return self.action_name, super(ParaQueue, self).__getstate__()
+
+    def __setstate__(self, state):
+        self.action_name, state = state
+        super(ParaQueue, self).__setstate__(state)
+
     def reject(self, data=None):
         msg = {'action': self.action_name, 'status': 'reject',
                'data': data}
