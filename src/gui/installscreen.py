@@ -54,12 +54,16 @@ class Controller(object):
         self.mod_manager = ModManager()
         self.loading_gif = None
 
-        # download mod descriptions
-        self.para = Para(self.mod_manager.prepare_and_check, (), self, 'checkmods')
-        self.para.run()
+        # download mod description
+        self.para = self.mod_manager.prepare_and_check()
+        self.para.add_progress_handler(self.on_checkmods_progress)
+        self.para.add_resolve_handler(self.on_checkmods_resolve)
 
     def on_install_button_release(self, btn, image):
-        self.para = Para(self.mod_manager.sync_all, (), self, 'sync')
+        self.para = self.mod_manager.sync_all()
+        self.para.add_progress_handler(self.on_sync_progress)
+        self.para.add_resolve_handler(self.on_sync_resolve)
+
         self.para.run()
 
     def on_checkmods_progress(self, progress, speed):

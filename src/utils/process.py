@@ -86,33 +86,75 @@ class ParaQueue(SimpleQueue):
         self.put(msg)
 
 class Para(object):
-    def __init__(self, func, args, target, action_name):
+    def __init__(self, func, args, action_name):
+        """
+        constructor of the Para
+
+        Args:
+            func: a function which is called in another process
+            args: the args which are passed to the function func contains
+            action_name: identifier shich is used in the messagequeue. Actually
+                         this is optional.
+
+        Returns:
+            The Para
+        """
         super(Para, self).__init__()
         self.messagequeue = None
         self.func = func
         self.args = args
-        self.target = target
         self.action_name = action_name
         self.current_child_process = None
+        self.progress_handler = []
+        self.resolve_handler = []
+        self.reject_handler = []
+
+        self.rejected = False
+        self.resolved = False
+
+    def add_progress_handler(self, func):
+        """adds an progress handler which could be called multiple times
+
+        Args:
+            func: a function which gets called with two arguments
+                data - dictionary which was passed on call of the progress function
+                progress - number between 0 and 1 indicating the progress
+
+        It gets called everytime the remote process calls the progress
+        method on the messagequeue
+        """
+        self.progress_handler.append(func)
+
+    def add_resolve_handler(self, func):
+        """adds a handler which gets called once on resolve
+
+        It gets called when the remote process calls the resolve
+        method on the messagequeue
+        """
+        self.resolve_handler.append(func)
+
+    def add_reject_handler(self, func):
+        """adds a handler which gets called once on reject
+
+        It gets called when the remote process calls the reject
+        method on the messagequeue
+        """
+        self.reject_handler.append(func)
 
     def _call_progress_handler(self, progress):
-        funcname = 'on_' + progress['action'] + '_progress'
-        func = getattr(self.target, funcname , None)
-        if callable(func):
-            func(progress['data'], progress['percentage'])
+        for f in self.progress_handler:
+            f(progress['data'], progress['percentage'])
 
     def _call_resolve_handler(self, progress):
-        funcname = 'on_' + progress['action'] + '_resolve'
-        func = getattr(self.target, funcname , None)
-        if callable(func):
-            func(progress['data'])
+        for f in self.resolve_handler:
+            f(progress['data'])
+
         self._reset()
 
     def _call_reject_handler(self, progress):
-        funcname = 'on_' + progress['action'] + '_reject'
-        func = getattr(self.target, funcname , None)
-        if callable(func):
-            func(progress['data'])
+        for f in self.reject_handler:
+            f(progress['data'])
+
         self._reset()
 
     def _reset(self):

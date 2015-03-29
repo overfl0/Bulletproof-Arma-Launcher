@@ -18,6 +18,7 @@ from kivy.logger import Logger
 import requests
 
 from utils.process import Process
+from utils.process import Para
 from utils.app import BaseApp
 from sync.httpsyncer import HttpSyncer
 from sync.torrentsyncer import TorrentSyncer
@@ -57,6 +58,8 @@ class ModManager(object):
     def __init__(self):
         super(ModManager, self).__init__()
 
+        self.para = None
+
     def _check_already_installed_with_six(self, mod):
         """returns true if mod is installed already with withsix, otherwise false"""
 
@@ -73,8 +76,9 @@ class ModManager(object):
 
         return os.path.isfile(mod_path)
 
-    def prepare_and_check(self, messagequeue):
-        """do everything which is needed to get all mods in sync"""
+    def _prepare_and_check(self, messagequeue):
+        # WARNING: This methods gets called in a diffrent process
+        #          self is not what you think it is
 
         # download mod descriptions first
         mod_list = get_mod_descriptions(messagequeue)
@@ -92,7 +96,14 @@ class ModManager(object):
         messagequeue.resolve({'msg': 'Checking mods finished'})
 
 
-    def sync_all(self, messagequeue):
+    def prepare_and_check(self):
+        self.para = Para(self._prepare_and_check, (), 'checkmods')
+        self.para.run()
+        return self.para
+
+    def _sync_all(self, messagequeue):
+        # WARNING: This methods gets called in a diffrent process
+        #          self is not what you think it is
 
         # TODO: Sync via libtorrent
         # The following is just test code
@@ -118,6 +129,11 @@ class ModManager(object):
         messagequeue.resolve({'msg': 'Downloading mods finished.'})
 
         return
+
+    def sync_all(self):
+        self.para = Para(self._sync_all, (), 'sync')
+        self.para.run()
+        return self.para
 
 if __name__ == '__main__':
 
