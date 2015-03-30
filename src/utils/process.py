@@ -24,6 +24,7 @@ import multiprocessing
 import os
 import sys
 from multiprocessing.queues import SimpleQueue
+from multiprocessing import Lock
 from kivy.clock import Clock
 import time
 
@@ -55,10 +56,13 @@ class Process(multiprocessing.Process):
 
 # TODO: comment and treat failure and join process
 
+
+
 class ParaQueue(SimpleQueue):
-    def __init__(self, action_name):
+    def __init__(self, action_name, lock):
         SimpleQueue.__init__(self)
         self.action_name = action_name
+        self.lock = lock
 
     # the following methods have to be overwritten for the queue to work
     # under windows, since pickling is needed. Check link:
@@ -83,7 +87,17 @@ class ParaQueue(SimpleQueue):
     def progress(self, data=None, percentage=0.0):
         msg = {'action': self.action_name, 'status': 'progress',
                'data': data, 'percentage': percentage}
+
+        # leave only one progress item on the queue at any time
+        self.lock.acquire()
+        if not self.empty():
+            top = self.get()
+
+            if top['status'] != 'progress':
+                self.put(top)
         self.put(msg)
+        self.lock.release()
+
 
 class Para(object):
     def __init__(self, func, args, action_name):
@@ -108,6 +122,7 @@ class Para(object):
         self.progress_handler = []
         self.resolve_handler = []
         self.reject_handler = []
+        self.state = 'pending' # pending, rejected or resolved
 
         self.rejected = False
         self.resolved = False
@@ -141,6 +156,20 @@ class Para(object):
         """
         self.reject_handler.append(func)
 
+    def then(self, resolve_handler, reject_handler, progress_handler):
+        """method registering all needed callback at once
+
+        pass None to skip an arg
+        """
+        if resolve_handler:
+            self.add_resolve_handler(resolve_handler)
+
+        if reject_handler:
+            self.add_reject_handler(reject_handler)
+
+        if progress_handler:
+            self.add_progress_handler(progress_handler)
+
     def _call_progress_handler(self, progress):
         for f in self.progress_handler:
             f(progress['data'], progress['percentage'])
@@ -149,12 +178,14 @@ class Para(object):
         for f in self.resolve_handler:
             f(progress['data'])
 
+        self.state = 'resolved'
         self._reset()
 
     def _call_reject_handler(self, progress):
         for f in self.reject_handler:
             f(progress['data'])
 
+        self.state = 'rejected'
         self._reset()
 
     def _reset(self):
@@ -163,7 +194,8 @@ class Para(object):
         Clock.unschedule(self.handle_messagequeue)
 
     def run(self):
-        self.messagequeue = ParaQueue(self.action_name)
+        self.lock = Lock()
+        self.messagequeue = ParaQueue(self.action_name, self.lock)
         p = Process(target=self.func, args=(self.messagequeue,) + self.args)
         p.start()
         self.current_child_process = p
