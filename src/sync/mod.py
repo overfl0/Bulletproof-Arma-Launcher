@@ -18,22 +18,31 @@ class Mod(object):
             clientlocation=None,
             synctype='http',
             downloadurl=None,
-            version=""):
+            torrent_timestamp="",
+            name=""):
         super(Mod, self).__init__()
 
         self.clientlocation = clientlocation
         self.synctype = synctype
         self.downloadurl = downloadurl
         self.foldername = foldername
+        self.torrent_timestamp = torrent_timestamp
+        self.name = name
 
     @classmethod
     def fromDict(cls, d):
         """return a new mod instance constructed from dictionary"""
 
-        if 'version' in d:
-            version = d['version']
-        if 'name' in d:
-            name = d['name']
+        torrent_timestamp = d.get('torrent-timestamp', "")
+        name = d.get('name', "Unknown Mod")
+        foldername = d.get('foldername', "@Unknown")
 
-        m = Mod(foldername=name, version=version)
+        m = Mod(foldername=foldername, torrent_timestamp=torrent_timestamp,
+                name=name)
         return m
+
+    def __repr__(self):
+        s = '[Mod: {} -- utcts: {} -- {}]'.format(self.foldername,
+                self.torrent_timestamp, self.name)
+
+        return s

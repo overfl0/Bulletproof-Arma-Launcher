@@ -14,6 +14,8 @@ import multiprocessing
 from multiprocessing import Queue
 import os
 
+from datetime import datetime
+
 from kivy.logger import Logger
 import requests
 
@@ -25,6 +27,18 @@ from sync.torrentsyncer import TorrentSyncer
 from sync.mod import Mod
 from arma.arma import Arma, ArmaNotInstalled
 
+def parse_timestamp(ts):
+    """
+    parse a time stamp to like this
+    YYYY-MM-DD_Epoch
+
+    we parse Epoch in utc time. After that make sure to use it like utc
+    """
+    s = ts.split('_')
+    stamp = s[1]
+    return datetime.utcfromtimestamp(float(stamp))
+
+
 def get_mod_descriptions(messagequeue):
     """
     helper function to get the moddescriptions from the server
@@ -33,7 +47,7 @@ def get_mod_descriptions(messagequeue):
     to pass in a queue
     """
     messagequeue.progress({'msg': 'Downloading mod descriptions'})
-    url = 'https://gist.githubusercontent.com/Sighter/adbce21192d0413cfbad/raw/074c5227b54ca7cb2abce918f08ce4b6a8362f66/moddesc.json'
+    url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
     res = requests.get(url, verify=False)
     data = None
 
@@ -46,7 +60,12 @@ def get_mod_descriptions(messagequeue):
     else:
         data = res.json()
 
-        for md in data:
+        for md in data['mods']:
+
+            # parse timestamp
+            tsstr = md.get('torrent-timestamp')
+            md['torrent-timestamp'] = parse_timestamp(tsstr)
+
             mods.append(Mod.fromDict(md))
 
         messagequeue.progress({'msg': 'Downloading mod descriptions finished', 'mods': mods})
@@ -88,7 +107,7 @@ def _prepare_and_check(messagequeue):
         if r:
             messagequeue.progress({'msg': 'Mod ' + m.foldername + ' already installed with withSix'})
 
-    messagequeue.resolve({'msg': 'Checking mods finished'})
+    messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
 
 def _sync_all(messagequeue):
     # WARNING: This methods gets called in a diffrent process

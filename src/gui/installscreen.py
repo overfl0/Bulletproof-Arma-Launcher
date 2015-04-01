@@ -73,6 +73,11 @@ class Controller(object):
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
 
+        Logger.debug('InstallScreen: got mods:')
+        for mod in progress['mods']:
+            Logger.debug('InstallScreen: {}'.format(mod))
+
+
     def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
         self.view.ids.install_button.disabled = True
