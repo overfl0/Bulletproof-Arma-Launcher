@@ -68,10 +68,10 @@ class ParaQueue(SimpleQueue):
     # under windows, since pickling is needed. Check link:
     # http://stackoverflow.com/questions/18906575/how-to-inherit-from-a-multiprocessing-queue
     def __getstate__(self):
-        return self.action_name, super(ParaQueue, self).__getstate__()
+        return self.action_name, self.lock, super(ParaQueue, self).__getstate__()
 
     def __setstate__(self, state):
-        self.action_name, state = state
+        self.action_name, self.lock, state = state
         super(ParaQueue, self).__setstate__(state)
 
     def reject(self, data=None):
@@ -89,14 +89,14 @@ class ParaQueue(SimpleQueue):
                'data': data, 'percentage': percentage}
 
         # leave only one progress item on the queue at any time
-        self.lock.acquire()
-        if not self.empty():
-            top = self.get()
-
-            if top['status'] != 'progress':
-                self.put(top)
+        # self.lock.acquire()
+        # if not self.empty():
+        #     top = self.get()
+        #
+        #     if top['status'] != 'progress':
+        #         self.put(top)
         self.put(msg)
-        self.lock.release()
+        #self.lock.release()
 
 
 class Para(object):

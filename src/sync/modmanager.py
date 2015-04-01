@@ -53,89 +53,86 @@ def get_mod_descriptions(messagequeue):
 
     return mods
 
+
+def _check_already_installed_with_six(mod):
+    """returns true if mod is installed already with withsix, otherwise false"""
+
+    # check user path
+    install_path = Arma.get_user_path()
+    mod_path = os.path.join(install_path, mod.name, '.synqinfo')
+
+    if os.path.isfile(mod_path):
+        return True
+
+    # check system path
+    install_path = Arma.get_installation_path()
+    mod_path = os.path.join(install_path, mod.name, '.synqinfo')
+
+    return os.path.isfile(mod_path)
+
+
+def _prepare_and_check(messagequeue):
+    # WARNING: This methods gets called in a diffrent process
+    #          self is not what you think it is
+
+    # download mod descriptions first
+    mod_list = get_mod_descriptions(messagequeue)
+
+    # check if any oth the mods is installed with withSix
+    messagequeue.progress({'msg': 'Checking mods'})
+    for m in mod_list:
+        try:
+            r = _check_already_installed_with_six(m)
+        except ArmaNotInstalled:
+            r = False
+        if r:
+            messagequeue.progress({'msg': 'Mod ' + m.name + ' already installed with withSix'})
+
+    messagequeue.resolve({'msg': 'Checking mods finished'})
+
+def _sync_all(messagequeue):
+    # WARNING: This methods gets called in a diffrent process
+
+    # TODO: Sync via libtorrent
+    # The following is just test code
+
+    cba_mod = Mod(
+        name='@CBA_A3',
+        clientlocation='../tests/',
+        synctype='http',
+        downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
+
+    cba_syncer = HttpSyncer(messagequeue, cba_mod)
+    cba_syncer.sync()
+
+    debussy_mod = Mod(
+        name='@debussybattle',
+        clientlocation=os.getcwd(),  # TODO: Change me
+        synctype='torrent',
+        downloadurl=BaseApp.resource_path('debussy.torrent'))
+
+    debussy_syncer = TorrentSyncer(messagequeue, debussy_mod)
+    debussy_syncer.sync()
+
+    messagequeue.resolve({'msg': 'Downloading mods finished.'})
+
+    return
+
 class ModManager(object):
     """docstring for ModManager"""
     def __init__(self):
         super(ModManager, self).__init__()
-
         self.para = None
 
-    def _check_already_installed_with_six(self, mod):
-        """returns true if mod is installed already with withsix, otherwise false"""
-
-        # check user path
-        install_path = Arma.get_user_path()
-        mod_path = os.path.join(install_path, mod.name, '.synqinfo')
-
-        if os.path.isfile(mod_path):
-            return True
-
-        # check system path
-        install_path = Arma.get_installation_path()
-        mod_path = os.path.join(install_path, mod.name, '.synqinfo')
-
-        return os.path.isfile(mod_path)
-
-    def _prepare_and_check(self, messagequeue):
-        # WARNING: This methods gets called in a diffrent process
-        #          self is not what you think it is
-
-        # download mod descriptions first
-        mod_list = get_mod_descriptions(messagequeue)
-
-        # check if any oth the mods is installed with withSix
-        messagequeue.progress({'msg': 'Checking mods'})
-        for m in mod_list:
-            try:
-                r = self._check_already_installed_with_six(m)
-            except ArmaNotInstalled:
-                r = False
-            if r:
-                messagequeue.progress({'msg': 'Mod ' + m.name + ' already installed with withSix'})
-
-        messagequeue.resolve({'msg': 'Checking mods finished'})
-
-
     def prepare_and_check(self):
-        self.para = Para(self._prepare_and_check, (), 'checkmods')
+        self.para = Para(_prepare_and_check, (), 'checkmods')
         self.para.run()
         return self.para
 
-    def _sync_all(self, messagequeue):
-        # WARNING: This methods gets called in a diffrent process
-        #          self is not what you think it is
-
-        # TODO: Sync via libtorrent
-        # The following is just test code
-
-        cba_mod = Mod(
-            name='@CBA_A3',
-            clientlocation='../tests/',
-            synctype='http',
-            downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
-
-        cba_syncer = HttpSyncer(messagequeue, cba_mod)
-        cba_syncer.sync()
-
-        debussy_mod = Mod(
-            name='@debussybattle',
-            clientlocation=os.getcwd(),  # TODO: Change me
-            synctype='torrent',
-            downloadurl=BaseApp.resource_path('debussy.torrent'))
-
-        debussy_syncer = TorrentSyncer(messagequeue, debussy_mod)
-        debussy_syncer.sync()
-
-        messagequeue.resolve({'msg': 'Downloading mods finished.'})
-
-        return
-
     def sync_all(self):
-        self.para = Para(self._sync_all, (), 'sync')
+        self.para = Para(_sync_all, (), 'sync')
         self.para.run()
         return self.para
 
 if __name__ == '__main__':
-
-    m = ModManager()
-    m.sync_all(Queue())
+    pass
