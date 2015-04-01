@@ -24,7 +24,7 @@ import multiprocessing
 import os
 import sys
 from multiprocessing.queues import SimpleQueue
-from multiprocessing import Lock
+from multiprocessing import Lock, Pipe
 from kivy.clock import Clock
 from kivy.logger import Logger
 import time
@@ -58,47 +58,44 @@ class Process(multiprocessing.Process):
 # TODO: comment and treat failure and join process
 
 
-
-class ParaQueue(SimpleQueue):
-    def __init__(self, action_name, lock):
-        SimpleQueue.__init__(self)
+class ConnectionWrapper(object):
+    def __init__(self, action_name, lock, con):
+        super(ConnectionWrapper, self).__init__()
         self.action_name = action_name
         self.lock = lock
+        self.con = con
 
     # the following methods have to be overwritten for the queue to work
     # under windows, since pickling is needed. Check link:
     # http://stackoverflow.com/questions/18906575/how-to-inherit-from-a-multiprocessing-queue
     def __getstate__(self):
-        return self.action_name, self.lock, super(ParaQueue, self).__getstate__()
+        return self.action_name, self.lock, self.con
 
     def __setstate__(self, state):
-        self.action_name, self.lock, state = state
-        super(ParaQueue, self).__setstate__(state)
+        self.action_name, self.lock, self.con = state
 
     def reject(self, data=None):
         msg = {'action': self.action_name, 'status': 'reject',
                'data': data}
-        self.put(msg)
+        self.con.send(msg)
 
     def resolve(self, data=None):
         msg = {'action': self.action_name, 'status': 'resolve',
                'data': data}
-        self.put(msg)
+        self.con.send(msg)
 
     def progress(self, data=None, percentage=0.0):
         msg = {'action': self.action_name, 'status': 'progress',
                'data': data, 'percentage': percentage}
-        print 'Current messagequeue: ', self
 
         # leave only one progress item on the queue at any time
-        self.lock.acquire()
-        if not self.empty():
-            top = self.get()
-
-            if top['status'] != 'progress':
-                self.put(top)
-        self.put(msg)
-        self.lock.release()
+        # self.lock.acquire()
+        # if not self.empty():
+        #     top = self.get()
+        #
+        #     if top['status'] != 'progress':
+        #         self.put(top)
+        self.con.send(msg)
 
 class Para(object):
     def __init__(self, func, args, action_name):
@@ -198,7 +195,8 @@ class Para(object):
 
     def run(self):
         self.lock = Lock()
-        self.messagequeue = ParaQueue(self.action_name, self.lock)
+        self.parent_conn, child_conn = Pipe()
+        self.messagequeue = ConnectionWrapper(self.action_name, self.lock, child_conn)
         Logger.debug('Para: {} spwaning new process'.format(self))
         p = Process(target=self.func, args=(self.messagequeue,) + self.args)
         p.start()
@@ -206,11 +204,11 @@ class Para(object):
         Clock.schedule_interval(self.handle_messagequeue, 1.0)
 
     def handle_messagequeue(self, dt):
-        queue = self.messagequeue
+        con = self.parent_conn
         progress = None
 
-        if queue and not queue.empty():
-            progress = queue.get()
+        if con.poll():
+            progress = con.recv()
 
         if progress:
             if progress['status'] == 'progress':
