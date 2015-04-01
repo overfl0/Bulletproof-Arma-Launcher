@@ -123,6 +123,7 @@ class ModManager(object):
     def __init__(self):
         super(ModManager, self).__init__()
         self.para = None
+        self.sync_para = None
 
     def prepare_and_check(self):
         self.para = Para(_prepare_and_check, (), 'checkmods')
@@ -130,9 +131,9 @@ class ModManager(object):
         return self.para
 
     def sync_all(self):
-        self.para = Para(_sync_all, (), 'sync')
-        self.para.run()
-        return self.para
+        self.sync_para = Para(_sync_all, (), 'sync')
+        self.sync_para.run()
+        return self.sync_para
 
 if __name__ == '__main__':
     pass

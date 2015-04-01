@@ -26,6 +26,7 @@ import sys
 from multiprocessing.queues import SimpleQueue
 from multiprocessing import Lock
 from kivy.clock import Clock
+from kivy.logger import Logger
 import time
 
 class _Popen(multiprocessing.forking.Popen):
@@ -87,17 +88,17 @@ class ParaQueue(SimpleQueue):
     def progress(self, data=None, percentage=0.0):
         msg = {'action': self.action_name, 'status': 'progress',
                'data': data, 'percentage': percentage}
+        print 'Current messagequeue: ', self
 
         # leave only one progress item on the queue at any time
-        # self.lock.acquire()
-        # if not self.empty():
-        #     top = self.get()
-        #
-        #     if top['status'] != 'progress':
-        #         self.put(top)
-        self.put(msg)
-        #self.lock.release()
+        self.lock.acquire()
+        if not self.empty():
+            top = self.get()
 
+            if top['status'] != 'progress':
+                self.put(top)
+        self.put(msg)
+        self.lock.release()
 
 class Para(object):
     def __init__(self, func, args, action_name):
@@ -192,10 +193,13 @@ class Para(object):
         self.current_child_process.join()
         self.current_child_process = None
         Clock.unschedule(self.handle_messagequeue)
+        Logger.debug('Para: {} joined process'.format(self))
+
 
     def run(self):
         self.lock = Lock()
         self.messagequeue = ParaQueue(self.action_name, self.lock)
+        Logger.debug('Para: {} spwaning new process'.format(self))
         p = Process(target=self.func, args=(self.messagequeue,) + self.args)
         p.start()
         self.current_child_process = p

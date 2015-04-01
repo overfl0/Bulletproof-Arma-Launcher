@@ -59,9 +59,9 @@ class Controller(object):
         self.para.then(self.on_checkmods_resolve, None, self.on_checkmods_progress)
 
     def on_install_button_release(self, btn, image):
+        self.view.ids.install_button.disabled = True
         self.para = self.mod_manager.sync_all()
         self.para.then(self.on_sync_resolve, None, self.on_sync_progress)
-        self.para.run()
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.hidden = False
