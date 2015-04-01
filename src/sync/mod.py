@@ -14,7 +14,7 @@ class Mod(object):
     """encapsulate data needed for a mod"""
     def __init__(
             self,
-            name='@noname',
+            foldername='@noname',
             clientlocation=None,
             synctype='http',
             downloadurl=None,
@@ -24,7 +24,7 @@ class Mod(object):
         self.clientlocation = clientlocation
         self.synctype = synctype
         self.downloadurl = downloadurl
-        self.name = name
+        self.foldername = foldername
 
     @classmethod
     def fromDict(cls, d):
@@ -35,5 +35,5 @@ class Mod(object):
         if 'name' in d:
             name = d['name']
 
-        m = Mod(name=name, version=version)
+        m = Mod(foldername=name, version=version)
         return m

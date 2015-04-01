@@ -83,9 +83,9 @@ class HttpSyncer(object):
         do your download stuff here and report status over the message queue
 
         """
-        self.result_queue.progress({'msg': 'Downloading mod: ' + self.mod.name})
+        self.result_queue.progress({'msg': 'Downloading mod: ' + self.mod.foldername})
 
-        print self.mod.name, self.mod
+        print self.mod.foldername, self.mod
 
         # get file over http using requests stream mode
         response = requests.get(
@@ -125,18 +125,18 @@ class HttpSyncer(object):
                     print kbpersec
 
                     # here it reports back to the modmanager
-                    self.result_queue.progress({'msg': '[%s] Downloading: %.2f%%' % (self.mod.name, fraction * 100.0)}, fraction)
+                    self.result_queue.progress({'msg': '[%s] Downloading: %.2f%%' % (self.mod.foldername, fraction * 100.0)}, fraction)
 
                     counter = 0
 
                 counter += 1
 
-            self.result_queue.progress({'msg': '[%s] Downloading finished.' % self.mod.name}, 100)
-            # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
+            self.result_queue.progress({'msg': '[%s] Downloading finished.' % self.mod.foldername}, 100)
+            # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.foldername})
 
 
         # with SevenZFile(os.path.join(downloaddir, fname)) as zfile:
         #     zfile.extractall(downloaddir)
         #
-        # shutil.move(os.path.join(downloaddir, self.mod.name), self.mod.clientlocation)
+        # shutil.move(os.path.join(downloaddir, self.mod.foldername), self.mod.clientlocation)
         # shutil.rmtree(downloaddir)

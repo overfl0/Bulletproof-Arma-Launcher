@@ -92,15 +92,15 @@ class TorrentSyncer(object):
                 (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, \
                 s.num_peers, s.state)
 
-            self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.name, str(s.state), download_fraction * 100.0)}, download_fraction)
+            self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.foldername, str(s.state), download_fraction * 100.0)}, download_fraction)
             sleep(self._update_interval)
 
         #print "Torrent: DONE!"
         #print "Is seed:", torrent_handle.is_seed()
         #print "State:", s.state
         # TODO: make sure files have been fully checked before exiting
-        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, str(s.state))}, download_fraction)
-        # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
+        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.foldername, str(s.state))}, download_fraction)
+        # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.foldername})
 
 
 if __name__ == '__main__':

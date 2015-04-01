@@ -59,14 +59,14 @@ def _check_already_installed_with_six(mod):
 
     # check user path
     install_path = Arma.get_user_path()
-    mod_path = os.path.join(install_path, mod.name, '.synqinfo')
+    mod_path = os.path.join(install_path, mod.foldername, '.synqinfo')
 
     if os.path.isfile(mod_path):
         return True
 
     # check system path
     install_path = Arma.get_installation_path()
-    mod_path = os.path.join(install_path, mod.name, '.synqinfo')
+    mod_path = os.path.join(install_path, mod.foldername, '.synqinfo')
 
     return os.path.isfile(mod_path)
 
@@ -86,7 +86,7 @@ def _prepare_and_check(messagequeue):
         except ArmaNotInstalled:
             r = False
         if r:
-            messagequeue.progress({'msg': 'Mod ' + m.name + ' already installed with withSix'})
+            messagequeue.progress({'msg': 'Mod ' + m.foldername + ' already installed with withSix'})
 
     messagequeue.resolve({'msg': 'Checking mods finished'})
 
@@ -97,7 +97,7 @@ def _sync_all(messagequeue):
     # The following is just test code
 
     cba_mod = Mod(
-        name='@CBA_A3',
+        foldername='@CBA_A3',
         clientlocation='../tests/',
         synctype='http',
         downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
@@ -106,7 +106,7 @@ def _sync_all(messagequeue):
     cba_syncer.sync()
 
     debussy_mod = Mod(
-        name='@debussybattle',
+        foldername='@debussybattle',
         clientlocation=os.getcwd(),  # TODO: Change me
         synctype='torrent',
         downloadurl=BaseApp.resource_path('debussy.torrent'))
