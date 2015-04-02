@@ -81,6 +81,7 @@ if __name__ == "__main__":
         """Main class for the normal app"""
         def __init__(self, settings):
             super(LauncherApp, self).__init__()
+            self.settings = settings
 
         def build(self):
             logger = logging.getLogger('concurrent.futures')

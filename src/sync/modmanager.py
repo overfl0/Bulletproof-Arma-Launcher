@@ -16,6 +16,7 @@ import os
 
 from datetime import datetime
 
+import kivy
 from kivy.logger import Logger
 import requests
 
@@ -109,7 +110,7 @@ def _prepare_and_check(messagequeue):
 
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
 
-def _sync_all(messagequeue):
+def _sync_all(messagequeue, launcher_moddir):
     # WARNING: This methods gets called in a diffrent process
 
     # TODO: Sync via libtorrent
@@ -117,7 +118,7 @@ def _sync_all(messagequeue):
 
     cba_mod = Mod(
         foldername='@CBA_A3',
-        clientlocation='../tests/',
+        clientlocation=launcher_moddir,
         synctype='http',
         downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
 
@@ -126,7 +127,7 @@ def _sync_all(messagequeue):
 
     debussy_mod = Mod(
         foldername='@debussybattle',
-        clientlocation=os.getcwd(),  # TODO: Change me
+        clientlocation=launcher_moddir,
         synctype='torrent',
         downloadurl=BaseApp.resource_path('debussy.torrent'))
 
@@ -143,6 +144,7 @@ class ModManager(object):
         super(ModManager, self).__init__()
         self.para = None
         self.sync_para = None
+        self.settings = kivy.app.App.get_running_app().settings
 
     def prepare_and_check(self):
         self.para = Para(_prepare_and_check, (), 'checkmods')
@@ -150,7 +152,7 @@ class ModManager(object):
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_sync_all, (), 'sync')
+        self.sync_para = Para(_sync_all, (self.settings.get_launcher_moddir(),), 'sync')
         self.sync_para.run()
         return self.sync_para
 

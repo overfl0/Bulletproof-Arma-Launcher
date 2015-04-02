@@ -94,7 +94,7 @@ class HttpSyncer(object):
         )
 
         fname = self._get_filename(response)
-        downloaddir = tempfile.mkdtemp(prefix='tacbflauncher')
+        downloaddir = self.mod.clientlocation
 
         print "downloading ", self.mod.downloadurl, "to:", downloaddir
 
