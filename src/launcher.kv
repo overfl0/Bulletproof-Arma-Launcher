@@ -83,6 +83,8 @@
 <InstallScreen>:
     name: 'install_screen'
 
+
+
     BoxLayout:
         orientation: 'vertical'
 
@@ -125,17 +127,30 @@
                 width: 500
                 source: app.resource_path('images/gun.png')
 
+        BoxLayout:
+            orientation: 'horizontal'
+            height: 100
+            size_hint_y: None
 
-        HoverButton:
-            id: install_button
-            disabled: True
-            width: 300
-            on_release: root.controller.on_install_button_release(self, install_image)
-            Image:
-                id: install_image
-                source: app.resource_path('images/install.png')
-                allow_stretch: False
-                pos: self.parent.x + 20, self.parent.y
+            HoverButton:
+                id: install_button
+                disabled: True
+                width: 300
+                on_release: root.controller.on_install_button_release(self, install_image)
+                Image:
+                    id: install_image
+                    source: app.resource_path('images/install.png')
+                    allow_stretch: False
+                    pos: self.parent.x + 20, self.parent.y
+
+            BoxLayout:
+                Label:
+                    orientation: 'horizontal'
+                    text: 'Brought to you by the polish-german-coding-union Stacktrace and Sighter'
+                    pos_hint: {'center_y': 0.1, 'center_x': 0.7}
+
+
+
 
 <PrefScreen>:
     name: 'pref_screen'
