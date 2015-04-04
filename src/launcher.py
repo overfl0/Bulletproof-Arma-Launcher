@@ -72,11 +72,6 @@ if __name__ == "__main__":
     from gui.installscreen import InstallScreen
     import logging
 
-    # register fonts
-    LabelBase.register(name="Xolonium",
-           fn_regular=BaseApp.resource_path("fonts/Xolonium-Regular.otf"),
-           fn_bold=BaseApp.resource_path("fonts/Xolonium-Bold.otf"))
-
     class PrefScreen(Screen):
         pass
 
