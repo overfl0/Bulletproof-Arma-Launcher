@@ -121,9 +121,7 @@ class Para(object):
         self.resolve_handler = []
         self.reject_handler = []
         self.state = 'pending' # pending, rejected or resolved
-
-        self.rejected = False
-        self.resolved = False
+        self.lastdata = None # cached data from the last resolve or reject
 
     def add_progress_handler(self, func):
         """adds an progress handler which could be called multiple times
@@ -146,6 +144,9 @@ class Para(object):
         """
         self.resolve_handler.append(func)
 
+        if self.state == 'resolved':
+            func(self.lastdata)
+
     def add_reject_handler(self, func):
         """adds a handler which gets called once on reject
 
@@ -153,6 +154,9 @@ class Para(object):
         method on the messagequeue
         """
         self.reject_handler.append(func)
+
+        if self.state == 'rejected':
+            func(self.lastdata)
 
     def then(self, resolve_handler, reject_handler, progress_handler):
         """method registering all needed callback at once
@@ -215,9 +219,11 @@ class Para(object):
                 self._call_progress_handler(progress)
 
             elif progress['status'] == 'resolve':
+                self.lastdata = progress['data']
                 self._call_resolve_handler(progress)
 
             elif progress['status'] == 'reject':
+                self.lastdata = progress['data']
                 self._call_reject_handler(progress)
 
 if __name__ == '__main__':
