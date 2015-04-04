@@ -58,10 +58,22 @@ class Controller(object):
         self.para = self.mod_manager.prepare_and_check()
         self.para.then(self.on_checkmods_resolve, None, self.on_checkmods_progress)
 
-    def on_install_button_release(self, btn, image):
+        Clock.schedule_interval(self.check_install_button, 0)
+
+    def check_install_button(self, dt):
+        if 'install_button' in self.view.ids:
+            self.on_install_button_ready()
+            return False
+
+    def on_install_button_ready(self):
+        self.view.ids.install_button.text = 'Checking'
+        self.view.ids.install_button.enable_progress_animation()
+
+    def on_install_button_release(self, btn):
         self.view.ids.install_button.disabled = True
         self.para = self.mod_manager.sync_all()
         self.para.then(self.on_sync_resolve, None, self.on_sync_progress)
+        self.view.ids.install_button.enable_progress_animation()
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.hidden = False
@@ -72,6 +84,8 @@ class Controller(object):
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.install_button.text = 'Install'
 
         Logger.debug('InstallScreen: got mods:')
         for mod in progress['mods']:
@@ -90,3 +104,4 @@ class Controller(object):
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()

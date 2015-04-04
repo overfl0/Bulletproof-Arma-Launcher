@@ -136,18 +136,27 @@
                 id: install_button
                 disabled: True
                 width: 300
-                on_release: root.controller.on_install_button_release(self, install_image)
-                Image:
-                    id: install_image
-                    source: app.resource_path('images/install.png')
-                    allow_stretch: False
-                    pos: self.parent.x + 20, self.parent.y
+                on_release: root.controller.on_install_button_release(self)
+                text: 'Install'
+                font_name: app.resource_path("fonts/Xolonium-Regular.ttf")
+                font_size: 30
+                text_size: self.width - 20, None
+                halign: 'left'
+                # Image:
+                #     id: install_image
+                #     source: app.resource_path('images/install.png')
+                #     allow_stretch: False
+                #     pos: self.parent.x + 20, self.parent.y
 
             BoxLayout:
                 Label:
                     orientation: 'horizontal'
+                    font_name: app.resource_path("fonts/Xolonium-Regular.ttf")
+                    font_size: 12
+                    text_size: self.width, self.height
+                    halign: 'right'
+                    valign: 'bottom'
                     text: 'Brought to you by the polish-german-coding-union Stacktrace and Sighter'
-                    pos_hint: {'center_y': 0.1, 'center_x': 0.7}
 
 
 

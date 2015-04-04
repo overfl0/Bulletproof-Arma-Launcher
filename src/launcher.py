@@ -62,6 +62,7 @@ if __name__ == "__main__":
     from kivy.clock import Clock
     from kivy.logger import Logger
     from kivy.uix.screenmanager import ScreenManager, Screen
+    from kivy.core.text import LabelBase
 
     from utils.app import BaseApp
     from view.hoverbutton import HoverButton
@@ -70,6 +71,11 @@ if __name__ == "__main__":
     from gui.updatermainwidget import UpdaterMainWidget
     from gui.installscreen import InstallScreen
     import logging
+
+    # register fonts
+    LabelBase.register(name="Xolonium",
+           fn_regular=BaseApp.resource_path("fonts/Xolonium-Regular.otf"),
+           fn_bold=BaseApp.resource_path("fonts/Xolonium-Bold.otf"))
 
     class PrefScreen(Screen):
         pass
