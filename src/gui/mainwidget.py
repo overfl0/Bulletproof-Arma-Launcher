@@ -9,6 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+import time
 
 from kivy.uix.widget import Widget
 from kivy.logger import Logger
@@ -20,6 +21,14 @@ class TestError(Exception):
         self.msg = msg
     def __str__(self):
         return repr(self.msg)
+
+def test_exc_in_process():
+    """function for testing if the exceptions gets rethrown into
+    the kivy main process
+    """
+    pass
+    time.sleep(2)
+    raise TestError('This is an test error')
 
 class MainWidget(Widget):
     """

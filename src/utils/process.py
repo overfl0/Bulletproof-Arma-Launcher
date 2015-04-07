@@ -117,6 +117,7 @@ class Para(object):
         super(Para, self).__init__()
         self.messagequeue = None
         self.func = func
+        self.protected_func = catchstacktrace(func)
         self.args = args
         self.action_name = action_name
         self.current_child_process = None
@@ -206,7 +207,7 @@ class Para(object):
         self.parent_conn, child_conn = Pipe()
         self.messagequeue = ConnectionWrapper(self.action_name, self.lock, child_conn)
         Logger.debug('Para: {} spwaning new process'.format(self))
-        p = Process(target=self.func, args=(self.messagequeue,) + self.args)
+        p = Process(target=self.protected_func, args=(self.messagequeue,) + self.args)
         p.start()
         self.current_child_process = p
         Clock.schedule_interval(self.handle_messagequeue, 1.0)
