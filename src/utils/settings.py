@@ -30,6 +30,10 @@ class Settings(object):
 
         self.parse_args(argv)
 
+        # set this to true to show a popup containing exceptions
+        # if one occurres
+        self.settings_data.exc_popup = False
+
         # create the launcher basedir if neccessary
         launcher_basedir = self.get_launcher_basedir()
         launcher_moddir = self.get_launcher_moddir()

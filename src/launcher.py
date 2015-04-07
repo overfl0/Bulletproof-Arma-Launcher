@@ -36,13 +36,13 @@ if __name__ == "__main__":
 
     if not settings.get('self_update'):
         Config.set('graphics','resizable',0)
-        Config.set('graphics', 'width', '1000')
-        Config.set('graphics', 'height', '666')
+        Config.set('graphics', 'width', 1000)
+        Config.set('graphics', 'height', 666)
         Config.set('graphics','borderless',1)
     else:
         Config.set('graphics','resizable',0)
-        Config.set('graphics', 'width', '400')
-        Config.set('graphics', 'height', '150')
+        Config.set('graphics', 'width', 400)
+        Config.set('graphics', 'height', 150)
         Config.set('graphics','borderless',1)
 
     #
@@ -75,7 +75,8 @@ if __name__ == "__main__":
     from gui.installscreen import InstallScreen
     import logging
 
-    ExceptionManager.add_handler(PopupHandler())
+    if settings.get('exc_popup') == True:
+        ExceptionManager.add_handler(PopupHandler())
 
     class PrefScreen(Screen):
         pass
