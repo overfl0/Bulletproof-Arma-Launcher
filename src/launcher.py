@@ -63,14 +63,19 @@ if __name__ == "__main__":
     from kivy.logger import Logger
     from kivy.uix.screenmanager import ScreenManager, Screen
     from kivy.core.text import LabelBase
+    from kivy.base import ExceptionManager
 
     from utils.app import BaseApp
     from view.hoverbutton import HoverButton
     from view.statusimage import StatusImage
+    from view.errorpopup import error_popup_decorator
+    from view.errorpopup import PopupHandler
     from gui.mainwidget import MainWidget
     from gui.updatermainwidget import UpdaterMainWidget
     from gui.installscreen import InstallScreen
     import logging
+
+    ExceptionManager.add_handler(PopupHandler())
 
     class PrefScreen(Screen):
         pass
@@ -107,4 +112,6 @@ if __name__ == "__main__":
             print 'launching self updater'
             launcher_app = SelfUpdaterApp(settings).run()
         else:
-            launcher_app = LauncherApp(settings).run()
+            launcher_app = LauncherApp(settings)
+            #launcher_app.run = error_popup_decorator(launcher_app.run)
+            launcher_app.run()

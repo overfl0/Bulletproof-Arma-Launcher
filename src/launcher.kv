@@ -55,7 +55,9 @@
                     allow_stretch: False
                     pos: self.parent.pos
             HoverButton:
+                on_release: root.controller.on_testpopupbutton_release(self)
                 Image:
+                    id: testpopupbutton
                     source: app.resource_path('images/button-com.png')
                     allow_stretch: False
                     pos: self.parent.pos

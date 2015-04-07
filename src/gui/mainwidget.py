@@ -11,9 +11,28 @@
 # GNU General Public License for more details.
 
 from kivy.uix.widget import Widget
+from kivy.logger import Logger
+
+from view.errorpopup import ErrorPopup
+
+class TestError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return repr(self.msg)
 
 class MainWidget(Widget):
     """
     View Class
     """
-    pass
+    def __init__(self, **kwargs):
+        super(MainWidget, self).__init__(**kwargs)
+        self.controller = Controller(self)
+
+class Controller(object):
+    def __init__(self, widget):
+        super(Controller, self).__init__()
+        self.view = widget
+
+    def on_testpopupbutton_release(self, btn):
+        raise TestError('This is an test error')

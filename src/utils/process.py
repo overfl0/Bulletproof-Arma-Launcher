@@ -195,6 +195,7 @@ class Para(object):
 
     def _reset(self):
         self.current_child_process.join()
+        self.parent_conn.close()
         self.current_child_process = None
         Clock.unschedule(self.handle_messagequeue)
         Logger.debug('Para: {} joined process'.format(self))
