@@ -44,7 +44,7 @@ class TorrentSyncer(object):
         settings.user_agent = 'TacBF (libtorrent/{})'.format(libtorrent.version)
 
         self.session = libtorrent.session()
-        self.session.listen_on(6881, 6891)  # TODO: check if this is necessary (maybe rely on automatic port selection?)
+        self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.
 
         # TODO: self.session.set_download_rate_limit(down_rate)
         # TODO: self.session.set_upload_rate_limit(up_rate)
@@ -65,10 +65,11 @@ class TorrentSyncer(object):
             self.init_metadata_from_string(file_contents)
 
     def get_session_logs(self):
-        # Get alerts from torrent engine and forward them to the manager process
+        """Get alerts from torrent engine and forward them to the manager process"""
         torrent_log = []
 
-        alerts = self.session.pop_alerts()  #  Important: these are messages for the whole session, not only one torrent!
+        alerts = self.session.pop_alerts()  # Important: these are messages for the whole session, not only one torrent!
+                                            # Use alert.handle in the future to get the torrent handle
         for alert in alerts:
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
             print "Alerts: Category: {}, Message: {}".format(alert.category(), alert.message())
@@ -86,7 +87,7 @@ class TorrentSyncer(object):
 
         params = {
             'save_path': self.mod.clientlocation,
-            'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk # TODO: check when does allocation take place to notify user.
+            'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
             'ti': self.torrent_info
             # 'url': http://....torrent
         }
@@ -100,7 +101,7 @@ class TorrentSyncer(object):
             download_fraction = s.progress
             download_kbs = s.download_rate / 1024
 
-            state_str = ['queued', 'checking', 'downloading metadata', 'downloading', 'finished', 'seeding', 'allocating']
+            state_str = ['queued', 'checking', 'downloading metadata', 'downloading', 'finished', 'seeding', 'allocating', 'checking resume data']
             print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
                 (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, \
                 s.num_peers, s.state)
@@ -114,7 +115,6 @@ class TorrentSyncer(object):
         #print "Torrent: DONE!"
         #print "Is seed:", torrent_handle.is_seed()
         #print "State:", s.state
-        # TODO: make sure files have been fully checked before exiting
         self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, str(s.state)),
                                     'log': self.get_session_logs(),
                                    }, download_fraction)
