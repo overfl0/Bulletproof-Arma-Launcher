@@ -23,6 +23,9 @@ import multiprocessing.forking
 import multiprocessing
 import os
 import sys
+import io
+import traceback
+
 from multiprocessing.queues import SimpleQueue
 from multiprocessing import Lock, Pipe
 from kivy.clock import Clock
@@ -226,15 +229,53 @@ class Para(object):
                 self.lastdata = progress['data']
                 self._call_reject_handler(progress)
 
+def catchstacktrace(func):
+    def wrapper(con, *args, **kwargs):
+        try:
+            func(con, *args, **kwargs)
+        except Exception as e:
+            msg = "".join(traceback.format_exception(*sys.exc_info()))
+            con.reject({'exc': msg})
+
+    return wrapper
+
+
+class TestError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return repr(self.msg)
+
 if __name__ == '__main__':
 
+    #
+    # little test that the tracback of a childprocess gets catched
+    #
+
+    # def test_func(pq):
+    #     print 'Process: ', os.getpid()
+    #     try:
+    #         pq.progress({'msg': 'test_func_has_started'})
+    #         raise TestError('This exception got thrown for testing purposes')
+    #     except Exception as e:
+    #         msg = "".join(traceback.format_exception(*sys.exc_info()))
+    #         pq.reject({'exc': msg})
+
+    @catchstacktrace
     def test_func(pq):
         pq.progress({'msg': 'test_func_has_started'})
-        time.sleep(2)
-        pq.progress({'msg': 'test_func in progress'})
-        time.sleep(2)
-        pq.resolve({'msg': 'test_func ready'})
+        raise TestError('This exception got thrown for testing purposes')
 
+    def on_reject(data):
+        print 'para rejected, got data:'
+        print data['exc']
 
-    para = Para(test_func, (), None, 'testaction')
+    print 'Process: ', os.getpid()
+    para = Para(test_func, (), 'testaction')
+    para.then(None, on_reject, None)
     para.run()
+
+    while not para.state == 'rejected':
+        Clock.tick()
+
+    print 'test good'
