@@ -10,10 +10,18 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+# Allow relative imports when the script is run from the command line
+if __name__ == "__main__":
+    import site
+    import os
+    file_directory = os.path.dirname(os.path.realpath(__file__))
+    site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
+
+
 import libtorrent
 import os
-import shutil
 
+from utils.metadatafile import MetadataFile
 from time import sleep
 
 class TorrentSyncer(object):
@@ -80,6 +88,9 @@ class TorrentSyncer(object):
     def sync(self):
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
 
+        metadata_file = MetadataFile(self.mod.clientlocation)
+        metadata_file.read_data(ignore_read_errors=True)  # In case the mod does not exist, we would get an error
+
         if not self.session:
             self.init_libtorrent()
 
@@ -91,6 +102,10 @@ class TorrentSyncer(object):
             'ti': self.torrent_info
             # 'url': http://....torrent
         }
+        resume_data = metadata_file.get_torrent_resume_data()
+        if resume_data:  # Quick resume
+            params['resume_data'] = resume_data
+
         torrent_handle = self.session.add_torrent(params)
         self._torrent_handle = torrent_handle
 
@@ -110,15 +125,28 @@ class TorrentSyncer(object):
                                         'log': self.get_session_logs(),
                                        }, download_fraction)
 
+            # TODO: Save resume_data periodically
             sleep(self._update_interval)
 
+        # Download finished. Performing housekeeping
         #print "Torrent: DONE!"
         #print "Is seed:", torrent_handle.is_seed()
         #print "State:", s.state
-        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, str(s.state)),
+        download_fraction = 1.0
+        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, s.state),
                                     'log': self.get_session_logs(),
                                    }, download_fraction)
         # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.name})
+
+        metadata_file.set_version(self.mod.version)
+
+        # Set resume data for quick checksum check
+        # TODO: maybe pause torrent to ensure data is flushed
+        resume_data = libtorrent.bencode(torrent_handle.write_resume_data())
+        print resume_data
+        metadata_file.set_torrent_resume_data(resume_data)
+
+        metadata_file.write_data()
 
 
 if __name__ == '__main__':
@@ -126,6 +154,8 @@ if __name__ == '__main__':
         downloadurl = "test.torrent"
         clientlocation = ""
         name = "dummy_name"
+        version = "123"
+
     class DummyQueue:
         def progress(self, d, frac):
             print str(d)
@@ -138,6 +168,6 @@ if __name__ == '__main__':
     ts.init_metadata_from_file("test.torrent")
 
     num_files = ts.torrent_info.num_files()
-    print num_files
+    # print num_files
 
     ts.sync()
