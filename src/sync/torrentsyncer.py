@@ -88,8 +88,9 @@ class TorrentSyncer(object):
 
     def sync(self):
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
+        #TODO: Add the check: mod name == torrent directory name
 
-        metadata_file = MetadataFile(self.mod.clientlocation)
+        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
         metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
@@ -152,7 +153,7 @@ if __name__ == '__main__':
     class DummyMod:
         downloadurl = "test.torrent"
         clientlocation = ""
-        name = "dummy_name"
+        name = "Prusa3-vanilla"
         version = "123"
 
     class DummyQueue:

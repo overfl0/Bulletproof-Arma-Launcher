@@ -25,6 +25,7 @@ class Mod(object):
         self.synctype = synctype
         self.downloadurl = downloadurl
         self.name = name
+        self.version = version
 
     @classmethod
     def fromDict(cls, d):

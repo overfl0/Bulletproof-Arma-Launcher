@@ -107,7 +107,7 @@ class ModManager(object):
         cba_syncer.sync()
 
         debussy_mod = Mod(
-            name='@debussybattle',
+            name='DebussyPrelduesBookI',  # The mod name MUST match directory name!
             clientlocation=os.getcwd(),  # TODO: Change me
             synctype='torrent',
             downloadurl=BaseApp.resource_path('debussy.torrent'))
