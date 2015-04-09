@@ -92,6 +92,9 @@ class TorrentSyncer(object):
         metadata_file = MetadataFile(self.mod.clientlocation)
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
+        metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
+        metadata_file.write_data()
+
         if not self.session:
             self.init_libtorrent()
 
@@ -117,14 +120,12 @@ class TorrentSyncer(object):
             download_fraction = s.progress
             download_kbs = s.download_rate / 1024
 
-            state_str = ['queued', 'checking', 'downloading metadata', 'downloading', 'finished', 'seeding', 'allocating', 'checking resume data']
-            print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
-                (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, \
-                s.num_peers, s.state)
-
             self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.name, str(s.state), download_fraction * 100.0),
                                         'log': self.get_session_logs(),
                                        }, download_fraction)
+
+            print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
+                  (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, s.num_peers, s.state)
 
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
@@ -138,6 +139,7 @@ class TorrentSyncer(object):
 
         # Save data that could come in handy in the future to a metadata file
         metadata_file.set_version(self.mod.version)
+        metadata_file.set_dirty(False)
 
         # Set resume data for quick checksum check
         resume_data = libtorrent.bencode(torrent_handle.write_resume_data())

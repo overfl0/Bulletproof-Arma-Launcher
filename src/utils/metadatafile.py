@@ -68,3 +68,10 @@ class MetadataFile(object):
                 data = None
 
         return data
+
+    def set_dirty(self, is_dirty):
+        """Mark the torrent as dirty - in an inconsistent state (download started, we don't know what's exactly on disk)"""
+        self.data['dirty'] = bool(is_dirty)
+
+    def get_dirty(self):
+        return self.data.setdefault('dirty', False)
