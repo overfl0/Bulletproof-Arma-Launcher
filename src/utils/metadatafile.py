@@ -10,6 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+import base64
 import json
 import os
 
@@ -28,13 +29,18 @@ class MetadataFile(object):
         """Returns the full path to the metadata file"""
         return os.path.join(self.dir_path, self.file_name)
 
-    def read_data(self, ignore_read_errors=False):
-        """Open the file and read its data to an internal variable"""
+    def read_data(self, ignore_open_errors=False):
+        """Open the file and read its data to an internal variable
+
+        If ignore_open_errors is set to True, it will ignore errors while opening the file
+        (which may not exist along with the whole directory if the torrent is downloaded for the first time)"""
+
+        self.data = {}
         try:
             with open(self.get_file_name(), 'rb') as file_handle:
                 self.data = json.load(file_handle, encoding=MetadataFile._encoding)
-        except:
-            if ignore_read_errors:
+        except IOError:
+            if ignore_open_errors:
                 pass
             else:
                 raise
@@ -42,7 +48,7 @@ class MetadataFile(object):
     def write_data(self):
         """Open the file and write the contents of the internal data variable to the file"""
         with open(self.get_file_name(), 'wb') as file_handle:
-            json.dump(self.data, file_handle, ensure_ascii=False, encoding=MetadataFile._encoding, indent=2)
+            json.dump(self.data, file_handle, encoding=MetadataFile._encoding, indent=2)
 
     def set_version(self, version):
         self.data['version'] = version
@@ -51,7 +57,14 @@ class MetadataFile(object):
         return self.data.setdefault('version', "0")
 
     def set_torrent_resume_data(self, data):
-        self.data['torrent_resume_data'] = data
+        self.data['torrent_resume_data'] = base64.b64encode(data)
 
     def get_torrent_resume_data(self):
-        return self.data.setdefault('torrent_resume_data', None)
+        data = self.data.setdefault('torrent_resume_data', None)
+        if data:
+            try:
+                data = base64.b64decode(data)
+            except TypeError:
+                data = None
+
+        return data
