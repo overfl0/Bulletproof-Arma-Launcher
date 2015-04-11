@@ -10,14 +10,23 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+# Allow relative imports when the script is run from the command line
+if __name__ == "__main__":
+    import site
+    import os
+    file_directory = os.path.dirname(os.path.realpath(__file__))
+    site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
+
+
 import libtorrent
 import os
-import shutil
 
+from utils.metadatafile import MetadataFile
 from time import sleep
 
 class TorrentSyncer(object):
     _update_interval = 1
+    _torrent_handle = None
     torrent_metadata = None
     torrent_info = None
     session = None
@@ -39,21 +48,30 @@ class TorrentSyncer(object):
         self.mod = mod
 
     def init_libtorrent(self):
-        self.session = libtorrent.session()
-        self.session.listen_on(6881, 6891)  # TODO: check if this is necessary (maybe rely on automatic port selection?)
+        """Perform the initialization of things that should be initialized once"""
+        settings = libtorrent.session_settings()
+        settings.user_agent = 'TacBF (libtorrent/{})'.format(libtorrent.version)
 
-    def init_metadata_from_string(self, bencoded):
+        self.session = libtorrent.session()
+        self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.
+
+        # TODO: self.session.set_download_rate_limit(down_rate)
+        # TODO: self.session.set_upload_rate_limit(up_rate)
+
+        self.session.set_settings(settings)
+
+    def init_torrent_data_from_string(self, bencoded):
         """Initialize torrent metadata from a bencoded string."""
 
         self.torrent_metadata = libtorrent.bdecode(bencoded)
         self.torrent_info = libtorrent.torrent_info(self.torrent_metadata)
 
-    def init_metadata_from_file(self, filename):
+    def init_torrent_data_from_file(self, filename):
         """Initialize torrent metadata from a file."""
         with open(filename, 'rb') as file_handle:
             file_contents = file_handle.read()
 
-            self.init_metadata_from_string(file_contents)
+            self.init_torrent_data_from_string(file_contents)
 
     def parse_torrent_inodes(self):
         """Computes the file paths, directories and top directories contained in a torrent."""
@@ -82,12 +100,14 @@ class TorrentSyncer(object):
         and were probably removed in an update.
         To prevent accidental file removal, this function will only remove files
         that are at least one directory deep in the file structure!
-        This will skip files or directories that match file_whitelist.
+        As all multi-file torrents *require* one root directory that holds those
+        files, this should not be an issue.
+        This function will skip files or directories that match file_whitelist.
 
         Returns if the directory has been cleaned sucessfully. Do not ignore this value!
         If unsuccessful at removing files, the mod should NOT be considered ready to play."""
 
-        #TODO: Handle unicode file names
+        # TODO: Handle unicode file names
         def raiser(exception):  # I'm sure there must be some builtin to do this :-/
             raise exception
 
@@ -143,71 +163,105 @@ class TorrentSyncer(object):
 
         return success
 
-    def sync(self):
-        """
-        helper function to download. It needs to be
-        on module level since multiprocessing needs
-        pickable objects
-        """
-        """Attention!
-        This is just a proof of concept module for now.
-        No extensive checks are performed! This module is the definition of wishful thinking.
-        """
+    def get_session_logs(self):
+        """Get alerts from torrent engine and forward them to the manager process"""
+        torrent_log = []
 
+        alerts = self.session.pop_alerts()  # Important: these are messages for the whole session, not only one torrent!
+                                            # Use alert.handle in the future to get the torrent handle
+        for alert in alerts:
+            # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
+            print "Alerts: Category: {}, Message: {}".format(alert.category(), alert.message())
+            torrent_log.append({'message': alert.message(), 'category': alert.category()})
+
+        return torrent_log
+
+    def sync(self):
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
-        print "TODO: Download this to a temporary location and copy/move afterwards"
+        #TODO: Add the check: mod name == torrent directory name
+
+        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
+        metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
+
+        metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
+        metadata_file.write_data()
 
         if not self.session:
             self.init_libtorrent()
 
-        self.init_metadata_from_file(self.mod.downloadurl)
+        self.init_torrent_data_from_file(self.mod.downloadurl)
 
         params = {
             'save_path': self.mod.clientlocation,
-            'storage_mode': libtorrent.storage_mode_t.storage_mode_sparse,
+            'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
             'ti': self.torrent_info
+            # 'url': http://....torrent
         }
-        torrent_handle = self.session.add_torrent(params)
+        resume_data = metadata_file.get_torrent_resume_data()
+        if resume_data:  # Quick resume torrent from data saved last time the torrent was run
+            params['resume_data'] = resume_data
 
+        torrent_handle = self.session.add_torrent(params)
+        self._torrent_handle = torrent_handle
+
+        # Loop while the torrent is not completely downloaded
         while (not torrent_handle.is_seed()):
             s = torrent_handle.status()
 
             download_fraction = s.progress
             download_kbs = s.download_rate / 1024
 
-            state_str = ['queued', 'checking', 'downloading metadata', 'downloading', 'finished', 'seeding', 'allocating']
-            print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
-                (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, \
-                s.num_peers, s.state)
+            self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.name, str(s.state), download_fraction * 100.0),
+                                        'log': self.get_session_logs(),
+                                       }, download_fraction)
 
-            self.result_queue.put({
-                'progress': download_fraction,
-                'kbpersec': download_kbs,
-                'status': str(s.state)})
+            print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
+                  (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, s.num_peers, s.state)
+
+            # TODO: Save resume_data periodically
             sleep(self._update_interval)
 
-        self.result_queue.put({
-            'progress': 1.0,
-            'kbpersec': 0,
-            'status': 'finished'})
+        # Download finished. Performing housekeeping
+        download_fraction = 1.0
+        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, torrent_handle.status().state),
+                                    'log': self.get_session_logs(),
+                                   }, download_fraction)
+
+
+        # Save data that could come in handy in the future to a metadata file
+        metadata_file.set_version(self.mod.version)
+        metadata_file.set_dirty(False)
+
+        # Set resume data for quick checksum check
+        resume_data = libtorrent.bencode(torrent_handle.write_resume_data())
+        metadata_file.set_torrent_resume_data(resume_data)
+
+        metadata_file.write_data()
+
 
 if __name__ == '__main__':
     class DummyMod:
         downloadurl = "test.torrent"
         clientlocation = ""
+        name = "Prusa3-vanilla"
+        version = "123"
+
     class DummyQueue:
-        def put(self, d):
+        def progress(self, d, frac):
             print str(d)
 
     mod = DummyMod()
     queue = DummyQueue()
 
     ts = TorrentSyncer(queue, mod)
-    ts.init_metadata_from_file("test.torrent")
+    ts.init_libtorrent()
+    ts.init_torrent_data_from_file("test.torrent")
 
     #num_files = ts.torrent_info.num_files()
     ts.parse_torrent_inodes()
+    print "asd"
     ts.cleanup_mod_directories()
+    print "ert"
 
     #print "File paths: ", ts.file_paths
     #print "Dirs: ", ts.dirs
