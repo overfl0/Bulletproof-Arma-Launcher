@@ -1,0 +1,3 @@
+[submodule "tools/Pytt"]
+	path = tools/Pytt
+	url = https://github.com/semk/Pytt.git
