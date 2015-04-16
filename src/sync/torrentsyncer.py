@@ -73,7 +73,7 @@ class TorrentSyncer(object):
 
             self.init_torrent_data_from_string(file_contents)
 
-    def parse_torrent_inodes(self):
+    def grab_torrent_file_structure(self):
         """Computes the file paths, directories and top directories contained in a torrent."""
 
         self.file_paths = set()
@@ -95,6 +95,22 @@ class TorrentSyncer(object):
 
                 dir_path = parent_dir
 
+    def _unlink_safety_assert(self, base_path, file_path, action="remove"):
+        real_base_path = os.path.realpath(base_path)
+        real_file_path = os.path.realpath(file_path)
+        if not real_file_path.startswith(real_base_path):
+            message = "Something fishy is happening. Attempted to {} {} which is not inside {}!".format(
+                action, real_file_path, real_base_path)
+            raise Exception(message)
+
+    def safer_unlink(self, base_path, file_path):
+        self._unlink_safety_assert(base_path, file_path)
+        #os.unlink(file_path)
+
+    def safer_rmtree(self, base_path, directory_path):
+        self._unlink_safety_assert(base_path, directory_path)
+        #shutil.rmtree(directory_path)
+
     def cleanup_mod_directories(self):
         """Remove files or directories that do not belong to the torrent file
         and were probably removed in an update.
@@ -111,17 +127,19 @@ class TorrentSyncer(object):
         def raiser(exception):  # I'm sure there must be some builtin to do this :-/
             raise exception
 
-        whitelist = ('.tbfmetadata',)
+        whitelist = (MetadataFile.file_name, '.synqinfo')  # Whitelist our and PWS metadata files
         base_directory = ""  # TODO: Fill me
         base_directory = os.path.realpath(base_directory)
+        print "Base:", base_directory
         success = True
 
         try:
             for directory in self.top_dirs:
                 if directory in whitelist:
                     continue
-
+                directory = ".."
                 full_base_path = os.path.join(base_directory, directory)
+                self._unlink_safety_assert(base_directory, full_base_path, action="enter")
                 for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=raiser, followlinks=False):
                     relative_path = os.path.relpath(dirpath, base_directory)
                     print 'In directory: {}'.format(relative_path)
@@ -139,7 +157,7 @@ class TorrentSyncer(object):
 
                         full_file_path = os.path.join(dirpath, file_name)
                         print 'Removing file: {}'.format(full_file_path)
-                        #os.unlink(full_file_path)
+                        self.safer_unlink(full_base_path, full_file_path)
 
                     # Now check directories
                     # Remove directories that match whitelist from checking and descending into them
@@ -156,7 +174,7 @@ class TorrentSyncer(object):
                         print 'Removing directory: {}'.format(full_directory_path)
                         dirnames.remove(dir_name)
 
-                        #shutil.rmtree(full_directory_path)
+                        self.safer_rmtree(full_base_path, full_directory_path)
 
         except (OSError, WindowsError) as exception:
             success = False
@@ -258,10 +276,8 @@ if __name__ == '__main__':
     ts.init_torrent_data_from_file("test.torrent")
 
     #num_files = ts.torrent_info.num_files()
-    ts.parse_torrent_inodes()
-    print "asd"
+    ts.grab_torrent_file_structure()
     ts.cleanup_mod_directories()
-    print "ert"
 
     #print "File paths: ", ts.file_paths
     #print "Dirs: ", ts.dirs
