@@ -62,7 +62,7 @@ class TorrentSyncer(object):
 
     def init_torrent_data_from_string(self, bencoded):
         """Initialize torrent metadata from a bencoded string."""
-
+        # TODO: Don't use class attributes but return a value
         self.torrent_metadata = libtorrent.bdecode(bencoded)
         self.torrent_info = libtorrent.torrent_info(self.torrent_metadata)
 
@@ -90,32 +90,52 @@ class TorrentSyncer(object):
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
         #TODO: Add the check: mod name == torrent directory name
 
+        if not self.session:
+            self.init_libtorrent()
+
+
+        ### Metadata handling
         metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
         metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
+
+        # If the torrent url changed, invalidate the resume data
+        old_torrent_url = metadata_file.get_torrent_url()
+        if old_torrent_url != self.mod.downloadurl:
+            metadata_file.set_torrent_resume_data("")
+            metadata_file.set_torrent_url(self.mod.downloadurl)
+
         metadata_file.write_data()
+        # End of metadata handling
 
-        if not self.session:
-            self.init_libtorrent()
 
-        self.init_torrent_data_from_file(self.mod.downloadurl)
-
+        ### Torrent parameters
         params = {
             'save_path': self.mod.clientlocation,
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
-            'ti': self.torrent_info
-            # 'url': http://....torrent
         }
+
+        # Configure torrent source
+        if self.mod.downloadurl.startswith('file://'):  # Local torrent from file
+            self.init_torrent_data_from_file(self.mod.downloadurl[len('file://'):])
+            params['ti'] = self.torrent_info
+        else:  # Torrent from url
+            params['url'] = self.mod.downloadurl
+
+        # Add optional resume data
         resume_data = metadata_file.get_torrent_resume_data()
         if resume_data:  # Quick resume torrent from data saved last time the torrent was run
             params['resume_data'] = resume_data
 
+        # Launch the download of the torrent
         torrent_handle = self.session.add_torrent(params)
         self._torrent_handle = torrent_handle
 
+        ### Main loop
         # Loop while the torrent is not completely downloaded
         while (not torrent_handle.is_seed()):
+            # TODO: If torrent from url, parse metadata if possible
             s = torrent_handle.status()
 
             download_fraction = s.progress
@@ -131,6 +151,7 @@ class TorrentSyncer(object):
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
 
+        #print torrent_handle.get_torrent_info()
         # Download finished. Performing housekeeping
         download_fraction = 1.0
         self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, torrent_handle.status().state),
@@ -151,7 +172,8 @@ class TorrentSyncer(object):
 
 if __name__ == '__main__':
     class DummyMod:
-        downloadurl = "test.torrent"
+        downloadurl = "https://archive.org/download/DebussyPrelduesBookI/DebussyPrelduesBookI_archive.torrent"
+        #downloadurl = "file://test.torrent"
         clientlocation = ""
         name = "Prusa3-vanilla"
         version = "123"

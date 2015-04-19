@@ -69,6 +69,12 @@ class MetadataFile(object):
     def get_version(self):
         return self.data.setdefault('version', "0")
 
+    def set_torrent_url(self, url):
+        self.data['torrent_url'] = url
+
+    def get_torrent_url(self):
+        return self.data.setdefault('torrent_url', '')
+
     def set_torrent_resume_data(self, data):
         self.data['torrent_resume_data'] = base64.b64encode(data)
 

@@ -110,7 +110,7 @@ class ModManager(object):
             name='DebussyPrelduesBookI',  # The mod name MUST match directory name!
             clientlocation=os.getcwd(),  # TODO: Change me
             synctype='torrent',
-            downloadurl=BaseApp.resource_path('debussy.torrent'))
+            downloadurl='file://' + BaseApp.resource_path('debussy.torrent'))
 
         debussy_syncer = TorrentSyncer(messagequeue, debussy_mod)
         debussy_syncer.sync()
