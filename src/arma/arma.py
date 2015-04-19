@@ -88,7 +88,7 @@ class Arma(object):
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
         Custom_args are appended as is and special care must be taken when using spaces.
         Raises ArmaNotInstalled if Arma is not installed.
-        Raises WindowsError (or OSError in Linux) if running the executable fails."""
+        Raises OSError if running the executable fails."""
 
         arma_path = Arma.get_executable_path()
         game_args = [arma_path, '-nosplash', '-skipIntro']
@@ -103,7 +103,7 @@ class Arma(object):
         if custom_args:
             game_args.extend(custom_args)
 
-        popen_object = subprocess.Popen(game_args)  # May raise WindowsError (or OSError on Linux)
+        popen_object = subprocess.Popen(game_args)  # May raise OSError
 
 
 if __name__ == "__main__":

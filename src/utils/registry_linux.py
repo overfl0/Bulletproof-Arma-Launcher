@@ -19,7 +19,7 @@
 
 # Dummy class with fake methods
 class Registry(object):
-    Error = Exception
+    Error = OSError
 
     @staticmethod
     def ReadValue(super_key_handle, key_path, value_name, force_32bit=True):

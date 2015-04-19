@@ -11,6 +11,7 @@
 # GNU General Public License for more details.
 
 import base64
+import errno
 import json
 import os
 
@@ -45,8 +46,20 @@ class MetadataFile(object):
             else:
                 raise
 
+    def _create_missing_directories(self, dirpath):
+        """Creates missing directories. Does not raise exceptions if the path already exists
+
+        Maybe move this to utils module in the future"""
+        try:
+            os.makedirs(dirpath)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST or not os.path.isdir(dirpath):
+                raise
+
     def write_data(self):
         """Open the file and write the contents of the internal data variable to the file"""
+        self._create_missing_directories(os.path.dirname(self.get_file_name()))
+
         with open(self.get_file_name(), 'wb') as file_handle:
             json.dump(self.data, file_handle, encoding=MetadataFile._encoding, indent=2)
 
