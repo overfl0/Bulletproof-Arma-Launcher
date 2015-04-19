@@ -27,8 +27,6 @@ from time import sleep
 class TorrentSyncer(object):
     _update_interval = 1
     _torrent_handle = None
-    torrent_metadata = None
-    torrent_info = None
     session = None
 
     file_paths = set()
@@ -60,18 +58,22 @@ class TorrentSyncer(object):
 
         self.session.set_settings(settings)
 
-    def init_torrent_data_from_string(self, bencoded):
-        """Initialize torrent metadata from a bencoded string."""
-        # TODO: Don't use class attributes but return a value
-        self.torrent_metadata = libtorrent.bdecode(bencoded)
-        self.torrent_info = libtorrent.torrent_info(self.torrent_metadata)
+    def get_torrent_info_from_string(self, bencoded):
+        """Get torrent metadata from a bencoded string and return info structure."""
 
-    def init_torrent_data_from_file(self, filename):
-        """Initialize torrent metadata from a file."""
+        torrent_metadata = libtorrent.bdecode(bencoded)
+        torrent_info = libtorrent.torrent_info(torrent_metadata)
+
+        return torrent_info
+
+    def get_torrent_info_from_file(self, filename):
+        """Get torrent_info structure from a file.
+        The file should contain a bencoded string - the contents of a .torrent file."""
+
         with open(filename, 'rb') as file_handle:
             file_contents = file_handle.read()
 
-            self.init_torrent_data_from_string(file_contents)
+            return self.get_torrent_info_from_string(file_contents)
 
     def get_session_logs(self):
         """Get alerts from torrent engine and forward them to the manager process"""
@@ -118,8 +120,8 @@ class TorrentSyncer(object):
 
         # Configure torrent source
         if self.mod.downloadurl.startswith('file://'):  # Local torrent from file
-            self.init_torrent_data_from_file(self.mod.downloadurl[len('file://'):])
-            params['ti'] = self.torrent_info
+            torrent_info = self.get_torrent_info_from_file(self.mod.downloadurl[len('file://'):])
+            params['ti'] = torrent_info
         else:  # Torrent from url
             params['url'] = self.mod.downloadurl
 
@@ -135,7 +137,6 @@ class TorrentSyncer(object):
         ### Main loop
         # Loop while the torrent is not completely downloaded
         while (not torrent_handle.is_seed()):
-            # TODO: If torrent from url, parse metadata if possible
             s = torrent_handle.status()
 
             download_fraction = s.progress
@@ -187,9 +188,9 @@ if __name__ == '__main__':
 
     ts = TorrentSyncer(queue, mod)
     ts.init_libtorrent()
-    ts.init_torrent_data_from_file("test.torrent")
+    torrent_info = ts.get_torrent_info_from_file("test.torrent")
 
-    num_files = ts.torrent_info.num_files()
-    # print num_files
+    num_files = torrent_info.num_files()
+    print num_files
 
     ts.sync()
