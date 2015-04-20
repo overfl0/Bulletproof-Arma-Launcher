@@ -208,6 +208,34 @@ class TorrentSyncer(object):
 
         return torrent_log
 
+    def is_complete_quick(self):
+        """Performs a quick check to see if the mod *seems* to be correctly installed.
+        This check assumes no external changes have been made to the mods.
+
+        1. Check if metadata file exists and can be opened (instant)
+        2. Check if torrent is not dirty [download completed successfully] (instant)
+        3. Check if torrent url matches (instant)
+        4. TODO: if possible, check resume data (very quick)"""
+
+        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
+
+        # Check if metadata can be opened
+        try:
+            metadata_file.read_data(ignore_open_errors=False)
+        except IOError:
+            print "Metadata file could not be read successfully. Marking as not complete"
+            return False
+
+        if metadata_file.get_dirty():
+            print "Torrent marked as dirty (not completed successfully). Marking as not complete"
+            return False
+
+        if metadata_file.get_torrent_url() != self.mod.downloadurl:
+            print "Torrent urls differ. Marking as not complete"
+            return False
+
+        return True
+
     def sync(self):
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
         #TODO: Add the check: mod name == torrent directory name
@@ -281,13 +309,9 @@ class TorrentSyncer(object):
 
 
         # Save data that could come in handy in the future to a metadata file
-        metadata_file.set_version(self.mod.version)
-        metadata_file.set_dirty(False)
-
         # Set resume data for quick checksum check
         resume_data = libtorrent.bencode(torrent_handle.write_resume_data())
         metadata_file.set_torrent_resume_data(resume_data)
-
         metadata_file.write_data()
 
         # Remove unused files
@@ -303,6 +327,10 @@ class TorrentSyncer(object):
 
             self.result_queue.reject({'msg': 'Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
                                              .format(self.mod.name)})
+        else:
+            metadata_file.set_version(self.mod.version)
+            metadata_file.set_dirty(False)
+            metadata_file.write_data()
 
 
 if __name__ == '__main__':
@@ -337,4 +365,9 @@ if __name__ == '__main__':
     #print "Dirs: ", ts.dirs
     #print "Top dirs", ts.top_dirs
 
-    ts.sync()
+    is_complete = ts.is_complete_quick()
+    print "Is complete:", is_complete
+
+    if not is_complete:
+        print "Syncing..."
+        ts.sync()
