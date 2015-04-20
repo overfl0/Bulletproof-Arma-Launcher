@@ -60,6 +60,7 @@ class MetadataFile(object):
         """Open the file and write the contents of the internal data variable to the file"""
         self._create_missing_directories(os.path.dirname(self.get_file_name()))
 
+        #TODO: Dump to a string and then to the disk to prevent incomplete file on exception
         with open(self.get_file_name(), 'wb') as file_handle:
             json.dump(self.data, file_handle, encoding=MetadataFile._encoding, indent=2)
 

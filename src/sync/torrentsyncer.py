@@ -20,6 +20,7 @@ if __name__ == "__main__":
 
 import libtorrent
 import os
+import shutil
 
 from utils.metadatafile import MetadataFile
 from time import sleep
@@ -98,6 +99,9 @@ class TorrentSyncer(object):
                 dir_path = parent_dir
 
     def _unlink_safety_assert(self, base_path, file_path, action="remove"):
+        """Asserts that the file_path string starts with base_path string.
+        If this is not true then raise an exception"""
+
         real_base_path = os.path.realpath(base_path)
         real_file_path = os.path.realpath(file_path)
         if not real_file_path.startswith(real_base_path):
@@ -106,21 +110,29 @@ class TorrentSyncer(object):
             raise Exception(message)
 
     def safer_unlink(self, base_path, file_path):
+        """Checks if the base_path contains the file_path and removes file_path if true"""
+
         self._unlink_safety_assert(base_path, file_path)
-        #os.unlink(file_path)
+        os.unlink(file_path)
 
     def safer_rmtree(self, base_path, directory_path):
-        self._unlink_safety_assert(base_path, directory_path)
-        #shutil.rmtree(directory_path)
+        """Checks if the base_path contains the directory_path and removes directory_path if true"""
 
-    def cleanup_mod_directories(self):
+        self._unlink_safety_assert(base_path, directory_path)
+        shutil.rmtree(directory_path)
+
+    def cleanup_mod_directories(self, base_directory):
         """Remove files or directories that do not belong to the torrent file
         and were probably removed in an update.
+
+        base_directory is the directory to which mods are downloaded.
+        For example: if the mod directory is C:\Arma\@MyMod, base_directory should be C:\Arma.
+
         To prevent accidental file removal, this function will only remove files
         that are at least one directory deep in the file structure!
         As all multi-file torrents *require* one root directory that holds those
         files, this should not be an issue.
-        This function will skip files or directories that match file_whitelist.
+        This function will skip files or directories that match the 'whitelist' variable.
 
         Returns if the directory has been cleaned sucessfully. Do not ignore this value!
         If unsuccessful at removing files, the mod should NOT be considered ready to play."""
@@ -131,9 +143,8 @@ class TorrentSyncer(object):
 
         # Whitelist our and PWS metadata files
         whitelist = (MetadataFile.file_name, '.synqinfo')
-        base_directory = ""  # TODO: Fill me
         base_directory = os.path.realpath(base_directory)
-        print "Base:", base_directory
+        print "Cleaning up base_directory:", base_directory
         success = True
 
         try:
@@ -279,6 +290,20 @@ class TorrentSyncer(object):
 
         metadata_file.write_data()
 
+        # Remove unused files
+        assert(self._torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
+        torrent_info = self._torrent_handle.get_torrent_info()
+        self.grab_torrent_file_structure(torrent_info)
+        cleanup_successful = self.cleanup_mod_directories(self.mod.clientlocation)
+
+        if not cleanup_successful:
+            print "Could not perform mod {} cleanup. Marking torrent as dirty.".format(self.mod.name)
+            metadata_file.set_dirty(True)
+            metadata_file.write_data()
+
+            self.result_queue.reject({'msg': 'Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
+                                             .format(self.mod.name)})
+
 
 if __name__ == '__main__':
     class DummyMod:
@@ -292,21 +317,24 @@ if __name__ == '__main__':
         def progress(self, d, frac):
             print str(d)
 
+        def reject(self, d):
+            print str(d)
+
     mod = DummyMod()
     queue = DummyQueue()
 
     ts = TorrentSyncer(queue, mod)
-    ts.init_libtorrent()
-    torrent_info = ts.get_torrent_info_from_file("test.torrent")
+    #ts.init_libtorrent()
+    #torrent_info = ts.get_torrent_info_from_file("test.torrent")
 
-    num_files = torrent_info.num_files()
-    print num_files
+    #num_files = torrent_info.num_files()
+    #print num_files
 
-    ts.grab_torrent_file_structure(torrent_info)
-    ts.cleanup_mod_directories()
+    #ts.grab_torrent_file_structure(torrent_info)
+    #ts.cleanup_mod_directories()
 
     #print "File paths: ", ts.file_paths
     #print "Dirs: ", ts.dirs
     #print "Top dirs", ts.top_dirs
 
-    #ts.sync()
+    ts.sync()
