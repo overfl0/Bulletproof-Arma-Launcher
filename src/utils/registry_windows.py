@@ -13,17 +13,15 @@
 # import Windows registry package while ensuring cygwin compatibility
 try:
     import cygwinreg as _winreg
-    WindowsError = _winreg.WindowsError
     KEY_WOW64_32KEY = 0x200  # Cygwin, you sucker!
 
 except ImportError:
     import _winreg
-    WindowsError = WindowsError
     KEY_WOW64_32KEY = _winreg.KEY_WOW64_32KEY
 
 
 class Registry(object):
-    Error = WindowsError
+    Error = OSError
 
     @staticmethod
     def ReadValue(super_key_handle, key_path, value_name, force_32bit=True):
