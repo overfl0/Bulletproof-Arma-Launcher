@@ -208,7 +208,14 @@ class TorrentSyncer(object):
 
         return torrent_log
 
-    def sync(self):
+    def sync(self, force_sync=False):
+        """
+        Synchronize the mod directory contents to contain exactly the files that
+        are described in the torrent file.
+
+        force_sync - Assume no resume data is available. Manually recheck all the
+                     checksums for all the files in the torrent description.
+        """
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
         #TODO: Add the check: mod name == torrent directory name
 
@@ -224,7 +231,7 @@ class TorrentSyncer(object):
 
         # If the torrent url changed, invalidate the resume data
         old_torrent_url = metadata_file.get_torrent_url()
-        if old_torrent_url != self.mod.downloadurl:
+        if old_torrent_url != self.mod.downloadurl or force_sync:
             metadata_file.set_torrent_resume_data("")
             metadata_file.set_torrent_url(self.mod.downloadurl)
 

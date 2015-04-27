@@ -113,7 +113,7 @@ class ModManager(object):
             downloadurl='file://' + BaseApp.resource_path('debussy.torrent'))
 
         debussy_syncer = TorrentSyncer(messagequeue, debussy_mod)
-        debussy_syncer.sync()
+        debussy_syncer.sync(force_sync=True)  # Use force_sync to force full recheck of all the files' checksums
 
         messagequeue.resolve({'msg': 'Downloading mods finished.'})
 
