@@ -17,6 +17,7 @@ import os
 
 class MetadataFile(object):
     """File that contains metadata about mods and is located in the root directory of each mod"""
+    """TODO: Maybe screw the whole json part and just bencode everything?"""
     file_name = '.tacbf_meta'
     _encoding = 'utf-8'
 
@@ -64,6 +65,21 @@ class MetadataFile(object):
         with open(self.get_file_name(), 'wb') as file_handle:
             json.dump(self.data, file_handle, encoding=MetadataFile._encoding, indent=2)
 
+    def set_base64_key(self, key_name, value):
+        self.data[key_name] = base64.b64encode(value)
+
+    def get_base64_key(self, key_name):
+        data = self.data.setdefault(key_name, None)
+        if data:
+            try:
+                data = base64.b64decode(data)
+            except TypeError:
+                data = None
+
+        return data
+
+    # Accessors and mutators below
+
     def set_version(self, version):
         self.data['version'] = version
 
@@ -77,17 +93,16 @@ class MetadataFile(object):
         return self.data.setdefault('torrent_url', '')
 
     def set_torrent_resume_data(self, data):
-        self.data['torrent_resume_data'] = base64.b64encode(data)
+        self.set_base64_key('torrent_resume_data', data)
 
     def get_torrent_resume_data(self):
-        data = self.data.setdefault('torrent_resume_data', None)
-        if data:
-            try:
-                data = base64.b64decode(data)
-            except TypeError:
-                data = None
+        return self.get_base64_key('torrent_resume_data')
 
-        return data
+    def set_torrent_content(self, torrent_content):
+        self.set_base64_key('torrent_content', torrent_content)
+
+    def get_torrent_content(self):
+        return self.get_base64_key('torrent_content')
 
     def set_dirty(self, is_dirty):
         """Mark the torrent as dirty - in an inconsistent state (download started, we don't know what's exactly on disk)"""

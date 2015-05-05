@@ -121,12 +121,17 @@ class TorrentSyncer(object):
         self._unlink_safety_assert(base_path, directory_path)
         shutil.rmtree(directory_path)
 
-    def cleanup_mod_directories(self, base_directory):
-        """Remove files or directories that do not belong to the torrent file
-        and were probably removed in an update.
+    def check_mod_directories(self, base_directory, action='warn'):
+        """Check if all files and directories present in the mod directories belong
+        to the torrent file. If not, remove those if action=='remove' or return False
+        if action=='warn'.
 
         base_directory is the directory to which mods are downloaded.
         For example: if the mod directory is C:\Arma\@MyMod, base_directory should be C:\Arma.
+
+        action is the action to perform when superfluous files are found:
+            'warn': return False
+            'remove': remove the file or directory
 
         To prevent accidental file removal, this function will only remove files
         that are at least one directory deep in the file structure!
@@ -134,12 +139,16 @@ class TorrentSyncer(object):
         files, this should not be an issue.
         This function will skip files or directories that match the 'whitelist' variable.
 
-        Returns if the directory has been cleaned sucessfully. Do not ignore this value!
+        Returns if the directory has been cleaned sucessfully or if all files present
+        are supposed to be there. Do not ignore this value!
         If unsuccessful at removing files, the mod should NOT be considered ready to play."""
 
         # TODO: Handle unicode file names
         def raiser(exception):  # I'm sure there must be some builtin to do this :-/
             raise exception
+
+        if not action in ('warn', 'remove'):
+            raise Exception('Unknown action: {}'.format(action))
 
         # Whitelist our and PWS metadata files
         whitelist = (MetadataFile.file_name, '.synqinfo')
@@ -153,7 +162,7 @@ class TorrentSyncer(object):
                     continue
 
                 full_base_path = os.path.join(base_directory, directory)
-                self._unlink_safety_assert(base_directory, full_base_path, action="enter")
+                self._unlink_safety_assert(base_directory, full_base_path, action='enter')
                 for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=raiser, followlinks=False):
                     relative_path = os.path.relpath(dirpath, base_directory)
                     print 'In directory: {}'.format(relative_path)
@@ -170,8 +179,14 @@ class TorrentSyncer(object):
                             continue  # File present in the torrent, nothing to see here
 
                         full_file_path = os.path.join(dirpath, file_name)
-                        print 'Removing file: {}'.format(full_file_path)
-                        self.safer_unlink(full_base_path, full_file_path)
+
+                        if action == 'remove':
+                            print 'Removing file: {}'.format(full_file_path)
+                            self.safer_unlink(full_base_path, full_file_path)
+
+                        elif action == 'warn':
+                            print 'Superfluous file: {}'.format(full_file_path)
+                            return False
 
                     # Now check directories
                     # Remove directories that match whitelist from checking and descending into them
@@ -185,10 +200,16 @@ class TorrentSyncer(object):
                             continue  # Directory present in the torrent, nothing to see here
 
                         full_directory_path = os.path.join(dirpath, dir_name)
-                        print 'Removing directory: {}'.format(full_directory_path)
-                        dirnames.remove(dir_name)
 
-                        self.safer_rmtree(full_base_path, full_directory_path)
+                        if action == 'remove':
+                            print 'Removing directory: {}'.format(full_directory_path)
+                            dirnames.remove(dir_name)
+
+                            self.safer_rmtree(full_base_path, full_directory_path)
+
+                        elif action == 'warn':
+                            print 'Superfluous directory: {}'.format(full_directory_path)
+                            return False
 
         except OSError as exception:
             success = False
@@ -208,6 +229,10 @@ class TorrentSyncer(object):
 
         return torrent_log
 
+    def check_file_modification(self):
+        #mtime = os.stat(path).st_mtime
+        pass
+
     def is_complete_quick(self):
         """Performs a quick check to see if the mod *seems* to be correctly installed.
         This check assumes no external changes have been made to the mods.
@@ -215,7 +240,8 @@ class TorrentSyncer(object):
         1. Check if metadata file exists and can be opened (instant)
         2. Check if torrent is not dirty [download completed successfully] (instant)
         3. Check if torrent url matches (instant)
-        4. TODO: if possible, check resume data (very quick)"""
+        4. TODO: if possible, check resume data (very quick)
+        5. Check if there are no superfluous files in the directory"""
 
         metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
 
@@ -234,8 +260,39 @@ class TorrentSyncer(object):
             print "Torrent urls differ. Marking as not complete"
             return False
 
-        return True
+        # Check if there are no additional files in the directory
+        torrent_content = metadata_file.get_torrent_content()
+        if not torrent_content:
+            print "Could not get torrent file content. Marking as not complete"
+            return False
 
+        torrent_info = self.get_torrent_info_from_string(torrent_content)
+        self.grab_torrent_file_structure(torrent_info)
+        if not self.check_mod_directories(self.mod.clientlocation, action='warn'):
+            print "Superfluous files in mod directory. Marking as not complete"
+            return False
+
+        return True
+    """
+    def create_flags(self):
+        f = libtorrent.add_torrent_params_flags_t
+
+        flags = 0
+        flags |= f.flag_apply_ip_filter  # default
+        flags |= f.flag_update_subscribe  # default
+        #flags |= f.flag_merge_resume_trackers  # default off
+        #flags |= f.flag_paused
+        flags |= f.flag_auto_managed
+        flags |= f.flag_override_resume_data
+        #flags |= f.flag_seed_mode
+        #flags |= f.flag_upload_mode
+        #flags |= f.flag_share_mode
+        flags |= f.flag_duplicate_is_error  # default?
+
+        # no_recheck_incomplete_resume
+
+        return flags
+    """
     def sync(self):
         print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
         #TODO: Add the check: mod name == torrent directory name
@@ -264,6 +321,7 @@ class TorrentSyncer(object):
         params = {
             'save_path': self.mod.clientlocation,
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
+            #'flags': self.create_flags()
         }
 
         # Configure torrent source
@@ -318,7 +376,12 @@ class TorrentSyncer(object):
         assert(self._torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
         torrent_info = self._torrent_handle.get_torrent_info()
         self.grab_torrent_file_structure(torrent_info)
-        cleanup_successful = self.cleanup_mod_directories(self.mod.clientlocation)
+        cleanup_successful = self.check_mod_directories(self.mod.clientlocation, action='remove')
+
+        # Recreate the torrent file and store it in the metadata file for future checks
+        recreated_torrent = libtorrent.create_torrent(torrent_info)
+        bencoded_recreated_torrent = libtorrent.bencode(recreated_torrent.generate())
+        metadata_file.set_torrent_content(bencoded_recreated_torrent)
 
         if not cleanup_successful:
             print "Could not perform mod {} cleanup. Marking torrent as dirty.".format(self.mod.name)
@@ -338,7 +401,7 @@ if __name__ == '__main__':
         downloadurl = "https://archive.org/download/DebussyPrelduesBookI/DebussyPrelduesBookI_archive.torrent"
         #downloadurl = "file://test.torrent"
         clientlocation = ""
-        name = "Prusa3-vanilla"
+        name = "DebussyPrelduesBookI"
         version = "123"
 
     class DummyQueue:
@@ -359,7 +422,7 @@ if __name__ == '__main__':
     #print num_files
 
     #ts.grab_torrent_file_structure(torrent_info)
-    #ts.cleanup_mod_directories()
+    #ts.check_mod_directories()
 
     #print "File paths: ", ts.file_paths
     #print "Dirs: ", ts.dirs
