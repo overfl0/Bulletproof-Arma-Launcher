@@ -109,13 +109,13 @@ class TorrentSyncer(object):
                 action, real_file_path, real_base_path)
             raise Exception(message)
 
-    def safer_unlink(self, base_path, file_path):
+    def _safer_unlink(self, base_path, file_path):
         """Checks if the base_path contains the file_path and removes file_path if true"""
 
         self._unlink_safety_assert(base_path, file_path)
         os.unlink(file_path)
 
-    def safer_rmtree(self, base_path, directory_path):
+    def _safer_rmtree(self, base_path, directory_path):
         """Checks if the base_path contains the directory_path and removes directory_path if true"""
 
         self._unlink_safety_assert(base_path, directory_path)
@@ -182,7 +182,7 @@ class TorrentSyncer(object):
 
                         if action == 'remove':
                             print 'Removing file: {}'.format(full_file_path)
-                            self.safer_unlink(full_base_path, full_file_path)
+                            self._safer_unlink(full_base_path, full_file_path)
 
                         elif action == 'warn':
                             print 'Superfluous file: {}'.format(full_file_path)
@@ -205,7 +205,7 @@ class TorrentSyncer(object):
                             print 'Removing directory: {}'.format(full_directory_path)
                             dirnames.remove(dir_name)
 
-                            self.safer_rmtree(full_base_path, full_directory_path)
+                            self._safer_rmtree(full_base_path, full_directory_path)
 
                         elif action == 'warn':
                             print 'Superfluous directory: {}'.format(full_directory_path)
@@ -229,9 +229,42 @@ class TorrentSyncer(object):
 
         return torrent_log
 
-    def check_file_modification(self):
-        #mtime = os.stat(path).st_mtime
-        pass
+    def check_files_mtime_correct(self, torrent_info, resume_data):
+        """Checks if all files have the right size and modification time.
+        If the size or modification time differs, the file is considered modified
+        and thus the check fails.
+
+        Attention: The modification time check accuracy depends on a number of
+        things such as the underlying File System type. Files are also allowed to be
+        up to 5 minutes more recent than stated as per libtorrent implementation."""
+
+        file_sizes = resume_data['file sizes']
+        files = torrent_info.files()
+
+        # file_path, size, mtime
+        files_data = map(lambda x, y: (y.path, x[0], x[1]), file_sizes, files)
+
+        for file_path, size, mtime in files_data:
+            try:
+                full_file_path = os.path.join(self.mod.clientlocation, file_path)
+                file_stat = os.stat(full_file_path)
+            except OSError:
+                print 'Could not perform stat on', full_file_path
+                return False
+
+            # print file_path, file_stat.st_mtime, mtime
+            if file_stat.st_size != size:  # TODO: Check if on Windows the file size may be a bit larger than declared (due to FS intrinsics)
+                print 'Incorrect file size for', full_file_path
+                return False
+
+            # Values based on libtorrent/src/storage.cpp: 135-190 // match_filesizes()
+            # Allow for 1 sec discrepancy due to FAT32
+            # Also allow files to be up to 5 minutes more recent than stated
+            if int(file_stat.st_mtime) > mtime + 5 * 60 or int(file_stat.st_mtime) < mtime - 1:
+                print 'Incorrect modification time for', full_file_path
+                return False
+
+        return True
 
     def is_complete_quick(self):
         """Performs a quick check to see if the mod *seems* to be correctly installed.
@@ -240,36 +273,51 @@ class TorrentSyncer(object):
         1. Check if metadata file exists and can be opened (instant)
         2. Check if torrent is not dirty [download completed successfully] (instant)
         3. Check if torrent url matches (instant)
-        4. TODO: if possible, check resume data (very quick)
-        5. Check if there are no superfluous files in the directory"""
+        4. Check if files have the right size and modification time (very quick)
+        5. Check if there are no superfluous files in the directory (very quick)"""
 
         metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
 
-        # Check if metadata can be opened
+        # (1) Check if metadata can be opened
         try:
             metadata_file.read_data(ignore_open_errors=False)
         except IOError:
-            print "Metadata file could not be read successfully. Marking as not complete"
+            print 'Metadata file could not be read successfully. Marking as not complete'
             return False
 
+        # (2)
         if metadata_file.get_dirty():
-            print "Torrent marked as dirty (not completed successfully). Marking as not complete"
+            print 'Torrent marked as dirty (not completed successfully). Marking as not complete'
             return False
 
+        # (3)
         if metadata_file.get_torrent_url() != self.mod.downloadurl:
-            print "Torrent urls differ. Marking as not complete"
+            print 'Torrent urls differ. Marking as not complete'
             return False
 
-        # Check if there are no additional files in the directory
+        # Get data required for (4) and (5)
         torrent_content = metadata_file.get_torrent_content()
         if not torrent_content:
-            print "Could not get torrent file content. Marking as not complete"
+            print 'Could not get torrent file content. Marking as not complete'
             return False
 
         torrent_info = self.get_torrent_info_from_string(torrent_content)
+
+        resume_data_bencoded = metadata_file.get_torrent_resume_data()
+        if not resume_data_bencoded:
+            print 'Could not get resume data. Marking as not complete'
+            return False
+        resume_data = libtorrent.bdecode(resume_data_bencoded)
+
+        # (4)
+        if not self.check_files_mtime_correct(torrent_info, resume_data):
+            print 'Some files seem to have been modified in the meantime. Marking as not complete'
+            return False
+
+        # (5) Check if there are no additional files in the directory
         self.grab_torrent_file_structure(torrent_info)
         if not self.check_mod_directories(self.mod.clientlocation, action='warn'):
-            print "Superfluous files in mod directory. Marking as not complete"
+            print 'Superfluous files in mod directory. Marking as not complete'
             return False
 
         return True
