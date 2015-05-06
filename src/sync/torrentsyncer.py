@@ -253,11 +253,11 @@ class TorrentSyncer(object):
                 return False
 
             # print file_path, file_stat.st_mtime, mtime
-            if file_stat.st_size != size:  # TODO: Check if on Windows the file size may be a bit larger than declared (due to FS intrinsics)
+            # Values for st_size and st_mtime based on libtorrent/src/storage.cpp: 135-190 // match_filesizes()
+            if file_stat.st_size < size:  # Actually, not sure why < instead of != but kept this to be compatible with libtorrent
                 print 'Incorrect file size for', full_file_path
                 return False
 
-            # Values based on libtorrent/src/storage.cpp: 135-190 // match_filesizes()
             # Allow for 1 sec discrepancy due to FAT32
             # Also allow files to be up to 5 minutes more recent than stated
             if int(file_stat.st_mtime) > mtime + 5 * 60 or int(file_stat.st_mtime) < mtime - 1:
