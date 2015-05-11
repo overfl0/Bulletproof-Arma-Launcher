@@ -57,6 +57,7 @@ class TorrentSyncer(object):
         # TODO: self.session.set_download_rate_limit(down_rate)
         # TODO: self.session.set_upload_rate_limit(up_rate)
 
+        self.session.set_alert_mask(libtorrent.alert.category_t.all_categories)
         self.session.set_settings(settings)
 
     def get_torrent_info_from_string(self, bencoded):
@@ -226,6 +227,53 @@ class TorrentSyncer(object):
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
             print "Alerts: Category: {}, Message: {}".format(alert.category(), alert.message())
             torrent_log.append({'message': alert.message(), 'category': alert.category()})
+
+            if type(alert) == libtorrent.read_piece_alert:  # alert::storage_notification
+                '''This alert is posted when the asynchronous read operation initiated by a call to torrent_handle::read_piece() is completed. If the read failed, the torrent is paused and an error state is set and the buffer member of the alert is 0. If successful, buffer points to a buffer containing all the data of the piece. piece is the piece index that was read. size is the number of bytes that was read.
+                If the operation fails, ec will indicat what went wrong.'''
+
+            elif type(alert) == libtorrent.tracker_error_alert:  # alert::tracker_notification | alert::error_notification
+                '''This alert is generated on tracker time outs, premature disconnects, invalid response or a HTTP response other than "200 OK". From the alert you can get the handle to the torrent the tracker belongs to.'''
+
+            elif type(alert) == libtorrent.scrape_failed_alert:  # alert::tracker_notification | alert::error_notification
+                '''If a scrape request fails, this alert is generated. This might be due to the tracker timing out, refusing connection or returning an http response code indicating an error.'''
+
+            elif type(alert) == libtorrent.peer_ban_alert:  # alert::peer_notification
+                '''This alert is generated when a peer is banned because it has sent too many corrupt pieces to us. ip is the endpoint to the peer that was banned.'''
+
+            elif type(alert) == libtorrent.torrent_finished_alert:  # alert::status_notification
+                '''This alert is generated when a torrent switches from being a downloader to a seed. It will only be generated once per torrent. It contains a torrent_handle to the torrent in question.'''
+
+            elif type(alert) == libtorrent.save_resume_data_failed_alert:  # | alert::error_notification   (alert::storage_notification ???)
+                '''This alert is generated instead of save_resume_data_alert if there was an error generating the resume data. error describes what went wrong.'''
+
+            elif type(alert) == libtorrent.url_seed_alert:  # alert::peer_notification | alert::error_notification
+                '''This alert is generated when a HTTP seed name lookup fails.'''
+
+            elif type(alert) == libtorrent.file_error_alert:  # | alert::storage_notification
+                '''If the storage fails to read or write files that it needs access to, this alert is generated and the torrent is paused.'''
+
+            elif type(alert) == libtorrent.metadata_received_alert:  # alert::status_notification
+                '''This alert is generated when the metadata has been completely received and the torrent can start downloading. It is not generated on torrents that are started with metadata, but only those that needs to download it from peers (when utilizing the libtorrent extension).'''
+
+            elif type(alert) == libtorrent.udp_error_alert:  # alert::error_notification
+                '''This alert is posted when there is an error on the UDP socket. The UDP socket is used for all uTP, DHT and UDP tracker traffic. It's global to the session.'''
+
+            elif type(alert) == libtorrent.listen_failed_alert:  # alert::status_notification | alert::error_notification
+                '''This alert is generated when none of the ports, given in the port range, to session can be opened for listening. The endpoint member is the interface and port that failed, error is the error code describing the failure.'''
+
+            elif type(alert) == libtorrent.portmap_error_alert:  # | alert::error_notification
+                '''This alert is generated when a NAT router was successfully found but some part of the port mapping request failed. It contains a text message that may help the user figure out what is wrong. This alert is not generated in case it appears the client is not running on a NAT:ed network or if it appears there is no NAT router that can be remote controlled to add port mappings.'''
+
+            elif type(alert) == libtorrent.torrent_error_alert:  # alert::error_notification | alert::status_notification
+                '''This is posted whenever a torrent is transitioned into the error state.'''
+
+            # The following line only in later libtorrent versions
+            #elif type(alert) == libtorrent.dht_error_alert:  # | alert::dht_notification
+            #    '''posted when something fails in the DHT. This is not necessarily a fatal error, but it could prevent proper operation'''
+
+            elif type(alert) == libtorrent.i2p_alert:  # alert::error_notification
+                '''this alert is used to report errors in the i2p SAM connection'''
 
         return torrent_log
 
