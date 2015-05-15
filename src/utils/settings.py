@@ -24,7 +24,7 @@ class Settings(object):
 
     # set this to true to show a popup containing exceptions
     # if one occurres
-    _EXC_POPUP = False
+    _EXC_POPUP = True
 
     def __init__(self, argv):
         super(Settings, self).__init__()
@@ -34,7 +34,7 @@ class Settings(object):
 
         self.parse_args(argv)
 
-        self.settings_data.exc_popup = _EXC_POPUP
+        self.settings_data.exc_popup = self._EXC_POPUP
 
         # create the launcher basedir if neccessary
         launcher_basedir = self.get_launcher_basedir()
