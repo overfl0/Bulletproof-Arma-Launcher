@@ -22,6 +22,10 @@ class Settings(object):
     # path to the registry entry which holds the users document path
     _USER_DOCUMENT_PATH = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
 
+    # set this to true to show a popup containing exceptions
+    # if one occurres
+    _EXC_POPUP = False
+
     def __init__(self, argv):
         super(Settings, self).__init__()
 
@@ -30,9 +34,7 @@ class Settings(object):
 
         self.parse_args(argv)
 
-        # set this to true to show a popup containing exceptions
-        # if one occurres
-        self.settings_data.exc_popup = False
+        self.settings_data.exc_popup = _EXC_POPUP
 
         # create the launcher basedir if neccessary
         launcher_basedir = self.get_launcher_basedir()
