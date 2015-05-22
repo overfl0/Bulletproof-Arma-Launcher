@@ -126,13 +126,13 @@ def _sync_all(messagequeue, launcher_moddir):
     cba_syncer.sync()
 
     debussy_mod = Mod(
-        foldername='@debussybattle',
+        foldername='@debussybattle',  # The mod name MUST match directory name!
         clientlocation=launcher_moddir,
         synctype='torrent',
-        downloadurl=BaseApp.resource_path('debussy.torrent'))
+        downloadurl='file://' + BaseApp.resource_path('debussy.torrent'))
 
     debussy_syncer = TorrentSyncer(messagequeue, debussy_mod)
-    debussy_syncer.sync()
+    debussy_syncer.sync(force_sync=True)  # Use force_sync to force full recheck of all the files' checksums
 
     messagequeue.resolve({'msg': 'Downloading mods finished.'})
 

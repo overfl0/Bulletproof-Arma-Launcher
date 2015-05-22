@@ -20,7 +20,8 @@ class Mod(object):
             synctype='http',
             downloadurl=None,
             torrent_timestamp="",
-            name=""):
+            name="",
+            version=""):
         super(Mod, self).__init__()
 
         self.clientlocation = clientlocation
@@ -29,6 +30,7 @@ class Mod(object):
         self.foldername = foldername
         self.torrent_timestamp = torrent_timestamp
         self.name = name
+        self.version = version
 
     @classmethod
     def fromDict(cls, d):
