@@ -29,7 +29,7 @@ if __name__ == "__main__":
     settings = Settings(sys.argv[1:])
 
     # HACK: clear sys.argv for kivy. Keep only the first element
-    sys.argv = sys.argv[0:1]
+    #sys.argv = sys.argv[0:1]
 
     # configure kivy
     from kivy.config import Config

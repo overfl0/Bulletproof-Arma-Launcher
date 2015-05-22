@@ -37,8 +37,12 @@ class Settings(object):
         self.settings_data.exc_popup = self._EXC_POPUP
 
         # create the launcher basedir if neccessary
-        launcher_basedir = self.get_launcher_basedir()
+        # take the the command line param first if present
+        if not self.settings_data.launcher_basedir:
+            self.settings_data.launcher_basedir = self._get_launcher_basedir_from_reg()
+
         launcher_moddir = self.get_launcher_moddir()
+        launcher_basedir = self.get_launcher_basedir()
 
         if not os.path.isdir(launcher_basedir):
             Logger.debug('Settings: Creating basedir - {}'.format(launcher_basedir))
@@ -48,13 +52,19 @@ class Settings(object):
             Logger.debug('Settings: Creating mod dir - {}'.format(launcher_moddir))
             os.mkdir(launcher_moddir)
 
-    def get_launcher_basedir(self):
+        Logger.debug("Settings: Launcher will use basedir: " + self.get_launcher_basedir())
+        Logger.debug("Settings: Launcher will use moddir: " + self.get_launcher_moddir())
+
+    def _get_launcher_basedir_from_reg(self):
         """retreive users document folder from the registry"""
         path = None
         user_docs = Registry.ReadValueCurrentUser(Settings._USER_DOCUMENT_PATH, 'Personal')
         path = os.path.join(user_docs, 'TacBF Launcher')
 
         return path
+
+    def get_launcher_basedir(self):
+        return self.settings_data.launcher_basedir
 
     def get_launcher_moddir(self):
         return os.path.join(self.get_launcher_basedir(), 'mods')
@@ -65,6 +75,9 @@ class Settings(object):
 
         self.parser.add_argument("-s", "--self-update",
             help="run the self updater", action="store_true")
+
+        self.parser.add_argument("-d", "--launcher-basedir",
+            help="specify the basedir for the launcher")
 
         self.settings_data = self.parser.parse_args(argv)
 
