@@ -17,7 +17,6 @@ import re
 import tempfile
 import shutil
 
-from utils.sevenzfile import SevenZFile
 from utils.process import Process
 
 class HttpSyncer(object):

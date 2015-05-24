@@ -76,21 +76,31 @@ class Arma(object):
         return path
 
     @staticmethod
-    def get_executable_path():
+    def get_executable_path(battleye=True):
         """Returns path to the arma executable.
+        The battleye variable allows to run the battleye-enhanced version of the game.
+
         Raises ArmaNotInstalled if Arma is not installed."""
-        return os.path.join(Arma.get_installation_path(), "arma3.exe")
+
+        if battleye:
+            executable = "arma3battleye.exe"
+        else:
+            executable = "arma3.exe"
+
+        return os.path.join(Arma.get_installation_path(), executable)
 
     @staticmethod
-    def run_game(mod_list=None, profile_name=None, custom_args=None):
+    def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
         Custom_args are appended as is and special care must be taken when using spaces.
+        The battleye variable allows to run the battleye-enhanced version of the game.
+
         Raises ArmaNotInstalled if Arma is not installed.
         Raises OSError if running the executable fails."""
 
-        arma_path = Arma.get_executable_path()
+        arma_path = Arma.get_executable_path(battleye=battleye)
         game_args = [arma_path, '-nosplash', '-skipIntro']
 
         if mod_list:
