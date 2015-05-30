@@ -447,8 +447,8 @@ class TorrentSyncer(object):
 
         ### Main loop
         # Loop while the torrent is not completely downloaded
-        while (not torrent_handle.is_seed()):
-            s = torrent_handle.status()
+        s = torrent_handle.status()
+        while (not torrent_handle.is_seed() and not s.error):
 
             download_fraction = s.progress
             download_kbs = s.download_rate / 1024
@@ -462,6 +462,11 @@ class TorrentSyncer(object):
 
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
+            s = torrent_handle.status()
+
+        if s.error:
+            self.result_queue.reject({'msg': 'An error occured: {}'.format(s.error)})
+            return
 
         #print torrent_handle.get_torrent_info()
         # Download finished. Performing housekeeping
@@ -511,10 +516,10 @@ if __name__ == '__main__':
 
     class DummyQueue:
         def progress(self, d, frac):
-            print str(d)
+            print 'Progress: {}'.format(str(d))
 
         def reject(self, d):
-            print str(d)
+            print 'Reject: {}'.format(str(d))
 
     mod = DummyMod()
     queue = DummyQueue()
