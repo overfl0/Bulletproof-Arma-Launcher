@@ -390,7 +390,7 @@ class TorrentSyncer(object):
         return flags
     """
 
-    def sync(self, force_sync=False):
+    def _sync(self, force_sync=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
         are described in the torrent file.
@@ -505,6 +505,15 @@ class TorrentSyncer(object):
             metadata_file.set_dirty(False)
             metadata_file.write_data()
 
+    def sync(self, *args, **kwargs):
+        """Wrapper for the _sync method along with checks for exceptions returned by libtorrent"""
+
+        try:
+            return self._sync(*args, **kwargs)
+        except RuntimeError as exception:
+            self.result_queue.reject({'msg': 'An exception occured: {}'.format(', '.join(exception.args))})
+            #import IPython
+            #IPython.embed()
 
 if __name__ == '__main__':
     class DummyMod:
