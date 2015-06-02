@@ -64,6 +64,11 @@ def get_mod_descriptions(messagequeue):
         return
     else:
         data = res.json()
+        # Temporary! Ensure alpha version is correct
+        if data.get('alpha') != "1":
+            Logger.error('This launcher is out of date! You won\'t be able do download mods until you update to the latest version!')
+            messagequeue.progress({'msg': 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'})
+            return None
 
         for md in data['mods']:
 
@@ -105,6 +110,8 @@ def _prepare_and_check(messagequeue):
 
     # download mod descriptions first
     mod_list = get_mod_descriptions(messagequeue)
+    if mod_list is None:  # Alpha version addition
+        return
 
     # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
