@@ -101,7 +101,12 @@ class Arma(object):
         Raises OSError if running the executable fails."""
 
         arma_path = Arma.get_executable_path(battleye=battleye)
-        game_args = [arma_path, '-nosplash', '-skipIntro']
+        game_args = [arma_path]
+
+        if battleye:
+            game_args.extend(['0', '1'])
+
+        game_args.extend(['-nosplash', '-skipIntro'])
 
         if mod_list:
             modlist_argument = '-mod=' + ';'.join(mod_list)
