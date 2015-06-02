@@ -29,20 +29,20 @@ if __name__ == "__main__":
     settings = Settings(sys.argv[1:])
 
     # HACK: clear sys.argv for kivy. Keep only the first element
-    sys.argv = sys.argv[0:1]
+    #sys.argv = sys.argv[0:1]
 
     # configure kivy
     from kivy.config import Config
 
     if not settings.get('self_update'):
         Config.set('graphics','resizable',0)
-        Config.set('graphics', 'width', '1000')
-        Config.set('graphics', 'height', '666')
+        Config.set('graphics', 'width', 1000)
+        Config.set('graphics', 'height', 666)
         Config.set('graphics','borderless',1)
     else:
         Config.set('graphics','resizable',0)
-        Config.set('graphics', 'width', '400')
-        Config.set('graphics', 'height', '150')
+        Config.set('graphics', 'width', 400)
+        Config.set('graphics', 'height', 150)
         Config.set('graphics','borderless',1)
 
     #
@@ -62,14 +62,21 @@ if __name__ == "__main__":
     from kivy.clock import Clock
     from kivy.logger import Logger
     from kivy.uix.screenmanager import ScreenManager, Screen
+    from kivy.core.text import LabelBase
+    from kivy.base import ExceptionManager
 
     from utils.app import BaseApp
     from view.hoverbutton import HoverButton
     from view.statusimage import StatusImage
+    from view.errorpopup import error_popup_decorator
+    from view.errorpopup import PopupHandler
     from gui.mainwidget import MainWidget
     from gui.updatermainwidget import UpdaterMainWidget
     from gui.installscreen import InstallScreen
     import logging
+
+    if settings.get('exc_popup') == True:
+        ExceptionManager.add_handler(PopupHandler())
 
     class PrefScreen(Screen):
         pass
@@ -81,6 +88,7 @@ if __name__ == "__main__":
         """Main class for the normal app"""
         def __init__(self, settings):
             super(LauncherApp, self).__init__()
+            self.settings = settings
 
         def build(self):
             logger = logging.getLogger('concurrent.futures')
@@ -105,4 +113,6 @@ if __name__ == "__main__":
             print 'launching self updater'
             launcher_app = SelfUpdaterApp(settings).run()
         else:
-            launcher_app = LauncherApp(settings).run()
+            launcher_app = LauncherApp(settings)
+            #launcher_app.run = error_popup_decorator(launcher_app.run)
+            launcher_app.run()

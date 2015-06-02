@@ -10,20 +10,25 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+
 class Mod(object):
     """encapsulate data needed for a mod"""
     def __init__(
             self,
-            name='@noname',
+            foldername='@noname',
             clientlocation=None,
             synctype='http',
             downloadurl=None,
+            torrent_timestamp="",
+            name="",
             version=""):
         super(Mod, self).__init__()
 
         self.clientlocation = clientlocation
         self.synctype = synctype
         self.downloadurl = downloadurl
+        self.foldername = foldername
+        self.torrent_timestamp = torrent_timestamp
         self.name = name
         self.version = version
 
@@ -31,10 +36,17 @@ class Mod(object):
     def fromDict(cls, d):
         """return a new mod instance constructed from dictionary"""
 
-        if 'version' in d:
-            version = d['version']
-        if 'name' in d:
-            name = d['name']
+        torrent_timestamp = d.get('torrent-timestamp', "")
+        name = d.get('name', "Unknown Mod")
+        foldername = d.get('foldername', "@Unknown")
+        downloadurl = d.get('downloadurl', "")
 
-        m = Mod(name=name, version=version)
+        m = Mod(foldername=foldername, torrent_timestamp=torrent_timestamp,
+                name=name, downloadurl=downloadurl)
         return m
+
+    def __repr__(self):
+        s = '[Mod: {} -- utcts: {} -- {} -- durl: {}]'.format(self.foldername,
+                self.torrent_timestamp, self.name, self.downloadurl)
+
+        return s

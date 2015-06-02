@@ -53,14 +53,28 @@ class Controller(object):
         self.view = widget
         self.mod_manager = ModManager()
         self.loading_gif = None
+        self.mods = None
 
-        # download mod descriptions
-        self.para = Para(self.mod_manager.prepare_and_check, (), self, 'checkmods')
-        self.para.run()
+        # download mod description
+        self.para = self.mod_manager.prepare_and_check()
+        self.para.then(self.on_checkmods_resolve, None, self.on_checkmods_progress)
 
-    def on_install_button_release(self, btn, image):
-        self.para = Para(self.mod_manager.sync_all, (), self, 'sync')
-        self.para.run()
+        Clock.schedule_interval(self.check_install_button, 0)
+
+    def check_install_button(self, dt):
+        if 'install_button' in self.view.ids:
+            self.on_install_button_ready()
+            return False
+
+    def on_install_button_ready(self):
+        self.view.ids.install_button.text = 'Checking'
+        self.view.ids.install_button.enable_progress_animation()
+
+    def on_install_button_release(self, btn):
+        self.view.ids.install_button.disabled = True
+        self.para = self.mod_manager.sync_all()
+        self.para.then(self.on_sync_resolve, None, self.on_sync_progress)
+        self.view.ids.install_button.enable_progress_animation()
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.hidden = False
@@ -71,15 +85,26 @@ class Controller(object):
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.install_button.text = 'Install'
 
-    def on_sync_progress(self, progress, speed):
+        Logger.debug('InstallScreen: got mods:')
+        for mod in progress['mods']:
+            Logger.info('InstallScreen: {}'.format(mod))
+
+        self.mods = progress['mods']
+
+
+    def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
         self.view.ids.install_button.disabled = True
         self.view.ids.status_image.hidden = False
         self.view.ids.status_label.text = progress['msg']
+        self.view.ids.progress_bar.value = percentage * 100
 
     def on_sync_resolve(self, progress):
         Logger.debug('InstallScreen: syncing finished')
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()

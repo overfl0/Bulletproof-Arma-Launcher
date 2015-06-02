@@ -10,9 +10,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from copy import copy
+
 from kivy.core.window import Window
 from kivy.uix.button import Button
 from kivy.properties import NumericProperty, ObjectProperty, BooleanProperty, StringProperty
+from kivy.clock import Clock
+
+
 
 class HoverButton(Button):
     """
@@ -30,6 +35,9 @@ class HoverButton(Button):
         self.bind(mouse_hover=self._on_mouse_hover)
 
         self.background_normal_orig = ''
+        self.last_text = None
+        self.animation_states = ['...', '..', '.', '']
+        self.text_animation_enabled = False
 
     def check_hover(self, instance, value):
 
@@ -48,3 +56,19 @@ class HoverButton(Button):
             self.background_normal = self.background_hover
         else:
             self.background_normal = self.background_normal_orig
+
+    def enable_progress_animation(self):
+        if not self.text_animation_enabled:
+            self.last_text = self.text
+            Clock.schedule_interval(self.do_progress_animation, 0.5)
+            self.text_animation_enabled = True
+
+    def disable_progress_animation(self):
+        Clock.unschedule(self.do_progress_animation)
+        self.text_animation_enabled = False
+        self.text = self.last_text
+
+    def do_progress_animation(self, dt):
+        st = self.animation_states.pop()
+        self.text = self.last_text + st
+        self.animation_states.insert(0, st)

@@ -276,7 +276,7 @@ class TorrentSyncer(object):
         4. Check if files have the right size and modification time (very quick)
         5. Check if there are no superfluous files in the directory (very quick)"""
 
-        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
+        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.foldername))
 
         # (1) Check if metadata can be opened
         try:
@@ -359,7 +359,7 @@ class TorrentSyncer(object):
 
 
         ### Metadata handling
-        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.name))
+        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.foldername))
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
         metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
@@ -405,7 +405,7 @@ class TorrentSyncer(object):
             download_fraction = s.progress
             download_kbs = s.download_rate / 1024
 
-            self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.name, str(s.state), download_fraction * 100.0),
+            self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.foldername, str(s.state), download_fraction * 100.0),
                                         'log': self.get_session_logs(),
                                        }, download_fraction)
 
@@ -423,7 +423,7 @@ class TorrentSyncer(object):
         #print torrent_handle.get_torrent_info()
         # Download finished. Performing housekeeping
         download_fraction = 1.0
-        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.name, torrent_handle.status().state),
+        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.foldername, torrent_handle.status().state),
                                     'log': self.get_session_logs(),
                                    }, download_fraction)
 
@@ -446,12 +446,12 @@ class TorrentSyncer(object):
         metadata_file.set_torrent_content(bencoded_recreated_torrent)
 
         if not cleanup_successful:
-            print "Could not perform mod {} cleanup. Marking torrent as dirty.".format(self.mod.name)
+            print "Could not perform mod {} cleanup. Marking torrent as dirty.".format(self.mod.foldername)
             metadata_file.set_dirty(True)
             metadata_file.write_data()
 
             self.result_queue.reject({'msg': 'Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
-                                             .format(self.mod.name)})
+                                             .format(self.mod.foldername)})
         else:
             metadata_file.set_version(self.mod.version)
             metadata_file.set_dirty(False)
