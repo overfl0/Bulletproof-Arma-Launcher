@@ -460,10 +460,10 @@ class TorrentSyncer(object):
 
 if __name__ == '__main__':
     class DummyMod:
-        downloadurl = "https://archive.org/download/DebussyPrelduesBookI/DebussyPrelduesBookI_archive.torrent"
+        downloadurl = "http://archive.org/download/DebussyPrelduesBookI/DebussyPrelduesBookI_archive.torrent"
         #downloadurl = "file://test.torrent"
         clientlocation = ""
-        name = "DebussyPrelduesBookI"
+        foldername = "DebussyPrelduesBookI"
         version = "123"
 
     class DummyQueue:
