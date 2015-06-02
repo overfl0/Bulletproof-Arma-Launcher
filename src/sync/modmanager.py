@@ -150,7 +150,9 @@ def _sync_all(messagequeue, launcher_moddir, mods):
         m.clientlocation = launcher_moddir
 
         syncer = TorrentSyncer(messagequeue, m)
-        syncer.sync(force_sync=True)  # Use force_sync to force full recheck of all the files' checksums
+        # Alpha version: do not force sync. Let's try to do this the right way.
+        # Forcing should be at an explicit request of the user
+        syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
     messagequeue.resolve({'msg': 'Downloading mods finished.'})
 
