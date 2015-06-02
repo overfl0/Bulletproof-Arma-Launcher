@@ -44,4 +44,5 @@ class Controller(object):
         self.view = widget
 
     def on_testpopupbutton_release(self, btn):
+        return  # Disable this for the alpha release
         raise TestError('This is an test error')
