@@ -39,13 +39,14 @@ class Mod(object):
         torrent_timestamp = d.get('torrent-timestamp', "")
         name = d.get('name', "Unknown Mod")
         foldername = d.get('foldername', "@Unknown")
+        downloadurl = d.get('downloadurl', "")
 
         m = Mod(foldername=foldername, torrent_timestamp=torrent_timestamp,
-                name=name)
+                name=name, downloadurl=downloadurl)
         return m
 
     def __repr__(self):
-        s = '[Mod: {} -- utcts: {} -- {}]'.format(self.foldername,
-                self.torrent_timestamp, self.name)
+        s = '[Mod: {} -- utcts: {} -- {} -- durl: {}]'.format(self.foldername,
+                self.torrent_timestamp, self.name, self.downloadurl)
 
         return s

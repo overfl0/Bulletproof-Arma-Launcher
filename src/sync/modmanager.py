@@ -47,8 +47,12 @@ def get_mod_descriptions(messagequeue):
     this function is ment be used threaded or multiprocesses, you have
     to pass in a queue
     """
+    downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
+
+
     messagequeue.progress({'msg': 'Downloading mod descriptions'})
-    url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
+    url = 'http://91.121.120.221/tacbf/updater/metadata.json'
+    #url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
     res = requests.get(url, verify=False)
     data = None
 
@@ -66,8 +70,12 @@ def get_mod_descriptions(messagequeue):
             # parse timestamp
             tsstr = md.get('torrent-timestamp')
             md['torrent-timestamp'] = parse_timestamp(tsstr)
+            md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
+                md['foldername'], tsstr)
 
             mods.append(Mod.fromDict(md))
+
+            Logger.debug('ModManager: Got mod description: ' + repr(md))
 
         messagequeue.progress({'msg': 'Downloading mod descriptions finished', 'mods': mods})
 
@@ -110,29 +118,32 @@ def _prepare_and_check(messagequeue):
 
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
 
-def _sync_all(messagequeue, launcher_moddir):
+def _sync_all(messagequeue, launcher_moddir, mods):
     # WARNING: This methods gets called in a diffrent process
 
     # TODO: Sync via libtorrent
     # The following is just test code
 
-    cba_mod = Mod(
-        foldername='@CBA_A3',
-        clientlocation=launcher_moddir,
-        synctype='http',
-        downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
+    # cba_mod = Mod(
+    #     foldername='@CBA_A3',
+    #     clientlocation=launcher_moddir,
+    #     synctype='http',
+    #     downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
+    #
+    # cba_syncer = HttpSyncer(messagequeue, cba_mod)
+    # cba_syncer.sync()
 
-    cba_syncer = HttpSyncer(messagequeue, cba_mod)
-    cba_syncer.sync()
+    # debussy_mod = Mod(
+    #     foldername='@debussybattle',  # The mod name MUST match directory name!
+    #     clientlocation=launcher_moddir,
+    #     synctype='torrent',
+    #     downloadurl='file://' + BaseApp.resource_path('debussy.torrent'))
 
-    debussy_mod = Mod(
-        foldername='@debussybattle',  # The mod name MUST match directory name!
-        clientlocation=launcher_moddir,
-        synctype='torrent',
-        downloadurl='file://' + BaseApp.resource_path('debussy.torrent'))
+    for m in mods:
+        m.clientlocation = launcher_moddir
 
-    debussy_syncer = TorrentSyncer(messagequeue, debussy_mod)
-    debussy_syncer.sync(force_sync=True)  # Use force_sync to force full recheck of all the files' checksums
+        syncer = TorrentSyncer(messagequeue, m)
+        syncer.sync(force_sync=True)  # Use force_sync to force full recheck of all the files' checksums
 
     messagequeue.resolve({'msg': 'Downloading mods finished.'})
 
@@ -144,17 +155,25 @@ class ModManager(object):
         super(ModManager, self).__init__()
         self.para = None
         self.sync_para = None
+        self.mods = None
         self.settings = kivy.app.App.get_running_app().settings
 
     def prepare_and_check(self):
         self.para = Para(_prepare_and_check, (), 'checkmods')
+        self.para.then(self.on_prepare_and_check_resolve, None, None)
         self.para.run()
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_sync_all, (self.settings.get_launcher_moddir(),), 'sync')
+        self.sync_para = Para(_sync_all,
+            (self.settings.get_launcher_moddir(), self.mods), 'sync')
         self.sync_para.run()
         return self.sync_para
+
+    def on_prepare_and_check_resolve(self, data):
+        Logger.info('ModManager: Got mods ' + repr(data['mods']))
+        self.mods = data['mods']
+
 
 if __name__ == '__main__':
     pass

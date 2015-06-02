@@ -53,6 +53,7 @@ class Controller(object):
         self.view = widget
         self.mod_manager = ModManager()
         self.loading_gif = None
+        self.mods = None
 
         # download mod description
         self.para = self.mod_manager.prepare_and_check()
@@ -89,7 +90,9 @@ class Controller(object):
 
         Logger.debug('InstallScreen: got mods:')
         for mod in progress['mods']:
-            Logger.debug('InstallScreen: {}'.format(mod))
+            Logger.info('InstallScreen: {}'.format(mod))
+
+        self.mods = progress['mods']
 
 
     def on_sync_progress(self, progress, percentage):
