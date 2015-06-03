@@ -63,7 +63,11 @@ def get_mod_descriptions(messagequeue):
                           'progress': 0.0, 'kbpersec': 0.0,})
         return
     else:
-        data = res.json()
+        try:
+            data = res.json()
+        except ValueError as e:
+            Logger.error('ModManager: Failed to parse moddescription json!')
+            return []
 
         for md in data['mods']:
 

@@ -13,8 +13,10 @@ import time
 
 from kivy.uix.widget import Widget
 from kivy.logger import Logger
+from kivy.clock import Clock
 
 from view.errorpopup import ErrorPopup
+from gui.alphanotification import AlphaNotification
 
 class TestError(Exception):
     def __init__(self, msg):
@@ -43,5 +45,13 @@ class Controller(object):
         super(Controller, self).__init__()
         self.view = widget
 
+        # this effectivly calls on_next_frame, when the view is ready
+        Clock.schedule_once(self.on_next_frame, 0)
+
     def on_testpopupbutton_release(self, btn):
         raise TestError('This is an test error')
+
+    def on_next_frame(self, dt):
+        a = AlphaNotification()
+        Logger.info('MainWidget: running alphapopup')
+        a.open()
