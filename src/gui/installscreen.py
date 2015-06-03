@@ -57,6 +57,7 @@ class Controller(object):
 
         # status flag whenever a sync was resolved
         self.sync_resolved = False
+        self.sync_rejected = False
 
         # download mod description
         self.para = self.mod_manager.prepare_and_check()
@@ -77,12 +78,12 @@ class Controller(object):
         # do nothing if sync was already resolved
         # this is a workaround because event is not unbindable, see
         # https://github.com/kivy/kivy/issues/903
-        if self.sync_resolved == True:
+        if (self.sync_resolved or self.sync_rejected) == True:
             return
 
         self.view.ids.install_button.disabled = True
         self.para = self.mod_manager.sync_all()
-        self.para.then(self.on_sync_resolve, None, self.on_sync_progress)
+        self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
         self.view.ids.install_button.enable_progress_animation()
 
     def on_checkmods_progress(self, progress, speed):
@@ -114,6 +115,19 @@ class Controller(object):
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
         self.sync_resolved = True
+        self.view.ids.install_button.disabled = False
+        self.view.ids.status_image.hidden = True
+        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()
+
+        # switch to play button and diffrent handler
+        self.view.ids.install_button.text = 'Play!'
+        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
+
+    def on_sync_reject(self, progress):
+        Logger.info('InstallScreen: syncing failed')
+        self.sync_rejected = True
+
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
