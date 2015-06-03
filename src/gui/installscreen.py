@@ -24,6 +24,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.logger import Logger
 
+from view.errorpopup import ErrorPopup
 from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
@@ -61,7 +62,8 @@ class Controller(object):
 
         # download mod description
         self.para = self.mod_manager.prepare_and_check()
-        self.para.then(self.on_checkmods_resolve, None, self.on_checkmods_progress)
+        self.para.then(self.on_checkmods_resolve, self.on_checkmods_reject,
+            self.on_checkmods_progress)
 
         Clock.schedule_interval(self.check_install_button, 0)
 
@@ -104,6 +106,15 @@ class Controller(object):
 
         self.mods = progress['mods']
 
+    def on_checkmods_reject(self, progress):
+        self.view.ids.install_button.disabled = False
+        self.view.ids.status_image.hidden = True
+        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.install_button.text = 'Play!'
+
+        ep = ErrorPopup(stacktrace=progress['msg'])
+        ep.open()
 
     def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
@@ -136,6 +147,9 @@ class Controller(object):
         # switch to play button and diffrent handler
         self.view.ids.install_button.text = 'Play!'
         self.view.ids.install_button.bind(on_release=self.on_play_button_release)
+
+        ep = ErrorPopup(stacktrace=progress['msg'])
+        ep.open()
 
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')

@@ -13,6 +13,9 @@
 import multiprocessing
 from multiprocessing import Queue
 import os
+import json
+import traceback
+import sys
 
 from datetime import datetime
 
@@ -67,7 +70,9 @@ def get_mod_descriptions(messagequeue):
             data = res.json()
         except ValueError as e:
             Logger.error('ModManager: Failed to parse moddescription json!')
-            return []
+            stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+            messagequeue.reject({'msg': '{}\n\n{}'.format(
+                'Mod descriptions could not be parsed', stacktrace)})
 
         for md in data['mods']:
 
