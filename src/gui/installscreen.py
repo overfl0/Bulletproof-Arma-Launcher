@@ -28,8 +28,10 @@ from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
+from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
+
 
 class InstallScreen(Screen):
     """
@@ -60,6 +62,12 @@ class Controller(object):
         self.para.then(self.on_checkmods_resolve, None, self.on_checkmods_progress)
 
         Clock.schedule_interval(self.check_install_button, 0)
+        Clock.schedule_once(self.update_footer_label, 0)
+
+    def update_footer_label(self, dt):
+        git_sha1 = get_git_sha1_auto()
+        footer_text = 'Build: {}'.format(git_sha1[:10] if git_sha1 else 'N/A')
+        self.view.ids.footer_label.text = footer_text
 
     def check_install_button(self, dt):
         if 'install_button' in self.view.ids:
