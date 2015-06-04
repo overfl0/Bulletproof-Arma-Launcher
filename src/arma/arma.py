@@ -118,8 +118,10 @@ class Arma(object):
         if custom_args:
             game_args.extend(custom_args)
 
+        print game_args
         popen_object = subprocess.Popen(game_args)  # May raise OSError
 
+        return popen_object
 
 if __name__ == "__main__":
     pass

@@ -18,6 +18,7 @@ from time import sleep
 
 import requests
 import kivy
+from arma.arma import Arma
 from gui.messagebox import MessageBox
 
 from kivy.clock import Clock
@@ -60,6 +61,8 @@ class Controller(object):
         self.loading_gif = None
         self.mods = None
 
+        self.arma_executable_object = None
+
         # status flag whenever a sync was resolved
         self.sync_resolved = False
         self.sync_rejected = False
@@ -71,6 +74,20 @@ class Controller(object):
 
         Clock.schedule_interval(self.check_install_button, 0)
         Clock.schedule_once(self.update_footer_label, 0)
+        Clock.schedule_interval(self.check_play_button, 1)
+
+    def check_play_button(self, dt):
+        if self.arma_executable_object is None:
+            return
+
+        returncode = self.arma_executable_object.poll()
+        if returncode is None:  # The game has not terminated yet
+            return
+
+        print 'Arma has terminated with code: {}'.format(returncode)
+        # Allow the game to be run once again.
+        self.view.ids.install_button.disabled = False
+        self.arma_executable_object = None
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
@@ -158,7 +175,7 @@ and:
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
 
-        # switch to play button and diffrent handler
+        # switch to play button and different handler
         self.view.ids.install_button.text = 'Play!'
         self.view.ids.install_button.bind(on_release=self.on_play_button_release)
 
@@ -180,3 +197,15 @@ and:
 
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')
+
+        # TODO: Move all this logic somewhere else
+        settings = kivy.app.App.get_running_app().settings
+        mod_dir = settings.get_launcher_moddir()  # Why from there? This should be in mod.clientlocation but it isn't!
+
+        mods_paths = []
+        for mod in self.mods:
+            mod_full_path = os.path.join(mod_dir, mod.foldername)
+            mods_paths.append(mod_full_path)
+
+        self.arma_executable_object = Arma.run_game(mod_list=mods_paths)
+        self.view.ids.install_button.disabled = True
