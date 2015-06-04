@@ -52,6 +52,8 @@ class Controller(object):
         raise TestError('This is an test error')
 
     def on_next_frame(self, dt):
-        a = AlphaNotification()
-        Logger.info('MainWidget: running alphapopup')
-        a.open()
+        # Only show the notification in alpha branch
+        # a = AlphaNotification()
+        # Logger.info('MainWidget: running alphapopup')
+        # a.open()
+        pass
