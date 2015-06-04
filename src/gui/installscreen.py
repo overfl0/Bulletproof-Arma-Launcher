@@ -18,7 +18,7 @@ from time import sleep
 
 import requests
 import kivy
-from arma.arma import Arma
+from arma.arma import Arma, ArmaNotInstalled
 from gui.messagebox import MessageBox
 
 from kivy.clock import Clock
@@ -207,5 +207,11 @@ and:
             mod_full_path = os.path.join(mod_dir, mod.foldername)
             mods_paths.append(mod_full_path)
 
-        self.arma_executable_object = Arma.run_game(mod_list=mods_paths)
+        try:
+            self.arma_executable_object = Arma.run_game(mod_list=mods_paths)
+        except ArmaNotInstalled:
+            text = "Arma 3 does not seem to be installed."
+            no_arma_info = MessageBox(text, title='Arma not installed!')
+            no_arma_info.open()
+
         self.view.ids.install_button.disabled = True
