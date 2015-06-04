@@ -23,13 +23,15 @@ import kivy
 from kivy.logger import Logger
 import requests
 
+from arma.arma import Arma, ArmaNotInstalled
+from utils.app import BaseApp
+from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
-from utils.app import BaseApp
 from sync.httpsyncer import HttpSyncer
-from sync.torrentsyncer import TorrentSyncer
 from sync.mod import Mod
-from arma.arma import Arma, ArmaNotInstalled
+from sync.torrentsyncer import TorrentSyncer
+
 
 def parse_timestamp(ts):
     """
@@ -116,7 +118,7 @@ def _check_already_installed_with_six(mod):
 
 
 def _prepare_and_check(messagequeue):
-    # WARNING: This methods gets called in a diffrent process
+    # WARNING: This methods gets called in a different process
     #          self is not what you think it is
 
     # download mod descriptions first
@@ -136,11 +138,9 @@ def _prepare_and_check(messagequeue):
 
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
 
-def _sync_all(messagequeue, launcher_moddir, mods):
-    # WARNING: This methods gets called in a diffrent process
 
-    # TODO: Sync via libtorrent
-    # The following is just test code
+def _sync_all(messagequeue, launcher_moddir, mods):
+    # WARNING: This methods gets called in a different process
 
     # cba_mod = Mod(
     #     foldername='@CBA_A3',
@@ -165,9 +165,21 @@ def _sync_all(messagequeue, launcher_moddir, mods):
         # Forcing should be at an explicit request of the user
         syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
+        messagequeue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
+                               'workaround_finished': m.foldername}, 1.0)
+
     messagequeue.resolve({'msg': 'Downloading mods finished.'})
 
-    return
+
+def _protected_call(messagequeue, function, *args, **kwargs):
+    try:
+        return function(messagequeue, *args, **kwargs)
+    except Exception as e:
+        import traceback
+        stacktrace = traceback.format_exc()
+        error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
+        messagequeue.reject({'msg': error})
+
 
 class ModManager(object):
     """docstring for ModManager"""
@@ -179,14 +191,14 @@ class ModManager(object):
         self.settings = kivy.app.App.get_running_app().settings
 
     def prepare_and_check(self):
-        self.para = Para(_prepare_and_check, (), 'checkmods')
+        self.para = Para(_protected_call, (_prepare_and_check,), 'checkmods')
         self.para.then(self.on_prepare_and_check_resolve, None, None)
         self.para.run()
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_sync_all,
-            (self.settings.get_launcher_moddir(), self.mods), 'sync')
+        self.sync_para = Para(_protected_call,
+            (_sync_all, self.settings.get_launcher_moddir(), self.mods), 'sync')
         self.sync_para.run()
         return self.sync_para
 
