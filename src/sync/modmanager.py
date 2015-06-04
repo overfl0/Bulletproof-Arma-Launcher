@@ -13,6 +13,9 @@
 import multiprocessing
 from multiprocessing import Queue
 import os
+import json
+import traceback
+import sys
 
 from datetime import datetime
 
@@ -40,7 +43,7 @@ def parse_timestamp(ts):
     return datetime.utcfromtimestamp(float(stamp))
 
 
-def get_mod_descriptions(messagequeue):
+def get_mod_descriptions(para):
     """
     helper function to get the moddescriptions from the server
 
@@ -50,7 +53,7 @@ def get_mod_descriptions(messagequeue):
     downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
 
 
-    messagequeue.progress({'msg': 'Downloading mod descriptions'})
+    para.progress({'msg': 'Downloading mod descriptions'})
     url = 'http://91.121.120.221/tacbf/updater/metadata.json'
     #url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
     res = requests.get(url, verify=False)
@@ -59,16 +62,24 @@ def get_mod_descriptions(messagequeue):
     mods = []
 
     if res.status_code != 200:
-        messagequeue.put({'action': 'moddescdownload', 'status': 'failed',
-                          'progress': 0.0, 'kbpersec': 0.0,})
-        return
+        para.reject({'msg': '{}\n{}\n\n{}'.format(
+            'Moddescriptions could not be received from the server',
+            'Status Code: ' + str(res.status_code), res.text)})
     else:
-        data = res.json()
+        try:
+            data = res.json()
+        except ValueError as e:
+            Logger.error('ModManager: Failed to parse moddescription json!')
+            stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+            para.reject({'msg': '{}\n\n{}'.format(
+                'Mod descriptions could not be parsed', stacktrace)})
+
         # Temporary! Ensure alpha version is correct
         if data.get('alpha') != "1":
-            Logger.error('This launcher is out of date! You won\'t be able do download mods until you update to the latest version!')
-            messagequeue.progress({'msg': 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'})
-            return None
+            error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
+            Logger.error(error_message)
+            para.reject({'msg': error_message})
+            return []
 
         for md in data['mods']:
 
@@ -82,7 +93,7 @@ def get_mod_descriptions(messagequeue):
 
             Logger.debug('ModManager: Got mod description: ' + repr(md))
 
-        messagequeue.progress({'msg': 'Downloading mod descriptions finished', 'mods': mods})
+        para.progress({'msg': 'Downloading mod descriptions finished', 'mods': mods})
 
     return mods
 

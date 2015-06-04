@@ -24,12 +24,15 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.logger import Logger
 
+from view.errorpopup import ErrorPopup
 from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
+from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
+
 
 class InstallScreen(Screen):
     """
@@ -55,11 +58,22 @@ class Controller(object):
         self.loading_gif = None
         self.mods = None
 
+        # status flag whenever a sync was resolved
+        self.sync_resolved = False
+        self.sync_rejected = False
+
         # download mod description
         self.para = self.mod_manager.prepare_and_check()
-        self.para.then(self.on_checkmods_resolve, None, self.on_checkmods_progress)
+        self.para.then(self.on_checkmods_resolve, self.on_checkmods_reject,
+            self.on_checkmods_progress)
 
         Clock.schedule_interval(self.check_install_button, 0)
+        Clock.schedule_once(self.update_footer_label, 0)
+
+    def update_footer_label(self, dt):
+        git_sha1 = get_git_sha1_auto()
+        footer_text = 'Build: {}'.format(git_sha1[:10] if git_sha1 else 'N/A')
+        self.view.ids.footer_label.text = footer_text
 
     def check_install_button(self, dt):
         if 'install_button' in self.view.ids:
@@ -71,9 +85,15 @@ class Controller(object):
         self.view.ids.install_button.enable_progress_animation()
 
     def on_install_button_release(self, btn):
+        # do nothing if sync was already resolved
+        # this is a workaround because event is not unbindable, see
+        # https://github.com/kivy/kivy/issues/903
+        if (self.sync_resolved or self.sync_rejected) == True:
+            return
+
         self.view.ids.install_button.disabled = True
         self.para = self.mod_manager.sync_all()
-        self.para.then(self.on_sync_resolve, None, self.on_sync_progress)
+        self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
         self.view.ids.install_button.enable_progress_animation()
 
     def on_checkmods_progress(self, progress, speed):
@@ -94,6 +114,15 @@ class Controller(object):
 
         self.mods = progress['mods']
 
+    def on_checkmods_reject(self, progress):
+        self.view.ids.install_button.disabled = False
+        self.view.ids.status_image.hidden = True
+        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.install_button.text = 'Play!'
+
+        ep = ErrorPopup(stacktrace=progress['msg'])
+        ep.open()
 
     def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
@@ -103,8 +132,32 @@ class Controller(object):
         self.view.ids.progress_bar.value = percentage * 100
 
     def on_sync_resolve(self, progress):
-        Logger.debug('InstallScreen: syncing finished')
+        Logger.info('InstallScreen: syncing finished')
+        self.sync_resolved = True
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
+
+        # switch to play button and diffrent handler
+        self.view.ids.install_button.text = 'Play!'
+        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
+
+    def on_sync_reject(self, progress):
+        Logger.info('InstallScreen: syncing failed')
+        self.sync_rejected = True
+
+        self.view.ids.install_button.disabled = False
+        self.view.ids.status_image.hidden = True
+        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.install_button.disable_progress_animation()
+
+        # switch to play button and diffrent handler
+        self.view.ids.install_button.text = 'Play!'
+        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
+
+        ep = ErrorPopup(stacktrace=progress['msg'])
+        ep.open()
+
+    def on_play_button_release(self, btn):
+        Logger.info('InstallScreen: User hit play')
