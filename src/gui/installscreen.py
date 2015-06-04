@@ -161,7 +161,7 @@ To finish the installation of TFR, you need to go to:
 C:\Users\<user>\Documents\TacBF Launcher\mods\@task_force_radio
 
 and:
-1) Copy the TeamSpeak3 Client\plugins files to your Teamspeak directory.
+1) Copy the TeamSpeak3 Client\plugins directory to your Teamspeak directory.
 2) Enable the TFR plugin in Settings->Plugins in Teamspeak."""
 
             tfr_info = MessageBox(text, title='Action required!')
