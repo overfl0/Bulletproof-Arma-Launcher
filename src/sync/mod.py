@@ -21,7 +21,8 @@ class Mod(object):
             downloadurl=None,
             torrent_timestamp="",
             name="",
-            version=""):
+            version="",
+            up_to_date=False):
         super(Mod, self).__init__()
 
         self.clientlocation = clientlocation
@@ -31,6 +32,7 @@ class Mod(object):
         self.torrent_timestamp = torrent_timestamp
         self.name = name
         self.version = version
+        self.up_to_date = up_to_date
 
     @classmethod
     def fromDict(cls, d):
