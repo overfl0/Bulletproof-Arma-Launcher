@@ -74,5 +74,5 @@ https://bitbucket.org/sighter/tacbf-launcher/issues
 
         alpha_title = 'Tactical Battlefield Mod launcher (Alpha)'
         alpha_box = MessageBox(text=alpha_text, title=alpha_title)
-        # Logger.info('MainWidget: opening alpha popup')
-        # alpha_box.open()
+        Logger.info('MainWidget: opening alpha popup')
+        alpha_box.open()
