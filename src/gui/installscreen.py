@@ -18,6 +18,8 @@ from time import sleep
 
 import requests
 import kivy
+from gui.messagebox import MessageBox
+
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -130,6 +132,23 @@ class Controller(object):
         self.view.ids.status_image.hidden = False
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
+
+        # This should be removed and reimplemented once the ParaAll is implemented
+        finished = progress.get('workaround_finished')
+        if finished == '@task_force_radio':
+            text = """Task Force Arrowhead Radio has been downloaded or updated.
+
+Automatic installation of TFR is not yet implemented.
+To finish the installation of TFR, you need to go to:
+
+C:\Users\<user>\Documents\TacBF Launcher\mods\@task_force_radio
+
+and:
+1) Copy the TeamSpeak3 Client\plugins files to your Teamspeak directory.
+2) Enable the TFR plugin in Settings->Plugins in Teamspeak."""
+
+            tfr_info = MessageBox(text, title='Action required!')
+            tfr_info.open()
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
