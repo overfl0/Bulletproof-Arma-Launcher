@@ -91,7 +91,9 @@ class Controller(object):
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
-        footer_text = 'Build: {}'.format(git_sha1[:10] if git_sha1 else 'N/A')
+        version = 'Alpha 1'
+        footer_text = '{}\nBuild: {}'.format(version,
+                                             git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
 
     def check_install_button(self, dt):
