@@ -425,7 +425,7 @@ class TorrentSyncer(object):
 
         if s.error:
             self.result_queue.reject({'msg': 'An error occured: {}'.format(s.error)})
-            return
+            return False
 
         #print torrent_handle.get_torrent_info()
         # Download finished. Performing housekeeping
@@ -459,10 +459,13 @@ class TorrentSyncer(object):
 
             self.result_queue.reject({'msg': 'Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
                                              .format(self.mod.foldername)})
+            return False
         else:
             metadata_file.set_version(self.mod.version)
             metadata_file.set_dirty(False)
             metadata_file.write_data()
+
+        return True
 
 
 if __name__ == '__main__':
