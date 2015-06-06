@@ -161,7 +161,7 @@ def _sync_all(messagequeue, launcher_moddir, mods):
         m.clientlocation = launcher_moddir  # This change does NOT persist in the main launcher (would be nice :()
 
         syncer = TorrentSyncer(messagequeue, m)
-        syncer.sync(force_sync=True)  # Use force_sync to force full recheck of all the files' checksums
+        syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
         messagequeue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
                                'workaround_finished': m.foldername}, 1.0)
