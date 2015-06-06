@@ -272,6 +272,7 @@ class TorrentSyncer(object):
 
         return True
 
+    # TODO: Make this a static function
     def is_complete_quick(self):
         """Performs a quick check to see if the mod *seems* to be correctly installed.
         This check assumes no external changes have been made to the mods.

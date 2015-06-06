@@ -210,7 +210,7 @@ class Para(object):
         p = Process(target=self.func, args=(self.messagequeue,) + self.args)
         p.start()
         self.current_child_process = p
-        Clock.schedule_interval(self.handle_messagequeue, 1.0)
+        Clock.schedule_interval(self.handle_messagequeue, 0.5)
 
     def handle_messagequeue(self, dt):
         con = self.parent_conn
