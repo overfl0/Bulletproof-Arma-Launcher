@@ -65,16 +65,16 @@ def get_mod_descriptions(para, launcher_moddir):
 
     if res.status_code != 200:
         para.reject({'msg': '{}\n{}\n\n{}'.format(
-            'Moddescriptions could not be received from the server',
+            'Mods descriptions could not be received from the server',
             'Status Code: ' + str(res.status_code), res.text)})
     else:
         try:
             data = res.json()
         except ValueError as e:
-            Logger.error('ModManager: Failed to parse moddescription json!')
+            Logger.error('ModManager: Failed to parse mods descriptions json!')
             stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
             para.reject({'msg': '{}\n\n{}'.format(
-                'Mod descriptions could not be parsed', stacktrace)})
+                'Mods descriptions could not be parsed', stacktrace)})
 
         for md in data['mods']:
 
@@ -88,9 +88,9 @@ def get_mod_descriptions(para, launcher_moddir):
             mod.clientlocation = launcher_moddir
             mods.append(mod)
 
-            Logger.debug('ModManager: Got mod description: ' + repr(md))
+            Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
 
-        para.progress({'msg': 'Downloading mod descriptions finished', 'mods': mods})
+        para.progress({'msg': 'Downloading mods descriptions finished', 'mods': mods})
 
     return mods
 
@@ -206,13 +206,13 @@ class ModManager(object):
         self.mods = data['mods']
 
     def on_sync_all_progress(self, data, progress):
-        Logger.info('ModManager: ### Sync progress ' + repr(data))
+        Logger.debug('ModManager: Sync progress ' + repr(data))
         # Todo: modlist could be a class of its own
 
-        mod_syncronised = data.get('workaround_finished')
-        if mod_syncronised:
+        mod_synchronised = data.get('workaround_finished')
+        if mod_synchronised:
             for mod in self.mods:
-                if mod.foldername == mod_syncronised:
+                if mod.foldername == mod_synchronised:
                     mod.up_to_date = True
 
 

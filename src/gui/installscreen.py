@@ -63,9 +63,8 @@ class Controller(object):
 
         self.arma_executable_object = None
 
-        # status flag whenever a sync was resolved
-        self.sync_resolved = False
-        self.sync_rejected = False
+        # TODO: Maybe transform this into a state
+        self.play_button_shown = False
 
         # download mod description
         self.para = self.mod_manager.prepare_and_check()
@@ -74,9 +73,11 @@ class Controller(object):
 
         Clock.schedule_interval(self.check_install_button, 0)
         Clock.schedule_once(self.update_footer_label, 0)
-        Clock.schedule_interval(self.check_play_button, 1)
+        Clock.schedule_interval(self.try_reenable_play_button, 1)
 
-    def check_play_button(self, dt):
+    def try_reenable_play_button(self, dt):
+        """This function first checks if a game process had been run. Then it checks
+        if that process did terminate. If it did, the play button is reenabled"""
         if self.arma_executable_object is None:
             return
 
@@ -101,6 +102,20 @@ class Controller(object):
             self.on_install_button_ready()
             return False
 
+    def try_enable_play_button(self):
+        if not self.mods:
+            return
+
+        for mod in self.mods:
+            if not mod.up_to_date:
+                return
+
+        # switch to play button and a different handler
+        self.view.ids.install_button.text = 'Play!'
+        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
+        self.view.ids.install_button.disabled = False
+        self.play_button_shown = True
+
     def on_install_button_ready(self):
         self.view.ids.install_button.text = 'Checking'
         self.view.ids.install_button.enable_progress_animation()
@@ -109,7 +124,7 @@ class Controller(object):
         # do nothing if sync was already resolved
         # this is a workaround because event is not unbindable, see
         # https://github.com/kivy/kivy/issues/903
-        if (self.sync_resolved or self.sync_rejected) == True:
+        if self.play_button_shown:
             return
 
         self.view.ids.install_button.disabled = True
@@ -134,13 +149,15 @@ class Controller(object):
             Logger.info('InstallScreen: {}'.format(mod))
 
         self.mods = progress['mods']
+        self.try_enable_play_button()
 
     def on_checkmods_reject(self, progress):
-        self.view.ids.install_button.disabled = False
+        #self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
-        self.view.ids.install_button.text = 'Play!'
+
+        self.try_enable_play_button()
 
         ep = ErrorPopup(stacktrace=progress['msg'])
         ep.open()
@@ -171,28 +188,22 @@ and:
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
-        self.sync_resolved = True
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
 
-        # switch to play button and different handler
-        self.view.ids.install_button.text = 'Play!'
-        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
+        self.try_enable_play_button()
 
     def on_sync_reject(self, progress):
         Logger.info('InstallScreen: syncing failed')
-        self.sync_rejected = True
 
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
 
-        # switch to play button and diffrent handler
-        self.view.ids.install_button.text = 'Play!'
-        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
+        self.try_enable_play_button()
 
         ep = ErrorPopup(stacktrace=progress['msg'])
         ep.open()
