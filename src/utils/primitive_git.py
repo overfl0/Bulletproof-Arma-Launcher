@@ -48,7 +48,8 @@ def get_git_sha1_auto():
 def save_git_sha1_to_file(git_controlled_directory, dump_file):
     """Dump the sha1 to a file that can then be used when wrapped by pyinstaller"""
     sha1 = get_sha1_from_git_controlled(git_controlled_directory)
-    os.unlink(dump_file)  # Make sure the file does not contain old data! Failure in unlinking should be visible!
+    if os.path.exists(dump_file):
+        os.unlink(dump_file)  # Make sure the file does not contain old data! Failure in unlinking should be visible!
 
     try:
         f = None
