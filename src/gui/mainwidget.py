@@ -65,7 +65,7 @@ something go awry.
 If you do not meet the above criterion, stop using this launcher now!
 
 Don't forget to report bugs at http://tacbf.com or at
-https://bitbucket.org/sighter/tacbf-launcher/issues
+https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues
 
 
                                                                                -- The TacBF launcher team
