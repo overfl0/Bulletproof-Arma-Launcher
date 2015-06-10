@@ -118,6 +118,9 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     # download mod descriptions first
     mod_list = get_mod_descriptions(messagequeue, launcher_moddir)
 
+    # DEBUG: Uncomment this to decrease the number of mods to download, for debugging
+    # mod_list = [mod for mod in mod_list if mod.name.startswith('Ta')]
+
     # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
     for m in mod_list:

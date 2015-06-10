@@ -61,9 +61,9 @@ class MetadataFile(object):
         """Open the file and write the contents of the internal data variable to the file"""
         self._create_missing_directories(os.path.dirname(self.get_file_name()))
 
-        #TODO: Dump to a string and then to the disk to prevent incomplete file on exception
+        json_string = json.dumps(self.data, encoding=MetadataFile._encoding, indent=2)
         with open(self.get_file_name(), 'wb') as file_handle:
-            json.dump(self.data, file_handle, encoding=MetadataFile._encoding, indent=2)
+            file_handle.write(json_string)
 
     def set_base64_key(self, key_name, value):
         self.data[key_name] = base64.b64encode(value)
