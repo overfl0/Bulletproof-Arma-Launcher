@@ -230,6 +230,12 @@ class Para(object):
             elif progress['status'] == 'reject':
                 self.lastdata = progress['data']
                 self._call_reject_handler(progress)
+        else:
+            if not self.current_child_process.is_alive():
+                message = '[{}] Child process terminated unexpectedly with code {}.'.format(
+                    self.action_name, self.current_child_process.exitcode)
+                self.lastdata = {'data': {'msg': message}}
+                self._call_reject_handler(self.lastdata)
 
 def catchstacktrace(func):
     def wrapper(con, *args, **kwargs):

@@ -35,7 +35,7 @@ class HoverButton(Button):
         self.bind(mouse_hover=self._on_mouse_hover)
 
         self.background_normal_orig = ''
-        self.last_text = None
+        self.last_text = ''
         self.animation_states = ['...', '..', '.', '']
         self.text_animation_enabled = False
 
