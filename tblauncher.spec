@@ -11,7 +11,7 @@ from kivy.tools.packaging.pyinstaller_hooks import install_hooks
 primitive_git.save_git_sha1_to_file('.', primitive_git.build_sha1_file)
 install_hooks(globals())
 
-a = Analysis(['src\\launcher.py'],
+a = Analysis(['src/launcher.py'],
              pathex=[''],
              hiddenimports=['concurrent', 'concurrent.futures'],
              runtime_hooks=None)
