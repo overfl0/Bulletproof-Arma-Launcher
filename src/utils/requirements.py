@@ -1,6 +1,19 @@
+# Tactical Battlefield Installer/Updater/Launcher
+# Copyright (C) 2015 TacBF Installer Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
 import sys
 import os.path
 
+from critical_messagebox import MessageBox
 from pkg_resources import require, \
                           DistributionNotFound, \
                           VersionConflict, \
@@ -53,14 +66,16 @@ def check_libraries_requirements(basedir):
         except Exception as ex:
             # Kivy raises an Exception with a not-so-nicely formatted message
             # Just print it and exit
-            print ex.message
+            MessageBox(ex.message, 'Error')
             sys.exit(1)
 
 
     except VersionConflict as ex:
-        print 'Wrong library version. Installed: {}. Required: {}'.format(ex.args[0], ex.args[1])
+        message = 'Wrong library version. Installed: {}. Required: {}'.format(ex.args[0], ex.args[1])
+        MessageBox(message, 'Error')
         sys.exit(1)
 
     except DistributionNotFound as ex:
-        print 'Missing python library. Required: {}'.format(ex.args[0])
+        message = 'Missing python library. Required: {}'.format(ex.args[0])
+        MessageBox(message, 'Error')
         sys.exit(1)
