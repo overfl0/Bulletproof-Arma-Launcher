@@ -76,6 +76,13 @@ def get_mod_descriptions(para, launcher_moddir):
             para.reject({'msg': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
+        # Temporary! Ensure alpha version is correct
+        if data.get('alpha') != "1":
+            error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
+            Logger.error(error_message)
+            para.reject({'msg': error_message})
+            return []
+
         for md in data['mods']:
 
             # parse timestamp

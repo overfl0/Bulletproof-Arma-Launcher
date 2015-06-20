@@ -50,6 +50,12 @@ class TorrentSyncer(object):
         """Perform the initialization of things that should be initialized once"""
         settings = libtorrent.session_settings()
         settings.user_agent = 'TacBF (libtorrent/{})'.format(libtorrent.version)
+        """When running on a network where the bandwidth is in such an abundance
+        that it's virtually infinite, this algorithm is no longer necessary, and
+        might even be harmful to throughput. It is adviced to experiment with the
+        session_setting::mixed_mode_algorithm, setting it to session_settings::prefer_tcp.
+        This setting entirely disables the balancing and unthrottles all connections."""
+        settings.mixed_mode_algorithm = 0
 
         self.session = libtorrent.session()
         self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.

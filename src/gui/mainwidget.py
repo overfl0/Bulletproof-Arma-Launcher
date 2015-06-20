@@ -49,6 +49,7 @@ class Controller(object):
         Clock.schedule_once(self.on_next_frame, 0)
 
     def on_testpopupbutton_release(self, btn):
+        return  # Disable this for the alpha release
         raise TestError('This is an test error')
 
     def on_next_frame(self, dt):
@@ -73,5 +74,5 @@ https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues
 
         alpha_title = 'Tactical Battlefield Mod launcher (Alpha)'
         alpha_box = MessageBox(text=alpha_text, title=alpha_title)
-        # Logger.info('MainWidget: opening alpha popup')
-        # alpha_box.open()
+        Logger.info('MainWidget: opening alpha popup')
+        alpha_box.open()
