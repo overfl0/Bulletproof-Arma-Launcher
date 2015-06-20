@@ -8,3 +8,4 @@ kivy.*
 tags
 DEV
 build.sha1
+no_alpha_popup

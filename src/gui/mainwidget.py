@@ -9,6 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+import os
 import time
 
 from kivy.uix.widget import Widget
@@ -17,6 +18,8 @@ from kivy.clock import Clock
 
 from view.errorpopup import ErrorPopup
 from gui.messagebox import MessageBox
+
+from utils import paths
 
 class TestError(Exception):
     def __init__(self, msg):
@@ -74,5 +77,8 @@ https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues
 
         alpha_title = 'Tactical Battlefield Mod launcher (Alpha)'
         alpha_box = MessageBox(text=alpha_text, title=alpha_title)
-        Logger.info('MainWidget: opening alpha popup')
-        alpha_box.open()
+
+        # Allow developers to silence the alpha popup by creating a 'no_alpha_popup' file in the base directory
+        if not os.path.exists(paths.get_base_path('no_alpha_popup')):
+            Logger.info('MainWidget: opening alpha popup')
+            alpha_box.open()
