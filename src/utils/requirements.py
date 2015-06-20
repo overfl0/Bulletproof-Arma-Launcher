@@ -18,21 +18,22 @@ from pkg_resources import require, \
                           DistributionNotFound, \
                           VersionConflict, \
                           parse_version
+from utils import paths
 
 libtorrent_least_required_version = '0.16.18'
 kivy_least_required_version = '1.8.0'
 
-def check_libraries_requirements(basedir):
+def check_libraries_requirements():
     """Check if the required dependencies are met.
     Calling this function at the program start will allow the program to terminate
     gracefully in case of an unmet dependency instead of crashing while performing
     important tasks."""
-    file_path = os.path.join(basedir, 'requirements.txt')
+    file_path = paths.get_base_path('requirements.txt')
 
     try:
         # TODO: pkg_resources does not seem to work in a PyInstaller bundle.
         # Skip the check if we are running in a |PyInstaller| bundle. Assume everything is all right.
-        if not getattr(sys, 'frozen', False):
+        if not paths.is_pyinstaller_bundle():
             with file(file_path) as req_file:
                 requirements = req_file.readlines()
                 require(requirements)

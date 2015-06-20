@@ -22,7 +22,7 @@ from utils.requirements import check_libraries_requirements
 #
 if __name__ == "__main__":
     # Enforce all requirements so that the program doesn't crash in the middle of execution.
-    check_libraries_requirements(basedir=os.path.dirname(os.path.dirname(__file__)))
+    check_libraries_requirements()
 
     # import multiprocessing and enable freeze_support which is neeeded on win
     import multiprocessing

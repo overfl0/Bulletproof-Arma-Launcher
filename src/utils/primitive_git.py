@@ -1,3 +1,4 @@
+import paths
 import os
 import sys
 
@@ -39,11 +40,10 @@ def get_git_sha1_auto():
     This works both in normal mode and in pyinstaller-wrapped mode.
     Returns a string with the sha1 or None if the sha1 was impossible to be found.
     """
-    if hasattr(sys, "_MEIPASS"):  # PyInstaller
-        return get_sha1_from_file(sys._MEIPASS, build_sha1_file)
+    if paths.is_pyinstaller_bundle():
+        return get_sha1_from_file(paths.get_base_path(), build_sha1_file)
 
-    base_dir = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
-    return get_sha1_from_git_controlled(base_dir)
+    return get_sha1_from_git_controlled(paths.get_base_path())
 
 def save_git_sha1_to_file(git_controlled_directory, dump_file):
     """Dump the sha1 to a file that can then be used when wrapped by pyinstaller"""
