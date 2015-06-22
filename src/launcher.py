@@ -79,7 +79,7 @@ if __name__ == "__main__":
     from gui.installscreen import InstallScreen
     import logging
 
-    if settings.get('exc_popup') == True:
+    if settings.get('use_exception_popup') == True:
         ExceptionManager.add_handler(PopupHandler())
 
     class PrefScreen(Screen):

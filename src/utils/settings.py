@@ -15,8 +15,9 @@ import argparse, os
 from kivy.logger import Logger
 
 from utils.registry import Registry
+from utils.data.model import Model
 
-class Settings(object):
+class Settings(Model):
     """docstring for Settings"""
 
     # path to the registry entry which holds the users document path
@@ -26,20 +27,28 @@ class Settings(object):
     # if one occurres
     _EXC_POPUP = True
 
+    fields = [
+        {'name': 'use_exception_popup', 'defaultValue': True},
+        {'name': 'self_update', 'defaultValue': False},
+        {'name': 'launcher_basedir'}
+    ]
+
     def __init__(self, argv):
         super(Settings, self).__init__()
 
-        self.parser = None
-        self.settings_data = None
+        # set default values
 
+        # parse arguments
+        self.parser = None
         self.parse_args(argv)
 
-        self.settings_data.exc_popup = self._EXC_POPUP
+        Logger.info('Settings: loaded args: ' + str(self.data))
+
 
         # create the launcher basedir if neccessary
         # take the the command line param first if present
-        if not self.settings_data.launcher_basedir:
-            self.settings_data.launcher_basedir = self._get_launcher_basedir_from_reg()
+        if not self.get('launcher_basedir'):
+            self.set('launcher_basedir', self._get_launcher_basedir_from_reg())
 
         launcher_moddir = self.get_launcher_moddir()
         launcher_basedir = self.get_launcher_basedir()
@@ -52,8 +61,8 @@ class Settings(object):
             Logger.debug('Settings: Creating mod dir - {}'.format(launcher_moddir))
             os.mkdir(launcher_moddir)
 
-        Logger.debug("Settings: Launcher will use basedir: " + self.get_launcher_basedir())
-        Logger.debug("Settings: Launcher will use moddir: " + self.get_launcher_moddir())
+        Logger.info("Settings: Launcher will use basedir: " + self.get_launcher_basedir())
+        Logger.info("Settings: Launcher will use moddir: " + self.get_launcher_moddir())
 
     def _get_launcher_basedir_from_reg(self):
         """retreive users document folder from the registry"""
@@ -64,11 +73,10 @@ class Settings(object):
         return path
 
     def get_launcher_basedir(self):
-        return self.settings_data.launcher_basedir
+        return self.get('launcher_basedir')
 
     def get_launcher_moddir(self):
         return os.path.join(self.get_launcher_basedir(), 'mods')
-        return path
 
     def parse_args(self, argv):
         self.parser = argparse.ArgumentParser()
@@ -79,15 +87,9 @@ class Settings(object):
         self.parser.add_argument("-d", "--launcher-basedir",
             help="specify the basedir for the launcher")
 
-        self.settings_data = self.parser.parse_args(argv)
+        settings_data = self.parser.parse_args(argv)
 
-        print self.settings_data
-
-    def get(self, key):
-        """retrieve a property from the settings namespace
-        if the property does not exists return None"""
-
-        if key in self.settings_data:
-            return getattr(self.settings_data, key)
-        else:
-            return None
+        for f in self.fields:
+            value  = getattr(settings_data, f['name'], None)
+            if value != None:
+                self.set(f['name'], value)
