@@ -165,5 +165,33 @@
     BoxLayout:
         orientation: 'vertical'
 
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 60
+            Label:
+                text: 'Launcher Directory:'
+                text_size: self.width, self.height
+                halign: 'left'
+                width: 200
+                size_hint_x: None
+
+            TextInput:
+                id: path_text_input
+                text: 'some/path/to/the/launcher/dir'
+                multiline: False
+                background_color: 0.3, 0.3, 0.3, 0.7
+                foreground_color: 0.9, 0.9, 0.9, 1
+                text_size: self.width, self.height
+                font_size: 20
+                height: 40
+                width: 400
+                size_hint: None, None
+
+            Button:
+                size_hint: None, None
+                height: 40
+                text: 'Choose Path'
+
         Label:
             text: 'In Beta, this will be a place for Settings'
