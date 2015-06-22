@@ -1,12 +1,13 @@
 import traceback
 import sys
 
-from kivy.uix.popup import Popup
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
-from kivy.uix.boxlayout import BoxLayout
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.textinput import TextInput
+from kivy.uix.boxlayout import BoxLayout
+from utils.primitive_git import get_git_sha1_auto
 
 LABEL_TEXT = """Critical Error. Please copy the text below and post
 it on the tactical battlefield forums at http://www.tacticalbattlefield.net/forum/"""
@@ -32,7 +33,9 @@ def error_popup_decorator(func):
         try:
             func(*args, **kwargs)
         except Exception as e:
-            msg = "".join(traceback.format_exception(*sys.exc_info()))
+            build = get_git_sha1_auto()
+            stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+            msg = 'Build: {}\n{}'.format(build, stacktrace)
             p = ErrorPopup(stacktrace=msg)
             p.open()
 
@@ -40,7 +43,9 @@ def error_popup_decorator(func):
 
 class PopupHandler(ExceptionHandler):
     def handle_exception(self, inst):
-        msg = "".join(traceback.format_exception(*sys.exc_info()))
+        build = get_git_sha1_auto()
+        stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+        msg = 'Build: {}\n{}'.format(build, stacktrace)
         p = ErrorPopup(stacktrace=msg)
         p.open()
         return ExceptionManager.PASS

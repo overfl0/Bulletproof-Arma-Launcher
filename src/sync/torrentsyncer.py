@@ -50,6 +50,12 @@ class TorrentSyncer(object):
         """Perform the initialization of things that should be initialized once"""
         settings = libtorrent.session_settings()
         settings.user_agent = 'TacBF (libtorrent/{})'.format(libtorrent.version)
+        """When running on a network where the bandwidth is in such an abundance
+        that it's virtually infinite, this algorithm is no longer necessary, and
+        might even be harmful to throughput. It is adviced to experiment with the
+        session_setting::mixed_mode_algorithm, setting it to session_settings::prefer_tcp.
+        This setting entirely disables the balancing and unthrottles all connections."""
+        settings.mixed_mode_algorithm = 0
 
         self.session = libtorrent.session()
         self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.
@@ -266,6 +272,7 @@ class TorrentSyncer(object):
 
         return True
 
+    # TODO: Make this a static function
     def is_complete_quick(self):
         """Performs a quick check to see if the mod *seems* to be correctly installed.
         This check assumes no external changes have been made to the mods.
@@ -399,8 +406,8 @@ class TorrentSyncer(object):
 
         ### Main loop
         # Loop while the torrent is not completely downloaded
-        while (not torrent_handle.is_seed()):
-            s = torrent_handle.status()
+        s = torrent_handle.status()
+        while (not torrent_handle.is_seed() and not s.error):
 
             download_fraction = s.progress
             download_kbs = s.download_rate / 1024
@@ -414,6 +421,11 @@ class TorrentSyncer(object):
 
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
+            s = torrent_handle.status()
+
+        if s.error:
+            self.result_queue.reject({'msg': 'An error occured: {}'.format(s.error)})
+            return False
 
         #print torrent_handle.get_torrent_info()
         # Download finished. Performing housekeeping
@@ -447,26 +459,29 @@ class TorrentSyncer(object):
 
             self.result_queue.reject({'msg': 'Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
                                              .format(self.mod.foldername)})
+            return False
         else:
             metadata_file.set_version(self.mod.version)
             metadata_file.set_dirty(False)
             metadata_file.write_data()
 
+        return True
+
 
 if __name__ == '__main__':
     class DummyMod:
-        downloadurl = "https://archive.org/download/DebussyPrelduesBookI/DebussyPrelduesBookI_archive.torrent"
+        downloadurl = "http://archive.org/download/DebussyPrelduesBookI/DebussyPrelduesBookI_archive.torrent"
         #downloadurl = "file://test.torrent"
         clientlocation = ""
-        name = "DebussyPrelduesBookI"
+        foldername = "DebussyPrelduesBookI"
         version = "123"
 
     class DummyQueue:
         def progress(self, d, frac):
-            print str(d)
+            print 'Progress: {}'.format(str(d))
 
         def reject(self, d):
-            print str(d)
+            print 'Reject: {}'.format(str(d))
 
     mod = DummyMod()
     queue = DummyQueue()

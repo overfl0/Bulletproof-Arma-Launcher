@@ -9,6 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+import os
 import time
 
 from kivy.uix.widget import Widget
@@ -16,7 +17,9 @@ from kivy.logger import Logger
 from kivy.clock import Clock
 
 from view.errorpopup import ErrorPopup
-from gui.alphanotification import AlphaNotification
+from gui.messagebox import MessageBox
+
+from utils import paths
 
 class TestError(Exception):
     def __init__(self, msg):
@@ -49,9 +52,33 @@ class Controller(object):
         Clock.schedule_once(self.on_next_frame, 0)
 
     def on_testpopupbutton_release(self, btn):
+        return  # Disable this for the alpha release
         raise TestError('This is an test error')
 
     def on_next_frame(self, dt):
-        a = AlphaNotification()
-        Logger.info('MainWidget: running alphapopup')
-        a.open()
+        # Only show the notification in alpha branch
+        alpha_text = """Welcome to the Tactical Battlefield Mod launcher!
+
+This is an early alpha version of the launcher and as such it WILL contain bugs!
+Although we have made every effort possible to ensure safe use of the launcher,
+we cannot guarantee it.
+
+Users of this launcher in alpha version are expected to be technically
+knowledgeable and capable of fixing their Arma 3 installation should
+something go awry.
+If you do not meet the above criterion, stop using this launcher now!
+
+Don't forget to report bugs at http://tacbf.com or at
+https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues
+
+
+                                                                               -- The TacBF launcher team
+"""
+
+        alpha_title = 'Tactical Battlefield Mod launcher (Alpha)'
+        alpha_box = MessageBox(text=alpha_text, title=alpha_title)
+
+        # Allow developers to silence the alpha popup by creating a 'no_alpha_popup' file in the base directory
+        if not os.path.exists(paths.get_base_path('no_alpha_popup')):
+            Logger.info('MainWidget: opening alpha popup')
+            alpha_box.open()

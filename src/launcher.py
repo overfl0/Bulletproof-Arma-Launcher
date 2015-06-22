@@ -13,12 +13,16 @@
 import sys
 import os
 
+from utils.requirements import check_libraries_requirements
+
 #
 # we have to protect the instantiation of the kivy app, cause
 # of the use of multiprocessing. If you spawn a new thread or process
 # it loads this file again. So there is the need of the __main__ guard.
 #
 if __name__ == "__main__":
+    # Enforce all requirements so that the program doesn't crash in the middle of execution.
+    check_libraries_requirements()
 
     # import multiprocessing and enable freeze_support which is neeeded on win
     import multiprocessing
@@ -49,7 +53,7 @@ if __name__ == "__main__":
     # other imports
     #
     import kivy
-    kivy.require('1.8.0')
+
     from kivy.app import App
     from kivy.uix.label import Label
     from kivy.uix.widget import Widget

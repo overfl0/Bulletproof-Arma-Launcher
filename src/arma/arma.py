@@ -76,22 +76,37 @@ class Arma(object):
         return path
 
     @staticmethod
-    def get_executable_path():
+    def get_executable_path(battleye=True):
         """Returns path to the arma executable.
+        The battleye variable allows to run the battleye-enhanced version of the game.
+
         Raises ArmaNotInstalled if Arma is not installed."""
-        return os.path.join(Arma.get_installation_path(), "arma3.exe")
+
+        if battleye:
+            executable = "arma3battleye.exe"
+        else:
+            executable = "arma3.exe"
+
+        return os.path.join(Arma.get_installation_path(), executable)
 
     @staticmethod
-    def run_game(mod_list=None, profile_name=None, custom_args=None):
+    def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
         Custom_args are appended as is and special care must be taken when using spaces.
+        The battleye variable allows to run the battleye-enhanced version of the game.
+
         Raises ArmaNotInstalled if Arma is not installed.
         Raises OSError if running the executable fails."""
 
-        arma_path = Arma.get_executable_path()
-        game_args = [arma_path, '-nosplash', '-skipIntro']
+        arma_path = Arma.get_executable_path(battleye=battleye)
+        game_args = [arma_path]
+
+        if battleye:
+            game_args.extend(['0', '1'])
+
+        game_args.extend(['-nosplash', '-skipIntro'])
 
         if mod_list:
             modlist_argument = '-mod=' + ';'.join(mod_list)
@@ -103,8 +118,10 @@ class Arma(object):
         if custom_args:
             game_args.extend(custom_args)
 
+        print game_args
         popen_object = subprocess.Popen(game_args)  # May raise OSError
 
+        return popen_object
 
 if __name__ == "__main__":
     pass
