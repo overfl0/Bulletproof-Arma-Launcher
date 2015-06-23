@@ -18,6 +18,8 @@ from kivy.clock import Clock
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.logger import Logger
 
+from view.filechooser import FileChooser
+
 class PrefScreen(Screen):
     """
     View Class
@@ -29,12 +31,25 @@ class PrefScreen(Screen):
 class Controller(object):
     def __init__(self, widget):
         super(Controller, self).__init__()
+
+        # dependencies
         self.view = widget
+        self.settings = kivy.app.App.get_running_app().settings
+
+
         Logger.info('PrefScreen: init controller')
 
-        Clock.schedule_interval(self.check_childs, 0)
+        Clock.schedule_once(self.check_childs, 0)
 
     def check_childs(self, dt):
-        Logger.info('PrefScreen: got ids: ' + str(self.view.ids))
+        inputfield = self.view.ids.path_text_input
+        inputfield.text = self.settings.get('launcher_basedir')
 
         return False
+
+    def on_choose_path_button_release(self, btn):
+        Logger.info('opening filechooser')
+
+        p = FileChooser(dirselect=True, path=self.settings.get('launcher_basedir'),
+            bound_textfield=self.view.ids.path_text_input)
+        p.open()

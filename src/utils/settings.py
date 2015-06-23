@@ -28,7 +28,7 @@ class Settings(Model):
     _EXC_POPUP = True
 
     fields = [
-        {'name': 'use_exception_popup', 'defaultValue': True},
+        {'name': 'use_exception_popup', 'defaultValue': False},
         {'name': 'self_update', 'defaultValue': False},
         {'name': 'launcher_basedir'}
     ]
