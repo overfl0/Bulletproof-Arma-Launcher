@@ -40,7 +40,6 @@ class FileChooser(Popup):
         ok_button.bind(on_release=self.on_ok_button_release)
         cancel_button = Button(text='Cancel')
         cancel_button.bind(on_release=self.on_cancel_button_release)
-
         buttons.add_widget(ok_button)
         buttons.add_widget(cancel_button)
 
@@ -56,6 +55,13 @@ class FileChooser(Popup):
         super(FileChooser, self).__init__(title='Choose directory',
             content=bl, size_hint=(None, None), size=(600, 400))
 
+        # define event for which gets fired if the user hits okay
+        self.register_event_type('on_ok')
+
+    def on_ok(*args):
+        Logger.info('FileChooser: dispatched: ' + str(args))
+        pass
+
     def on_file_chooser_selection(self, fc, value):
         text = ''
         if len(value) > 0:
@@ -66,9 +72,7 @@ class FileChooser(Popup):
         return os.path.isdir(path)
 
     def on_ok_button_release(self, btn):
-        if self.bound_textfield:
-            self.bound_textfield.text = self.textinput.text
-        self.ok_pressed = True
+        self.dispatch('on_ok', self.textinput.text)
         self.dismiss()
 
     def on_cancel_button_release(self, btn):
