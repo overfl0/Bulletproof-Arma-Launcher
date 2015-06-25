@@ -10,10 +10,18 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-import sys
-import os
 
-from utils.requirements import check_libraries_requirements
+# Enforce all requirements so that the program doesn't crash in the middle of execution.
+if __name__ == '__main__':
+    from utils.requirements import check_libraries_requirements
+    check_libraries_requirements()
+
+# Import multiprocessing and enable freeze_support which is needed on windows
+import multiprocessing
+multiprocessing.freeze_support()
+
+# Import kivy as soon as possible to let it eat all the kivy args from sys.argv
+import kivy
 
 #
 # we have to protect the instantiation of the kivy app, cause
@@ -21,12 +29,7 @@ from utils.requirements import check_libraries_requirements
 # it loads this file again. So there is the need of the __main__ guard.
 #
 if __name__ == "__main__":
-    # Enforce all requirements so that the program doesn't crash in the middle of execution.
-    check_libraries_requirements()
-
-    # import multiprocessing and enable freeze_support which is neeeded on win
-    import multiprocessing
-    multiprocessing.freeze_support()
+    import sys
 
     # initilize settings class
     from utils.settings import Settings
@@ -52,8 +55,6 @@ if __name__ == "__main__":
     #
     # other imports
     #
-    import kivy
-
     from kivy.app import App
     from kivy.uix.label import Label
     from kivy.uix.widget import Widget
