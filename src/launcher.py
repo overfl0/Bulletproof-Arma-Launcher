@@ -15,13 +15,7 @@ import os
 
 from utils.requirements import check_libraries_requirements
 
-# HACK: clear sys.argv for kivy. Keep only the first element
-# Arguments passed to this program are also implicitly passed to processes spawned
-# with multiprocessing which make them crash if an argument that is not supported by
-# Kivy shows up in the command line.
-original_argv = sys.argv
-sys.argv = sys.argv[0:1]
-
+#
 # we have to protect the instantiation of the kivy app, cause
 # of the use of multiprocessing. If you spawn a new thread or process
 # it loads this file again. So there is the need of the __main__ guard.
@@ -36,7 +30,10 @@ if __name__ == "__main__":
 
     # initilize settings class
     from utils.settings import Settings
-    settings = Settings(original_argv[1:])
+    settings = Settings(sys.argv[1:])
+
+    # HACK: clear sys.argv for kivy. Keep only the first element
+    #sys.argv = sys.argv[0:1]
 
     # configure kivy
     from kivy.config import Config
