@@ -73,11 +73,14 @@ class Settings(object):
     def parse_args(self, argv):
         self.parser = argparse.ArgumentParser()
 
-        self.parser.add_argument("-s", "--self-update",
-            help="run the self updater", action="store_true")
+        self.parser.add_argument("-u", "--update", metavar='OLD_EXECUTABLE',
+            help="Run the self updater. OLD_EXECUTABLE is the file to be updated.")
 
         self.parser.add_argument("-d", "--launcher-basedir",
-            help="specify the basedir for the launcher")
+            help="Specify the basedir for the launcher")
+
+        self.parser.add_argument("-r", "--run-updated", action='store_true',
+            help="Dummy switch to test autoupdate")
 
         self.settings_data = self.parser.parse_args(argv)
 
