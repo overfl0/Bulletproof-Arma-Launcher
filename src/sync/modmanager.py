@@ -45,23 +45,12 @@ def parse_timestamp(ts):
     return datetime.utcfromtimestamp(float(stamp))
 
 
-def get_mod_descriptions(para, launcher_moddir):
-    """
-    helper function to get the moddescriptions from the server
-
-    this function is ment be used threaded or multiprocesses, you have
-    to pass in a queue
-    """
-    downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
-
-
+def download_metadata(para):
     para.progress({'msg': 'Downloading mod descriptions'})
     url = 'http://91.121.120.221/tacbf/updater/metadata.json'
     #url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
     res = requests.get(url, verify=False)
     data = None
-
-    mods = []
 
     if res.status_code != 200:
         para.reject({'msg': '{}\n{}\n\n{}'.format(
@@ -81,23 +70,43 @@ def get_mod_descriptions(para, launcher_moddir):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
-            return []
+            return None
 
-        for md in data['mods']:
+        if data.get('launcher-latest'):
+            launcher_latest_torrent = data['launcher-latest']
 
-            # parse timestamp
-            tsstr = md.get('torrent-timestamp')
-            md['torrent-timestamp'] = parse_timestamp(tsstr)
-            md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
-                md['foldername'], tsstr)
+        para.progress({'msg': 'Downloading metadata finished'})
 
-            mod = Mod.fromDict(md)
-            mod.clientlocation = launcher_moddir
-            mods.append(mod)
+    return data
 
-            Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
 
-        para.progress({'msg': 'Downloading mods descriptions finished', 'mods': mods})
+def get_mod_descriptions(para, launcher_moddir, metadata):
+    """
+    helper function to get the moddescriptions from the server
+
+    this function is ment be used threaded or multiprocesses, you have
+    to pass in a queue
+    """
+    downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
+    mods = []
+
+    para.progress({'msg': 'Parsing mods descriptions'})
+
+    for md in metadata['mods']:
+
+        # parse timestamp
+        tsstr = md.get('torrent-timestamp')
+        md['torrent-timestamp'] = parse_timestamp(tsstr)
+        md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
+            md['foldername'], tsstr)
+
+        mod = Mod.fromDict(md)
+        mod.clientlocation = launcher_moddir
+        mods.append(mod)
+
+        Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
+
+        para.progress({'msg': 'Parsing mods descriptions finished', 'mods': mods})
 
     return mods
 
@@ -122,8 +131,10 @@ def _check_already_installed_with_six(mod):
 def _prepare_and_check(messagequeue, launcher_moddir):
     # WARNING: This methods gets called in a different process
 
-    # download mod descriptions first
-    mod_list = get_mod_descriptions(messagequeue, launcher_moddir)
+    # Download metadata first
+    metadata = download_metadata(messagequeue)
+
+    mod_list = get_mod_descriptions(messagequeue, launcher_moddir, metadata)
 
     # DEBUG: Uncomment this to decrease the number of mods to download, for debugging
     # mod_list = [mod for mod in mod_list if mod.name.startswith('Ta')]

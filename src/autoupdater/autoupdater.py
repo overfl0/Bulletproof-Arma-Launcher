@@ -90,6 +90,7 @@ def try_perform_substitution(old_executable_name):
 def run_updated(old_executable_name):
     Logger.info('old: ' + old_executable_name)
     args = call_file_arguments(old_executable_name)
+    args.append('--')
     args.append('-r')
 
     popen_object = subprocess.Popen(args)
