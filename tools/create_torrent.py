@@ -53,7 +53,8 @@ def create_torrent(directory, name=None):
     #t.add_url_seed("http://...")
     #t.add_http_seed("http://...")
 
-    libtorrent.set_piece_hashes(t, ".")
+    #libtorrent.set_piece_hashes(t, ".")
+    libtorrent.set_piece_hashes(t, os.path.dirname(directory))
 
     with open(name, "wb") as file_handle:
         file_handle.write(libtorrent.bencode(t.generate()))
@@ -62,10 +63,14 @@ def create_torrent(directory, name=None):
 def main():
     parser = argparse.ArgumentParser(description="Create a file of <size>MB in a directory and make a torrent out of it.")
     parser.add_argument("-s", "--size", type=int, help="size of the torrent to create (in MB)", default=50)
+    parser.add_argument("-d", "--directory", help="directory to convert to torrent")
 
     args = parser.parse_args()
 
-    create_torrent_file_with_dir(args.size)
+    if args.directory:
+        create_torrent(args.directory)
+    else:
+        create_torrent_file_with_dir(args.size)
 
 if __name__ == "__main__":
     main()
