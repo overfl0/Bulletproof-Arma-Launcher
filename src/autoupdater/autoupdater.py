@@ -25,6 +25,7 @@ file(a, "wb") on file running:                                  IOError: [Errno 
 To know if we need UAC, check if the directory is writable
 """
 
+import hashlib
 import os
 import shutil
 import subprocess
@@ -69,6 +70,29 @@ def request_my_update(new_executable):
     popen_object = subprocess.Popen(args)
     #Logger.info('Got: %s' % popen_object)
     # TODO: Error handling
+
+def compare_if_same_files(other_executable):
+    """This function checks if the running executable is the same as the one pointed by
+    other_executable variable"""
+    my_sha1 = None
+    other_sha1 = None
+
+    my_executable_path = get_my_executable_pathname()
+    Logger.info("Comparing {} with {}...".format(my_executable_path, other_executable))
+
+    try:
+        with file(my_executable_path, "rb") as my_file:
+            contents = my_file.read()
+            my_sha1 = hashlib.sha1(contents).hexdigest()
+
+        with file(other_executable, "rb") as other_file:
+            contents = other_file.read()
+            other_sha1 = hashlib.sha1(contents).hexdigest()
+
+    except Exception as ex:
+        print ex.message
+
+    return my_sha1 == other_sha1
 
 def try_perform_substitution(old_executable_name):
     my_executable_pathname = get_my_executable_pathname()

@@ -105,7 +105,10 @@ class Controller(object):
 
     def try_enable_play_button(self):
         if self.launcher:
-            if not self.launcher.up_to_date:
+            launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
+            same_files = autoupdater.compare_if_same_files(launcher_executable)
+
+            if not self.launcher.up_to_date or not same_files:
                 # switch to play button and a different handler
                 self.view.ids.install_button.text = 'Self-upgrade'
                 self.view.ids.install_button.bind(on_release=self.on_self_upgrade_button_release)
