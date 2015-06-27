@@ -48,7 +48,6 @@ def parse_timestamp(ts):
 def download_metadata(para):
     para.progress({'msg': 'Downloading mod descriptions'})
     url = 'http://91.121.120.221/tacbf/updater/metadata.json'
-    #url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
     res = requests.get(url, verify=False)
     data = None
 
@@ -72,12 +71,35 @@ def download_metadata(para):
             para.reject({'msg': error_message})
             return None
 
-        if data.get('launcher-latest'):
-            launcher_latest_torrent = data['launcher-latest']
-
         para.progress({'msg': 'Downloading metadata finished'})
 
     return data
+
+
+def convert_metadata_to_mod(md, downloadurlPrefix):
+    # TODO: This should be a constructor of the Mod class
+    # parse timestamp
+    tsstr = md.get('torrent-timestamp')
+    md['torrent-timestamp'] = parse_timestamp(tsstr)
+    md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
+        md['foldername'], tsstr)
+
+    mod = Mod.fromDict(md)
+
+    return mod
+
+
+def get_launcher_description(para, launcher_moddir, metadata):
+    downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
+
+    if not metadata.has_key('launcher'):
+        return None
+
+    launcher = metadata['launcher']
+    launcher_mod = convert_metadata_to_mod(launcher, downloadurlPrefix)
+    launcher_mod.clientlocation = launcher_moddir  # TODO: Change this
+
+    return launcher_mod
 
 
 def get_mod_descriptions(para, launcher_moddir, metadata):
@@ -93,20 +115,13 @@ def get_mod_descriptions(para, launcher_moddir, metadata):
     para.progress({'msg': 'Parsing mods descriptions'})
 
     for md in metadata['mods']:
-
-        # parse timestamp
-        tsstr = md.get('torrent-timestamp')
-        md['torrent-timestamp'] = parse_timestamp(tsstr)
-        md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
-            md['foldername'], tsstr)
-
-        mod = Mod.fromDict(md)
+        mod = convert_metadata_to_mod(md, downloadurlPrefix)
         mod.clientlocation = launcher_moddir
         mods.append(mod)
 
         Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
 
-        para.progress({'msg': 'Parsing mods descriptions finished', 'mods': mods})
+    para.progress({'msg': 'Parsing mods descriptions finished', 'mods': mods})
 
     return mods
 
@@ -133,11 +148,16 @@ def _prepare_and_check(messagequeue, launcher_moddir):
 
     # Download metadata first
     metadata = download_metadata(messagequeue)
-
+    launcher = get_launcher_description(messagequeue, launcher_moddir, metadata)
     mod_list = get_mod_descriptions(messagequeue, launcher_moddir, metadata)
 
     # DEBUG: Uncomment this to decrease the number of mods to download, for debugging
     # mod_list = [mod for mod in mod_list if mod.name.startswith('Ta')]
+
+    # TODO: Perform a better check here. Should compare md5sum with actual launcher, etc...
+    # TODO: Change this to a static function
+    launcher_syncer = TorrentSyncer(messagequeue, launcher)
+    launcher.up_to_date = launcher_syncer.is_complete_quick()
 
     # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
@@ -153,7 +173,7 @@ def _prepare_and_check(messagequeue, launcher_moddir):
         syncer = TorrentSyncer(messagequeue, m)
         m.up_to_date = syncer.is_complete_quick()
 
-    messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
+    messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list, 'launcher': launcher})
 
 
 def _sync_all(messagequeue, launcher_moddir, mods):
@@ -209,7 +229,9 @@ class ModManager(object):
         super(ModManager, self).__init__()
         self.para = None
         self.sync_para = None
+        self.launcher_sync_para = None
         self.mods = None
+        self.launcher = None
         self.settings = kivy.app.App.get_running_app().settings
 
     def prepare_and_check(self):
@@ -225,9 +247,17 @@ class ModManager(object):
         self.sync_para.run()
         return self.sync_para
 
+    def sync_launcher(self):
+        self.launcher_sync_para = Para(_protected_call,
+            (_sync_all, self.settings.get_launcher_moddir(), [self.launcher]), 'sync')
+        self.launcher_sync_para.then(None, None, self.on_sync_all_progress)
+        self.launcher_sync_para.run()
+        return self.launcher_sync_para
+
     def on_prepare_and_check_resolve(self, data):
         Logger.info('ModManager: Got mods ' + repr(data['mods']))
         self.mods = data['mods']
+        self.launcher = data['launcher']
 
     def on_sync_all_progress(self, data, progress):
         Logger.debug('ModManager: Sync progress ' + repr(data))

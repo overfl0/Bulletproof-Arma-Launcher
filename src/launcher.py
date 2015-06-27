@@ -119,10 +119,6 @@ if __name__ == "__main__":
             print 'launching self updater'
             launcher_app = SelfUpdaterApp(settings).run()
 
-        elif settings.get('run_updated'):
-            print 'Updated!'
-            sys.exit(0)
-
         else:
             launcher_app = LauncherApp(settings)
             #launcher_app.run = error_popup_decorator(launcher_app.run)

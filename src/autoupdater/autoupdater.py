@@ -56,23 +56,19 @@ def call_file_arguments(filename):
 
     return [filename]
 
-def update_me(new_executable):
+def request_my_update(new_executable):
     """Update the executable being run with a new executable pointed by new_executable.
     The new_executable will be run with the path to this executable and a parameter indicating
     that an update has to take place."""
     my_executable_path = get_my_executable_pathname()
 
     args = call_file_arguments(new_executable)
-    args.append(my_executable_path)
+    args.extend(['--', '-u', my_executable_path])
 
     Logger.info('Will call with args: ' + str(args))
     popen_object = subprocess.Popen(args)
     #Logger.info('Got: %s' % popen_object)
     # TODO: Error handling
-
-    time.sleep(0.5)  # Fake delay to test robustness
-    Logger.debug('Exiting...')
-    sys.exit(0)
 
 def try_perform_substitution(old_executable_name):
     my_executable_pathname = get_my_executable_pathname()
@@ -90,8 +86,6 @@ def try_perform_substitution(old_executable_name):
 def run_updated(old_executable_name):
     Logger.info('old: ' + old_executable_name)
     args = call_file_arguments(old_executable_name)
-    args.append('--')
-    args.append('-r')
 
     popen_object = subprocess.Popen(args)
 

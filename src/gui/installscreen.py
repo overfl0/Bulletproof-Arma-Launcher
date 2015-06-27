@@ -19,6 +19,7 @@ from time import sleep
 import requests
 import kivy
 from arma.arma import Arma, ArmaNotInstalled
+from autoupdater import autoupdater
 from gui.messagebox import MessageBox
 
 from kivy.clock import Clock
@@ -64,7 +65,7 @@ class Controller(object):
         self.arma_executable_object = None
 
         # TODO: Maybe transform this into a state
-        self.play_button_shown = False
+        self.install_button_disabled = False
 
         # download mod description
         self.para = self.mod_manager.prepare_and_check()
@@ -103,6 +104,15 @@ class Controller(object):
             return False
 
     def try_enable_play_button(self):
+        if self.launcher:
+            if not self.launcher.up_to_date:
+                # switch to play button and a different handler
+                self.view.ids.install_button.text = 'Self-upgrade'
+                self.view.ids.install_button.bind(on_release=self.on_self_upgrade_button_release)
+                self.view.ids.install_button.disabled = False  # Note: 'install_button' is the name. The actual action may not be 'install'.
+                self.install_button_disabled = True
+                return
+
         if not self.mods:
             return
 
@@ -113,8 +123,8 @@ class Controller(object):
         # switch to play button and a different handler
         self.view.ids.install_button.text = 'Play!'
         self.view.ids.install_button.bind(on_release=self.on_play_button_release)
-        self.view.ids.install_button.disabled = False
-        self.play_button_shown = True
+        self.view.ids.install_button.disabled = False  # Note: 'install_button' is the name. The actual action may not be 'install'.
+        self.install_button_disabled = True
 
     def on_install_button_ready(self):
         self.view.ids.install_button.text = 'Checking'
@@ -124,13 +134,27 @@ class Controller(object):
         # do nothing if sync was already resolved
         # this is a workaround because event is not unbindable, see
         # https://github.com/kivy/kivy/issues/903
-        if self.play_button_shown:
+        if self.install_button_disabled:
             return
 
         self.view.ids.install_button.disabled = True
         self.para = self.mod_manager.sync_all()
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
         self.view.ids.install_button.enable_progress_animation()
+
+    def on_self_upgrade_button_release(self, btn):
+        self.view.ids.install_button.disabled = True
+        self.para = self.mod_manager.sync_launcher()
+        self.para.then(self.on_self_upgrade_resolve, self.on_sync_reject, self.on_sync_progress)
+        self.view.ids.install_button.enable_progress_animation()
+
+    def on_self_upgrade_resolve(self, data):
+        # Should terminate all working paras here.
+
+        print str(self.launcher)
+        executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
+        autoupdater.request_my_update(executable)
+        kivy.app.App.get_running_app().stop()
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.hidden = False
@@ -143,6 +167,8 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
         self.view.ids.install_button.text = 'Install'
+
+        self.launcher = progress['launcher']
 
         Logger.debug('InstallScreen: got mods:')
         for mod in progress['mods']:
