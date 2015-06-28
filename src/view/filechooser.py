@@ -32,10 +32,12 @@ class FileChooser(Popup):
         fc = FileChooserListView(**kwargs)
         fc.filters = [self.file_filter]
         ti = TextInput(id='pathinput', multiline=False, height=30,
-            size_hint_y=None)
+                       size_hint_y=None)
 
         # buttons
-        buttons = BoxLayout(orientation='horizontal', height=30, size_hint_y=None)
+        buttons = BoxLayout(orientation='horizontal', height=30,
+                            size_hint_y=None)
+
         ok_button = Button(text='Ok')
         ok_button.bind(on_release=self.on_ok_button_release)
         cancel_button = Button(text='Cancel')
@@ -69,7 +71,14 @@ class FileChooser(Popup):
         self.textinput.text = text
 
     def file_filter(self, folder, path):
-        return os.path.isdir(path)
+        Logger.info('filtering path: ' + path)
+
+        # we have to correspond to kivys very weird behaivor of evaluating
+        # filters. Check in kivy is: if list(<returnvalue of this function>)
+        if os.path.isdir(path):
+            return [True]
+        else:
+            return []
 
     def on_ok_button_release(self, btn):
         self.dispatch('on_ok', self.textinput.text)

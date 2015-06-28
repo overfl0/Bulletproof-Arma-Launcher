@@ -13,15 +13,14 @@
 import os
 
 import kivy
-from arma.arma import Arma, ArmaNotInstalled
-from gui.messagebox import MessageBox
 from kivy.clock import Clock
 
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
 
 from view.filechooser import FileChooser
 from utils.data.jsonstore import JsonStore
+
 
 class PrefScreen(Screen):
     """
@@ -30,6 +29,7 @@ class PrefScreen(Screen):
     def __init__(self, **kwargs):
         super(PrefScreen, self).__init__(**kwargs)
         self.controller = Controller(self)
+
 
 class Controller(object):
     def __init__(self, widget):
@@ -50,9 +50,11 @@ class Controller(object):
         return False
 
     def on_choose_path_button_release(self, btn):
-        Logger.info('opening filechooser')
+        path = self.settings.get('launcher_basedir')
 
-        p = FileChooser(dirselect=True, path=self.settings.get('launcher_basedir'))
+        Logger.info('opening filechooser with path: ' + path)
+        p = FileChooser(dirselect=True, path=path)
+
         p.bind(on_ok=self.on_filechooser_ok)
         p.open()
 

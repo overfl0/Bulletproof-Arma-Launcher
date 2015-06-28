@@ -108,10 +108,11 @@ class Settings(object):
         self.parser = argparse.ArgumentParser()
 
         self.parser.add_argument("-s", "--self-update",
-            help="run the self updater", action="store_true")
+                                 help="run the self updater",
+                                 action="store_true")
 
         self.parser.add_argument("-d", "--launcher-basedir",
-            help="specify the basedir for the launcher")
+                                 help="specify the basedir for the launcher")
 
         settings_data = self.parser.parse_args(argv)
 
