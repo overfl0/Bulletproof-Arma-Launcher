@@ -71,8 +71,6 @@ class FileChooser(Popup):
         self.textinput.text = text
 
     def file_filter(self, folder, path):
-        Logger.info('filtering path: ' + path)
-
         # we have to correspond to kivys very weird behaivor of evaluating
         # filters. Check in kivy is: if list(<returnvalue of this function>)
         if os.path.isdir(path):
