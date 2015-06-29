@@ -22,7 +22,7 @@ def create_dummy_file(filename, size_mb):
         for i in xrange(size_mb):
             file_handle.write(value)
 
-def create_torrent_file_with_dir(size):
+def create_dumy_torrent_file_with_dir(size):
     print "Creating directory and file with the size of {}MB...".format(size)
     name = str(size) + "MB"
 
@@ -37,35 +37,57 @@ def create_torrent_file_with_dir(size):
     create_dummy_file(filename, size)
     create_torrent(name)
 
-def create_torrent(directory, name=None):
-    if not name:
-        name = directory + ".torrent"
+def create_torrent(directory, announce=None, output=None, comment=None, web_seed=None):
+    if not output:
+        output = directory + ".torrent"
 
     # "If a piece size of 0 is specified, a piece_size will be calculated such that the torrent file is roughly 40 kB."
     piece_size_multiplier = 0
     piece_size = (16 * 1024) * piece_size_multiplier  # Must be multiple of 16KB
 
-    fs = libtorrent.file_storage()
-    libtorrent.add_files(fs, directory)
-    t = libtorrent.create_torrent(fs, piece_size=piece_size)
+    # http://www.libtorrent.org/make_torrent.html#create-torrent
+    flags = libtorrent.create_torrent_flags_t.calculate_file_hashes
 
-    t.add_tracker("http://127.0.0.1:8080/announce")
-    #t.add_url_seed("http://...")
+    if not os.path.isdir(directory):
+        raise Exception("The path {} is not a directory".format(directory))
+
+    fs = libtorrent.file_storage()
+    libtorrent.add_files(fs, directory, flags=flags)
+    t = libtorrent.create_torrent(fs, piece_size=piece_size, flags=flags)
+
+    if announce is None:
+        raise Exception("The announce can't be empty!")
+
+    t.add_tracker(announce)
+
+    if comment:
+        t.set_comment(comment)
+
+    if web_seed:
+        t.add_url_seed(web_seed)
     #t.add_http_seed("http://...")
 
-    libtorrent.set_piece_hashes(t, ".")
+    libtorrent.set_piece_hashes(t, os.path.dirname(directory))
 
-    with open(name, "wb") as file_handle:
+    with open(output, "wb") as file_handle:
         file_handle.write(libtorrent.bencode(t.generate()))
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create a file of <size>MB in a directory and make a torrent out of it.")
-    parser.add_argument("-s", "--size", type=int, help="size of the torrent to create (in MB)", default=50)
+    parser = argparse.ArgumentParser(description="Creates a torrent from a directory.")
+    parser.add_argument("-a", "--announce", required=True, help="Full announce URL")
+    parser.add_argument("-c", "--comment", help="Add a comment to the metainfo")
+    parser.add_argument("-o", "--output", help="Set the path and the filename of the created file")
+    parser.add_argument("-w", "--web-seed", help="Set the web-seed (url-seed as explained in BEP 19)")
+    parser.add_argument("directory", help="Data directory")
+    #parser.add_argument("-s", "--size", type=int, help="Create a DUMMY torrent of <size>MB. <directory> will be overwritten!", default=50)
 
     args = parser.parse_args()
 
-    create_torrent_file_with_dir(args.size)
+    create_torrent(directory=args.directory, announce=args.announce, comment=args.comment,
+                   output=args.output, web_seed=args.web_seed)
+
+    #create_dumy_torrent_file_with_dir(args.size)
 
 if __name__ == "__main__":
     main()
