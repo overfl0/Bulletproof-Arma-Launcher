@@ -22,6 +22,7 @@ def create_dummy_file(filename, size_mb):
         for i in xrange(size_mb):
             file_handle.write(value)
 
+
 def create_dumy_torrent_file_with_dir(size):
     print "Creating directory and file with the size of {}MB...".format(size)
     name = str(size) + "MB"
@@ -37,7 +38,8 @@ def create_dumy_torrent_file_with_dir(size):
     create_dummy_file(filename, size)
     create_torrent(name)
 
-def create_torrent(directory, announce=None, output=None, comment=None, web_seed=None):
+
+def create_torrent(directory, announces=None, output=None, comment=None, web_seeds=None):
     if not output:
         output = directory + ".torrent"
 
@@ -55,15 +57,13 @@ def create_torrent(directory, announce=None, output=None, comment=None, web_seed
     libtorrent.add_files(fs, directory, flags=flags)
     t = libtorrent.create_torrent(fs, piece_size=piece_size, flags=flags)
 
-    if announce is None:
-        raise Exception("The announce can't be empty!")
-
-    t.add_tracker(announce)
+    for announce in announces:
+        t.add_tracker(announce)
 
     if comment:
         t.set_comment(comment)
 
-    if web_seed:
+    for web_seed in web_seeds:
         t.add_url_seed(web_seed)
     #t.add_http_seed("http://...")
 
@@ -75,17 +75,17 @@ def create_torrent(directory, announce=None, output=None, comment=None, web_seed
 
 def main():
     parser = argparse.ArgumentParser(description="Creates a torrent from a directory.")
-    parser.add_argument("-a", "--announce", required=True, help="Full announce URL")
+    parser.add_argument("-a", "--announce", required=True, action='append', help="Full announce URL. Additional -a add backup trackers")
     parser.add_argument("-c", "--comment", help="Add a comment to the metainfo")
     parser.add_argument("-o", "--output", help="Set the path and the filename of the created file")
-    parser.add_argument("-w", "--web-seed", help="Set the web-seed (url-seed as explained in BEP 19)")
+    parser.add_argument("-w", "--web-seed", action='append', help="Set the web-seed (url-seed as explained in BEP 19). Additional -w add more urls")
     parser.add_argument("directory", help="Data directory")
     #parser.add_argument("-s", "--size", type=int, help="Create a DUMMY torrent of <size>MB. <directory> will be overwritten!", default=50)
 
     args = parser.parse_args()
 
-    create_torrent(directory=args.directory, announce=args.announce, comment=args.comment,
-                   output=args.output, web_seed=args.web_seed)
+    create_torrent(directory=args.directory, announces=args.announce, comment=args.comment,
+                   output=args.output, web_seeds=args.web_seed)
 
     #create_dumy_torrent_file_with_dir(args.size)
 
