@@ -18,7 +18,7 @@ from time import sleep
 
 import requests
 import kivy
-from arma.arma import Arma, ArmaNotInstalled
+from arma.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from gui.messagebox import MessageBox
 
 from kivy.clock import Clock
@@ -81,11 +81,15 @@ class Controller(object):
         if self.arma_executable_object is None:
             return
 
-        returncode = self.arma_executable_object.poll()
-        if returncode is None:  # The game has not terminated yet
-            return
+        # TODO: Since we started to launch the game via steam.exe (as opposed to arma3battleye.exe)
+        # the check below would only check if Steam has terminated on the first run (of steam)
+        # On all subsequent runs steam terminates almost instantaneously (as an instance is already running.
+        # Should probably check running processes for "arma3.exe" or something.
+        # returncode = self.arma_executable_object.poll()
+        # if returncode is None:  # The game has not terminated yet
+        #     return
 
-        print 'Arma has terminated with code: {}'.format(returncode)
+        # print 'Arma has terminated with code: {}'.format(returncode)
         # Allow the game to be run once again.
         self.view.ids.install_button.disabled = False
         self.arma_executable_object = None
@@ -221,10 +225,22 @@ and:
             mods_paths.append(mod_full_path)
 
         try:
-            self.arma_executable_object = Arma.run_game(mod_list=mods_paths)
+            custom_args = ['-noFilePatching']  # TODO: Make this user selectable
+            self.arma_executable_object = Arma.run_game(mod_list=mods_paths, custom_args=custom_args)
+
         except ArmaNotInstalled:
             text = "Arma 3 does not seem to be installed."
             no_arma_info = MessageBox(text, title='Arma not installed!')
             no_arma_info.open()
+
+        except SteamNotInstalled:
+            text = "Steam does not seem to be installed."
+            no_steam_info = MessageBox(text, title='Steam not installed!')
+            no_steam_info.open()
+
+        except OSError as ex:
+            text = "Error while launching Arma 3: {}.".format(str(ex))  # TODO: FIXME: Funny letters in polish locale with str()
+            error_info = MessageBox(text, title='Error while launching Arma 3!')
+            error_info.open()
 
         self.view.ids.install_button.disabled = True

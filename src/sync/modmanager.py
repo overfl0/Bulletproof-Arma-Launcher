@@ -23,7 +23,7 @@ import kivy
 from kivy.logger import Logger
 import requests
 
-from arma.arma import Arma, ArmaNotInstalled
+from arma.arma import Arma, SoftwareNotInstalled
 from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
@@ -133,7 +133,7 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     for m in mod_list:
         try:
             r = _check_already_installed_with_six(m)
-        except ArmaNotInstalled:
+        except SoftwareNotInstalled:
             r = False
         if r:
             messagequeue.progress({'msg': 'Mod ' + m.foldername + ' already installed with withSix'})
