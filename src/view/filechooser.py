@@ -18,50 +18,43 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.logger import Logger
+from kivy.clock import Clock
+from view.filebrowser import FileBrowser
 
 
 class FileChooser(Popup):
     """docstring for FileChooser"""
     def __init__(self, **kwargs):
 
-        self.ok_pressed = False
+        self.browser = FileBrowser(**kwargs)
 
-        bl = BoxLayout(orientation='vertical', spacing=10)
-        self.bound_textfield = kwargs.get('bound_textfield', None)
-
-        fc = FileChooserListView(**kwargs)
-        fc.filters = [self.file_filter]
-        ti = TextInput(id='pathinput', multiline=False, height=30,
-                       size_hint_y=None)
-
-        # buttons
-        buttons = BoxLayout(orientation='horizontal', height=30,
-                            size_hint_y=None)
-
-        ok_button = Button(text='Ok')
-        ok_button.bind(on_release=self.on_ok_button_release)
-        cancel_button = Button(text='Cancel')
-        cancel_button.bind(on_release=self.on_cancel_button_release)
-        buttons.add_widget(ok_button)
-        buttons.add_widget(cancel_button)
-
-        fc.bind(selection=self.on_file_chooser_selection)
-
-        bl.add_widget(fc)
-        bl.add_widget(ti)
-        bl.add_widget(buttons)
-
-        self.textinput = ti
-        self.textinput.text = kwargs.get('path', '')
+        self.browser.bind(on_success=self._fbrowser_success,
+                          on_canceled=self._fbrowser_canceled)
 
         super(FileChooser, self).__init__(title='Choose directory',
-            content=bl, size_hint=(None, None), size=(600, 400))
+                                          content=self.browser,
+                                          size_hint=(None, None),
+                                          size=(900, 600))
 
         # define event for which gets fired if the user hits okay
         self.register_event_type('on_ok')
 
+        Clock.schedule_once(self._on_next_frame, 0)
+
+    def _on_next_frame(self, dt):
+        file_list = self.browser.ids.list_view
+        file_list.filters = [self.file_filter]
+
+        return False
+
     def on_ok(*args):
         Logger.info('FileChooser: dispatched: ' + str(args))
+        pass
+
+    def _fbrowser_canceled(self, instance):
+        self.dismiss()
+
+    def _fbrowser_success(self, instance):
         pass
 
     def on_file_chooser_selection(self, fc, value):

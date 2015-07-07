@@ -38,6 +38,7 @@ class Controller(object):
         # dependencies
         self.view = widget
         self.settings = kivy.app.App.get_running_app().settings
+        self.file_browser_popup = None
 
         Logger.info('PrefScreen: init controller')
 
@@ -53,12 +54,25 @@ class Controller(object):
         path = self.settings.get('launcher_basedir')
 
         Logger.info('opening filechooser with path: ' + path)
-        p = FileChooser(dirselect=True, path=path)
 
-        p.bind(on_ok=self.on_filechooser_ok)
+        p = FileChooser(select_string='Select', dirselect=True,
+                        path=path)
+
+        p.browser.bind(on_success=self._fbrowser_success,
+                       on_canceled=self._fbrowser_canceled)
         p.open()
+        self.file_browser_popup = p
 
-    def on_filechooser_ok(self, instance, path):
+    def _fbrowser_canceled(self, instance):
+        print 'cancelled, Close self.'
+
+    def _fbrowser_success(self, instance):
+        if len(instance.selection) > 0:
+            path = instance.selection[0]
+        else:
+            Logger.error('PrefScreen: no selection made')
+            return False
+
         if not os.path.isdir(path):
             Logger.error('PrefScreen: path is not a dir: ' + path)
             return False
@@ -69,3 +83,6 @@ class Controller(object):
         store.save(self.settings.launcher_config)
         self.settings.reinit()
         self.view.ids.path_text_input.text = path
+
+        if self.file_browser_popup:
+            self.file_browser_popup.dismiss()
