@@ -75,16 +75,16 @@ if __name__ == "__main__":
     from view.statusimage import StatusImage
     from view.errorpopup import error_popup_decorator
     from view.errorpopup import PopupHandler
+
     from gui.mainwidget import MainWidget
     from gui.updatermainwidget import UpdaterMainWidget
     from gui.installscreen import InstallScreen
+    from gui.prefscreen import PrefScreen
+
     import logging
 
-    if settings.get('exc_popup') == True:
+    if settings.get('use_exception_popup') == True:
         ExceptionManager.add_handler(PopupHandler())
-
-    class PrefScreen(Screen):
-        pass
 
     class MainScreenManager(ScreenManager):
         pass
