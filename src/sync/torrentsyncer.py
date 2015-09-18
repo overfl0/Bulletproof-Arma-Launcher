@@ -412,7 +412,10 @@ class TorrentSyncer(object):
             download_fraction = s.progress
             download_kbs = s.download_rate / 1024
 
-            self.result_queue.progress({'msg': '[%s] %s: %.2f%%' % (self.mod.foldername, str(s.state), download_fraction * 100.0),
+            progress_message = '[{}] {}: {:0.2f}% ({:0.2f} KB/s)'.format(
+                               self.mod.foldername, str(s.state), download_fraction * 100.0,
+                               s.download_rate / 1024)
+            self.result_queue.progress({'msg': progress_message,
                                         'log': self.get_session_logs(),
                                        }, download_fraction)
 
