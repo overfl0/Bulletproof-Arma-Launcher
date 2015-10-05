@@ -26,6 +26,7 @@ class LauncherConfig(Model):
         {'name': 'use_exception_popup', 'defaultValue': False},
         {'name': 'self_update', 'defaultValue': False},
         {'name': 'launcher_basedir'},
+        {'name': 'launcher_moddir'},
     ]
 
     def __init__(self):
@@ -56,7 +57,7 @@ class Settings(object):
         # load config
         try:
             store = JsonStore(self.config_path)
-            self.launcher_config = store.load(self.launcher_config)
+            self.launcher_config = store.load(self.launcher_config, update=True)
         except:
             Logger.warn('Settings: Launcher config could not be loaded')
 
@@ -81,18 +82,17 @@ class Settings(object):
 
         if not os.path.isdir(launcher_basedir):
             Logger.info('Settings: Creating basedir - {}'.format(launcher_basedir))
-            os.mkdir(launcher_basedir)
+            os.mkdir(launcher_basedir)  # TODO: Exception handling here!
 
         if not os.path.isdir(launcher_moddir):
             Logger.info('Settings: Creating mod dir - {}'.format(launcher_moddir))
-            os.mkdir(launcher_moddir)
+            os.mkdir(launcher_moddir)  # TODO: Exception handling here!
 
         Logger.info("Settings: Launcher will use basedir: " + self.get_launcher_basedir())
         Logger.info("Settings: Launcher will use moddir: " + self.get_launcher_moddir())
 
     def _get_launcher_basedir_from_reg(self):
         """retreive users document folder from the registry"""
-        path = None
         user_docs = Registry.ReadValueCurrentUser(Settings._USER_DOCUMENT_PATH, 'Personal')
         path = os.path.join(user_docs, Settings._LAUNCHER_DIR)
 
@@ -101,8 +101,15 @@ class Settings(object):
     def get_launcher_basedir(self):
         return self.launcher_config.get('launcher_basedir')
 
+    def set_launcher_basedir(self, value):
+        return self.launcher_config.set('launcher_basedir', value)
+
     def get_launcher_moddir(self):
-        return os.path.join(self.get_launcher_basedir(), 'mods')
+        moddir = self.launcher_config.get('launcher_moddir')
+        if not moddir:
+            moddir = os.path.join(self.get_launcher_basedir(), 'mods')
+
+        return moddir
 
     def parse_args(self, argv):
         self.parser = argparse.ArgumentParser()
