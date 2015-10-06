@@ -82,7 +82,10 @@ class Controller(object):
         self.settings.set_launcher_basedir(path)
         store.save(self.settings.launcher_config)
         self.settings.reinit()
-        self.view.ids.path_text_input.text = path
+        # Fixme: Workaround: resave the settings in case something went wrong
+        # with reinit and the paths have changed again
+        store.save(self.settings.launcher_config)
+        self.view.ids.path_text_input.text = self.settings.get_launcher_basedir()
 
         if self.file_browser_popup:
             self.file_browser_popup.dismiss()

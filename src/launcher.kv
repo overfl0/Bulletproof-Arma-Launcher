@@ -176,6 +176,7 @@
                 halign: 'left'
                 width: 200
                 size_hint_x: None
+                pos_hint: { 'center_y': 0.7 } # Change or remove this if you're changing the label's text
 
             TextInput:
                 id: path_text_input
@@ -186,7 +187,7 @@
                 text_size: self.width, self.height
                 font_size: 20
                 height: 40
-                width: 400
+                width: 660
                 size_hint: None, None
                 readonly: True
 
