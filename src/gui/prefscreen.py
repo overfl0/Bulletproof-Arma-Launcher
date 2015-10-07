@@ -13,6 +13,9 @@
 import os
 
 import kivy
+import kivy.app
+from gui.messagebox import MessageBox
+
 from kivy.clock import Clock
 
 from kivy.uix.screenmanager import Screen
@@ -20,6 +23,7 @@ from kivy.logger import Logger
 
 from view.filechooser import FileChooser
 from utils.data.jsonstore import JsonStore
+from utils.paths import is_dir_writable
 
 
 class PrefScreen(Screen):
@@ -75,6 +79,11 @@ class Controller(object):
 
         if not os.path.isdir(path):
             Logger.error('PrefScreen: path is not a dir: ' + path)
+            return False
+
+        if not is_dir_writable(path):
+            Logger.error('PrefScreen: directory {} is not writable'.format(path))
+            MessageBox('Directory {} is not writable'.format(path)).open()
             return False
 
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
