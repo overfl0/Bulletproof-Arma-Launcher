@@ -176,16 +176,19 @@ class Controller(object):
         # This should be removed and reimplemented once the ParaAll is implemented
         finished = progress.get('workaround_finished')
         if finished == '@task_force_radio':
+            settings = kivy.app.App.get_running_app().settings
+            mod_dir = settings.get_launcher_moddir()
             text = """Task Force Arrowhead Radio has been downloaded or updated.
 
 Automatic installation of TFR is not yet implemented.
 To finish the installation of TFR, you need to go to:
 
-C:\Users\<user>\Documents\TacBF Launcher\mods\@task_force_radio
+{}
 
 and:
 1) Copy the TeamSpeak3 Client\plugins directory to your Teamspeak directory.
-2) Enable the TFR plugin in Settings->Plugins in Teamspeak."""
+2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+                os.path.join(mod_dir, '@task_force_radio'))
 
             tfr_info = MessageBox(text, title='Action required!')
             tfr_info.open()
