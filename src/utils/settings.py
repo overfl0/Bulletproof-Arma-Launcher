@@ -100,7 +100,7 @@ class Settings(object):
                 reg_moddir = self._get_launcher_basedir_from_reg()
                 # TODO: Show a regular message box, not a win32 message box
                 MessageBox("Could not create directory {}\nFalling back to {}".format(
-                            launcher_basedir, reg_moddir), "Error while setting mod directory")
+                            launcher_moddir, reg_moddir), "Error while setting mod directory")
                 self.set_launcher_moddir(reg_moddir)
 
         Logger.info("Settings: Launcher will use basedir: " + self.get_launcher_basedir())
