@@ -50,12 +50,12 @@ class Controller(object):
 
     def check_childs(self, dt):
         inputfield = self.view.ids.path_text_input
-        inputfield.text = self.settings.get_launcher_basedir()
+        inputfield.text = self.settings.get_launcher_moddir()
 
         return False
 
     def on_choose_path_button_release(self, btn):
-        path = self.settings.get_launcher_basedir()
+        path = self.settings.get_launcher_moddir()
 
         Logger.info('opening filechooser with path: ' + path)
 
@@ -88,13 +88,13 @@ class Controller(object):
 
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
         store = JsonStore(self.settings.config_path)
-        self.settings.set_launcher_basedir(path)
+        self.settings.set_launcher_moddir(path)
         store.save(self.settings.launcher_config)
         self.settings.reinit()
         # Fixme: Workaround: resave the settings in case something went wrong
         # with reinit and the paths have changed again
         store.save(self.settings.launcher_config)
-        self.view.ids.path_text_input.text = self.settings.get_launcher_basedir()
+        self.view.ids.path_text_input.text = self.settings.get_launcher_moddir()
 
         if self.file_browser_popup:
             self.file_browser_popup.dismiss()
