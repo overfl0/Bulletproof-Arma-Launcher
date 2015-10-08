@@ -8,6 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from utils.primitive_git import get_git_sha1_auto
+from utils.critical_messagebox import MessageBox
 
 LABEL_TEXT = """Critical Error. Please copy the text below and post
 it on the tactical battlefield forums at http://www.tacticalbattlefield.net/forum/"""
@@ -15,6 +16,8 @@ it on the tactical battlefield forums at http://www.tacticalbattlefield.net/foru
 ST_DEFAULT = """No stacktrace given!"""
 
 POPUP_TITLE = """An error occurred"""
+
+CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
 
 class ErrorPopup(Popup):
     """docstring for ErrorPopup"""
@@ -36,8 +39,9 @@ def error_popup_decorator(func):
             build = get_git_sha1_auto()
             stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
             msg = 'Build: {}\n{}'.format(build, stacktrace)
-            p = ErrorPopup(stacktrace=msg)
-            p.open()
+            #p = ErrorPopup(stacktrace=msg)
+            #p.open()
+            MessageBox(msg, CRITICAL_POPUP_TITLE)
 
     return wrapper
 

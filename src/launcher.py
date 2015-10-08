@@ -119,5 +119,5 @@ if __name__ == "__main__":
             launcher_app = SelfUpdaterApp(settings).run()
         else:
             launcher_app = LauncherApp(settings)
-            #launcher_app.run = error_popup_decorator(launcher_app.run)
+            launcher_app.run = error_popup_decorator(launcher_app.run)
             launcher_app.run()
