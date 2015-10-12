@@ -10,6 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+import errno
 import sys, os
 
 def is_pyinstaller_bundle():
@@ -69,3 +70,12 @@ def is_dir_writable(path):
         return False
 
     return True
+
+def mkdir_p(path):
+    """Create all directories described by path if they don't exist"""
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise
