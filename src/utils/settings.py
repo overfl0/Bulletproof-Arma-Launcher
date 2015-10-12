@@ -12,6 +12,7 @@
 
 import argparse, os
 
+from arma.arma import Arma, SoftwareNotInstalled
 from kivy.logger import Logger
 
 from utils.registry import Registry
@@ -119,7 +120,18 @@ class Settings(object):
         return self.launcher_config.set('launcher_basedir', value)
 
     def get_launcher_moddir(self):
+        """Try to get the mod directory from the settings.
+        If that fails, use "Arma 3\Tactical Battlefield" directory.
+        If that also fails (because there is no Arma, for example) use basedir\mods.
+        """
+
         moddir = self.launcher_config.get('launcher_moddir')
+        try:
+            if not moddir:
+                moddir = os.path.join(Arma.get_installation_path(), 'Tactical Battlefield')
+        except SoftwareNotInstalled:
+            pass
+
         if not moddir:
             moddir = os.path.join(self.get_launcher_basedir(), 'mods')
 
