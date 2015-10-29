@@ -427,7 +427,7 @@ class TorrentSyncer(object):
             s = torrent_handle.status()
 
         if s.error:
-            self.result_queue.reject({'msg': 'An error occured: {}'.format(s.error)})
+            self.result_queue.reject({'msg': 'An error occured: Libtorrent error: {}'.format(s.error)})
             return False
 
         #print torrent_handle.get_torrent_info()
