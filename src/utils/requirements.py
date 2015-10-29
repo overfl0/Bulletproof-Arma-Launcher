@@ -11,14 +11,24 @@
 # GNU General Public License for more details.
 
 import sys
-import os.path
 
 from critical_messagebox import MessageBox
-from pkg_resources import require, \
-                          DistributionNotFound, \
-                          VersionConflict, \
-                          parse_version
+from distutils.version import LooseVersion
 from utils import paths
+
+if not paths.is_pyinstaller_bundle():
+    from pkg_resources import require, \
+                              DistributionNotFound, \
+                              VersionConflict
+
+else:
+    # Pyinstaller does not handle pkg_resources well. Create dummy exceptions
+    # This should be safe as PyInstaller should already take care of dependencies
+    class DistributionNotFound(Exception):
+        pass
+    class VersionConflict(Exception):
+        pass
+
 
 libtorrent_least_required_version = '0.16.18'
 kivy_least_required_version = '1.8.0'
@@ -31,7 +41,6 @@ def check_libraries_requirements():
     file_path = paths.get_base_path('requirements.txt')
 
     try:
-        # TODO: pkg_resources does not seem to work in a PyInstaller bundle.
         # Skip the check if we are running in a |PyInstaller| bundle. Assume everything is all right.
         if not paths.is_pyinstaller_bundle():
             with file(file_path) as req_file:
@@ -44,7 +53,7 @@ def check_libraries_requirements():
             # be written inside requirements.txt).
             import libtorrent
 
-            if parse_version(libtorrent.version) < parse_version(libtorrent_least_required_version):
+            if LooseVersion(libtorrent.version) < LooseVersion(libtorrent_least_required_version):
                 raise VersionConflict('libtorrent {}'.format(libtorrent.version),
                                       'libtorrent >= {}'.format(libtorrent_least_required_version))
 
