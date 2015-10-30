@@ -178,7 +178,7 @@ class Controller(object):
         if finished == '@task_force_radio':
             settings = kivy.app.App.get_running_app().settings
             mod_dir = settings.get_launcher_moddir()
-            text = """Task Force Arrowhead Radio has been downloaded or updated.
+            text = r"""Task Force Arrowhead Radio has been downloaded or updated.
 
 Automatic installation of TFR is not yet implemented.
 To finish the installation of TFR, you need to go to:
@@ -186,8 +186,9 @@ To finish the installation of TFR, you need to go to:
 {}
 
 and:
-1) Copy the TeamSpeak3 Client\plugins directory to your Teamspeak directory.
-2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+1) Copy the userconfig\task_force_radio to your Arma 3\userconfig directory.
+2) Copy the TeamSpeak3 Client\plugins directory to your Teamspeak directory.
+3) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
                 os.path.join(mod_dir, '@task_force_radio'))
 
             tfr_info = MessageBox(text, title='Action required!')
