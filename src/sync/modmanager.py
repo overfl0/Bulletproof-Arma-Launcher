@@ -46,6 +46,36 @@ def parse_timestamp(ts):
     return datetime.utcfromtimestamp(float(stamp))
 
 
+def requests_get_or_reject(para, domain, *args, **kwargs):
+    """
+    Helper function that adds our error handling to requests.get.
+    Feel free to refactor it.
+    """
+
+    if not domain:
+        domain = "the domain"
+
+    try:
+        res = requests.get(*args, **kwargs)
+    except requests.exceptions.ConnectionError as ex:
+        try:
+            reason_errno = ex.message.reason.errno
+            if reason_errno == 11004:
+                para.reject({'msg': 'Could not resolve {}. Check your DNS settings.'.format(domain)})
+        except:
+            para.reject({'msg': 'Could not connect to the metadata server.'})
+
+        para.reject({'msg': 'Could not connect to the metadata server.'})
+
+    except requests.exceptions.Timeout:
+        para.reject({'msg': 'The server timed out while downloading metadata information from the server.'})
+
+    except requests.exceptions.RequestException as ex:
+        para.reject({'msg': 'Could not download metadata information from the server.'})
+
+    return res
+
+
 def get_mod_descriptions(para, launcher_moddir):
     """
     helper function to get the moddescriptions from the server
@@ -57,9 +87,10 @@ def get_mod_descriptions(para, launcher_moddir):
 
 
     para.progress({'msg': 'Downloading mod descriptions'})
-    url = 'http://launcher.tacbf.com/tacbf/updater/metadata.json'
-    res = requests.get(url, verify=False)
+    domain = 'launcher.tacbf.com'
+    url = 'http://{}/tacbf/updater/metadata.json'.format(domain)
     data = None
+    res = requests_get_or_reject(para, domain, url, verify=False, timeout=10)
 
     mods = []
 
