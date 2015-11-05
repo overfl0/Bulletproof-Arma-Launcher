@@ -53,12 +53,11 @@ def get_mod_descriptions(para, launcher_moddir):
     this function is ment be used threaded or multiprocesses, you have
     to pass in a queue
     """
-    downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
+    downloadurlPrefix = 'http://launcher.tacbf.com/tacbf/updater/torrents/'
 
 
     para.progress({'msg': 'Downloading mod descriptions'})
-    url = 'http://91.121.120.221/tacbf/updater/metadata.json'
-    #url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
+    url = 'http://launcher.tacbf.com/tacbf/updater/metadata.json'
     res = requests.get(url, verify=False)
     data = None
 
