@@ -24,6 +24,7 @@ import libtorrent
 import os
 import shutil
 
+from arma.arma import Arma, ArmaNotInstalled
 from utils.metadatafile import MetadataFile
 from time import sleep
 
@@ -274,6 +275,41 @@ class TorrentSyncer(object):
 
         return True
 
+    def is_complete_tfr_hack(self):
+        """This is a hackish check if Task Force Arrowhead Radio mod has been
+        correctly installed.
+        This function assumes that self.file_paths has already been computed.
+        To be fully installed, files contained in the userconfig subdirectory
+        must be present in in Arma 3/userconfig directory. Additionally, a check
+        if plugins have been copied to Teamspeak directory is made.
+        This should be moved elsewhere in order to fight with spaghetti code."""
+
+        # If the checked mod is not TFR, happily return rainbows and unicorns
+        if not self.mod.name.startswith("Task Force Arrowhead Radio"):
+            return True
+
+        try:
+            arma_path = Arma.get_installation_path()
+        except ArmaNotInstalled:
+            # For testing purposes
+            arma_path = "C:\\Users\\IEUser\\Documents\Arma 3"
+
+        # Check if all files in userconfig are PRESENT (not necessarily the same)
+        for entry in self.file_paths:
+            # path == @task_force_radio\userconfig\...
+            entry_pieces = os.path.normpath(entry).split(os.path.sep)
+            if entry_pieces[1] == "userconfig":
+                supposed_file_path = os.path.join(arma_path, *entry_pieces[1:])
+
+                if not os.path.isfile(supposed_file_path):
+                    print "File {} not present. Marking as not fully installed".format(supposed_file_path)
+                    return False
+                # print entry_path_rest
+
+        # TODO: Check for the plugins in Teamspeak
+
+        return True
+
     # TODO: Make this a static function
     def is_complete_quick(self):
         """Performs a quick check to see if the mod *seems* to be correctly installed.
@@ -329,7 +365,7 @@ class TorrentSyncer(object):
             print 'Superfluous files in mod directory. Marking as not complete'
             return False
 
-        return True
+        return self.is_complete_tfr_hack()
     """
     def create_flags(self):
         f = libtorrent.add_torrent_params_flags_t
