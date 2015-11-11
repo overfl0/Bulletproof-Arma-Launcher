@@ -32,10 +32,6 @@ class TorrentSyncer(object):
     _torrent_handle = None
     session = None
 
-    file_paths = set()
-    dirs = set()
-    top_dirs = set()
-
     def __init__(self, result_queue, mod):
         """
         constructor
@@ -152,12 +148,12 @@ class TorrentSyncer(object):
             return False
 
         # (5) Check if there are no additional files in the directory
-        self.top_dirs, self.dirs, self.file_paths = parse_files_list(torrent_info.files())
-        if not check_mod_directories((self.top_dirs, self.dirs, self.file_paths), self.mod.clientlocation, action='warn'):
+        top_dirs, dirs, file_paths = parse_files_list(torrent_info.files())
+        if not check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, action='warn'):
             print 'Superfluous files in mod directory. Marking as not complete'
             return False
 
-        return is_complete_tfr_hack(self.mod.name, self.file_paths)
+        return is_complete_tfr_hack(self.mod.name, file_paths)
     """
     def create_flags(self):
         f = libtorrent.add_torrent_params_flags_t
@@ -277,8 +273,8 @@ class TorrentSyncer(object):
         # Remove unused files
         assert(self._torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
         torrent_info = self._torrent_handle.get_torrent_info()
-        self.top_dirs, self.dirs, self.file_paths = parse_files_list(torrent_info.files())
-        cleanup_successful = check_mod_directories((self.top_dirs, self.dirs, self.file_paths), self.mod.clientlocation, action='remove')
+        top_dirs, dirs, file_paths = parse_files_list(torrent_info.files())
+        cleanup_successful = check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, action='remove')
 
         # Recreate the torrent file and store it in the metadata file for future checks
         recreated_torrent = libtorrent.create_torrent(torrent_info)
@@ -326,12 +322,12 @@ if __name__ == '__main__':
     # num_files = torrent_info.num_files()
     # print num_files
 
-    # self.top_dirs, self.dirs, self.file_paths = parse_files_list(torrent_info.files())
-    # check_mod_directories((self.top_dirs, self.dirs, self.file_paths))
+    # top_dirs, dirs, file_paths = parse_files_list(torrent_info.files())
+    # check_mod_directories((top_dirs, dirs, file_paths))
 
-    # print "File paths: ", ts.file_paths
-    # print "Dirs: ", ts.dirs
-    # print "Top dirs", ts.top_dirs
+    # print "File paths: ", file_paths
+    # print "Dirs: ", dirs
+    # print "Top dirs", top_dirs
 
     is_complete = ts.is_complete_quick()
     print "Is complete:", is_complete
