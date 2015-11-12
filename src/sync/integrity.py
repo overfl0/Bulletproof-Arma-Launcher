@@ -12,10 +12,12 @@
 
 from __future__ import unicode_literals
 
+import itertools
 import os
 import shutil
 
 from arma.arma import Arma, ArmaNotInstalled
+from contextlib import contextmanager
 from utils.metadatafile import MetadataFile
 
 def _unlink_safety_assert(base_path, file_path, action="remove"):
@@ -44,17 +46,38 @@ def _safer_rmtree(base_path, directory_path):
     shutil.rmtree(directory_path)
 
 
-def check_mod_directories((top_dirs, dirs, file_paths), base_directory, action='warn'):
+def _raiser(exception):  # I'm sure there must be some builtin to do this :-/
+    raise exception
+
+
+@contextmanager
+def _ignore_exceptions(*exceptions):
+    try:
+        yield
+    except exceptions:
+        pass
+
+
+def filter_out_whitelisted(elements, whitelist):
+    for whitelist_element in whitelist:
+        file_match = os.path.sep + whitelist_element
+        dir_match = os.path.sep + whitelist_element + os.path.sep
+        elements = set(itertools.ifilterfalse(lambda x: x.endswith(file_match) or dir_match in x, elements))
+
+    return elements
+
+def check_mod_directories((top_dirs, dirs_orig, file_paths_orig), base_directory, check_subdir="", on_superfluous='warn'):
     """Check if all files and directories present in the mod directories belong
-    to the torrent file. If not, remove those if action=='remove' or return False
-    if action=='warn'.
+    to the torrent file. If not, remove those if on_superfluous=='remove' or return False
+    if on_superfluous=='warn'.
 
     base_directory is the directory to which mods are downloaded.
     For example: if the mod directory is C:\Arma\@MyMod, base_directory should be C:\Arma.
 
-    action is the action to perform when superfluous files are found:
+    on_superfluous is the action to perform when superfluous files are found:
         'warn': return False
         'remove': remove the file or directory
+        'ignore': do nothing
 
     To prevent accidental file removal, this function will only remove files
     that are at least one directory deep in the file structure!
@@ -66,20 +89,28 @@ def check_mod_directories((top_dirs, dirs, file_paths), base_directory, action='
     are supposed to be there. Do not ignore this value!
     If unsuccessful at removing files, the mod should NOT be considered ready to play."""
 
-    def _raiser(exception):  # I'm sure there must be some builtin to do this :-/
-        raise exception
+    if not on_superfluous in ('warn', 'remove', 'ignore'):
+        raise Exception('Unknown action: {}'.format(on_superfluous))
 
-    if not action in ('warn', 'remove'):
-        raise Exception('Unknown action: {}'.format(action))
+    dirs = dirs_orig.copy()
+    file_paths = file_paths_orig.copy()
 
     # Whitelist our and PWS metadata files
-    whitelist = (MetadataFile.file_name, '.synqinfo')
+    whitelist = (MetadataFile.file_name, '.synqinfo', '.sync')
+
+    # Remove whitelisted items from the lists
+    dirs = filter_out_whitelisted(dirs, whitelist)
+    file_paths = filter_out_whitelisted(file_paths, whitelist)
+
     base_directory = os.path.realpath(base_directory)
     print "Cleaning up base_directory:", base_directory
     success = True
 
     try:
         for directory in top_dirs:
+            with _ignore_exceptions(KeyError):
+                dirs.remove(directory)
+
             if directory in whitelist:
                 continue
 
@@ -91,47 +122,73 @@ def check_mod_directories((top_dirs, dirs, file_paths), base_directory, action='
 
                 # First check files in this directory
                 for file_name in filenames:
+                    relative_file_name = os.path.join(check_subdir, relative_path, file_name)
+
                     if file_name in whitelist:
                         print 'File {} in whitelist, skipping...'.format(file_name)
+
+                        with _ignore_exceptions(KeyError):
+                            file_paths.remove(relative_file_name)
                         continue
 
-                    relative_file_name = os.path.join(relative_path, file_name)
                     print 'Checking file: {}'.format(relative_file_name)
                     if relative_file_name in file_paths:
+                        file_paths.remove(relative_file_name)
+                        print relative_file_name, "removed"
                         continue  # File present in the torrent, nothing to see here
 
                     full_file_path = os.path.join(dirpath, file_name)
 
-                    if action == 'remove':
+                    if on_superfluous == 'remove':
                         print 'Removing file: {}'.format(full_file_path)
                         _safer_unlink(full_base_path, full_file_path)
 
-                    elif action == 'warn':
+                    elif on_superfluous == 'warn':
                         print 'Superfluous file: {}'.format(full_file_path)
                         return False
 
+                    elif on_superfluous == 'ignore':
+                        pass
+
                 # Now check directories
-                # Remove directories that match whitelist from checking and descending into them
-                dirnames[:] = [d for d in dirnames if d not in whitelist]
                 # Iterate over a copy because we'll be deleting items from the original
                 for dir_name in dirnames[:]:
-                    relative_dir_path = os.path.join(relative_path, dir_name)
-                    print 'Checking dir: {}'.format(relative_dir_path)
+                    relative_dir_path = os.path.join(check_subdir, relative_path, dir_name)
 
+                    if dir_name in whitelist:
+                        dirnames.remove(dir_name)
+
+                        with _ignore_exceptions(KeyError):
+                            dirs.remove(relative_dir_path)
+
+                        continue
+
+                    print 'Checking dir: {}'.format(relative_dir_path)
                     if relative_dir_path in dirs:
+                        dirs.remove(relative_dir_path)
                         continue  # Directory present in the torrent, nothing to see here
 
                     full_directory_path = os.path.join(dirpath, dir_name)
 
-                    if action == 'remove':
+                    if on_superfluous == 'remove':
                         print 'Removing directory: {}'.format(full_directory_path)
                         dirnames.remove(dir_name)
 
                         _safer_rmtree(full_base_path, full_directory_path)
 
-                    elif action == 'warn':
+                    elif on_superfluous == 'warn':
                         print 'Superfluous directory: {}'.format(full_directory_path)
                         return False
+
+                    elif on_superfluous == 'ignore':
+                        pass
+
+        # Check for files missing on disk
+        if file_paths:
+            success = False
+
+        if dirs:
+            success = False
 
     except OSError:
         success = False

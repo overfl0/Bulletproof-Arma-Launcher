@@ -149,7 +149,7 @@ class TorrentSyncer(object):
 
         # (5) Check if there are no additional files in the directory
         top_dirs, dirs, file_paths = parse_files_list(torrent_info.files())
-        if not check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, action='warn'):
+        if not check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, on_superfluous='warn'):
             print 'Superfluous files in mod directory. Marking as not complete'
             return False
 
@@ -274,7 +274,7 @@ class TorrentSyncer(object):
         assert(self._torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
         torrent_info = self._torrent_handle.get_torrent_info()
         top_dirs, dirs, file_paths = parse_files_list(torrent_info.files())
-        cleanup_successful = check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, action='remove')
+        cleanup_successful = check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, on_superfluous='remove')
 
         # Recreate the torrent file and store it in the metadata file for future checks
         recreated_torrent = libtorrent.create_torrent(torrent_info)
