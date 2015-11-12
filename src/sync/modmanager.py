@@ -11,6 +11,7 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+
 import multiprocessing
 from multiprocessing import Queue
 import os

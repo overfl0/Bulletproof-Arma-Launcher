@@ -11,9 +11,9 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
-import paths
+
 import os
-import sys
+import paths
 
 build_sha1_file = 'build.sha1'
 

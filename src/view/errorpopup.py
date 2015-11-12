@@ -11,8 +11,9 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
-import traceback
+
 import sys
+import traceback
 
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager

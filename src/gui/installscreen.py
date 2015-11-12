@@ -14,7 +14,6 @@ from __future__ import unicode_literals
 
 from multiprocessing import Queue
 
-
 import os
 from time import sleep
 
