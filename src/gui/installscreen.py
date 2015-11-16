@@ -230,7 +230,7 @@ and:
             mods_paths.append(mod_full_path)
 
         try:
-            custom_args = ['-noFilePatching']  # TODO: Make this user selectable
+            custom_args = []  # TODO: Make this user selectable
             self.arma_executable_object = Arma.run_game(mod_list=mods_paths, custom_args=custom_args)
 
         except ArmaNotInstalled:
