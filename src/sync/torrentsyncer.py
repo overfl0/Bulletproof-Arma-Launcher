@@ -11,6 +11,10 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+# Note: every std::string coming from libtorrent should be decoded from utf-8
+# like that: alert.message().decode('utf-8')
+# Every string submitted to libtorrent should be encoded to utf-8 as well
+# http://sourceforge.net/p/libtorrent/mailman/message/33684047/
 
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
@@ -51,7 +55,7 @@ class TorrentSyncer(object):
     def init_libtorrent(self):
         """Perform the initialization of things that should be initialized once"""
         settings = libtorrent.session_settings()
-        settings.user_agent = 'TacBF (libtorrent/{})'.format(libtorrent.version)
+        settings.user_agent = 'TacBF (libtorrent/{})'.format(libtorrent.version.decode('utf-8')).encode('utf-8')
         """When running on a network where the bandwidth is in such an abundance
         that it's virtually infinite, this algorithm is no longer necessary, and
         might even be harmful to throughput. It is adviced to experiment with the
@@ -92,8 +96,9 @@ class TorrentSyncer(object):
         self.top_dirs = set()
 
         for torrent_file in torrent_info.files():
-            self.file_paths.add(torrent_file.path)
-            dir_path = os.path.dirname(torrent_file.path)
+            path = torrent_file.path.decode('utf-8')
+            self.file_paths.add(path)
+            dir_path = os.path.dirname(path)
 
             while dir_path:  # Go up the directory structure until the end
                 if dir_path in self.dirs:  # If already processed for another file
@@ -232,8 +237,9 @@ class TorrentSyncer(object):
                                             # Use alert.handle in the future to get the torrent handle
         for alert in alerts:
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
-            print "Alerts: Category: {}, Message: {}".format(alert.category(), alert.message())
-            torrent_log.append({'message': alert.message(), 'category': alert.category()})
+            message = alert.message().decode('utf-8')
+            print "Alerts: Category: {}, Message: {}".format(alert.category(), message)
+            torrent_log.append({'message': message, 'category': alert.category()})
 
         return torrent_log
 
@@ -250,7 +256,7 @@ class TorrentSyncer(object):
         files = torrent_info.files()
 
         # file_path, size, mtime
-        files_data = map(lambda x, y: (y.path, x[0], x[1]), file_sizes, files)
+        files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
 
         for file_path, size, mtime in files_data:
             try:
@@ -351,6 +357,23 @@ class TorrentSyncer(object):
         return flags
     """
 
+    def handle_torrent_progress(self, s):
+        """Just log the download progress for now."""
+        download_fraction = s.progress
+        download_kBps = s.download_rate / 1024
+        upload_kBps = s.upload_rate / 1024
+        state = s.state.name.decode('utf-8')
+
+        progress_message = '[{}] {}: {:0.2f}% ({:0.2f} KB/s)'.format(
+                           self.mod.foldername, state, download_fraction * 100.0,
+                           download_kBps)
+        self.result_queue.progress({'msg': progress_message,
+                                    'log': self.get_session_logs(),
+                                   }, download_fraction)
+
+        print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
+              (s.progress * 100, download_kBps, upload_kBps, s.num_peers, state)
+
     def sync(self, force_sync=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
@@ -385,7 +408,7 @@ class TorrentSyncer(object):
 
         ### Torrent parameters
         params = {
-            'save_path': self.mod.clientlocation,
+            'save_path': self.mod.clientlocation.encode('utf-8'),
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
             #'flags': self.create_flags()
         }
@@ -395,7 +418,7 @@ class TorrentSyncer(object):
             torrent_info = self.get_torrent_info_from_file(self.mod.downloadurl[len('file://'):])
             params['ti'] = torrent_info
         else:  # Torrent from url
-            params['url'] = self.mod.downloadurl
+            params['url'] = self.mod.downloadurl.encode('utf-8')
 
         # Add optional resume data
         resume_data = metadata_file.get_torrent_resume_data()
@@ -410,35 +433,17 @@ class TorrentSyncer(object):
         # Loop while the torrent is not completely downloaded
         s = torrent_handle.status()
         while (not torrent_handle.is_seed() and not s.error):
-
-            download_fraction = s.progress
-            download_kbs = s.download_rate / 1024
-
-            progress_message = '[{}] {}: {:0.2f}% ({:0.2f} KB/s)'.format(
-                               self.mod.foldername, str(s.state), download_fraction * 100.0,
-                               s.download_rate / 1024)
-            self.result_queue.progress({'msg': progress_message,
-                                        'log': self.get_session_logs(),
-                                       }, download_fraction)
-
-            print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
-                  (s.progress * 100, s.download_rate / 1024, s.upload_rate / 1024, s.num_peers, s.state)
+            self.handle_torrent_progress(s)
 
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
             s = torrent_handle.status()
 
+        self.handle_torrent_progress(s)
+
         if s.error:
-            self.result_queue.reject({'msg': 'An error occured: Libtorrent error: {}'.format(s.error)})
+            self.result_queue.reject({'msg': 'An error occured: Libtorrent error: {}'.format(s.error.decode('utf-8'))})
             return False
-
-        #print torrent_handle.get_torrent_info()
-        # Download finished. Performing housekeeping
-        download_fraction = 1.0
-        self.result_queue.progress({'msg': '[%s] %s' % (self.mod.foldername, torrent_handle.status().state),
-                                    'log': self.get_session_logs(),
-                                   }, download_fraction)
-
 
         # Save data that could come in handy in the future to a metadata file
         # Set resume data for quick checksum check
