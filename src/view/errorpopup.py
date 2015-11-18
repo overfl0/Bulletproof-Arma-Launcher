@@ -13,7 +13,6 @@
 from __future__ import unicode_literals
 
 import sys
-import traceback
 
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
@@ -23,6 +22,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from utils.primitive_git import get_git_sha1_auto
 from utils.critical_messagebox import MessageBox
+from utils.testtools_compat import _format_exc_info
 
 LABEL_TEXT = """Critical Error. Please copy the text below and post
 it on the tactical battlefield forums at http://www.tacticalbattlefield.net/forum/"""
@@ -51,7 +51,7 @@ def error_popup_decorator(func):
             func(*args, **kwargs)
         except Exception as e:
             build = get_git_sha1_auto()
-            stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+            stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             msg = 'Build: {}\n{}'.format(build, stacktrace)
             #p = ErrorPopup(stacktrace=msg)
             #p.open()
@@ -62,7 +62,7 @@ def error_popup_decorator(func):
 class PopupHandler(ExceptionHandler):
     def handle_exception(self, inst):
         build = get_git_sha1_auto()
-        stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         msg = 'Build: {}\n{}'.format(build, stacktrace)
         p = ErrorPopup(stacktrace=msg)
         p.open()

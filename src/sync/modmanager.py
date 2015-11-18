@@ -16,7 +16,6 @@ import multiprocessing
 from multiprocessing import Queue
 import os
 import json
-import traceback
 import sys
 
 from datetime import datetime
@@ -30,6 +29,7 @@ from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
+from utils.testtools_compat import _format_exc_info
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
@@ -104,7 +104,7 @@ def get_mod_descriptions(para, launcher_moddir):
             data = res.json()
         except ValueError as e:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
-            stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+            stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             para.reject({'msg': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
@@ -218,8 +218,7 @@ def _protected_call(messagequeue, function, *args, **kwargs):
     try:
         return function(messagequeue, *args, **kwargs)
     except Exception as e:
-        import traceback
-        stacktrace = traceback.format_exc()
+        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
         messagequeue.reject({'msg': error})
 

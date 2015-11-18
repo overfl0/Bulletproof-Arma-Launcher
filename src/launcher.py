@@ -129,14 +129,15 @@ try:
 
 except Exception as e:
     # Mega catch-all requirements
-    import traceback
+    import sys
 
     from utils.critical_messagebox import MessageBox
     from utils.primitive_git import get_git_sha1_auto
+    from utils.testtools_compat import _format_exc_info
 
     CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
     build = get_git_sha1_auto()
-    stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+    stacktrace = "".join(_format_exc_info(*sys.exc_info()))
     msg = 'Build: {}\n{}'.format(build, stacktrace)
 
     MessageBox(msg, CRITICAL_POPUP_TITLE)
