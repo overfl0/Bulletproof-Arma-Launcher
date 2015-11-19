@@ -48,6 +48,7 @@ try:
         from utils.paths import get_resources_path
 
         Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
+        Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
         if not settings.get('self_update'):
             Config.set('graphics', 'resizable', 0)

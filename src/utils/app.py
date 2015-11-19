@@ -12,8 +12,6 @@
 
 from __future__ import unicode_literals
 
-import sys, os
-
 from kivy.app import App
 from utils.paths import get_resources_path
 
