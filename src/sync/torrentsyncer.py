@@ -488,10 +488,10 @@ if __name__ == '__main__':
 
     class DummyQueue:
         def progress(self, d, frac):
-            print 'Progress: {}'.format(str(d))
+            print 'Progress: {}'.format(unicode(d))
 
         def reject(self, d):
-            print 'Reject: {}'.format(str(d))
+            print 'Reject: {}'.format(unicode(d))
 
     mod = DummyMod()
     queue = DummyQueue()

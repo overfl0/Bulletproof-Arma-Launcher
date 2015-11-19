@@ -98,7 +98,7 @@ def get_mod_descriptions(para, launcher_moddir):
     if res.status_code != 200:
         para.reject({'msg': '{}\n{}\n\n{}'.format(
             'Mods descriptions could not be received from the server',
-            'Status Code: ' + str(res.status_code), res.text)})
+            'Status Code: ' + unicode(res.status_code), res.text)})
     else:
         try:
             data = res.json()

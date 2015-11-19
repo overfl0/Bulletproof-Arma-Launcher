@@ -49,8 +49,8 @@ class FileChooser(Popup):
 
         return False
 
-    def on_ok(*args):
-        Logger.info('FileChooser: dispatched: ' + str(args))
+    def on_ok(*args):  # Is this function even used anywhere?
+        Logger.info('FileChooser: dispatched: ' + unicode(args))
         pass
 
     def _fbrowser_canceled(self, instance):
