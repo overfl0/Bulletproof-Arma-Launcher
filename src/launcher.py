@@ -45,6 +45,9 @@ try:
 
         # configure kivy
         from kivy.config import Config
+        from utils.paths import get_resources_path
+
+        Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
 
         if not settings.get('self_update'):
             Config.set('graphics', 'resizable', 0)
@@ -96,6 +99,9 @@ try:
 
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
+
+            title = 'Tactical Battlefield'
+
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
                 self.settings = settings
@@ -107,6 +113,8 @@ try:
 
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
+
+            title = 'Tactical Battlefield Self-updater'
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()

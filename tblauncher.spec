@@ -32,4 +32,5 @@ exe = EXE(pyz,
           debug=False,
           strip=None,
           upx=True,
+          icon='./resources/icons/tb.ico',
           console=True )
