@@ -101,7 +101,7 @@ try:
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
 
-            title = 'Tactical Battlefield'
+            title = b'Tactical Battlefield'
 
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
@@ -115,7 +115,7 @@ try:
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
 
-            title = 'Tactical Battlefield Self-updater'
+            title = b'Tactical Battlefield Self-updater'
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()
