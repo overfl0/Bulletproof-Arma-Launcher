@@ -34,6 +34,10 @@ CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bu
 
 def open_hyperlink(obj, ref):
     import webbrowser
+
+    if ref[1:].startswith(':\\'):  # C:\, D:\, etc...
+        ref = ref.encode(sys.getfilesystemencoding())
+
     webbrowser.open(ref)
 
 

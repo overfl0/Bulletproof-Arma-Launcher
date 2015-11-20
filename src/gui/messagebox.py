@@ -12,6 +12,8 @@
 
 from __future__ import unicode_literals
 
+import sys
+
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.button import Button
@@ -21,6 +23,10 @@ default_title = """Message"""
 
 def open_hyperlink(obj, ref):
     import webbrowser
+
+    if ref[1:].startswith(':\\'):  # C:\, D:\, etc...
+        ref = ref.encode(sys.getfilesystemencoding())
+
     webbrowser.open(ref)
 
 class MessageBox(Popup):
