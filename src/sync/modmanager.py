@@ -25,6 +25,7 @@ from kivy.logger import Logger
 import requests
 
 from arma.arma import Arma, SoftwareNotInstalled
+from utils.devmode import devmode
 from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
@@ -157,8 +158,11 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     # download mod descriptions first
     mod_list = get_mod_descriptions(messagequeue, launcher_moddir)
 
-    # DEBUG: Uncomment this to decrease the number of mods to download, for debugging
-    # mod_list = [mod for mod in mod_list if mod.name.startswith('Ta')]
+    # Debug mode: decrease the number of mods to download
+    mods_filter = devmode.get_mods_filter()
+    if mods_filter:
+        # Keep only the mods with names starting with any of the giver filters
+        mod_list = [mod for mod in mod_list if any(mod.name.startswith(prefix) for prefix in mods_filter)]
 
     # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
