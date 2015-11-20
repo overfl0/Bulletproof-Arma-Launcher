@@ -19,10 +19,15 @@ from kivy.uix.boxlayout import BoxLayout
 
 default_title = """Message"""
 
+def open_hyperlink(obj, ref):
+    import webbrowser
+    webbrowser.open(ref)
+
 class MessageBox(Popup):
-    def __init__(self, text, title=default_title):
+    def __init__(self, text, title=default_title, markup=False):
         bl = BoxLayout(orientation='vertical')
-        la = Label(text=text, size_hint_y=0.8)
+        la = Label(text=text, size_hint_y=0.8, markup=markup)
+        la.bind(on_ref_press=open_hyperlink)
         button = Button(text="Ok", size_hint_y=0.2)
         button.bind(on_release=self.dismiss)
 

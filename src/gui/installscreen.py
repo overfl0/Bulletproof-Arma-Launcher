@@ -164,8 +164,20 @@ class Controller(object):
 
         self.try_enable_play_button()
 
-        ep = ErrorPopup(stacktrace=progress['msg'])
-        ep.open()
+        # Ugly hack until we have an auto-updater
+        if 'launcher is out of date' in progress['msg']:
+            message = '''This launcher is out of date!
+You won\'t be able do download mods until you update to the latest version!
+
+Get it here:
+
+[ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe[/color][/ref]
+'''
+            popup_box = MessageBox(message, title='Get the new version of the launcher!', markup=True)
+        else:
+            popup_box = ErrorPopup(stacktrace=progress['msg'])
+
+        popup_box.open()
 
     def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
