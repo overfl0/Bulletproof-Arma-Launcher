@@ -26,10 +26,8 @@ import subprocess
 from utils.singleton import Singleton
 from utils.registry import Registry
 
+from . import SoftwareNotInstalled
 # Exceptions:
-class SoftwareNotInstalled(Exception):
-    pass
-
 class ArmaNotInstalled(SoftwareNotInstalled):
     pass
 

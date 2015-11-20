@@ -24,7 +24,7 @@ import kivy
 from kivy.logger import Logger
 import requests
 
-from arma.arma import Arma, SoftwareNotInstalled
+from third_party.arma import Arma, SoftwareNotInstalled
 from utils.devmode import devmode
 from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto

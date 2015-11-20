@@ -19,7 +19,7 @@ from time import sleep
 
 import requests
 import kivy
-from arma.arma import Arma, ArmaNotInstalled, SteamNotInstalled
+from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from gui.messagebox import MessageBox
 
 from kivy.clock import Clock

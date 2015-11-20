@@ -13,7 +13,7 @@
 import unittest
 from nose.plugins.attrib import attr
 
-from arma.arma import Arma
+from third_party.arma import Arma
 
 class ArmaTest(unittest.TestCase):
 
