@@ -33,6 +33,7 @@ from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
+from third_party import teamspeak
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
@@ -108,6 +109,11 @@ class Controller(object):
             return False
 
     def try_enable_play_button(self):
+        self.view.ids.install_button.disabled = True
+
+        if not self.check_requirements():
+            return
+
         if not self.mods:
             return
 
@@ -120,6 +126,46 @@ class Controller(object):
         self.view.ids.install_button.bind(on_release=self.on_play_button_release)
         self.view.ids.install_button.disabled = False
         self.play_button_shown = True
+
+    def check_requirements(self):
+        # TODO: move me to a better place
+        try:
+            teamspeak.check_installed()
+        except teamspeak.TeamspeakNotInstalled:
+            message = """Teamspeak does not seem to be installed.
+Having Teamspeak is required in order to play Tactical Battlefield.
+
+[ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
+
+Install Teamspeak and restart the launcher."""
+            box = MessageBox(message, title='Teamspeak required!', markup=True)
+            box.open()
+            return False
+
+        try:
+            Arma.get_installation_path()
+        except ArmaNotInstalled:
+            message = """Arma 3 does not seem to be installed.
+
+Having Arma 3 is required in order to play Tactical Battlefield."""
+            box = MessageBox(message, title='Arma 3 required!', markup=True)
+            box.open()
+            return False
+
+        try:
+            Arma.get_steam_exe_path()
+        except SteamNotInstalled:
+            message = """Steam does not seem to be installed.
+Having Steam is required in order to play Tactical Battlefield.
+
+[ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
+
+Install Steam and restart the launcher."""
+            box = MessageBox(message, title='Steam required!', markup=True)
+            box.open()
+            return False
+
+        return True
 
     def on_install_button_ready(self):
         self.view.ids.install_button.text = 'Checking'
