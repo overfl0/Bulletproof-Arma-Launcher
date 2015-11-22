@@ -68,14 +68,22 @@ class Controller(object):
         # TODO: Maybe transform this into a state
         self.play_button_shown = False
 
-        # download mod description
-        self.para = self.mod_manager.prepare_and_check()
-        self.para.then(self.on_checkmods_resolve, self.on_checkmods_reject,
-            self.on_checkmods_progress)
+        # Don't run logic if required third party programs are not installed
+        if self.check_requirements(verbose=False):
+            # download mod description
+            self.para = self.mod_manager.prepare_and_check()
+            self.para.then(self.on_checkmods_resolve, self.on_checkmods_reject,
+                self.on_checkmods_progress)
 
-        Clock.schedule_interval(self.check_install_button, 0)
+            Clock.schedule_interval(self.check_install_button, 0)
+            Clock.schedule_interval(self.try_reenable_play_button, 1)
+
+        else:
+            # This will call check_requirements(dt) which is not really what we
+            # want but it is good enough ;)
+            Clock.schedule_interval(self.check_requirements, 1)
+
         Clock.schedule_once(self.update_footer_label, 0)
-        Clock.schedule_interval(self.try_reenable_play_button, 1)
 
     def try_reenable_play_button(self, dt):
         """This function first checks if a game process had been run. Then it checks
@@ -111,7 +119,7 @@ class Controller(object):
     def try_enable_play_button(self):
         self.view.ids.install_button.disabled = True
 
-        if not self.check_requirements():
+        if not self.check_requirements(verbose=False):
             return
 
         if not self.mods:
@@ -127,42 +135,53 @@ class Controller(object):
         self.view.ids.install_button.disabled = False
         self.play_button_shown = True
 
-    def check_requirements(self):
+    def check_requirements(self, verbose=True):
+        """Check if all the required third party programs are installed in the system.
+        Return True if the check passed.
+        If verbose == true, show a message box in case of a failed check.
+        """
+
         # TODO: move me to a better place
         try:
             teamspeak.check_installed()
         except teamspeak.TeamspeakNotInstalled:
-            message = """Teamspeak does not seem to be installed.
+            if verbose:
+                message = """Teamspeak does not seem to be installed.
 Having Teamspeak is required in order to play Tactical Battlefield.
 
 [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
 
 Install Teamspeak and restart the launcher."""
-            box = MessageBox(message, title='Teamspeak required!', markup=True)
-            box.open()
+                box = MessageBox(message, title='Teamspeak required!', markup=True)
+                box.open()
+
             return False
 
         try:
             Arma.get_installation_path()
         except ArmaNotInstalled:
-            message = """Arma 3 does not seem to be installed.
+            if verbose:
+                message = """Arma 3 does not seem to be installed.
 
 Having Arma 3 is required in order to play Tactical Battlefield."""
-            box = MessageBox(message, title='Arma 3 required!', markup=True)
-            box.open()
+                box = MessageBox(message, title='Arma 3 required!', markup=True)
+                box.open()
+
             return False
 
         try:
             Arma.get_steam_exe_path()
         except SteamNotInstalled:
-            message = """Steam does not seem to be installed.
+            if verbose:
+                message = """Steam does not seem to be installed.
 Having Steam is required in order to play Tactical Battlefield.
 
 [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
 
 Install Steam and restart the launcher."""
-            box = MessageBox(message, title='Steam required!', markup=True)
-            box.open()
+                box = MessageBox(message, title='Steam required!', markup=True)
+                box.open()
+
             return False
 
         return True
