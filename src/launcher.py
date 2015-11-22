@@ -36,7 +36,7 @@ try:
     if __name__ == "__main__":
         import sys
 
-        # initilize settings class
+        # initialize settings class
         from utils.settings import Settings
         settings = Settings(sys.argv[1:])
 
