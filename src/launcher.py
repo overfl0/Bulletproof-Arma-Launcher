@@ -11,6 +11,8 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+from utils.paths import fix_unicode_paths
+fix_unicode_paths()
 
 # Mega catch-all. This is ugly but probably the only way to show users a message
 # in any possible case something fails at any possible place.
@@ -138,15 +140,39 @@ try:
 
 except Exception as e:
     # Mega catch-all requirements
+    # Try to catch all possible problems
     import sys
+    exc_info = sys.exc_info()
 
     from utils.critical_messagebox import MessageBox
-    from utils.primitive_git import get_git_sha1_auto
-    from utils.testtools_compat import _format_exc_info
 
     CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
-    build = get_git_sha1_auto()
-    stacktrace = "".join(_format_exc_info(*sys.exc_info()))
-    msg = 'Build: {}\n{}'.format(build, stacktrace)
+    try:
+        from utils.primitive_git import get_git_sha1_auto
+        build = get_git_sha1_auto()
 
+    except:
+        build = 'N/A (exception occurred)\nBuild exception reason:\n{}'.format(
+            repr(sys.exc_info()[1])
+        )
+
+    try:
+        from utils.testtools_compat import _format_exc_info
+        stacktrace = "".join(_format_exc_info(*exc_info))
+
+    except:
+        try:
+            import traceback
+            last_chance_traceback = "\n".join(traceback.format_tb(exc_info[2]))
+
+        except:
+            last_chance_traceback = "Traceback parsing failed. Reason:\n{}\n\nLast chance parsing:\n{}".format(
+                repr(sys.exc_info()[1]), repr(exc_info[1])
+            )
+
+        stacktrace = "Could not parse stacktrace. Emergency parsing:\n{}\nException while parsing stacktrace:\n{}".format(
+            last_chance_traceback, repr(sys.exc_info()[1])
+        )
+
+    msg = 'Build: {}\n\n{}'.format(build, stacktrace)
     MessageBox(msg, CRITICAL_POPUP_TITLE)
