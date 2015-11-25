@@ -12,19 +12,5 @@
 
 from __future__ import unicode_literals
 
-from kivy.app import App
-from utils.paths import get_resources_path
-
-class BaseApp(App):
-    """docstring for BaseApp"""
-    def __init__(self):
-        super(BaseApp, self).__init__()
-
-    @staticmethod
-    def resource_path(relative):
-        """
-        This method makes sure that the app can access resource path
-        also if packed within a single executable
-        """
-        # Just use utils.paths.get_resources_path for less code replication
-        return get_resources_path(relative)
+class SoftwareNotInstalled(Exception):
+    pass

@@ -11,6 +11,8 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+from utils.paths import fix_unicode_paths
+fix_unicode_paths()
 
 # Mega catch-all. This is ugly but probably the only way to show users a message
 # in any possible case something fails at any possible place.
@@ -36,7 +38,7 @@ try:
     if __name__ == "__main__":
         import sys
 
-        # initilize settings class
+        # initialize settings class
         from utils.settings import Settings
         settings = Settings(sys.argv[1:])
 
@@ -45,6 +47,10 @@ try:
 
         # configure kivy
         from kivy.config import Config
+        from utils.paths import get_resources_path
+
+        Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
+        Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
         if not settings.get('self_update'):
             Config.set('graphics', 'resizable', 0)
@@ -96,6 +102,9 @@ try:
 
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
+
+            title = b'Tactical Battlefield'
+
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
                 self.settings = settings
@@ -107,6 +116,8 @@ try:
 
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
+
+            title = b'Tactical Battlefield Self-updater'
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()
@@ -129,14 +140,39 @@ try:
 
 except Exception as e:
     # Mega catch-all requirements
-    import traceback
+    # Try to catch all possible problems
+    import sys
+    exc_info = sys.exc_info()
 
     from utils.critical_messagebox import MessageBox
-    from utils.primitive_git import get_git_sha1_auto
 
     CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
-    build = get_git_sha1_auto()
-    stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
-    msg = 'Build: {}\n{}'.format(build, stacktrace)
+    try:
+        from utils.primitive_git import get_git_sha1_auto
+        build = get_git_sha1_auto()
 
+    except:
+        build = 'N/A (exception occurred)\nBuild exception reason:\n{}'.format(
+            repr(sys.exc_info()[1])
+        )
+
+    try:
+        from utils.testtools_compat import _format_exc_info
+        stacktrace = "".join(_format_exc_info(*exc_info))
+
+    except:
+        try:
+            import traceback
+            last_chance_traceback = "\n".join(traceback.format_tb(exc_info[2]))
+
+        except:
+            last_chance_traceback = "Traceback parsing failed. Reason:\n{}\n\nLast chance parsing:\n{}".format(
+                repr(sys.exc_info()[1]), repr(exc_info[1])
+            )
+
+        stacktrace = "Could not parse stacktrace. Emergency parsing:\n{}\nException while parsing stacktrace:\n{}".format(
+            last_chance_traceback, repr(sys.exc_info()[1])
+        )
+
+    msg = 'Build: {}\n\n{}'.format(build, stacktrace)
     MessageBox(msg, CRITICAL_POPUP_TITLE)

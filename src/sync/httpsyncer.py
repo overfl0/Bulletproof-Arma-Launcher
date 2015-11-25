@@ -11,6 +11,7 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+
 import os
 import requests
 from datetime import datetime

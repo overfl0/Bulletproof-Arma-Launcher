@@ -24,13 +24,17 @@ class Registry(object):
     Error = OSError
 
     @staticmethod
-    def ReadValue(super_key_handle, key_path, value_name, force_32bit=True):
+    def ReadValue(super_key_handle, key_path, value_name, check_both_architectures=False):
         return '/tmp'
 
     @staticmethod
-    def ReadValueMachine(key_path, value_name, force_32bit=True):
+    def ReadValueMachine(key_path, value_name, check_both_architectures=False):
         return '/tmp'
 
     @staticmethod
-    def ReadValueCurrentUser(key_path, value_name, force_32bit=True):
+    def ReadValueCurrentUser(key_path, value_name, check_both_architectures=False):
+        return '/tmp'
+
+    @staticmethod
+    def ReadValueUserAndMachine(key_path, value_name, check_both_architectures=False):
         return '/tmp'

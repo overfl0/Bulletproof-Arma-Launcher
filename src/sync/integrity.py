@@ -16,7 +16,7 @@ import itertools
 import os
 import shutil
 
-from arma.arma import Arma, ArmaNotInstalled
+from third_party.arma import Arma, ArmaNotInstalled
 from contextlib import contextmanager
 from utils.metadatafile import MetadataFile
 
@@ -197,15 +197,18 @@ def check_mod_directories((top_dirs, dirs_orig, file_paths_orig), base_directory
 
 
 def parse_files_list(files_list):
-    """Computes the top directories, directories and the file paths contained in a torrent."""
+    """Computes the top directories, directories and the file paths contained in a torrent.
+    For now the paths have to be utf-8 encoded. This is likely to change in the future.
+    """
 
     file_paths = set()
     dirs = set()
     top_dirs = set()
 
     for torrent_file in files_list:
-        file_paths.add(torrent_file.path)
-        dir_path = os.path.dirname(torrent_file.path)
+        path = torrent_file.path.decode('utf-8')
+        file_paths.add(path)
+        dir_path = os.path.dirname(path)
 
         while dir_path:  # Go up the directory structure until the end
             if dir_path in dirs:  # If already processed for another file

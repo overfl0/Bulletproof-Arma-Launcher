@@ -23,13 +23,12 @@ if __name__ == "__main__":
 import os
 import subprocess
 
+from utils.devmode import devmode
 from utils.singleton import Singleton
 from utils.registry import Registry
 
+from . import SoftwareNotInstalled
 # Exceptions:
-class SoftwareNotInstalled(Exception):
-    pass
-
 class ArmaNotInstalled(SoftwareNotInstalled):
     pass
 
@@ -49,7 +48,7 @@ class Arma(object):
 
     @staticmethod
     def get_custom_path():
-        """Returns a custom mod installation path set by the user.
+        """Return a custom mod installation path set by the user.
         If no path has been set beforehand, returns None"""
         return Arma().__custom_path
 
@@ -61,12 +60,16 @@ class Arma(object):
 
     @staticmethod
     def get_installation_path():
-        """Returns the folder where Arma is installed.
+        """Return the folder where Arma is installed.
         Raises ArmaNotInstalled if the required registry keys cannot be found."""
+
+        if devmode.get_arma_path():
+            return devmode.get_arma_path()
 
         path = None
         try:
-            path = Registry.ReadValueMachine(Arma._arma_registry_path, 'main')
+            path = Registry.ReadValueUserAndMachine(Arma._arma_registry_path, 'main', check_both_architectures=True)
+
         except Registry.Error:
             raise ArmaNotInstalled()
 
@@ -86,7 +89,7 @@ class Arma(object):
 
     @staticmethod
     def get_executable_path(battleye=True):
-        """Returns path to the arma executable.
+        """Return path to the arma executable.
         The battleye variable allows to run the battleye-enhanced version of the game.
 
         Raises ArmaNotInstalled if Arma is not installed."""
@@ -100,13 +103,16 @@ class Arma(object):
 
     @staticmethod
     def get_steam_exe_path():
-        """Returns the path to the steam executable.
+        """Return the path to the steam executable.
 
         Raises SteamNotInstalled if steam is not installed."""
 
+        if devmode.get_steam_executable():
+            return devmode.get_steam_executable()
+
         try:
             # Optionally, there is also SteamPath
-            return Registry.ReadValueCurrentUser(Arma._steam_registry_path, 'SteamExe')  # SteamPath
+            return Registry.ReadValueUserAndMachine(Arma._steam_registry_path, 'SteamExe', check_both_architectures=True)  # SteamPath
 
         except Registry.Error:
             raise SteamNotInstalled()

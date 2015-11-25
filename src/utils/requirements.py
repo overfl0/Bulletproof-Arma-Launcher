@@ -78,7 +78,7 @@ def check_libraries_requirements():
         except Exception as ex:
             # Kivy raises an Exception with a not-so-nicely formatted message
             # Just print it and exit
-            MessageBox(str(ex), 'Error')
+            MessageBox(", ".join(ex.args), 'Error')
             sys.exit(1)
 
 

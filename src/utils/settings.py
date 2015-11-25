@@ -14,15 +14,13 @@ from __future__ import unicode_literals
 
 import argparse, os
 
-from arma.arma import Arma, SoftwareNotInstalled
 from kivy.logger import Logger
-
-from utils.registry import Registry
-from utils.data.model import Model
-
-from utils.data.jsonstore import JsonStore
-from utils.paths import mkdir_p
+from third_party.arma import Arma, SoftwareNotInstalled
 from utils.critical_messagebox import MessageBox
+from utils.data.jsonstore import JsonStore
+from utils.data.model import Model
+from utils.paths import mkdir_p
+from utils.registry import Registry
 
 class LauncherConfig(Model):
     """Container class for storing configuration"""
@@ -69,7 +67,7 @@ class Settings(object):
         self.parser = None
         self.parse_args(argv)
 
-        Logger.info('Settings: loaded args: ' + str(self.launcher_config.data))
+        Logger.info('Settings: loaded args: ' + unicode(self.launcher_config.data))
 
         self.reinit()
 
