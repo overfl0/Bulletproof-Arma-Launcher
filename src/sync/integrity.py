@@ -74,6 +74,9 @@ def check_mod_directories((top_dirs, dirs_orig, file_paths_orig), base_directory
     base_directory is the directory to which mods are downloaded.
     For example: if the mod directory is C:\Arma\@MyMod, base_directory should be C:\Arma.
 
+    check_subdir tells the function to only check if files contained in the
+    subdirectory are properly created and existing.
+
     on_superfluous is the action to perform when superfluous files are found:
         'warn': return False
         'remove': remove the file or directory
@@ -197,18 +200,15 @@ def check_mod_directories((top_dirs, dirs_orig, file_paths_orig), base_directory
 
 
 def parse_files_list(files_list):
-    """Computes the top directories, directories and the file paths contained in a torrent.
-    For now the paths have to be utf-8 encoded. This is likely to change in the future.
-    """
+    """Computes the top directories, directories and the file paths contained in a torrent."""
 
     file_paths = set()
     dirs = set()
     top_dirs = set()
 
     for torrent_file in files_list:
-        path = torrent_file.path.decode('utf-8')
-        file_paths.add(path)
-        dir_path = os.path.dirname(path)
+        file_paths.add(torrent_file)
+        dir_path = os.path.dirname(torrent_file)
 
         while dir_path:  # Go up the directory structure until the end
             if dir_path in dirs:  # If already processed for another file
