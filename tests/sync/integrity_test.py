@@ -21,12 +21,38 @@ from sync import integrity
 
 BASE_DIR = 'c:\\base'
 TOP_DIR = 'top_dir'
+DIRECTORY = {}
 
+'''This test makes use of a modified mockfs, a library to mock a file system.
+The modification allows mockfs to work on windows file paths.
+The file system is populated with files, so is the "torrent" structure.
+Then the function check_mod_directories() is ran. Its purpose is to remove
+superfluous files from the file system and report whether all the files required
+from the "torrent" are in fact on the disk.
+
+At the end of each test, _check_if_dir_contains_only() checks if the required
+files and directories are still on disk (no berserk removal) and if all files
+contained in a given directory are in fact listed in the torrent (no superfluous
+files on disk).
+'''
 
 class IntegrityTest(unittest.TestCase):
 
+    def setUp(self):
+        self.physical_files_expected = set([])
+        self.physical_dirs_expected = set([])
+        self.file_paths = set([])
+
+        self.fs = mockfs.replace_builtins()
+        self._set_basic_files()
+
+    def tearDown(self):
+        self._check_if_dir_contains_only(BASE_DIR, self.physical_dirs_expected, self.physical_files_expected)
+        mockfs.restore_builtins()
+
     def _add_file(self, rel_path, top_dir=TOP_DIR, base_dir=BASE_DIR,
-                  physical=True, inTorrent=True):
+                  physical=True, in_torrent=True, force_keep_it=False, content=''):
+        '''Add the file/dir to mockfs. Also add it to the appropriate internal "set".'''
 
         # Allow passing more than one file to add
         if isinstance(rel_path, basestring):
@@ -37,70 +63,185 @@ class IntegrityTest(unittest.TestCase):
 
             # Create "real" file on "disk"
             if physical:
-                self.fs.add_entries({physical_path: ""})
+                self.fs.add_entries({physical_path: content})
+
+                if in_torrent or force_keep_it:
+                    if content != DIRECTORY:
+                        self.physical_files_expected.add(physical_path)
+                        directory = os.path.dirname(physical_path)
+                    else:
+                        directory = physical_path
+
+                    while directory != base_dir:
+                        self.physical_dirs_expected.add(directory)
+                        directory = os.path.dirname(directory)
 
             # Add to torrent internal data
-            if inTorrent:
-                if physical:
-                    self.physical_files_expected.add(physical_path)
-
+            if in_torrent:
                 self.file_paths.add(os.path.join(top_dir, f))
 
-    def _add_real_file_only(self, rel_path, top_dir=TOP_DIR, base_dir=BASE_DIR):
-        return self._add_file(rel_path, top_dir, base_dir, True, False)
+    def _add_real_file_only(self, rel_path, top_dir=TOP_DIR, base_dir=BASE_DIR, force_keep_it=False, content=''):
+        return self._add_file(rel_path, top_dir, base_dir, physical=True, in_torrent=False, force_keep_it=force_keep_it, content=content)
 
-    def _add_torrent_file_only(self, rel_path, top_dir=TOP_DIR, base_dir=BASE_DIR):
-        return self._add_file(rel_path, top_dir, base_dir, False, True)
+    def _add_torrent_file_only(self, rel_path, top_dir=TOP_DIR, base_dir=BASE_DIR, content=''):
+        return self._add_file(rel_path, top_dir, base_dir, physical=False, in_torrent=True, content=content)
 
     def _set_basic_files(self):
+        '''Add some dummy files so that the tests actually have to do something.'''
         self._add_file('dir1\\file11')
         self._add_file('dir1\\file12')
         self._add_file('dir2\\file21')
         self._add_file('dir2\\file22')
 
-    def setUp(self):
-        self.physical_files_expected = set([])
-        self.file_paths = set([])
+    def _check_if_dir_contains_only(self, dirpath, dirs, files):
+        '''Make sure all required files are physically present on disk (no
+        berserk removal). Make sure all files in directory are actually required
+        (no superfluous files).
+        '''
 
-        self.fs = mockfs.replace_builtins()
-        self._set_basic_files()
-
-    def tearDown(self):
-        self.checkIfDirContains(BASE_DIR, self.physical_files_expected)
-        mockfs.restore_builtins()
-
-    def checkIfDirContains(self, dirpath, files):
+        # Are all required files really on the file system?
         for f in files:
-            self.assertTrue(os.path.exists(f), "File does not exist, but should: {}".format(f))
+            self.assertTrue(os.path.isfile(f), "File does not exist, but should: {}".format(f))
 
-        for (dirpath, _, filenames) in os.walk(dirpath):
+        for d in dirs:
+            self.assertTrue(os.path.isdir(d), "Directory does not exist, but should: {}".format(d))
+
+        # Are all files on disk required by the torrent?
+        for (dirpath, dirnames, filenames) in os.walk(dirpath):
             for f in filenames:
                 full_f = os.path.join(dirpath, f)
-                # print "checkIfDirContains: {}".format(full_f)
+                # print "_check_if_dir_contains_only: {}".format(full_f)
                 self.assertIn(full_f, files, "Superfluous file: {}".format(full_f))
 
-    @attr('integration')
-    def test_check_mod_directories_synced(self):
-        top_dirs, dirs_orig, file_paths = integrity.parse_files_list(self.file_paths)
-        retval = integrity.check_mod_directories((top_dirs, dirs_orig, file_paths),
-                                                 BASE_DIR, check_subdir='', on_superfluous='ignore')
+            for d in dirnames:
+                full_d = os.path.join(dirpath, d)
+                self.assertIn(full_d, dirs, "Superfluous directory: {}".format(full_d))
 
-        self.assertEqual(retval, True, "retval should be true")
+    ############################################################################
+    # Actual tests start here                                                  #
+    ############################################################################
 
     @attr('integration')
-    def test_check_mod_directories_too_much(self):
-        self._add_real_file_only('dir1\\file6')
-        top_dirs, dirs_orig, file_paths = integrity.parse_files_list(self.file_paths)
-        retval = integrity.check_mod_directories((top_dirs, dirs_orig, file_paths),
+    def test_sync_already_synced(self):
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
 
-        self.assertEqual(retval, True, "retval should be true")
+        self.assertEqual(retval, True, "check_mod_directories should return true")
 
     @attr('integration')
-    def test_check_mod_directories_not_enough(self):
-        self._add_torrent_file_only('dir1\\file7')
-        top_dirs, dirs_orig, file_paths = integrity.parse_files_list(self.file_paths)
-        retval = integrity.check_mod_directories((top_dirs, dirs_orig, file_paths),
+    def test_sync_superfluous_entries_so_remove(self):
+        self._add_real_file_only('dir1\\file6')
+        self._add_real_file_only('dir1\\dir6', content=DIRECTORY)
+        self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_superfluous_entries_but_ignore(self):
+        self._add_real_file_only('dir1\\file6', force_keep_it=True)
+        self._add_real_file_only('dir1\\dir6', force_keep_it=True, content=DIRECTORY)
+        self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
                                                  BASE_DIR, check_subdir='', on_superfluous='ignore')
 
-        self.assertEqual(retval, False, "retval should be false")
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_superfluous_file_on_warn(self):
+        self._add_real_file_only('dir1\\file6', force_keep_it=True)
+        # self._add_real_file_only('dir1\\dir6', force_keep_it=True, content=DIRECTORY)
+        # self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='warn')
+
+        self.assertEqual(retval, False, "check_mod_directories should return false")
+
+    @attr('integration')
+    def test_sync_superfluous_dir_on_warn(self):
+        self._add_real_file_only('dir1\\dir6', force_keep_it=True, content=DIRECTORY)
+        self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='warn')
+
+        self.assertEqual(retval, False, "check_mod_directories should return false")
+
+    @attr('integration')
+    def test_sync_missing_file(self):
+        self._add_torrent_file_only('dir1\\file7')
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='ignore')
+
+        self.assertEqual(retval, False, "check_mod_directories should return false")
+
+    @attr('integration')
+    def _test_sync_missing_dir(self):
+        '''Test invalid because checking empty dirs from torrents not yet implemented.'''
+        self._add_torrent_file_only('dir1\\dir6', content=DIRECTORY)
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='ignore')
+
+        self.assertEqual(retval, False, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_entries_in_other_top_dirs(self):
+        self._add_real_file_only('dir1\\file6', top_dir='other', force_keep_it=True)
+        self._add_real_file_only('dir2\\file1', top_dir='other', force_keep_it=True)
+        self._add_real_file_only('dir2\\dire1', top_dir='other2', force_keep_it=True, content=DIRECTORY)
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_keep_whitelisted_physical_entries(self):
+        self._add_real_file_only('dir1\\.tacbf_meta', force_keep_it=True)
+        self._add_real_file_only('dir1\\will_be_removed')
+        self._add_real_file_only('.tacbf_meta\\somefile', force_keep_it=True)
+        self._add_real_file_only('.tacbf_meta\\otherfile', force_keep_it=True)
+        self._add_real_file_only('.synqinfo\\file1', force_keep_it=True)
+        self._add_real_file_only('.synqinfo\\file2', force_keep_it=True)
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_keep_whitelisted_physical_entries_on_warn(self):
+        self._add_real_file_only('dir1\\.tacbf_meta', force_keep_it=True)
+        self._add_real_file_only('.tacbf_meta\\somefile', force_keep_it=True)
+        self._add_real_file_only('.tacbf_meta\\otherfile', force_keep_it=True)
+        self._add_real_file_only('.synqinfo\\file1', force_keep_it=True)
+        self._add_real_file_only('.synqinfo\\file2', force_keep_it=True)
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='warn')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_whitelisted_entries_from_torrent_removed(self):
+        self._add_torrent_file_only('dir1\\.tacbf_meta')
+        self._add_torrent_file_only('.tacbf_meta\\somefile')
+        self._add_torrent_file_only('.tacbf_meta\\otherfile')
+        self._add_torrent_file_only('.synqinfo\\file1')
+        self._add_torrent_file_only('.synqinfo\\file2')
+
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+
+# TODO:
+# Subdir check
+# FIX torrent empty directory
+# UTF-8
