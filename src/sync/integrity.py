@@ -66,7 +66,7 @@ def filter_out_whitelisted(elements, whitelist):
 
     return elements
 
-def check_mod_directories((top_dirs, dirs_orig, file_paths_orig), base_directory, check_subdir="", on_superfluous='warn'):
+def check_mod_directories(files_list, base_directory, check_subdir="", on_superfluous='warn'):
     """Check if all files and directories present in the mod directories belong
     to the torrent file. If not, remove those if on_superfluous=='remove' or return False
     if on_superfluous=='warn'.
@@ -94,6 +94,8 @@ def check_mod_directories((top_dirs, dirs_orig, file_paths_orig), base_directory
 
     if not on_superfluous in ('warn', 'remove', 'ignore'):
         raise Exception('Unknown action: {}'.format(on_superfluous))
+
+    top_dirs, dirs_orig, file_paths_orig = parse_files_list(files_list)
 
     dirs = dirs_orig.copy()
     file_paths = file_paths_orig.copy()

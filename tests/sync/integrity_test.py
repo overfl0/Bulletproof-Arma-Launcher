@@ -124,7 +124,7 @@ class IntegrityTest(unittest.TestCase):
 
     @attr('integration')
     def test_sync_already_synced(self):
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
@@ -138,7 +138,7 @@ class IntegrityTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
         self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'żółw\\dir6')), 'File is not a dir!')
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
@@ -152,7 +152,7 @@ class IntegrityTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
         self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'żółw\\dir6')), 'File is not a dir!')
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='ignore')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
@@ -163,7 +163,7 @@ class IntegrityTest(unittest.TestCase):
         # self._add_real_file_only('dir1\\dir6', force_keep_it=True, content=DIRECTORY)
         # self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='warn')
 
         self.assertEqual(retval, False, "check_mod_directories should return false")
@@ -173,7 +173,7 @@ class IntegrityTest(unittest.TestCase):
         self._add_real_file_only('dir1\\dir6', force_keep_it=True, content=DIRECTORY)
         self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='warn')
 
         self.assertEqual(retval, False, "check_mod_directories should return false")
@@ -181,7 +181,7 @@ class IntegrityTest(unittest.TestCase):
     @attr('integration')
     def test_sync_missing_file(self):
         self._add_torrent_file_only('dir1\\file7')
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='ignore')
 
         self.assertEqual(retval, False, "check_mod_directories should return false")
@@ -189,7 +189,7 @@ class IntegrityTest(unittest.TestCase):
     @attr('integration')
     def test_sync_missing_unicode_file(self):
         self._add_torrent_file_only('dir1\\żółw')
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='ignore')
 
         self.assertEqual(retval, False, "check_mod_directories should return false")
@@ -199,7 +199,7 @@ class IntegrityTest(unittest.TestCase):
         '''Test invalid because checking empty dirs from torrents not yet implemented.'''
         self._add_torrent_file_only('dir1\\dir6', content=DIRECTORY)
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='ignore')
 
         self.assertEqual(retval, False, "check_mod_directories should return true")
@@ -210,7 +210,7 @@ class IntegrityTest(unittest.TestCase):
         self._add_real_file_only('dir2\\file1', top_dir='other', force_keep_it=True)
         self._add_real_file_only('dir2\\dire1', top_dir='other2', force_keep_it=True, content=DIRECTORY)
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
@@ -224,7 +224,7 @@ class IntegrityTest(unittest.TestCase):
         self._add_real_file_only('.synqinfo\\file1', force_keep_it=True)
         self._add_real_file_only('.synqinfo\\file2', force_keep_it=True)
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
@@ -237,7 +237,7 @@ class IntegrityTest(unittest.TestCase):
         self._add_real_file_only('.synqinfo\\file1', force_keep_it=True)
         self._add_real_file_only('.synqinfo\\file2', force_keep_it=True)
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='warn')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
@@ -250,7 +250,7 @@ class IntegrityTest(unittest.TestCase):
         self._add_torrent_file_only('.synqinfo\\file1')
         self._add_torrent_file_only('.synqinfo\\file2')
 
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
@@ -258,7 +258,7 @@ class IntegrityTest(unittest.TestCase):
     @attr('integration')
     def test_sync_unicode(self):
         self._add_file('test\\żółw')
-        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+        retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
 
         self.assertEqual(retval, True, "check_mod_directories should return true")

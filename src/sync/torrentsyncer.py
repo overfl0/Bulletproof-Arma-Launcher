@@ -27,7 +27,7 @@ if __name__ == "__main__":
 import libtorrent
 import os
 
-from sync.integrity import check_mod_directories, parse_files_list, check_files_mtime_correct, is_complete_tfr_hack
+from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack
 from utils.metadatafile import MetadataFile
 from time import sleep
 
@@ -154,12 +154,11 @@ class TorrentSyncer(object):
 
         # (5) Check if there are no additional files in the directory
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
-        top_dirs, dirs, file_paths = parse_files_list(files_list)
-        if not check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, on_superfluous='warn'):
+        if not check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='warn'):
             print 'Superfluous files in mod directory. Marking as not complete'
             return False
 
-        return is_complete_tfr_hack(self.mod.name, file_paths)
+        return is_complete_tfr_hack(self.mod.name, files_list)
     """
     def create_flags(self):
         f = libtorrent.add_torrent_params_flags_t
@@ -279,8 +278,7 @@ class TorrentSyncer(object):
         assert(self._torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
         torrent_info = self._torrent_handle.get_torrent_info()
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
-        top_dirs, dirs, file_paths = parse_files_list(files_list)
-        cleanup_successful = check_mod_directories((top_dirs, dirs, file_paths), self.mod.clientlocation, on_superfluous='remove')
+        cleanup_successful = check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='remove')
 
         # Recreate the torrent file and store it in the metadata file for future checks
         recreated_torrent = libtorrent.create_torrent(torrent_info)
@@ -329,8 +327,7 @@ if __name__ == '__main__':
     # print num_files
 
     # files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
-    # top_dirs, dirs, file_paths = parse_files_list(files_list)
-    # check_mod_directories((top_dirs, dirs, file_paths))
+    # check_mod_directories(files_list)
 
     # print "File paths: ", file_paths
     # print "Dirs: ", dirs
