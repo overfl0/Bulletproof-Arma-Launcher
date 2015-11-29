@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Tactical Battlefield Installer/Updater/Launcher
 # Copyright (C) 2015 TacBF Installer Team.
 #
@@ -132,7 +133,10 @@ class IntegrityTest(unittest.TestCase):
     def test_sync_superfluous_entries_so_remove(self):
         self._add_real_file_only('dir1\\file6')
         self._add_real_file_only('dir1\\dir6', content=DIRECTORY)
+        self._add_real_file_only('dir1\\żółw')
+        self._add_real_file_only('żółw\\dir6', content=DIRECTORY)
         self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
+        self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'żółw\\dir6')), 'File is not a dir!')
 
         retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
@@ -143,7 +147,10 @@ class IntegrityTest(unittest.TestCase):
     def test_sync_superfluous_entries_but_ignore(self):
         self._add_real_file_only('dir1\\file6', force_keep_it=True)
         self._add_real_file_only('dir1\\dir6', force_keep_it=True, content=DIRECTORY)
+        self._add_real_file_only('dir1\\żółw', force_keep_it=True)
+        self._add_real_file_only('żółw\\dir6', force_keep_it=True, content=DIRECTORY)
         self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'dir1\\dir6')), 'File is not a dir!')
+        self.assertTrue(os.path.isdir(os.path.join(BASE_DIR, TOP_DIR, 'żółw\\dir6')), 'File is not a dir!')
 
         retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
                                                  BASE_DIR, check_subdir='', on_superfluous='ignore')
@@ -174,6 +181,14 @@ class IntegrityTest(unittest.TestCase):
     @attr('integration')
     def test_sync_missing_file(self):
         self._add_torrent_file_only('dir1\\file7')
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='ignore')
+
+        self.assertEqual(retval, False, "check_mod_directories should return false")
+
+    @attr('integration')
+    def test_sync_missing_unicode_file(self):
+        self._add_torrent_file_only('dir1\\żółw')
         retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
                                                  BASE_DIR, check_subdir='', on_superfluous='ignore')
 
@@ -240,8 +255,14 @@ class IntegrityTest(unittest.TestCase):
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
 
+    @attr('integration')
+    def test_sync_unicode(self):
+        self._add_file('test\\żółw')
+        retval = integrity.check_mod_directories(integrity.parse_files_list(self.file_paths),
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
 
 # TODO:
 # Subdir check
 # FIX torrent empty directory
-# UTF-8
