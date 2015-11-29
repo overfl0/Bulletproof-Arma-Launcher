@@ -265,17 +265,26 @@ class IntegrityTest(unittest.TestCase):
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
 
-    @attr('integration')
-    def test_sync_subdir(self):
+    def _set_basic_subdir_files(self):
         self._add_file('ts\\plugins\\tsfile1')
         self._add_file('ts\\plugins\\tsfile2')
         self._add_file('ts\\plugins\\tsdir1\\tsfile3')
 
+        # c:\\teamspeak\\plugins\\tsfileX
         self._add_real_file_only('tsfile1', 'plugins', 'c:\\teamspeak', force_keep_it=True)
         self._add_real_file_only('tsfile2', 'plugins', 'c:\\teamspeak', force_keep_it=True)
         self._add_real_file_only('tsdir1\\tsfile3', 'plugins', 'c:\\teamspeak', force_keep_it=True)
 
+        # Irrelevant files. They MUST be kept and NOT removed!
+        self._add_real_file_only('somePlugin\\pluginFile', 'plugins', 'c:\\teamspeak', force_keep_it=True)
+        self._add_real_file_only('otherPluginFile', 'plugins', 'c:\\teamspeak', force_keep_it=True)
+        self._add_real_file_only('tsInternalFile', '', 'c:\\teamspeak', force_keep_it=True)
+        self._add_real_file_only('passer-byFile', '', 'c:\\', force_keep_it=True)
+        self._add_real_file_only('passer-byDir\\somefile', '', 'c:\\', force_keep_it=True)
 
+    @attr('integration')
+    def test_sync_subdir(self):
+        self._set_basic_subdir_files()
         retval = integrity.check_mod_directories(self.file_paths,
                                                  base_directory='c:\\teamspeak\\plugins',
                                                  check_subdir='top_dir\\ts\\plugins',
@@ -283,5 +292,15 @@ class IntegrityTest(unittest.TestCase):
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
 
-# TODO:
-# FIX torrent empty directory
+    @attr('integration')
+    def test_sync_subdir_missing(self):
+        self._set_basic_subdir_files()
+        self._add_file('ts\\plugins\\tsdir1\\tsfile4')
+        retval = integrity.check_mod_directories(self.file_paths,
+                                                 base_directory='c:\\teamspeak\\plugins',
+                                                 check_subdir='top_dir\\ts\\plugins',
+                                                 on_superfluous='warn')
+
+        self.assertEqual(retval, False, "check_mod_directories should return false")
+
+# TODO: fix torrent empty directory check both in normal and in subdir check

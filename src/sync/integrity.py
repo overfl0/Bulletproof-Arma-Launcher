@@ -194,7 +194,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             full_path = os.path.join(base_directory, file_entry)
 
             if not os.path.isfile(full_path):
-                # print "File paths present, setting retval to False"
+                print "File paths present, setting retval to False"
                 success = False
                 break
 
