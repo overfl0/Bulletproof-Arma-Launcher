@@ -66,7 +66,7 @@ def filter_out_whitelisted(elements, whitelist):
 
     return elements
 
-def check_mod_directories(files_list, base_directory, check_subdir="", on_superfluous='warn'):
+def check_mod_directories(files_list, base_directory, check_subdir='', on_superfluous='warn'):
     """Check if all files and directories present in the mod directories belong
     to the torrent file. If not, remove those if on_superfluous=='remove' or return False
     if on_superfluous=='warn'.
@@ -95,13 +95,10 @@ def check_mod_directories(files_list, base_directory, check_subdir="", on_superf
     if not on_superfluous in ('warn', 'remove', 'ignore'):
         raise Exception('Unknown action: {}'.format(on_superfluous))
 
-    top_dirs, dirs_orig, file_paths_orig = parse_files_list(files_list)
-
-    dirs = dirs_orig.copy()
-    file_paths = file_paths_orig.copy()
-
     # Whitelist our and PWS metadata files
     whitelist = (MetadataFile.file_name, '.synqinfo', '.sync')
+
+    top_dirs, dirs, file_paths = parse_files_list(files_list, check_subdir)
 
     # Remove whitelisted items from the lists
     dirs = filter_out_whitelisted(dirs, whitelist)
@@ -127,7 +124,7 @@ def check_mod_directories(files_list, base_directory, check_subdir="", on_superf
 
                 # First check files in this directory
                 for file_name in filenames:
-                    relative_file_name = os.path.join(check_subdir, relative_path, file_name)
+                    relative_file_name = os.path.join(relative_path, file_name)
 
                     if file_name in whitelist:
                         print 'File {} in whitelist, skipping...'.format(file_name)
@@ -158,7 +155,7 @@ def check_mod_directories(files_list, base_directory, check_subdir="", on_superf
                 # Now check directories
                 # Iterate over a copy because we'll be deleting items from the original
                 for dir_name in dirnames[:]:
-                    relative_dir_path = os.path.join(check_subdir, relative_path, dir_name)
+                    relative_dir_path = os.path.join(relative_path, dir_name)
 
                     if dir_name in whitelist:
                         dirnames.remove(dir_name)
@@ -189,10 +186,20 @@ def check_mod_directories(files_list, base_directory, check_subdir="", on_superf
                         pass
 
         # Check for files missing on disk
-        if file_paths:
-            success = False
+        # file_paths contains all missing files OR files outside of any directory.
+        # Such files will not exist with regular torrents but may happen if using
+        # check_subdir != ''.
+        # We just check if they exist. No deleting!
+        for file_entry in file_paths:
+            full_path = os.path.join(base_directory, file_entry)
+
+            if not os.path.isfile(full_path):
+                # print "File paths present, setting retval to False"
+                success = False
+                break
 
         if dirs:
+            print "Dirs present, setting retval to False"
             success = False
 
     except OSError:
@@ -201,12 +208,21 @@ def check_mod_directories(files_list, base_directory, check_subdir="", on_superf
     return success
 
 
-def parse_files_list(files_list):
+def parse_files_list(files_list, only_subdir=''):
     """Computes the top directories, directories and the file paths contained in a torrent."""
 
     file_paths = set()
     dirs = set()
     top_dirs = set()
+
+    # if only_subdir == 'foo/bar':
+    #     'foo/bar/dir/file' => 'dir/file'
+    if only_subdir != '':
+        if not only_subdir.endswith(os.path.sep):
+            only_subdir += os.path.sep
+
+        subdir_len = len(only_subdir)
+        files_list = [f[subdir_len:] for f in files_list if f.startswith(only_subdir)]
 
     for torrent_file in files_list:
         file_paths.add(torrent_file)

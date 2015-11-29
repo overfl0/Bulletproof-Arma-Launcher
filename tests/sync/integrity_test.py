@@ -209,6 +209,8 @@ class IntegrityTest(unittest.TestCase):
         self._add_real_file_only('dir1\\file6', top_dir='other', force_keep_it=True)
         self._add_real_file_only('dir2\\file1', top_dir='other', force_keep_it=True)
         self._add_real_file_only('dir2\\dire1', top_dir='other2', force_keep_it=True, content=DIRECTORY)
+        self._add_real_file_only('somefile', top_dir='', base_dir='c:\\', force_keep_it=True)
+        self._add_real_file_only('otherfile', top_dir='', base_dir=BASE_DIR, force_keep_it=True)
 
         retval = integrity.check_mod_directories(self.file_paths,
                                                  BASE_DIR, check_subdir='', on_superfluous='remove')
@@ -263,6 +265,23 @@ class IntegrityTest(unittest.TestCase):
 
         self.assertEqual(retval, True, "check_mod_directories should return true")
 
+    @attr('integration')
+    def test_sync_subdir(self):
+        self._add_file('ts\\plugins\\tsfile1')
+        self._add_file('ts\\plugins\\tsfile2')
+        self._add_file('ts\\plugins\\tsdir1\\tsfile3')
+
+        self._add_real_file_only('tsfile1', 'plugins', 'c:\\teamspeak', force_keep_it=True)
+        self._add_real_file_only('tsfile2', 'plugins', 'c:\\teamspeak', force_keep_it=True)
+        self._add_real_file_only('tsdir1\\tsfile3', 'plugins', 'c:\\teamspeak', force_keep_it=True)
+
+
+        retval = integrity.check_mod_directories(self.file_paths,
+                                                 base_directory='c:\\teamspeak\\plugins',
+                                                 check_subdir='top_dir\\ts\\plugins',
+                                                 on_superfluous='warn')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
 # TODO:
-# Subdir check
 # FIX torrent empty directory
