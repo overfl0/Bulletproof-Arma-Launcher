@@ -1,2 +1,21 @@
+@echo #########################################################################
+@echo Running unit tests...
+@echo #########################################################################
+nosetests tests -a --nocapture
+
+@rem If tests fail, do NOT build!
+@if %errorlevel% neq 0 exit /b %errorlevel%
+
+@echo #########################################################################
+@echo Running integration tests...
+@echo #########################################################################
+nosetests tests -a "integration" --nocapture
+
+@rem If tests fail, do NOT build!
+@if %errorlevel% neq 0 exit /b %errorlevel%
+
+@echo #########################################################################
+@echo Tests passed, building the launcher...
+@echo #########################################################################
 python c:\Kivy-1.8.0-py2.7-win32\Python27\Scripts\pyinstaller-script.py tblauncher.spec
 copy dist\tblauncher.exe c:\vagrant
