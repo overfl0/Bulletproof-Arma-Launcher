@@ -286,24 +286,17 @@ def is_complete_tfr_hack(mod_name, file_paths):
     if not mod_name.startswith("Task Force Arrowhead Radio"):
         return True
 
-    try:
-        arma_path = Arma.get_installation_path()
-    except ArmaNotInstalled:
-        # For testing purposes
-        arma_path = "C:\\Users\\IEUser\\Documents\Arma 3"
+    arma_path = Arma.get_installation_path()
+    userconfig = os.path.join(arma_path, 'userconfig')
 
-    # Check if all files in userconfig are PRESENT (not necessarily the same)
-    for entry in file_paths:
-        # path == @task_force_radio\userconfig\...
-        entry_pieces = os.path.normpath(entry).split(os.path.sep)
-        if entry_pieces[1] == "userconfig":
-            supposed_file_path = os.path.join(arma_path, *entry_pieces[1:])
+    retval = check_mod_directories(file_paths, base_directory=userconfig,
+                                   check_subdir='@task_force_radio\\userconfig',
+                                   on_superfluous='ignore')
 
-            if not os.path.isfile(supposed_file_path):
-                print "File {} not present. Marking as not fully installed".format(supposed_file_path)
-                return False
-            # print entry_path_rest
+    if not retval:
+        print "Userconfig not populated. Marking as not fully installed"
+    else:
+        print "All OK"
 
+    return retval
     # TODO: Check for the plugins in Teamspeak
-
-    return True
