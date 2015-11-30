@@ -208,7 +208,6 @@ Install Steam and restart the launcher."""
 
     def on_checkmods_resolve(self, progress):
         Logger.debug('InstallScreen: checking mods finished')
-        self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
@@ -220,6 +219,8 @@ Install Steam and restart the launcher."""
 
         self.mods = progress['mods']
         self.try_enable_play_button()
+
+        self.view.ids.install_button.disabled = False
 
     def on_checkmods_reject(self, progress):
         #self.view.ids.install_button.disabled = False
