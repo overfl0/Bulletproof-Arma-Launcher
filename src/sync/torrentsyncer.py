@@ -153,12 +153,13 @@ class TorrentSyncer(object):
             return False
 
         # (5) Check if there are no additional files in the directory
-        files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
+        checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
+        files_list = checksums.keys()
         if not check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='warn'):
             print 'Superfluous files in mod directory. Marking as not complete'
             return False
 
-        return is_complete_tfr_hack(self.mod.name, files_list)
+        return is_complete_tfr_hack(self.mod.name, files_list, checksums)
     """
     def create_flags(self):
         f = libtorrent.add_torrent_params_flags_t

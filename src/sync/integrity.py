@@ -16,9 +16,12 @@ import itertools
 import os
 import shutil
 
-from third_party.arma import Arma, ArmaNotInstalled
+from third_party.arma import Arma
 from contextlib import contextmanager
+from utils.hashes import sha1
 from utils.metadatafile import MetadataFile
+from third_party import teamspeak
+
 
 def _unlink_safety_assert(base_path, file_path, action="remove"):
     """Asserts that the file_path string starts with base_path string.
@@ -66,7 +69,8 @@ def filter_out_whitelisted(elements, whitelist):
 
     return elements
 
-def check_mod_directories(files_list, base_directory, check_subdir='', on_superfluous='warn'):
+
+def check_mod_directories(files_list, base_directory, check_subdir='', on_superfluous='warn', checksums=None):
     """Check if all files and directories present in the mod directories belong
     to the torrent file. If not, remove those if on_superfluous=='remove' or return False
     if on_superfluous=='warn'.
@@ -88,17 +92,19 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     files, this should not be an issue.
     This function will skip files or directories that match the 'whitelist' variable.
 
+    If the dictionary checksums is not None, the files' checksums will be checked.
+
     Returns if the directory has been cleaned sucessfully or if all files present
     are supposed to be there. Do not ignore this value!
     If unsuccessful at removing files, the mod should NOT be considered ready to play."""
 
-    if not on_superfluous in ('warn', 'remove', 'ignore'):
+    if on_superfluous not in ('warn', 'remove', 'ignore'):
         raise Exception('Unknown action: {}'.format(on_superfluous))
 
     # Whitelist our and PWS metadata files
     whitelist = (MetadataFile.file_name, '.synqinfo', '.sync')
 
-    top_dirs, dirs, file_paths = parse_files_list(files_list, check_subdir)
+    top_dirs, dirs, file_paths, checksums = parse_files_list(files_list, checksums, check_subdir)
 
     # Remove whitelisted items from the lists
     dirs = filter_out_whitelisted(dirs, whitelist)
@@ -133,13 +139,19 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                             file_paths.remove(relative_file_name)
                         continue
 
+                    full_file_path = os.path.join(dirpath, file_name)
+
                     print 'Checking file: {}'.format(relative_file_name)
                     if relative_file_name in file_paths:
                         file_paths.remove(relative_file_name)
                         print relative_file_name, "removed"
-                        continue  # File present in the torrent, nothing to see here
 
-                    full_file_path = os.path.join(dirpath, file_name)
+                        if checksums and sha1(full_file_path) != checksums[relative_file_name]:
+                            print "File {} exists but its hash differs from expected.".format(relative_file_name)
+                            print "Expected: {}, computed: {}".format(checksums[relative_file_name].encode('hex'), sha1(full_file_path).encode('hex'))
+                            return False
+
+                        continue  # File present in the torrent, nothing to see here
 
                     if on_superfluous == 'remove':
                         print 'Removing file: {}'.format(full_file_path)
@@ -198,6 +210,12 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 success = False
                 break
 
+            if checksums and sha1(full_path) != checksums[file_entry]:
+                print "File {} exists but its hash differs from expected.".format(file_entry)
+                print "Expected: {}, computed: {}".format(checksums[file_entry].encode('hex'), sha1(full_path).encode('hex'))
+                success = False
+                break
+
         if dirs:
             print "Dirs present, setting retval to False"
             success = False
@@ -208,7 +226,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     return success
 
 
-def parse_files_list(files_list, only_subdir=''):
+def parse_files_list(files_list, checksums, only_subdir=''):
     """Computes the top directories, directories and the file paths contained in a torrent."""
 
     file_paths = set()
@@ -222,7 +240,12 @@ def parse_files_list(files_list, only_subdir=''):
             only_subdir += os.path.sep
 
         subdir_len = len(only_subdir)
+
+        # Shorten file names by removing the subdir from the begining
         files_list = [f[subdir_len:] for f in files_list if f.startswith(only_subdir)]
+        if checksums:
+            # Do the same for checksums keys. Keep hashes intact
+            checksums = dict([(f[subdir_len:], hsh) for (f, hsh) in checksums.iteritems() if f.startswith(only_subdir)])
 
     for torrent_file in files_list:
         file_paths.add(torrent_file)
@@ -239,7 +262,7 @@ def parse_files_list(files_list, only_subdir=''):
 
             dir_path = parent_dir
 
-    return (top_dirs, dirs, file_paths)
+    return top_dirs, dirs, file_paths, checksums
 
 
 def check_files_mtime_correct(base_directory, files_data):  # file_path, size, mtime
@@ -274,7 +297,7 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
     return True
 
 
-def is_complete_tfr_hack(mod_name, file_paths):
+def is_complete_tfr_hack(mod_name, file_paths, checksums):
     """This is a hackish check if Task Force Arrowhead Radio mod has been
     correctly installed.
     To be fully installed, files contained in the userconfig subdirectory
@@ -295,8 +318,16 @@ def is_complete_tfr_hack(mod_name, file_paths):
 
     if not retval:
         print "Userconfig not populated. Marking as not fully installed"
+        return retval
     else:
         print "All OK"
 
+    teamspeak_path = teamspeak.get_install_location()
+    teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
+    retval = check_mod_directories(file_paths, base_directory=teamspeak_plugins,
+                                   check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
+                                   on_superfluous='ignore', checksums=checksums)
+
+    print "Teamspeak plugins check:", retval
+
     return retval
-    # TODO: Check for the plugins in Teamspeak
