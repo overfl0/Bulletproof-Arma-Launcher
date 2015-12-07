@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 from kivy.uix.widget import Widget
 
 class UpdaterMainWidget(Widget):

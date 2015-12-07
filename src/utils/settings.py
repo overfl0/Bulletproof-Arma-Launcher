@@ -10,14 +10,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 import argparse, os
 
 from kivy.logger import Logger
-
-from utils.registry import Registry
-from utils.data.model import Model
-
+from third_party.arma import Arma, SoftwareNotInstalled
+from utils.critical_messagebox import MessageBox
 from utils.data.jsonstore import JsonStore
+from utils.data.model import Model
+from utils.paths import mkdir_p
+from utils.registry import Registry
 
 class LauncherConfig(Model):
     """Container class for storing configuration"""
@@ -26,6 +29,7 @@ class LauncherConfig(Model):
         {'name': 'use_exception_popup', 'defaultValue': False},
         {'name': 'self_update', 'defaultValue': False},
         {'name': 'launcher_basedir'},
+        {'name': 'launcher_moddir'},
     ]
 
     def __init__(self):
@@ -47,16 +51,15 @@ class Settings(object):
         super(Settings, self).__init__()
 
         # get the basedir for config files. This has to be the same everytime
-        self.config_path = os.path.join(self._get_launcher_basedir_from_reg(), 'config.json')
+        self.config_path = os.path.join(self._get_launcher_default_basedir(), 'config.json')
 
         # init LauncherConfig
         self.launcher_config = LauncherConfig()
 
-
         # load config
         try:
             store = JsonStore(self.config_path)
-            self.launcher_config = store.load(self.launcher_config)
+            self.launcher_config = store.load(self.launcher_config, update=True)
         except:
             Logger.warn('Settings: Launcher config could not be loaded')
 
@@ -64,45 +67,78 @@ class Settings(object):
         self.parser = None
         self.parse_args(argv)
 
-        Logger.info('Settings: loaded args: ' + str(self.launcher_config.data))
+        Logger.info('Settings: loaded args: ' + unicode(self.launcher_config.data))
 
         self.reinit()
 
     def reinit(self):
         """recreate directories if something changed"""
 
-        # create the launcher basedir if neccessary
-        # take the the command line param first if present
-        if not self.launcher_config.get('launcher_basedir'):
-            self.launcher_config.set('launcher_basedir', self._get_launcher_basedir_from_reg())
-
-        launcher_moddir = self.get_launcher_moddir()
         launcher_basedir = self.get_launcher_basedir()
+        launcher_moddir = self.get_launcher_moddir()
 
-        if not os.path.isdir(launcher_basedir):
-            Logger.info('Settings: Creating basedir - {}'.format(launcher_basedir))
-            os.mkdir(launcher_basedir)
+        Logger.info('Settings: Ensuring basedir exists - {}'.format(launcher_basedir))
+        try:
+            mkdir_p(launcher_basedir)
+        except OSError:
+            fallback_basedir = self._get_launcher_default_basedir()
+            # TODO: Show a regular message box, not a win32 message box
+            MessageBox('Could not create directory {}\nFalling back to {}'.format(
+                        launcher_basedir, fallback_basedir), 'Error while setting launcher directory')
+            launcher_basedir = fallback_basedir
 
-        if not os.path.isdir(launcher_moddir):
-            Logger.info('Settings: Creating mod dir - {}'.format(launcher_moddir))
-            os.mkdir(launcher_moddir)
+        Logger.info('Settings: Ensuring mod dir exists - {}'.format(launcher_moddir))
+        try:
+            mkdir_p(launcher_moddir)
+        except OSError:
+            fallback_moddir = self._get_launcher_default_basedir()
+            # TODO: Show a regular message box, not a win32 message box
+            MessageBox('Could not create directory {}\nFalling back to {}'.format(
+                        launcher_moddir, fallback_moddir), 'Error while setting mod directory')
+            launcher_moddir = fallback_moddir
 
-        Logger.info("Settings: Launcher will use basedir: " + self.get_launcher_basedir())
-        Logger.info("Settings: Launcher will use moddir: " + self.get_launcher_moddir())
+        self.set_launcher_basedir(launcher_basedir)
+        self.set_launcher_moddir(launcher_moddir)
+        Logger.info('Settings: Launcher will use basedir: ' + self.get_launcher_basedir())
+        Logger.info('Settings: Launcher will use moddir: ' + self.get_launcher_moddir())
 
-    def _get_launcher_basedir_from_reg(self):
-        """retreive users document folder from the registry"""
-        path = None
+    def _get_launcher_default_basedir(self):
+        """Retrieve users document folder from the registry"""
         user_docs = Registry.ReadValueCurrentUser(Settings._USER_DOCUMENT_PATH, 'Personal')
         path = os.path.join(user_docs, Settings._LAUNCHER_DIR)
 
         return path
 
     def get_launcher_basedir(self):
-        return self.launcher_config.get('launcher_basedir')
+        basedir = self.launcher_config.get('launcher_basedir')
+        if not basedir:
+            basedir = self._get_launcher_default_basedir()
+
+        return basedir
+
+    def set_launcher_basedir(self, value):
+        return self.launcher_config.set('launcher_basedir', value)
 
     def get_launcher_moddir(self):
-        return os.path.join(self.get_launcher_basedir(), 'mods')
+        """Try to get the mod directory from the settings.
+        If that fails, use "Arma 3\Tactical Battlefield" directory.
+        If that also fails (because there is no Arma, for example) use basedir\mods.
+        """
+
+        moddir = self.launcher_config.get('launcher_moddir')
+        try:
+            if not moddir:
+                moddir = os.path.join(Arma.get_installation_path(), 'Tactical Battlefield')
+        except SoftwareNotInstalled:
+            pass
+
+        if not moddir:
+            moddir = os.path.join(self.get_launcher_basedir(), 'mods')
+
+        return moddir
+
+    def set_launcher_moddir(self, value):
+        return self.launcher_config.set('launcher_moddir', value)
 
     def parse_args(self, argv):
         self.parser = argparse.ArgumentParser()

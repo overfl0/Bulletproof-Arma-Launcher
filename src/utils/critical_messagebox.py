@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 import ctypes
 
 # https://msdn.microsoft.com/en-us/library/windows/desktop/ms645505(v=vs.85).aspx
@@ -55,7 +57,7 @@ def MessageBox(message, title, flags=MB_ICONEXCLAMATION):
     print message
 
     try:
-        win32_msgbox = ctypes.windll.user32.MessageBoxA
+        win32_msgbox = ctypes.windll.user32.MessageBoxW
 
         return win32_msgbox(None, message, title, flags)
 

@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
     import site
@@ -21,11 +23,16 @@ if __name__ == "__main__":
 import os
 import subprocess
 
+from utils.devmode import devmode
 from utils.singleton import Singleton
 from utils.registry import Registry
 
+from . import SoftwareNotInstalled
 # Exceptions:
-class ArmaNotInstalled(Exception):
+class ArmaNotInstalled(SoftwareNotInstalled):
+    pass
+
+class SteamNotInstalled(SoftwareNotInstalled):
     pass
 
 
@@ -37,10 +44,11 @@ class Arma(object):
     _arma_registry_path = r"software\bohemia interactive\arma 3"
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
+    _steam_registry_path = r"Software\Valve\Steam"
 
     @staticmethod
     def get_custom_path():
-        """Returns a custom mod installation path set by the user.
+        """Return a custom mod installation path set by the user.
         If no path has been set beforehand, returns None"""
         return Arma().__custom_path
 
@@ -52,12 +60,16 @@ class Arma(object):
 
     @staticmethod
     def get_installation_path():
-        """Returns the folder where Arma is installed.
+        """Return the folder where Arma is installed.
         Raises ArmaNotInstalled if the required registry keys cannot be found."""
+
+        if devmode.get_arma_path():
+            return devmode.get_arma_path()
 
         path = None
         try:
-            path = Registry.ReadValueMachine(Arma._arma_registry_path, 'main')
+            path = Registry.ReadValueUserAndMachine(Arma._arma_registry_path, 'main', check_both_architectures=True)
+
         except Registry.Error:
             raise ArmaNotInstalled()
 
@@ -77,7 +89,7 @@ class Arma(object):
 
     @staticmethod
     def get_executable_path(battleye=True):
-        """Returns path to the arma executable.
+        """Return path to the arma executable.
         The battleye variable allows to run the battleye-enhanced version of the game.
 
         Raises ArmaNotInstalled if Arma is not installed."""
@@ -90,6 +102,22 @@ class Arma(object):
         return os.path.join(Arma.get_installation_path(), executable)
 
     @staticmethod
+    def get_steam_exe_path():
+        """Return the path to the steam executable.
+
+        Raises SteamNotInstalled if steam is not installed."""
+
+        if devmode.get_steam_executable():
+            return devmode.get_steam_executable()
+
+        try:
+            # Optionally, there is also SteamPath
+            return Registry.ReadValueUserAndMachine(Arma._steam_registry_path, 'SteamExe', check_both_architectures=True)  # SteamPath
+
+        except Registry.Error:
+            raise SteamNotInstalled()
+
+    @staticmethod
     def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True):
         """Run the game in a separate process.
 
@@ -98,15 +126,20 @@ class Arma(object):
         The battleye variable allows to run the battleye-enhanced version of the game.
 
         Raises ArmaNotInstalled if Arma is not installed.
+        Raises SteamNotInstalled if Steam is not installed.
         Raises OSError if running the executable fails."""
 
-        arma_path = Arma.get_executable_path(battleye=battleye)
-        game_args = [arma_path]
+        # http://feedback.arma3.com/view.php?id=23435
+        # Correct launching method when steam is turned off:
+        # steam.exe -applaunch 107410 -usebe -nolauncher -connect=IP -port=PORT -mod=<modparameters>
+
+        steam_exe_path = Arma.get_steam_exe_path()
+        game_args = [steam_exe_path, '-applaunch', '107410']
 
         if battleye:
-            game_args.extend(['0', '1'])
+            game_args.append('-usebe')
 
-        game_args.extend(['-nosplash', '-skipIntro'])
+        game_args.extend(['-nosplash', '-skipIntro', '-nolauncher'])
 
         if mod_list:
             modlist_argument = '-mod=' + ';'.join(mod_list)

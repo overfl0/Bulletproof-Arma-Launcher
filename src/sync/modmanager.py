@@ -10,11 +10,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 import multiprocessing
 from multiprocessing import Queue
 import os
 import json
-import traceback
 import sys
 
 from datetime import datetime
@@ -23,11 +24,13 @@ import kivy
 from kivy.logger import Logger
 import requests
 
-from arma.arma import Arma, ArmaNotInstalled
+from third_party.arma import Arma, SoftwareNotInstalled
+from utils.devmode import devmode
 from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
+from utils.testtools_compat import _format_exc_info
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
@@ -45,6 +48,36 @@ def parse_timestamp(ts):
     return datetime.utcfromtimestamp(float(stamp))
 
 
+def requests_get_or_reject(para, domain, *args, **kwargs):
+    """
+    Helper function that adds our error handling to requests.get.
+    Feel free to refactor it.
+    """
+
+    if not domain:
+        domain = "the domain"
+
+    try:
+        res = requests.get(*args, **kwargs)
+    except requests.exceptions.ConnectionError as ex:
+        try:
+            reason_errno = ex.message.reason.errno
+            if reason_errno == 11004:
+                para.reject({'msg': 'Could not resolve {}. Check your DNS settings.'.format(domain)})
+        except:
+            para.reject({'msg': 'Could not connect to the metadata server.'})
+
+        para.reject({'msg': 'Could not connect to the metadata server.'})
+
+    except requests.exceptions.Timeout:
+        para.reject({'msg': 'The server timed out while downloading metadata information from the server.'})
+
+    except requests.exceptions.RequestException as ex:
+        para.reject({'msg': 'Could not download metadata information from the server.'})
+
+    return res
+
+
 def get_mod_descriptions(para, launcher_moddir):
     """
     helper function to get the moddescriptions from the server
@@ -52,32 +85,32 @@ def get_mod_descriptions(para, launcher_moddir):
     this function is ment be used threaded or multiprocesses, you have
     to pass in a queue
     """
-    downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
+    downloadurlPrefix = 'http://launcher.tacbf.com/tacbf/updater/torrents/'
 
 
     para.progress({'msg': 'Downloading mod descriptions'})
-    url = 'http://91.121.120.221/tacbf/updater/metadata.json'
-    #url = 'https://gist.githubusercontent.com/Sighter/cd769854a3adeec8908e/raw/a187f49eac56136a0555da8e2f1a86c3cc694d27/metadata.json'
-    res = requests.get(url, verify=False)
+    domain = 'launcher.tacbf.com'
+    url = 'http://{}/tacbf/updater/metadata.json'.format(domain)
     data = None
+    res = requests_get_or_reject(para, domain, url, verify=False, timeout=10)
 
     mods = []
 
     if res.status_code != 200:
         para.reject({'msg': '{}\n{}\n\n{}'.format(
             'Mods descriptions could not be received from the server',
-            'Status Code: ' + str(res.status_code), res.text)})
+            'Status Code: ' + unicode(res.status_code), res.text)})
     else:
         try:
             data = res.json()
         except ValueError as e:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
-            stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+            stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             para.reject({'msg': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') != "1":
+        if data.get('alpha') not in ("2", "3", "4", "4.1"):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
@@ -125,15 +158,18 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     # download mod descriptions first
     mod_list = get_mod_descriptions(messagequeue, launcher_moddir)
 
-    # DEBUG: Uncomment this to decrease the number of mods to download, for debugging
-    # mod_list = [mod for mod in mod_list if mod.name.startswith('Ta')]
+    # Debug mode: decrease the number of mods to download
+    mods_filter = devmode.get_mods_filter()
+    if mods_filter:
+        # Keep only the mods with names starting with any of the giver filters
+        mod_list = [mod for mod in mod_list if any(mod.name.startswith(prefix) for prefix in mods_filter)]
 
     # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
     for m in mod_list:
         try:
             r = _check_already_installed_with_six(m)
-        except ArmaNotInstalled:
+        except SoftwareNotInstalled:
             r = False
         if r:
             messagequeue.progress({'msg': 'Mod ' + m.foldername + ' already installed with withSix'})
@@ -186,8 +222,7 @@ def _protected_call(messagequeue, function, *args, **kwargs):
     try:
         return function(messagequeue, *args, **kwargs)
     except Exception as e:
-        import traceback
-        stacktrace = traceback.format_exc()
+        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
         messagequeue.reject({'msg': error})
 

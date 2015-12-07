@@ -10,9 +10,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 import os
 
 import kivy
+import kivy.app
+from gui.messagebox import MessageBox
+
 from kivy.clock import Clock
 
 from kivy.uix.screenmanager import Screen
@@ -20,6 +25,7 @@ from kivy.logger import Logger
 
 from view.filechooser import FileChooser
 from utils.data.jsonstore import JsonStore
+from utils.paths import is_dir_writable
 
 
 class PrefScreen(Screen):
@@ -46,12 +52,12 @@ class Controller(object):
 
     def check_childs(self, dt):
         inputfield = self.view.ids.path_text_input
-        inputfield.text = self.settings.get('launcher_basedir')
+        inputfield.text = self.settings.get_launcher_moddir()
 
         return False
 
     def on_choose_path_button_release(self, btn):
-        path = self.settings.get('launcher_basedir')
+        path = self.settings.get_launcher_moddir()
 
         Logger.info('opening filechooser with path: ' + path)
 
@@ -77,12 +83,20 @@ class Controller(object):
             Logger.error('PrefScreen: path is not a dir: ' + path)
             return False
 
+        if not is_dir_writable(path):
+            Logger.error('PrefScreen: directory {} is not writable'.format(path))
+            MessageBox('Directory {} is not writable'.format(path)).open()
+            return False
+
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
         store = JsonStore(self.settings.config_path)
-        self.settings.set('launcher_basedir', path)
+        self.settings.set_launcher_moddir(path)
         store.save(self.settings.launcher_config)
         self.settings.reinit()
-        self.view.ids.path_text_input.text = path
+        # Fixme: Workaround: resave the settings in case something went wrong
+        # with reinit and the paths have changed again
+        store.save(self.settings.launcher_config)
+        self.view.ids.path_text_input.text = self.settings.get_launcher_moddir()
 
         if self.file_browser_popup:
             self.file_browser_popup.dismiss()

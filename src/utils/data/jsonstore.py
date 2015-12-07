@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 import json
 
 from kivy.logger import Logger
@@ -30,11 +32,15 @@ class JsonStore(object):
         with open(self.filepath, "w") as text_file:
             text_file.write(string)
 
-    def load(self, model):
+    def load(self, model, update=True):
         Logger.info('JsonStore: Loading model: {} from {} | {} '.format(
                 model, self.filepath, model.data))
 
         with open(self.filepath, "r") as text_file:
-            model.data = json.load(text_file)
+            data = json.load(text_file)
+            if update:
+                model.data.update(data)
+            else:
+                model.data = data
 
         return model
