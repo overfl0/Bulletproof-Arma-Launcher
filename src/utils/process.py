@@ -197,7 +197,7 @@ class Para(object):
         self._reset()
 
     def _reset(self):
-        self.current_child_process.join()
+        #self.current_child_process.join()
         self.parent_conn.close()
         self.current_child_process = None
         Clock.unschedule(self.handle_messagequeue)
@@ -227,10 +227,14 @@ class Para(object):
 
             elif progress['status'] == 'resolve':
                 self.lastdata = progress['data']
+                # join process first
+                self.current_child_process.join()
                 self._call_resolve_handler(progress)
 
             elif progress['status'] == 'reject':
                 self.lastdata = progress['data']
+                # join process first
+                self.current_child_process.join()
                 self._call_reject_handler(progress)
         else:
             if not self.current_child_process.is_alive():
