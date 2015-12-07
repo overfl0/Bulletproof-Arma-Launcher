@@ -260,36 +260,52 @@ class TestError(Exception):
     def __str__(self):
         return repr(self.msg)
 
+def termination_test_func(con):
+    con.progress({'msg': 'test_func_has_started'})
+    time.sleep(3)
+    con.resolve({'msg': 'test_func resolved'})
+
 if __name__ == '__main__':
+
+    def test_func_print(msg):
+        print "resolved with msg:", msg
+
+    def termination_test():
+        """test if a childprocess can react on termination flag of para"""
+
+        print 'Process: ', os.getpid()
+        para = Para(termination_test_func, (), 'testaction')
+        para.then(test_func_print, None, None)
+        para.run()
+
+        while not para.state == 'resolved':
+            Clock.tick()
+
+        print "termination test good"
+
+
+    termination_test()
+
 
     #
     # little test that the tracback of a childprocess gets catched
     #
 
+    # @catchstacktrace
     # def test_func(pq):
-    #     print 'Process: ', os.getpid()
-    #     try:
-    #         pq.progress({'msg': 'test_func_has_started'})
-    #         raise TestError('This exception got thrown for testing purposes')
-    #     except Exception as e:
-    #         msg = "".join(_format_exc_info(*sys.exc_info()))
-    #         pq.reject({'exc': msg})
-
-    @catchstacktrace
-    def test_func(pq):
-        pq.progress({'msg': 'test_func_has_started'})
-        raise TestError('This exception got thrown for testing purposes')
-
-    def on_reject(data):
-        print 'para rejected, got data:'
-        print data['exc']
-
-    print 'Process: ', os.getpid()
-    para = Para(test_func, (), 'testaction')
-    para.then(None, on_reject, None)
-    para.run()
-
-    while not para.state == 'rejected':
-        Clock.tick()
-
-    print 'test good'
+    #     pq.progress({'msg': 'test_func_has_started'})
+    #     raise TestError('This exception got thrown for testing purposes')
+    #
+    # def on_reject(data):
+    #     print 'para rejected, got data:'
+    #     print data['exc']
+    #
+    # print 'Process: ', os.getpid()
+    # para = Para(test_func, (), 'testaction')
+    # para.then(None, on_reject, None)
+    # para.run()
+    #
+    # while not para.state == 'rejected':
+    #     Clock.tick()
+    #
+    # print 'test good'
