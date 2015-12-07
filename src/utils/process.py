@@ -102,6 +102,15 @@ class ConnectionWrapper(object):
         #         self.put(top)
         self.con.send(msg)
 
+    def wants_termination(self):
+        """Returns true if the parent process wants to terminate the child.
+        The child is in charge of terminating itself"""
+        if self.con.poll():
+            command = self.con.recv()
+            if command == 'terminate':
+                return True
+        return False
+
 class Para(object):
     def __init__(self, func, args, action_name):
         """
@@ -203,6 +212,9 @@ class Para(object):
         Clock.unschedule(self.handle_messagequeue)
         Logger.debug('Para: {} joined process'.format(self))
 
+    def send_termation_msg(self):
+        """sends a termination command to the child process"""
+        self.parent_conn.send('terminate')
 
     def run(self):
         self.lock = Lock()
@@ -261,8 +273,22 @@ class TestError(Exception):
         return repr(self.msg)
 
 def termination_test_func(con):
+    """this function is run in another process"""
     con.progress({'msg': 'test_func_has_started'})
-    time.sleep(3)
+    time.sleep(1)
+    # this is how you check for need to terminate
+    if con.wants_termination():
+        print 'terminating after 1 sec'
+    time.sleep(1)
+    if con.wants_termination():
+        print 'terminating after 2 sec'
+    time.sleep(1)
+    if con.wants_termination():
+        print 'terminating after 3 sec'
+    time.sleep(1)
+    if con.wants_termination():
+        print 'terminating after 4 sec'
+
     con.resolve({'msg': 'test_func resolved'})
 
 if __name__ == '__main__':
@@ -273,13 +299,26 @@ if __name__ == '__main__':
     def termination_test():
         """test if a childprocess can react on termination flag of para"""
 
-        print 'Process: ', os.getpid()
+        # Build a para. Register termination_test_func which has to be defined
+        # at module scope because of pickling. This function could represent
+        # the libtorrent side. So see above
         para = Para(termination_test_func, (), 'testaction')
+
+        # register resolve handler. For reasons it has to be defined on the
+        # module namespace.
         para.then(test_func_print, None, None)
         para.run()
 
+        # a check loop simulating the parent process waiting for paras
+        # to resolve or reject
+        count = 0
         while not para.state == 'resolved':
+            time.sleep(0.5)
             Clock.tick()
+            count += 1
+            # send termination after 2 seconds
+            if count == 4:
+                para.send_termation_msg()
 
         print "termination test good"
 
