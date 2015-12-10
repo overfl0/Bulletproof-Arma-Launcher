@@ -31,10 +31,11 @@ def termination_func(con):
     con.progress({'msg': 'test_func_has_started'})
 
     termination_challanged = False
-    while not termination_challanged:
+    while termination_challanged == False:
         time.sleep(1)
         termination_challanged = con.wants_termination()
-        con.resolve('terminating')
+
+    con.resolve('terminating')
 
 
 class ParaTest(unittest.TestCase):
