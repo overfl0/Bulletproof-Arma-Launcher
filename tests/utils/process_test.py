@@ -17,6 +17,8 @@ import shutil
 import sys
 import json
 
+from datetime import datetime
+from datetime import timedelta
 from mock import patch, Mock
 from kivy.clock import Clock
 
@@ -37,6 +39,11 @@ def termination_func(con):
 
     con.resolve('terminating')
 
+def blocking_after_resolving(con):
+    """this function is run in another process"""
+    con.progress({'msg': 'blocking_after_resolving started'})
+    con.resolve('something')
+    time.sleep(5)
 
 class ParaTest(unittest.TestCase):
 
@@ -51,6 +58,27 @@ class ParaTest(unittest.TestCase):
     def tearDown(self):
         sys.modules["__main__"] =           self.old_main
         sys.modules["__main__"].__file__ =  self.old_main_file
+
+    def test_para_should_not_block(self):
+        res_handler = Mock()
+        para = Para(blocking_after_resolving, (), 'testaction')
+        para.then(res_handler, None, None)
+        para.run()
+
+        # para should be ckeckable after a second
+        time.sleep(1)
+
+        s = datetime.now()
+        Clock.tick()
+        e = datetime.now()
+        diff = e - s
+        self.assertTrue(diff < timedelta(0, 1), 'clock tick shorter than one second')
+        while not para.state == 'resolved':
+            time.sleep(0.5)
+            Clock.tick()
+
+        res_handler.assert_called_once_with('something')
+
 
     def test_para_should_resolve(self):
         # do your testing here
