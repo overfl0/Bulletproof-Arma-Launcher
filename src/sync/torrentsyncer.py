@@ -52,10 +52,26 @@ class TorrentSyncer(object):
         self.result_queue = result_queue
         self.mod = mod
 
+    def decode_utf8(self, message):
+        """Wrapper that prints the decoded message if an error occurs."""
+        try:
+            return message.decode('utf-8')
+        except UnicodeDecodeError as ex:
+            error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
+            raise UnicodeError(error_message)
+
+    def encode_utf8(self, message):
+        """Wrapper that prints the encoded message if an error occurs."""
+        try:
+            return message.encode('utf-8')
+        except UnicodeEncodeError as ex:
+            error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
+            raise UnicodeError(error_message)
+
     def init_libtorrent(self):
         """Perform the initialization of things that should be initialized once"""
         settings = libtorrent.session_settings()
-        settings.user_agent = 'TacBF (libtorrent/{})'.format(libtorrent.version.decode('utf-8')).encode('utf-8')
+        settings.user_agent = self.encode_utf8('TacBF (libtorrent/{})'.format(self.decode_utf8(libtorrent.version)))
         """When running on a network where the bandwidth is in such an abundance
         that it's virtually infinite, this algorithm is no longer necessary, and
         might even be harmful to throughput. It is adviced to experiment with the
@@ -237,7 +253,7 @@ class TorrentSyncer(object):
                                             # Use alert.handle in the future to get the torrent handle
         for alert in alerts:
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
-            message = alert.message().decode('utf-8')
+            message = self.decode_utf8(alert.message())
             print "Alerts: Category: {}, Message: {}".format(alert.category(), message)
             torrent_log.append({'message': message, 'category': alert.category()})
 
@@ -362,7 +378,7 @@ class TorrentSyncer(object):
         download_fraction = s.progress
         download_kBps = s.download_rate / 1024
         upload_kBps = s.upload_rate / 1024
-        state = s.state.name.decode('utf-8')
+        state = self.decode_utf8(s.state.name)
 
         progress_message = '[{}] {}: {:0.2f}% ({:0.2f} KB/s)'.format(
                            self.mod.foldername, state, download_fraction * 100.0,
@@ -408,7 +424,7 @@ class TorrentSyncer(object):
 
         ### Torrent parameters
         params = {
-            'save_path': self.mod.clientlocation.encode('utf-8'),
+            'save_path': self.encode_utf8(self.mod.clientlocation),
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
             #'flags': self.create_flags()
         }
@@ -418,7 +434,7 @@ class TorrentSyncer(object):
             torrent_info = self.get_torrent_info_from_file(self.mod.downloadurl[len('file://'):])
             params['ti'] = torrent_info
         else:  # Torrent from url
-            params['url'] = self.mod.downloadurl.encode('utf-8')
+            params['url'] = self.encode_utf8(self.mod.downloadurl)
 
         # Add optional resume data
         resume_data = metadata_file.get_torrent_resume_data()
@@ -442,7 +458,7 @@ class TorrentSyncer(object):
         self.handle_torrent_progress(s)
 
         if s.error:
-            self.result_queue.reject({'msg': 'An error occured: Libtorrent error: {}'.format(s.error.decode('utf-8'))})
+            self.result_queue.reject({'msg': 'An error occured: Libtorrent error: {}'.format(self.decode_utf8(s.error))})
             return False
 
         # Save data that could come in handy in the future to a metadata file
