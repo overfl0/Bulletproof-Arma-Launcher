@@ -17,7 +17,7 @@ import os
 import shutil
 
 from third_party.arma import Arma
-from contextlib import contextmanager
+from utils.context import ignore_exceptions
 from utils.hashes import sha1
 from utils.metadatafile import MetadataFile
 from third_party import teamspeak
@@ -51,14 +51,6 @@ def _safer_rmtree(base_path, directory_path):
 
 def _raiser(exception):  # I'm sure there must be some builtin to do this :-/
     raise exception
-
-
-@contextmanager
-def _ignore_exceptions(*exceptions):
-    try:
-        yield
-    except exceptions:
-        pass
 
 
 def filter_out_whitelisted(elements, whitelist):
@@ -102,7 +94,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
         raise Exception('Unknown action: {}'.format(on_superfluous))
 
     # Whitelist our and PWS metadata files
-    whitelist = (MetadataFile.file_name, '.synqinfo', '.sync')
+    whitelist = (MetadataFile.file_name, 'tfr.ts3_plugin', '.synqinfo', '.sync')
 
     top_dirs, dirs, file_paths, checksums = parse_files_list(files_list, checksums, check_subdir)
 
@@ -116,7 +108,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
 
     try:
         for directory in top_dirs:
-            with _ignore_exceptions(KeyError):
+            with ignore_exceptions(KeyError):
                 dirs.remove(directory)
 
             if directory in whitelist:
@@ -135,7 +127,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                     if file_name in whitelist:
                         print 'File {} in whitelist, skipping...'.format(file_name)
 
-                        with _ignore_exceptions(KeyError):
+                        with ignore_exceptions(KeyError):
                             file_paths.remove(relative_file_name)
                         continue
 
@@ -144,7 +136,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                     print 'Checking file: {}'.format(relative_file_name)
                     if relative_file_name in file_paths:
                         file_paths.remove(relative_file_name)
-                        print relative_file_name, "removed"
+                        print relative_file_name, "present in torrent metadata"
 
                         if checksums and sha1(full_file_path) != checksums[relative_file_name]:
                             print "File {} exists but its hash differs from expected.".format(relative_file_name)
@@ -172,7 +164,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                     if dir_name in whitelist:
                         dirnames.remove(dir_name)
 
-                        with _ignore_exceptions(KeyError):
+                        with ignore_exceptions(KeyError):
                             dirs.remove(relative_dir_path)
 
                         continue
@@ -206,7 +198,8 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             full_path = os.path.join(base_directory, file_entry)
 
             if not os.path.isfile(full_path):
-                print "File paths present, setting retval to False"
+                print "File paths missing on disk, setting retval to False"
+                print full_path
                 success = False
                 break
 
@@ -217,7 +210,8 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 break
 
         if dirs:
-            print "Dirs present, setting retval to False"
+            print "Dirs missing on disk, setting retval to False"
+            print dirs
             success = False
 
     except OSError:

@@ -275,6 +275,7 @@ and:
 
             tfr_info = MessageBox(text, title='Action required!', markup=True)
             tfr_info.open()
+            teamspeak.install_unpackaged_plugin(path=path_plugins)
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')

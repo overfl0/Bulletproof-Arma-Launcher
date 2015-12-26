@@ -12,8 +12,16 @@
 
 from __future__ import unicode_literals
 
-from utils.devmode import devmode
+import errno
+import os
+import shutil
+import subprocess
+import textwrap
+
+from utils.paths import u_to_fs
 from third_party import SoftwareNotInstalled
+from utils.context import ignore_nosuchfile_exception
+from utils.devmode import devmode
 from utils.registry import Registry
 
 class TeamspeakNotInstalled(SoftwareNotInstalled):
@@ -111,7 +119,7 @@ def get_config_location():
 
 
 def check_installed():
-    """Runs all the registry checks. If any of them fails, raises TeamspeakNotInstalled()."""
+    """Run all the registry checks. If any of them fails, raises TeamspeakNotInstalled()."""
 
     print get_executable_path()
     print get_addon_installer_path()
@@ -119,11 +127,75 @@ def check_installed():
     print get_config_location()
 
 
-package_ini = """
-Name = Task Force Arma 3 Radio
-Type = Plugin
-Author = [TF]Nkey
-Version = Unknown
-Platforms = win32, win64
-Description = "Task Force Arrowhead Radio.\nPlugin automatically packaged by the TacBF team."
-"""
+def create_package_ini_file(path, name, author, version, platforms, description):
+    """Create a package.ini file at <path> for a future ts3_plugin file."""
+    package_ini = textwrap.dedent("""Name = {}
+                                     Type = Plugin
+                                     Author = {}
+                                     Version = {}
+                                     Platforms = {}
+                                     Description = "{}"
+    """).format(name, author, version, ', '.join(platforms), description)
+    package_ini_path = os.path.join(path, 'package.ini')
+
+    with file(package_ini_path, 'w') as f:
+        f.write(package_ini)
+
+
+def create_teamspeak_package(path, name, author, version, platforms, description):
+    """Create a teamspeak ts3_plugin file from files in <path>.
+    The created file will be called tfr.ts3_plugin.
+    """
+
+    package_ini_path = os.path.join(path, 'package.ini')
+    zip_path_no_extension = os.path.join(path, 'tfr')
+    zip_path = zip_path_no_extension + '.zip'
+    ts3_plugin_path = os.path.join(path, 'tfr.ts3_plugin')
+
+    try:
+        create_package_ini_file(path=path, name=name, author=author,
+                                version=version, platforms=platforms,
+                                description=description)
+
+        # Ensure the previously generated files will not get included in the package
+        with ignore_nosuchfile_exception():
+            os.unlink(zip_path)
+
+        with ignore_nosuchfile_exception():
+            os.unlink(ts3_plugin_path)
+
+        # Create a zip file containing plugins and package.ini
+        shutil.make_archive(zip_path_no_extension, 'zip', path)
+        os.rename(zip_path, ts3_plugin_path)
+
+        return ts3_plugin_path
+
+    finally:
+        with ignore_nosuchfile_exception():
+            os.unlink(package_ini_path)
+
+        with ignore_nosuchfile_exception():
+            os.unlink(zip_path)
+
+
+def install_unpackaged_plugin(path):
+    """Package a plugin located at <path> to a ts3_plugin file and then install it.
+    The created ts3_plugin file will be left in place because we cannot know when
+    the installer terminates, yet.
+    """
+
+    version = 'Unknown'
+
+    tfr_package = create_teamspeak_package(
+        path,
+        name='Task Force Arma 3 Radio',
+        author='[TF]Nkey',
+        version=version,
+        platforms=['win32', 'win64'],
+        description='Task Force Arrowhead Radio.\nPlugin packaged automatically by TacBF launcher team.'
+    )
+
+    addon_installer = get_addon_installer_path()
+    args = u_to_fs([addon_installer, tfr_package])
+    subprocess.call(args)
+    # TODO: Wait for this to finish in a separate thread (use promises)
