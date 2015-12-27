@@ -23,6 +23,7 @@ if __name__ == "__main__":
 import os
 import subprocess
 
+from utils.paths import u_to_fs
 from utils.devmode import devmode
 from utils.singleton import Singleton
 from utils.registry import Registry
@@ -152,7 +153,7 @@ class Arma(object):
             game_args.extend(custom_args)
 
         print game_args
-        popen_object = subprocess.Popen(game_args)  # May raise OSError
+        popen_object = subprocess.Popen(u_to_fs(game_args))  # May raise OSError
 
         return popen_object
 

@@ -328,7 +328,7 @@ and:
             no_steam_info.open()
 
         except OSError as ex:
-            text = "Error while launching Arma 3: {}.".format(", ".join(ex.args))
+            text = "Error while launching Arma 3: {}.".format(ex.strerror)
             error_info = MessageBox(text, title='Error while launching Arma 3!')
             error_info.open()
 
