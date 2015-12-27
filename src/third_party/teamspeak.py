@@ -12,7 +12,6 @@
 
 from __future__ import unicode_literals
 
-import errno
 import os
 import shutil
 import subprocess
@@ -199,3 +198,16 @@ def install_unpackaged_plugin(path):
     args = u_to_fs([addon_installer, tfr_package])
     subprocess.call(args)
     # TODO: Wait for this to finish in a separate thread (use promises)
+
+
+def copy_userconfig(path):
+    """Copy and overwrite the files at <path> to the userconfig directory inside Arma 3 directory."""
+    # TODO: Move this somewhere else
+    import distutils.dir_util
+
+    from third_party.arma import Arma
+
+    Arma.get_installation_path()
+    userconfig_path = os.path.join(Arma.get_installation_path(), 'userconfig')
+
+    distutils.dir_util.copy_tree(path, userconfig_path)

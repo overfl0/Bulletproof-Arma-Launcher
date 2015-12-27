@@ -103,7 +103,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     file_paths = filter_out_whitelisted(file_paths, whitelist)
 
     base_directory = os.path.realpath(base_directory)
-    print "Cleaning up base_directory:", base_directory
+    print "Verifying base_directory:", base_directory
     success = True
 
     try:
@@ -311,10 +311,10 @@ def is_complete_tfr_hack(mod_name, file_paths, checksums):
                                    on_superfluous='ignore')
 
     if not retval:
-        print "Userconfig not populated. Marking as not fully installed"
+        print "TFR userconfig not populated. Marking as not fully installed"
         return retval
     else:
-        print "All OK"
+        print "TFR userconfig files OK."
 
     teamspeak_path = teamspeak.get_install_location()
     teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
@@ -322,6 +322,6 @@ def is_complete_tfr_hack(mod_name, file_paths, checksums):
                                    check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
                                    on_superfluous='ignore', checksums=checksums)
 
-    print "Teamspeak plugins check:", retval
+    print "Teamspeak plugins synchronized:", retval
 
     return retval
