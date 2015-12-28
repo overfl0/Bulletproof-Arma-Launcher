@@ -13,14 +13,11 @@
 from __future__ import unicode_literals
 
 import os
-import shutil
-import subprocess
 import textwrap
 import zipfile
 
-from utils.paths import u_to_fs
 from third_party import SoftwareNotInstalled
-from utils.context import ignore_nosuchfile_exception
+from utils.admin import run_admin
 from utils.devmode import devmode
 from utils.registry import Registry
 
@@ -195,10 +192,9 @@ def install_unpackaged_plugin(path):
         description='Task Force Arrowhead Radio.\nPlugin packaged automatically by TacBF launcher team.'
     )
 
-    addon_installer = get_addon_installer_path()
-    args = u_to_fs([addon_installer, tfr_package])  # TODO: Add -silent and test it
-    print args
-    return subprocess.Popen(args)
+    args = [get_addon_installer_path(), '-silent', tfr_package]
+    return run_admin(args[0], args[1:])
+    # return subprocess.Popen(u_to_fs(args))
     # TODO: Wait for this to finish in a separate thread (use promises)
 
 
