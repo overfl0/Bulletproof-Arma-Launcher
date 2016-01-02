@@ -252,32 +252,13 @@ Get it here:
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
 
-        # This should be removed and reimplemented once the ParaAll is implemented
-        finished = progress.get('workaround_finished')
-        if finished == '@task_force_radio':
-            settings = kivy.app.App.get_running_app().settings
-            mod_dir = settings.get_launcher_moddir()
-            path_tfr = os.path.join(mod_dir, '@task_force_radio')
-            path_userconfig = os.path.join(path_tfr, 'userconfig')
-            path_plugins = os.path.join(path_tfr, 'TeamSpeak 3 Client')
-            text = """Task Force Arrowhead Radio has been downloaded or updated.
+        message_box = progress.get('message_box')
+        if message_box:
+            message_box_instance = MessageBox(text=message_box['text'],
+                                              title=message_box['title'],
+                                              markup=message_box['markup'])
+            message_box_instance.open()
 
-Automatic installation of TFR is not yet implemented.
-To finish the installation of TFR, you need to go to:
-
-[ref={}][color=3572b0]{}[/color][/ref]
-
-and:
-1) Copy the [ref={}][color=3572b0]userconfig\\task_force_radio[/color][/ref] to your Arma 3\\userconfig directory.
-2) Copy the [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory to your Teamspeak directory.
-3) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
-                path_tfr, path_tfr, path_userconfig, path_plugins)
-
-            tfr_info = MessageBox(text, title='Action required!', markup=True)
-            tfr_info.open()
-
-            teamspeak.copy_userconfig(path=path_userconfig)
-            teamspeak.install_unpackaged_plugin(path=path_plugins)
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
