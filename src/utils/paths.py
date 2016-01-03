@@ -21,13 +21,23 @@ def is_pyinstaller_bundle():
     return getattr(sys, 'frozen', False)
 
 
+def u_to_fs(args):
+    """Convert a list of arguments from unicode to the file system encoding"""
+    return [arg.encode(sys.getfilesystemencoding()) for arg in args]
+
+
+def fs_to_u(args):
+    """Convert a list of arguments from the file system encoding to unicode"""
+    return [arg.decode(sys.getfilesystemencoding()) for arg in args]
+
+
 def fix_unicode_paths():
     """Convert both argv and sys._MEIPASS (pyinstaller path) to unicode.
     Contains protection against multiple use.
     """
 
     if not isinstance(sys.argv[0], unicode):
-        sys.argv = [i.decode(sys.getfilesystemencoding()) for i in sys.argv]
+        sys.argv = fs_to_u(sys.argv)
 
     if hasattr(sys, '_MEIPASS') and not isinstance(sys._MEIPASS, unicode):
         sys._MEIPASS = sys._MEIPASS.decode(sys.getfilesystemencoding())

@@ -19,7 +19,7 @@ from time import sleep
 
 import requests
 import kivy
-from arma.arma import Arma, ArmaNotInstalled, SteamNotInstalled
+from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from gui.messagebox import MessageBox
 
 from kivy.clock import Clock
@@ -33,6 +33,7 @@ from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
+from third_party import teamspeak
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
@@ -67,14 +68,22 @@ class Controller(object):
         # TODO: Maybe transform this into a state
         self.play_button_shown = False
 
-        # download mod description
-        self.para = self.mod_manager.prepare_and_check()
-        self.para.then(self.on_checkmods_resolve, self.on_checkmods_reject,
-            self.on_checkmods_progress)
+        # Don't run logic if required third party programs are not installed
+        if self.check_requirements(verbose=False):
+            # download mod description
+            self.para = self.mod_manager.prepare_and_check()
+            self.para.then(self.on_checkmods_resolve, self.on_checkmods_reject,
+                self.on_checkmods_progress)
 
-        Clock.schedule_interval(self.check_install_button, 0)
+            Clock.schedule_interval(self.check_install_button, 0)
+            Clock.schedule_interval(self.try_reenable_play_button, 1)
+
+        else:
+            # This will call check_requirements(dt) which is not really what we
+            # want but it is good enough ;)
+            Clock.schedule_interval(self.check_requirements, 1)
+
         Clock.schedule_once(self.update_footer_label, 0)
-        Clock.schedule_interval(self.try_reenable_play_button, 1)
 
     def try_reenable_play_button(self, dt):
         """This function first checks if a game process had been run. Then it checks
@@ -108,6 +117,11 @@ class Controller(object):
             return False
 
     def try_enable_play_button(self):
+        self.view.ids.install_button.disabled = True
+
+        if not self.check_requirements(verbose=False):
+            return
+
         if not self.mods:
             return
 
@@ -120,6 +134,57 @@ class Controller(object):
         self.view.ids.install_button.bind(on_release=self.on_play_button_release)
         self.view.ids.install_button.disabled = False
         self.play_button_shown = True
+
+    def check_requirements(self, verbose=True):
+        """Check if all the required third party programs are installed in the system.
+        Return True if the check passed.
+        If verbose == true, show a message box in case of a failed check.
+        """
+
+        # TODO: move me to a better place
+        try:
+            teamspeak.check_installed()
+        except teamspeak.TeamspeakNotInstalled:
+            if verbose:
+                message = """Teamspeak does not seem to be installed.
+Having Teamspeak is required in order to play Tactical Battlefield.
+
+[ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
+
+Install Teamspeak and restart the launcher."""
+                box = MessageBox(message, title='Teamspeak required!', markup=True)
+                box.open()
+
+            return False
+
+        try:
+            Arma.get_installation_path()
+        except ArmaNotInstalled:
+            if verbose:
+                message = """Arma 3 does not seem to be installed.
+
+Having Arma 3 is required in order to play Tactical Battlefield."""
+                box = MessageBox(message, title='Arma 3 required!', markup=True)
+                box.open()
+
+            return False
+
+        try:
+            Arma.get_steam_exe_path()
+        except SteamNotInstalled:
+            if verbose:
+                message = """Steam does not seem to be installed.
+Having Steam is required in order to play Tactical Battlefield.
+
+[ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
+
+Install Steam and restart the launcher."""
+                box = MessageBox(message, title='Steam required!', markup=True)
+                box.open()
+
+            return False
+
+        return True
 
     def on_install_button_ready(self):
         self.view.ids.install_button.text = 'Checking'
@@ -143,7 +208,6 @@ class Controller(object):
 
     def on_checkmods_resolve(self, progress):
         Logger.debug('InstallScreen: checking mods finished')
-        self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
@@ -155,6 +219,8 @@ class Controller(object):
 
         self.mods = progress['mods']
         self.try_enable_play_button()
+
+        self.view.ids.install_button.disabled = False
 
     def on_checkmods_reject(self, progress):
         #self.view.ids.install_button.disabled = False
@@ -186,29 +252,13 @@ Get it here:
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
 
-        # This should be removed and reimplemented once the ParaAll is implemented
-        finished = progress.get('workaround_finished')
-        if finished == '@task_force_radio':
-            settings = kivy.app.App.get_running_app().settings
-            mod_dir = settings.get_launcher_moddir()
-            path_tfr = os.path.join(mod_dir, '@task_force_radio')
-            path_userconfig = os.path.join(path_tfr, 'userconfig')
-            path_plugins = os.path.join(path_tfr, 'TeamSpeak 3 Client')
-            text = """Task Force Arrowhead Radio has been downloaded or updated.
+        message_box = progress.get('message_box')
+        if message_box:
+            message_box_instance = MessageBox(text=message_box['text'],
+                                              title=message_box['title'],
+                                              markup=message_box['markup'])
+            message_box_instance.open()
 
-Automatic installation of TFR is not yet implemented.
-To finish the installation of TFR, you need to go to:
-
-[ref={}][color=3572b0]{}[/color][/ref]
-
-and:
-1) Copy the [ref={}][color=3572b0]userconfig\\task_force_radio[/color][/ref] to your Arma 3\\userconfig directory.
-2) Copy the [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory to your Teamspeak directory.
-3) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
-                path_tfr, path_tfr, path_userconfig, path_plugins)
-
-            tfr_info = MessageBox(text, title='Action required!', markup=True)
-            tfr_info.open()
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
@@ -259,7 +309,7 @@ and:
             no_steam_info.open()
 
         except OSError as ex:
-            text = "Error while launching Arma 3: {}.".format(", ".join(ex.args))
+            text = "Error while launching Arma 3: {}.".format(ex.strerror)
             error_info = MessageBox(text, title='Error while launching Arma 3!')
             error_info.open()
 
