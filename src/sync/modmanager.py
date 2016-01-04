@@ -99,7 +99,7 @@ def get_mod_descriptions(para, launcher_moddir):
     mods = []
 
     if res.status_code != 200:
-        para.reject({'msg': '{}\n{}\n\n{}'.format(
+        para.reject({'details': '{}\n{}\n\n{}'.format(
             'Mods descriptions could not be received from the server',
             'Status Code: ' + unicode(res.status_code), res.text)})
     else:
@@ -108,7 +108,7 @@ def get_mod_descriptions(para, launcher_moddir):
         except ValueError as e:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
-            para.reject({'msg': '{}\n\n{}'.format(
+            para.reject({'details': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
@@ -254,7 +254,7 @@ def _tfr_post_download_hook(message_queue, mod):
         exit_code = install_instance.wait()
         if exit_code != 0:
             _show_message_box(message_queue, title='TFR TeamSpeak plugin installation failed!', message=installation_failed_message)
-            message_queue.reject({'msg': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
+            message_queue.reject({'details': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
             return False
         else:
             _show_message_box(message_queue, title='Action required!', message=installation_succeeded_message)
@@ -313,7 +313,7 @@ def _protected_call(messagequeue, function, *args, **kwargs):
     except Exception:
         stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
-        messagequeue.reject({'msg': error})
+        messagequeue.reject({'details': error})
 
 
 class ModManager(object):

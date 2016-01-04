@@ -24,11 +24,11 @@ from utils.primitive_git import get_git_sha1_auto
 from utils.critical_messagebox import MessageBox
 from utils.testtools_compat import _format_exc_info
 
-LABEL_TEXT = """Critical Error. Please copy the text below and post it on the bugtracker:
+DEFAULT_ERROR_MESSAGE = """Critical Error. Please copy the text below and post it on the bugtracker:
 [color=3572b0][ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/ref][/color]
 
 Please make sure you're not reporting an issue that has already been reported."""
-ST_DEFAULT = """No stacktrace given!"""
+
 POPUP_TITLE = """An error occurred"""
 CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
 
@@ -42,14 +42,21 @@ def open_hyperlink(obj, ref):
 
 
 class ErrorPopup(Popup):
-    """docstring for ErrorPopup"""
-    def __init__(self, message=LABEL_TEXT, stacktrace=ST_DEFAULT, label_markup=True):
+    """Show a popup in case an error ocurred.
+    Arguments:
+    message - The message to be shown in a label.
+    details - Shows an additional box containing details that may span dozens of lines.
+    """
+    def __init__(self, message=DEFAULT_ERROR_MESSAGE, details=None, label_markup=True):
         bl = BoxLayout(orientation='vertical')
-        la = Label(text=message, size_hint_y=0.3, markup=label_markup)
+        la = Label(text=message, size_hint_y=0.3, markup=label_markup, halign='center')
         la.bind(on_ref_press=open_hyperlink)
-        ti = TextInput(text=stacktrace, size_hint_y=0.7)
+        la.text_size = (550, None)  # Enable wrapping when text inside label is over 550px wide
         bl.add_widget(la)
-        bl.add_widget(ti)
+
+        if details:
+            ti = TextInput(text=details, size_hint_y=0.7)
+            bl.add_widget(ti)
 
         super(ErrorPopup, self).__init__(title=POPUP_TITLE,
             content=bl, size_hint=(None, None), size=(600, 400))
@@ -62,7 +69,7 @@ def error_popup_decorator(func):
             build = get_git_sha1_auto()
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             msg = 'Build: {}\n{}'.format(build, stacktrace)
-            #p = ErrorPopup(stacktrace=msg)
+            # p = ErrorPopup(details=msg)
             #p.open()
             MessageBox(msg, CRITICAL_POPUP_TITLE)
 
@@ -73,6 +80,6 @@ class PopupHandler(ExceptionHandler):
         build = get_git_sha1_auto()
         stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         msg = 'Build: {}\n{}'.format(build, stacktrace)
-        p = ErrorPopup(stacktrace=msg)
+        p = ErrorPopup(details=msg)
         p.open()
         return ExceptionManager.PASS

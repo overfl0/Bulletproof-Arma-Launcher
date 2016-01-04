@@ -282,7 +282,7 @@ class TorrentSyncer(object):
         self.handle_torrent_progress(s)
 
         if s.error:
-            self.result_queue.reject({'msg': 'An error occured: Libtorrent error: {}'.format(self.decode_utf8(s.error))})
+            self.result_queue.reject({'details': 'An error occured: Libtorrent error: {}'.format(self.decode_utf8(s.error))})
             return False
 
         # Save data that could come in handy in the future to a metadata file

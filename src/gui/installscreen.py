@@ -28,7 +28,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.logger import Logger
 
-from view.errorpopup import ErrorPopup
+from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
@@ -222,16 +222,21 @@ Install Steam and restart the launcher."""
 
         self.view.ids.install_button.disabled = False
 
-    def on_checkmods_reject(self, progress):
+    def on_checkmods_reject(self, data):
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
+
         #self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
-        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
         # Ugly hack until we have an auto-updater
-        if 'launcher is out of date' in progress['msg']:
+        if 'launcher is out of date' in message:
             message = '''This launcher is out of date!
 You won\'t be able do download mods until you update to the latest version!
 
@@ -241,7 +246,7 @@ Get it here:
 '''
             popup_box = MessageBox(message, title='Get the new version of the launcher!', markup=True)
         else:
-            popup_box = ErrorPopup(stacktrace=progress['msg'])
+            popup_box = ErrorPopup(details=details, message=message)
 
         popup_box.open()
 
@@ -269,17 +274,22 @@ Get it here:
 
         self.try_enable_play_button()
 
-    def on_sync_reject(self, progress):
+    def on_sync_reject(self, data):
         Logger.info('InstallScreen: syncing failed')
+
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
-        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
-        ep = ErrorPopup(stacktrace=progress['msg'])
+        ep = ErrorPopup(details=details, message=message)
         ep.open()
 
     def on_play_button_release(self, btn):
