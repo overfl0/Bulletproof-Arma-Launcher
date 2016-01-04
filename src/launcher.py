@@ -138,7 +138,7 @@ try:
                 launcher_app.run = error_popup_decorator(launcher_app.run)
                 launcher_app.run()
 
-except Exception as e:
+except Exception:
     # Mega catch-all requirements
     # Try to catch all possible problems
     import sys

@@ -1,3 +1,9 @@
+@echo #########################################################################
+@echo Deleting required files
+@echo #########################################################################
+del tblauncher.exe c:\vagrant\tblauncher 2> NUL
+for /d %%G in ("build\tblauncher\setuptools*.egg") do rmdir /s /q "%%~G"
+
 @rem @echo #########################################################################
 @rem @echo Running unit tests...
 @rem @echo #########################################################################

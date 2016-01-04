@@ -65,7 +65,7 @@ def error_popup_decorator(func):
     def wrapper(*args, **kwargs):
         try:
             func(*args, **kwargs)
-        except Exception as e:
+        except Exception:
             build = get_git_sha1_auto()
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             msg = 'Build: {}\n{}'.format(build, stacktrace)
