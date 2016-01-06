@@ -19,6 +19,7 @@ import re
 import tempfile
 import shutil
 
+from kivy.logger import Logger
 from utils.process import Process
 
 class HttpSyncer(object):
@@ -86,7 +87,7 @@ class HttpSyncer(object):
         """
         self.result_queue.progress({'msg': 'Downloading mod: ' + self.mod.foldername})
 
-        print self.mod.foldername, self.mod
+        Logger.debug('{} {}'.format(self.mod.foldername, self.mod))
 
         # get file over http using requests stream mode
         response = requests.get(
@@ -97,14 +98,14 @@ class HttpSyncer(object):
         fname = self._get_filename(response)
         downloaddir = self.mod.clientlocation
 
-        print "downloading ", self.mod.downloadurl, "to:", downloaddir
+        Logger.info('downloading {} to {}'.format(self.mod.downloadurl, downloaddir))
 
         # open file
         with open(os.path.join(downloaddir, fname), 'wb') as handle:
 
             # we can check the eventhandlers
             if not response.ok:
-                 print 'response failed'
+                Logger.error('response failed')
 
             start_time = datetime.now()
             length = float(response.headers['content-length'])
@@ -123,7 +124,7 @@ class HttpSyncer(object):
                     fraction = downloaded / length
                     td = datetime.now() - start_time
                     kbpersec = (downloaded / 1024) / td.total_seconds()
-                    print kbpersec
+                    Logger.debug(str(kbpersec))
 
                     # here it reports back to the modmanager
                     self.result_queue.progress({'msg': '[%s] Downloading: %.2f%%' % (self.mod.foldername, fraction * 100.0)}, fraction)

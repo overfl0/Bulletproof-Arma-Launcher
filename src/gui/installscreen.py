@@ -28,7 +28,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.logger import Logger
 
-from view.errorpopup import ErrorPopup
+from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from sync.modmanager import ModManager
 from sync.modmanager import get_mod_descriptions
 from sync.httpsyncer import HttpSyncer
@@ -99,14 +99,14 @@ class Controller(object):
         # if returncode is None:  # The game has not terminated yet
         #     return
 
-        # print 'Arma has terminated with code: {}'.format(returncode)
+        # Logger.error('Arma has terminated with code: {}'.format(returncode))
         # Allow the game to be run once again.
         self.view.ids.install_button.disabled = False
         self.arma_executable_object = None
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
-        version = 'Alpha 4.1'
+        version = 'Alpha 5'
         footer_text = '{}\nBuild: {}'.format(version,
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
@@ -222,16 +222,21 @@ Install Steam and restart the launcher."""
 
         self.view.ids.install_button.disabled = False
 
-    def on_checkmods_reject(self, progress):
+    def on_checkmods_reject(self, data):
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
+
         #self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
-        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
         # Ugly hack until we have an auto-updater
-        if 'launcher is out of date' in progress['msg']:
+        if 'launcher is out of date' in message:
             message = '''This launcher is out of date!
 You won\'t be able do download mods until you update to the latest version!
 
@@ -241,7 +246,7 @@ Get it here:
 '''
             popup_box = MessageBox(message, title='Get the new version of the launcher!', markup=True)
         else:
-            popup_box = ErrorPopup(stacktrace=progress['msg'])
+            popup_box = ErrorPopup(details=details, message=message)
 
         popup_box.open()
 
@@ -252,29 +257,13 @@ Get it here:
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
 
-        # This should be removed and reimplemented once the ParaAll is implemented
-        finished = progress.get('workaround_finished')
-        if finished == '@task_force_radio':
-            settings = kivy.app.App.get_running_app().settings
-            mod_dir = settings.get_launcher_moddir()
-            path_tfr = os.path.join(mod_dir, '@task_force_radio')
-            path_userconfig = os.path.join(path_tfr, 'userconfig')
-            path_plugins = os.path.join(path_tfr, 'TeamSpeak 3 Client')
-            text = """Task Force Arrowhead Radio has been downloaded or updated.
+        message_box = progress.get('message_box')
+        if message_box:
+            message_box_instance = MessageBox(text=message_box['text'],
+                                              title=message_box['title'],
+                                              markup=message_box['markup'])
+            message_box_instance.open()
 
-Automatic installation of TFR is not yet implemented.
-To finish the installation of TFR, you need to go to:
-
-[ref={}][color=3572b0]{}[/color][/ref]
-
-and:
-1) Copy the [ref={}][color=3572b0]userconfig\\task_force_radio[/color][/ref] to your Arma 3\\userconfig directory.
-2) Copy the [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory to your Teamspeak directory.
-3) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
-                path_tfr, path_tfr, path_userconfig, path_plugins)
-
-            tfr_info = MessageBox(text, title='Action required!', markup=True)
-            tfr_info.open()
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
@@ -285,17 +274,22 @@ and:
 
         self.try_enable_play_button()
 
-    def on_sync_reject(self, progress):
+    def on_sync_reject(self, data):
         Logger.info('InstallScreen: syncing failed')
+
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
-        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
-        ep = ErrorPopup(stacktrace=progress['msg'])
+        ep = ErrorPopup(details=details, message=message)
         ep.open()
 
     def on_play_button_release(self, btn):
@@ -325,7 +319,7 @@ and:
             no_steam_info.open()
 
         except OSError as ex:
-            text = "Error while launching Arma 3: {}.".format(", ".join(ex.args))
+            text = "Error while launching Arma 3: {}.".format(ex.strerror)
             error_info = MessageBox(text, title='Error while launching Arma 3!')
             error_info.open()
 

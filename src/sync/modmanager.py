@@ -23,7 +23,9 @@ from datetime import datetime
 import kivy
 from kivy.logger import Logger
 import requests
+import textwrap
 
+from third_party import teamspeak
 from third_party.arma import Arma, SoftwareNotInstalled
 from utils.devmode import devmode
 from utils.app import BaseApp
@@ -97,7 +99,7 @@ def get_mod_descriptions(para, launcher_moddir):
     mods = []
 
     if res.status_code != 200:
-        para.reject({'msg': '{}\n{}\n\n{}'.format(
+        para.reject({'details': '{}\n{}\n\n{}'.format(
             'Mods descriptions could not be received from the server',
             'Status Code: ' + unicode(res.status_code), res.text)})
     else:
@@ -106,11 +108,11 @@ def get_mod_descriptions(para, launcher_moddir):
         except ValueError as e:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
-            para.reject({'msg': '{}\n\n{}'.format(
+            para.reject({'details': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') not in ("2", "3", "4", "4.1"):
+        if data.get('alpha') not in ("2", "3", "4", "4.1", "5"):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
@@ -181,7 +183,90 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
 
 
-def _sync_all(messagequeue, launcher_moddir, mods):
+def _tfr_post_download_hook(message_queue, mod):
+    """Copy TFR configuration files and install the TeamSpeak plugin.
+    In case of errors, show the appropriate message box.
+    """
+    # WARNING: This methods gets called in a different process
+
+    def _show_message_box(message_queue, title, message, markup=True):
+        message_queue.progress({'msg': 'Installing TFR TeamSpeak plugin...',
+                                'message_box': {
+                                    'text': message,
+                                    'title': title,
+                                    'markup': markup
+                                }
+                               }, 1.0)
+
+    tfr_directory = '@task_force_radio'
+    if mod.foldername != tfr_directory:
+        return
+
+    path_tfr = os.path.join(mod.clientlocation, tfr_directory)
+    path_userconfig = os.path.join(path_tfr, 'userconfig')
+    path_ts3_addon = os.path.join(path_tfr, 'TeamSpeak 3 Client')
+    path_ts_plugins = os.path.join(path_ts3_addon, 'plugins')
+    path_installed_plugins = os.path.join(teamspeak.get_install_location(), 'plugins')
+
+    installation_failed_message = textwrap.dedent("""
+        Task Force Arrowhead Radio has been downloaded or updated.
+
+        Automatic installation of TFR failed.
+
+
+        To finish the installation of TFR, you need to:
+
+        1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
+            to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
+        2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+            path_ts_plugins, path_installed_plugins))
+
+    run_admin_message = textwrap.dedent("""
+        Task Force Arrowhead Radio has been downloaded or updated.
+
+        In order to install the Task Force Radio TeamSpeak plugin you need to run the
+        plugin installer as Administrator.
+
+
+        If you do not want to do that, you need to:
+
+        1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
+            to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
+        2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+            path_ts_plugins, path_installed_plugins))
+
+    installation_succeeded_message = textwrap.dedent("""
+        Task Force Arrowhead Radio has been downloaded or updated.
+
+        To finish the installation of TFR, you need to enable the TFR plugin in
+        Settings->Plugins in Teamspeak.""")
+
+    message_queue.progress({'msg': 'Copying TFR configuration...'}, 1.0)
+    teamspeak.copy_userconfig(path=path_userconfig)
+
+    message_queue.progress({'msg': 'Installing TFR TeamSpeak plugin...'}, 1.0)
+    install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
+    if not install_instance:
+        _show_message_box(message_queue, title='Run TFR TeamSpeak plugin installer!', message=run_admin_message)
+        install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
+
+    if install_instance:
+        exit_code = install_instance.wait()
+        if exit_code != 0:
+            _show_message_box(message_queue, title='TFR TeamSpeak plugin installation failed!', message=installation_failed_message)
+            message_queue.reject({'details': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
+            return False
+        else:
+            _show_message_box(message_queue, title='Action required!', message=installation_succeeded_message)
+
+    else:
+        message_queue.reject({'msg': 'The user cancelled the TeamSpeak plugin installation.'})
+        return False
+
+    return True
+
+def _sync_all(message_queue, launcher_moddir, mods):
+    """Run syncers for all the mods sequentially and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
 
     # cba_mod = Mod(
@@ -190,7 +275,7 @@ def _sync_all(messagequeue, launcher_moddir, mods):
     #     synctype='http',
     #     downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
     #
-    # cba_syncer = HttpSyncer(messagequeue, cba_mod)
+    # cba_syncer = HttpSyncer(message_queue, cba_mod)
     # cba_syncer.sync()
 
     # debussy_mod = Mod(
@@ -206,25 +291,29 @@ def _sync_all(messagequeue, launcher_moddir, mods):
 
         m.clientlocation = launcher_moddir  # This change does NOT persist in the main launcher (would be nice :()
 
-        syncer = TorrentSyncer(messagequeue, m)
+        syncer = TorrentSyncer(message_queue, m)
         sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
         if sync_ok == False:  # Alpha undocumented feature: stop processing on a reject()
             return
 
-        messagequeue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
-                               'workaround_finished': m.foldername}, 1.0)
+        # Will only fire up if mod == TFR
+        if _tfr_post_download_hook(message_queue, m) == False:
+            return  # Alpha undocumented feature: stop processing on a reject()
 
-    messagequeue.resolve({'msg': 'Downloading mods finished.'})
+        message_queue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
+                                'workaround_finished': m.foldername}, 1.0)
+
+    message_queue.resolve({'msg': 'Downloading mods finished.'})
 
 
 def _protected_call(messagequeue, function, *args, **kwargs):
     try:
         return function(messagequeue, *args, **kwargs)
-    except Exception as e:
+    except Exception:
         stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
-        messagequeue.reject({'msg': error})
+        messagequeue.reject({'details': error})
 
 
 class ModManager(object):

@@ -17,6 +17,7 @@ import sys
 from critical_messagebox import MessageBox
 from distutils.version import LooseVersion
 from utils import paths
+from utils.testtools_compat import _format_exc_info
 
 if not paths.is_pyinstaller_bundle():
     from pkg_resources import require, \
@@ -75,10 +76,12 @@ def check_libraries_requirements():
         except ImportError:
             raise DistributionNotFound('kivy')
 
-        except Exception as ex:
+        except Exception:
             # Kivy raises an Exception with a not-so-nicely formatted message
             # Just print it and exit
-            MessageBox(", ".join(ex.args), 'Error')
+            msg = "".join(_format_exc_info(*sys.exc_info())) + \
+                  "\nAvast DeepScreen is known to fail here."
+            MessageBox(msg, 'Kivy error')
             sys.exit(1)
 
 

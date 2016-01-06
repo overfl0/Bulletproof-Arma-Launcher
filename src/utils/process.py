@@ -267,7 +267,7 @@ if __name__ == '__main__':
     #     try:
     #         pq.progress({'msg': 'test_func_has_started'})
     #         raise TestError('This exception got thrown for testing purposes')
-    #     except Exception as e:
+    #     except Exception:
     #         msg = "".join(_format_exc_info(*sys.exc_info()))
     #         pq.reject({'exc': msg})
 

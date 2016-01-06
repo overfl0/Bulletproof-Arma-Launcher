@@ -12,6 +12,7 @@
 
 from __future__ import unicode_literals
 
+from kivy.logger import Logger
 from kivy.uix.widget import Widget
 
 class UpdaterMainWidget(Widget):
@@ -24,8 +25,8 @@ class Controller(object):
     def __init__(self, view):
         super(Controller, self).__init__()
         self.view = view
-        print 'init UpdaterMainWidgetController'
+        Logger.info('init UpdaterMainWidgetController')
 
     def on_abort_button_release(self, button):
-        print 'aborting', self.view.ids
+        Logger.info('Button: aborting {}'.format(self.view.ids))
         self.view.ids.status_label.text = 'Aborting ...'
