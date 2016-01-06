@@ -34,7 +34,6 @@ from time import sleep
 
 class TorrentSyncer(object):
     _update_interval = 1
-    _torrent_handle = None
     session = None
 
     def __init__(self, result_queue, mod):
@@ -268,7 +267,6 @@ class TorrentSyncer(object):
 
         # Launch the download of the torrent
         torrent_handle = self.session.add_torrent(params)
-        self._torrent_handle = torrent_handle
 
         # === Main loop ===
         # Loop while the torrent is not completely downloaded
@@ -293,8 +291,8 @@ class TorrentSyncer(object):
         metadata_file.write_data()
 
         # Remove unused files
-        assert(self._torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
-        torrent_info = self._torrent_handle.get_torrent_info()
+        assert(torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
+        torrent_info = torrent_handle.get_torrent_info()
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
         cleanup_successful = check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='remove')
 
