@@ -53,8 +53,8 @@ MB_SERVICE_NOTIFICATION = 0x00200000
 goes so wrong that we cannot even be sure that kivy is running"""
 def MessageBox(message, title, flags=MB_ICONEXCLAMATION):
     # Print to console if any present
-    print title
-    print message
+    print repr(title)
+    print repr(message)
 
     try:
         win32_msgbox = ctypes.windll.user32.MessageBoxW

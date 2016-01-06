@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 
 from kivy.app import App
 from kivy.lang import Builder
+from kivy.logger import Logger
 from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 
@@ -119,7 +120,7 @@ class BorderBehavior(Widget):
         self.border_origin_y = self.pos[1] + self.line_width
 
     def on_border_origin(self, instance, value):
-        print self.border_origin, "border origin"
+        Logger.debug('{} border origin'.format(self.border_origin))
         self.update_borders()
 
     def on_size(self, instance, value):
@@ -131,14 +132,14 @@ class BorderBehavior(Widget):
             self.pos = self.border_origin
 
     def on_pos(self, instance, value):
-        # print instance, value, "pos changed"
+        # Logger.debug('{} {} pos changed'.format(instance, value))
         if hasattr(self, 'line_width'):
             self.set_border_origin()
 
     def on_borders(self, instance, value):
         self.line_width, self.line_style, self.line_color = value
         self.cur_dash_style = self.dash_styles[self.line_style]
-        # print self.cur_dash_style, "dash_style selected"
+        # Logger.debug('{} dash_style selected'.format(self.cur_dash_style))
         self.set_border_origin()
         self.draw_border()
 
@@ -150,10 +151,10 @@ class BorderBehavior(Widget):
     def on_touch_move(self, touch):
         if touch.grab_current is self:
             # I received my grabbed touch
-            print touch
+            Logger.debug('{} touch'.format(touch))
             self.pos = (touch.x, touch.y)
         # else:
-        #     print "only touched"
+        #     Logger.debug('only touched')
         #     # it's a normal touch
 
     def on_touch_up(self, touch):
@@ -162,5 +163,5 @@ class BorderBehavior(Widget):
             touch.ungrab(self)
         # else:
         #     # it's a normal touch
-        #     print "normal touch up"
+        #     Logger.debug('normal touch up')
         #     pass

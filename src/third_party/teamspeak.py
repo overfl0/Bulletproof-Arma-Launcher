@@ -16,6 +16,7 @@ import os
 import textwrap
 import zipfile
 
+from kivy.logger import Logger
 from third_party import SoftwareNotInstalled
 from utils.admin import run_admin
 from utils.devmode import devmode
@@ -118,10 +119,15 @@ def get_config_location():
 def check_installed():
     """Run all the registry checks. If any of them fails, raises TeamspeakNotInstalled()."""
 
-    print get_executable_path()
-    print get_addon_installer_path()
-    print get_install_location()
-    print get_config_location()
+    executable_path = get_executable_path()
+    addon_installer_path = get_addon_installer_path()
+    install_location = get_install_location()
+    config_location = get_config_location()
+
+    Logger.debug('TS: executable path: {}'.format(executable_path))
+    Logger.debug('TS: addon installer path: {}'.format(addon_installer_path))
+    Logger.debug('TS: install location: {}'.format(install_location))
+    Logger.debug('TS: config location: {}'.format(config_location))
 
 
 def create_package_ini_file_contents(path, name, author, version, platforms, description):

@@ -27,6 +27,7 @@ if __name__ == "__main__":
 import libtorrent
 import os
 
+from kivy.logger import Logger
 from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack
 from utils.metadatafile import MetadataFile
 from time import sleep
@@ -109,7 +110,7 @@ class TorrentSyncer(object):
         for alert in alerts:
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
             message = self.decode_utf8(alert.message())
-            print "Alerts: Category: {}, Message: {}".format(alert.category(), message)
+            Logger.info("Alerts: Category: {}, Message: {}".format(alert.category(), message))
             torrent_log.append({'message': message, 'category': alert.category()})
 
         return torrent_log
@@ -131,30 +132,30 @@ class TorrentSyncer(object):
         try:
             metadata_file.read_data(ignore_open_errors=False)
         except IOError:
-            print 'Metadata file could not be read successfully. Marking as not complete'
+            Logger.info('Metadata file could not be read successfully. Marking as not complete')
             return False
 
         # (2)
         if metadata_file.get_dirty():
-            print 'Torrent marked as dirty (not completed successfully). Marking as not complete'
+            Logger.info('Torrent marked as dirty (not completed successfully). Marking as not complete')
             return False
 
         # (3)
         if metadata_file.get_torrent_url() != self.mod.downloadurl:
-            print 'Torrent urls differ. Marking as not complete'
+            Logger.info('Torrent urls differ. Marking as not complete')
             return False
 
         # Get data required for (4) and (5)
         torrent_content = metadata_file.get_torrent_content()
         if not torrent_content:
-            print 'Could not get torrent file content. Marking as not complete'
+            Logger.info('Could not get torrent file content. Marking as not complete')
             return False
 
         torrent_info = self.get_torrent_info_from_string(torrent_content)
 
         resume_data_bencoded = metadata_file.get_torrent_resume_data()
         if not resume_data_bencoded:
-            print 'Could not get resume data. Marking as not complete'
+            Logger.info('Could not get resume data. Marking as not complete')
             return False
         resume_data = libtorrent.bdecode(resume_data_bencoded)
 
@@ -165,14 +166,14 @@ class TorrentSyncer(object):
         files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
 
         if not check_files_mtime_correct(self.mod.clientlocation, files_data):
-            print 'Some files seem to have been modified in the meantime. Marking as not complete'
+            Logger.info('Some files seem to have been modified in the meantime. Marking as not complete')
             return False
 
         # (5) Check if there are no additional files in the directory
         checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
         files_list = checksums.keys()
         if not check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='warn'):
-            print 'Superfluous files in mod directory. Marking as not complete'
+            Logger.info('Superfluous files in mod directory. Marking as not complete')
             return False
 
         return is_complete_tfr_hack(self.mod.name, files_list, checksums)
@@ -211,8 +212,8 @@ class TorrentSyncer(object):
                                     'log': self.get_session_logs(),
                                    }, download_fraction)
 
-        print '%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
-              (s.progress * 100, download_kBps, upload_kBps, s.num_peers, state)
+        Logger.debug('%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
+              (s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
 
     def sync(self, force_sync=False):
         """
@@ -223,7 +224,7 @@ class TorrentSyncer(object):
                      checksums for all the files in the torrent description.
         """
 
-        print "downloading ", self.mod.downloadurl, "to:", self.mod.clientlocation
+        Logger.info('Downloading {} to {}'.format(self.mod.downloadurl, self.mod.clientlocation))
         # TODO: Add the check: mod name == torrent directory name
 
         if not self.session:
@@ -303,7 +304,7 @@ class TorrentSyncer(object):
         metadata_file.set_torrent_content(bencoded_recreated_torrent)
 
         if not cleanup_successful:
-            print "Could not perform mod {} cleanup. Marking torrent as dirty.".format(self.mod.foldername)
+            Logger.info("Could not perform mod {} cleanup. Marking torrent as dirty.".format(self.mod.foldername))
             metadata_file.set_dirty(True)
             metadata_file.write_data()
 

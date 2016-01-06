@@ -16,6 +16,7 @@ import itertools
 import os
 import shutil
 
+from kivy.logger import Logger
 from third_party.arma import Arma
 from utils.context import ignore_exceptions
 from utils.hashes import sha1
@@ -103,7 +104,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     file_paths = filter_out_whitelisted(file_paths, whitelist)
 
     base_directory = os.path.realpath(base_directory)
-    print "Verifying base_directory:", base_directory
+    Logger.debug('Verifying base_directory: {}'.format(base_directory))
     success = True
 
     try:
@@ -118,14 +119,14 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             _unlink_safety_assert(base_directory, full_base_path, action='enter')
             for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=False):
                 relative_path = os.path.relpath(dirpath, base_directory)
-                print 'In directory: {}'.format(relative_path)
+                Logger.debug('In directory: {}'.format(relative_path))
 
                 # First check files in this directory
                 for file_name in filenames:
                     relative_file_name = os.path.join(relative_path, file_name)
 
                     if file_name in whitelist:
-                        print 'File {} in whitelist, skipping...'.format(file_name)
+                        Logger.debug('File {} in whitelist, skipping...'.format(file_name))
 
                         with ignore_exceptions(KeyError):
                             file_paths.remove(relative_file_name)
@@ -133,24 +134,24 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
 
                     full_file_path = os.path.join(dirpath, file_name)
 
-                    print 'Checking file: {}'.format(relative_file_name)
+                    Logger.debug('Checking file: {}'.format(relative_file_name))
                     if relative_file_name in file_paths:
                         file_paths.remove(relative_file_name)
-                        print relative_file_name, "present in torrent metadata"
+                        Logger.debug('{} present in torrent metadata'.format(relative_file_name))
 
                         if checksums and sha1(full_file_path) != checksums[relative_file_name]:
-                            print "File {} exists but its hash differs from expected.".format(relative_file_name)
-                            print "Expected: {}, computed: {}".format(checksums[relative_file_name].encode('hex'), sha1(full_file_path).encode('hex'))
+                            Logger.debug('File {} exists but its hash differs from expected.'.format(relative_file_name))
+                            Logger.debug('Expected: {}, computed: {}'.format(checksums[relative_file_name].encode('hex'), sha1(full_file_path).encode('hex')))
                             return False
 
                         continue  # File present in the torrent, nothing to see here
 
                     if on_superfluous == 'remove':
-                        print 'Removing file: {}'.format(full_file_path)
+                        Logger.debug('Removing file: {}'.format(full_file_path))
                         _safer_unlink(full_base_path, full_file_path)
 
                     elif on_superfluous == 'warn':
-                        print 'Superfluous file: {}'.format(full_file_path)
+                        Logger.debug('Superfluous file: {}'.format(full_file_path))
                         return False
 
                     elif on_superfluous == 'ignore':
@@ -169,7 +170,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
 
                         continue
 
-                    print 'Checking dir: {}'.format(relative_dir_path)
+                    Logger.debug('Checking dir: {}'.format(relative_dir_path))
                     if relative_dir_path in dirs:
                         dirs.remove(relative_dir_path)
                         continue  # Directory present in the torrent, nothing to see here
@@ -177,13 +178,13 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                     full_directory_path = os.path.join(dirpath, dir_name)
 
                     if on_superfluous == 'remove':
-                        print 'Removing directory: {}'.format(full_directory_path)
+                        Logger.debug('Removing directory: {}'.format(full_directory_path))
                         dirnames.remove(dir_name)
 
                         _safer_rmtree(full_base_path, full_directory_path)
 
                     elif on_superfluous == 'warn':
-                        print 'Superfluous directory: {}'.format(full_directory_path)
+                        Logger.debug('Superfluous directory: {}'.format(full_directory_path))
                         return False
 
                     elif on_superfluous == 'ignore':
@@ -198,20 +199,20 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             full_path = os.path.join(base_directory, file_entry)
 
             if not os.path.isfile(full_path):
-                print "File paths missing on disk, setting retval to False"
-                print full_path
+                Logger.debug('File paths missing on disk, setting retval to False')
+                Logger.debug(full_path)
                 success = False
                 break
 
             if checksums and sha1(full_path) != checksums[file_entry]:
-                print "File {} exists but its hash differs from expected.".format(file_entry)
-                print "Expected: {}, computed: {}".format(checksums[file_entry].encode('hex'), sha1(full_path).encode('hex'))
+                Logger.debug('File {} exists but its hash differs from expected.'.format(file_entry))
+                Logger.debug('Expected: {}, computed: {}'.format(checksums[file_entry].encode('hex'), sha1(full_path).encode('hex')))
                 success = False
                 break
 
         if dirs:
-            print "Dirs missing on disk, setting retval to False"
-            print dirs
+            Logger.debug('Dirs missing on disk, setting retval to False')
+            Logger.debug(', '.join(dirs))
             success = False
 
     except OSError:
@@ -273,19 +274,19 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
             full_file_path = os.path.join(base_directory, file_path)
             file_stat = os.stat(full_file_path)
         except OSError:
-            print 'Could not perform stat on', full_file_path
+            Logger.error('Could not perform stat on {}'.format(full_file_path))
             return False
 
-        # print file_path, file_stat.st_mtime, mtime
+        # Logger.debug('{} {} {}'.format(file_path, file_stat.st_mtime, mtime))
         # Values for st_size and st_mtime based on libtorrent/src/storage.cpp: 135-190 // match_filesizes()
         if file_stat.st_size < size:  # Actually, not sure why < instead of != but kept this to be compatible with libtorrent
-            print 'Incorrect file size for', full_file_path
+            Logger.debug('Incorrect file size for {}'.format(full_file_path))
             return False
 
         # Allow for 1 sec discrepancy due to FAT32
         # Also allow files to be up to 5 minutes more recent than stated
         if int(file_stat.st_mtime) > mtime + 5 * 60 or int(file_stat.st_mtime) < mtime - 1:
-            print 'Incorrect modification time for', full_file_path
+            Logger.debug('Incorrect modification time for {}'.format(full_file_path))
             return False
 
     return True
@@ -311,10 +312,10 @@ def is_complete_tfr_hack(mod_name, file_paths, checksums):
                                    on_superfluous='ignore')
 
     if not retval:
-        print "TFR userconfig not populated. Marking as not fully installed"
+        Logger.debug('TFR userconfig not populated. Marking as not fully installed')
         return retval
     else:
-        print "TFR userconfig files OK."
+        Logger.debug('TFR userconfig files OK.')
 
     teamspeak_path = teamspeak.get_install_location()
     teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
@@ -322,6 +323,6 @@ def is_complete_tfr_hack(mod_name, file_paths, checksums):
                                    check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
                                    on_superfluous='ignore', checksums=checksums)
 
-    print "Teamspeak plugins synchronized:", retval
+    Logger.debug('Teamspeak plugins synchronized: {}'.format(retval))
 
     return retval

@@ -131,7 +131,7 @@ try:
             launcher_app = None
 
             if settings.get('self_update'):
-                print 'launching self updater'
+                Logger.info('launching self updater')
                 launcher_app = SelfUpdaterApp(settings).run()
             else:
                 launcher_app = LauncherApp(settings)

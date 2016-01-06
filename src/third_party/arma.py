@@ -23,6 +23,7 @@ if __name__ == "__main__":
 import os
 import subprocess
 
+from kivy.logger import Logger
 from utils.paths import u_to_fs
 from utils.devmode import devmode
 from utils.singleton import Singleton
@@ -152,7 +153,7 @@ class Arma(object):
         if custom_args:
             game_args.extend(custom_args)
 
-        print game_args
+        Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
         popen_object = subprocess.Popen(u_to_fs(game_args))  # May raise OSError
 
         return popen_object

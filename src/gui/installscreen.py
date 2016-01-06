@@ -99,7 +99,7 @@ class Controller(object):
         # if returncode is None:  # The game has not terminated yet
         #     return
 
-        # print 'Arma has terminated with code: {}'.format(returncode)
+        # Logger.error('Arma has terminated with code: {}'.format(returncode))
         # Allow the game to be run once again.
         self.view.ids.install_button.disabled = False
         self.arma_executable_object = None
