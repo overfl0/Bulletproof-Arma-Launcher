@@ -23,7 +23,7 @@ def print_session_logs(session):
     for alert in alerts:
         print "Message:", alert.message()
 
-def download_torrent(torrent_file):
+def download_torrent(torrent_file, download_throttle, upload_throttle):
     global torrent_handle
     settings = libtorrent.session_settings()
     settings.user_agent = 'TacBF_simple_client (libtorrent/{})'.format(libtorrent.version)
@@ -31,6 +31,12 @@ def download_torrent(torrent_file):
     session = libtorrent.session()
     session.listen_on(6881, 6891)
     session.set_settings(settings)
+
+    if upload_throttle is not None:
+        session.set_upload_rate_limit(int(upload_throttle) * 1024)
+
+    if download_throttle is not None:
+        session.set_download_rate_limit(int(download_throttle) * 1024)
 
     with open(torrent_file, 'rb') as file_handle:
         file_contents = file_handle.read()
@@ -57,11 +63,13 @@ def download_torrent(torrent_file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Simple torrent client. Will download and seed until Ctrl+C is pressed.")
+    parser.add_argument("-u", "--upload", help="Upload throttle in KB/s")
+    parser.add_argument("-d", "--download", help="Download throttle in KB/s")
     parser.add_argument("torrent_file", help="Torrent file to use.")
 
     args = parser.parse_args()
 
     try:
-        download_torrent(args.torrent_file)
+        download_torrent(args.torrent_file, args.download, args.upload)
     except KeyboardInterrupt:
         pass
