@@ -32,10 +32,11 @@ def termination_func(con):
     """this function is run in another process"""
     con.progress({'msg': 'test_func_has_started'})
 
-    termination_challanged = False
-    while termination_challanged == False:
+    termination_requested = False
+    while termination_requested == False:
         time.sleep(1)
-        termination_challanged = con.wants_termination()
+        # check if your parent wants your termination
+        termination_requested = con.wants_termination()
 
     con.resolve('terminating')
 
@@ -133,6 +134,6 @@ class ParaTest(unittest.TestCase):
             count += 1
             # send termination after 2 seconds
             if count == 4:
-                para.send_termation_msg()
+                para.request_termination()
 
         res_handler.assert_called_once_with('terminating')

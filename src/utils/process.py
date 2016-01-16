@@ -145,6 +145,10 @@ class Para(object):
         self.lastdata = None # cached data from the last resolve or reject
         self.lastprogress = None # cached progress data from the last resolve or reject
 
+    def is_open(self):
+        """simple method which queries whenever the para is still in processing."""
+        return not (self.state == 'resolved' or self.state == 'rejected')
+
     def add_progress_handler(self, func):
         """adds an progress handler which could be called multiple times
 
@@ -219,7 +223,7 @@ class Para(object):
         Clock.unschedule(self.handle_messagequeue)
         Logger.debug('Para: {} joined process'.format(self))
 
-    def send_termation_msg(self):
+    def request_termination(self):
         """sends a termination command to the child process"""
         self.parent_conn.send('terminate')
 
