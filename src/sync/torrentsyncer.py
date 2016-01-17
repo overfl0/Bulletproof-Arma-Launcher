@@ -37,7 +37,6 @@ from kivy.logger import Logger
 
 class TorrentSyncer(object):
     _update_interval = 1
-    _torrent_handle = None
     session = None
 
     def __init__(self, result_queue, mod):
@@ -180,8 +179,8 @@ class TorrentSyncer(object):
             return False
 
         return is_complete_tfr_hack(self.mod.name, files_list, checksums)
-    """
-    def create_flags(self):
+
+    def create_add_torrent_flags(self):
         f = libtorrent.add_torrent_params_flags_t
 
         flags = 0
@@ -199,7 +198,6 @@ class TorrentSyncer(object):
         # no_recheck_incomplete_resume
 
         return flags
-    """
 
     def handle_torrent_progress(self, s):
         """Just log the download progress for now."""
@@ -254,7 +252,7 @@ class TorrentSyncer(object):
         params = {
             'save_path': self.encode_utf8(self.mod.clientlocation),
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
-            # 'flags': self.create_flags()
+            'flags': self.create_add_torrent_flags()
         }
 
         # Configure torrent source
@@ -271,12 +269,26 @@ class TorrentSyncer(object):
 
         # Launch the download of the torrent
         torrent_handle = self.session.add_torrent(params)
-        self._torrent_handle = torrent_handle
 
         # === Main loop ===
         # Loop while the torrent is not completely downloaded
+        finished_downloading = False
         s = torrent_handle.status()
-        while (not torrent_handle.is_seed() and not s.error):
+
+        # Loop until finished and paused
+        while not (finished_downloading and torrent_handle.is_paused()):
+            if s.error:
+                break
+
+            # If finished downloading, request pausing the torrent to synchronize data to disk
+            if torrent_handle.is_seed() and not finished_downloading:
+                finished_downloading = True
+
+                # Stop the torrent to force syncing everything to disk
+                Logger.info('Sync: pausing torrent')
+                torrent_handle.auto_managed(False)
+                torrent_handle.pause()
+
             self.handle_torrent_progress(s)
 
             # TODO: Save resume_data periodically
@@ -291,6 +303,8 @@ class TorrentSyncer(object):
 
         self.handle_torrent_progress(s)
 
+        Logger.info('Sync: terminated loop')
+
         if s.error:
             self.result_queue.reject({'details': 'An error occured: Libtorrent error: {}'.format(self.decode_utf8(s.error))})
             return False
@@ -302,8 +316,8 @@ class TorrentSyncer(object):
         metadata_file.write_data()
 
         # Remove unused files
-        assert(self._torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
-        torrent_info = self._torrent_handle.get_torrent_info()
+        assert(torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
+        torrent_info = torrent_handle.get_torrent_info()
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
         cleanup_successful = check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='remove')
 
@@ -335,6 +349,7 @@ if __name__ == '__main__':
         clientlocation = ""
         foldername = "DebussyPrelduesBookI"
         version = "123"
+        name = "name"
 
     class DummyQueue:
         def progress(self, d, frac):
