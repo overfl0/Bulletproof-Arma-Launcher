@@ -39,7 +39,7 @@ class ModManagerTest(unittest.TestCase):
         self.assertEqual(cls, HttpSyncer)
 
     @attr('integration')
-    def test_sync_zipped_mod(self):
+    def _test_sync_zipped_mod(self):
         m = ModManager()
         self.assertIsNotNone(m)
 
