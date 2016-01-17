@@ -58,11 +58,13 @@ class InstallScreen(Screen):
 class Controller(object):
     def __init__(self, widget):
         super(Controller, self).__init__()
+
+        application = kivy.app.App.get_running_app()
+
         self.view = widget
         self.mod_manager = ModManager()
         self.loading_gif = None
         self.mods = None
-
         self.arma_executable_object = None
 
         # TODO: Maybe transform this into a state
@@ -84,6 +86,9 @@ class Controller(object):
             Clock.schedule_interval(self.check_requirements, 1)
 
         Clock.schedule_once(self.update_footer_label, 0)
+
+        # bind to application stop event
+        application.bind(on_stop=self.on_application_stop)
 
     def try_reenable_play_button(self, dt):
         """This function first checks if a game process had been run. Then it checks
@@ -324,3 +329,12 @@ Get it here:
             error_info.open()
 
         self.view.ids.install_button.disabled = True
+
+    def on_application_stop(self, something):
+        Logger.info('InstallScreen: Application Stop, Trying to close child process')
+
+        if self.para and self.para.is_open():
+            self.para.request_termination()
+            Logger.info("sending termination to para action {}".format(self.para.action_name))
+        else:
+            Logger.info("No open para. App can just close")

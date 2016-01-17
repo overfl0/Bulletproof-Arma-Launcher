@@ -32,6 +32,9 @@ from sync.integrity import check_mod_directories, check_files_mtime_correct, is_
 from utils.metadatafile import MetadataFile
 from time import sleep
 
+from kivy.logger import Logger
+
+
 class TorrentSyncer(object):
     _update_interval = 1
     session = None
@@ -291,6 +294,12 @@ class TorrentSyncer(object):
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
             s = torrent_handle.status()
+
+            if self.result_queue.wants_termination():
+                # WARNING: You probably have to remove Logger, it probably
+                # doesn't work when packaged with pyinstaller
+                Logger.info('TorrentSyncer wants termination')
+
 
         self.handle_torrent_progress(s)
 

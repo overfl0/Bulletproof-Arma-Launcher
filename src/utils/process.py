@@ -102,7 +102,19 @@ class ConnectionWrapper(object):
         #         self.put(top)
         self.con.send(msg)
 
+    def wants_termination(self):
+        """Returns true if the parent process wants to terminate the child.
+        The child is in charge of terminating itself"""
+        if self.con.poll():
+            command = self.con.recv()
+            if command == 'terminate':
+                return True
+        return False
+
 class Para(object):
+
+    JOIN_TIMEOUT_GRANULATION = 0.1
+
     def __init__(self, func, args, action_name):
         """
         constructor of the Para
@@ -126,8 +138,16 @@ class Para(object):
         self.progress_handler = []
         self.resolve_handler = []
         self.reject_handler = []
-        self.state = 'pending' # pending, rejected or resolved
+
+        # the state of a para can be
+        # pending, rejected or resolved or closingforreject and closingforresolve
+        self.state = 'pending'
         self.lastdata = None # cached data from the last resolve or reject
+        self.lastprogress = None # cached progress data from the last resolve or reject
+
+    def is_open(self):
+        """simple method which queries whenever the para is still in processing."""
+        return not (self.state == 'resolved' or self.state == 'rejected')
 
     def add_progress_handler(self, func):
         """adds an progress handler which could be called multiple times
@@ -197,12 +217,15 @@ class Para(object):
         self._reset()
 
     def _reset(self):
-        self.current_child_process.join()
+        #self.current_child_process.join()
         self.parent_conn.close()
         self.current_child_process = None
         Clock.unschedule(self.handle_messagequeue)
         Logger.debug('Para: {} joined process'.format(self))
 
+    def request_termination(self):
+        """sends a termination command to the child process"""
+        self.parent_conn.send('terminate')
 
     def run(self):
         self.lock = Lock()
@@ -218,6 +241,20 @@ class Para(object):
         con = self.parent_conn
         progress = None
 
+        # handle closingphases first
+        # try to join the child process
+        if self.state == 'closingforreject':
+            self.current_child_process.join(0.1)
+            if not self.current_child_process.is_alive():
+                self._call_reject_handler(self.lastprogress)
+                return
+
+        if self.state == 'closingforresolve':
+            self.current_child_process.join(0.1)
+            if not self.current_child_process.is_alive():
+                self._call_resolve_handler(self.lastprogress)
+                return
+
         if con.poll():
             progress = con.recv()
 
@@ -227,11 +264,17 @@ class Para(object):
 
             elif progress['status'] == 'resolve':
                 self.lastdata = progress['data']
-                self._call_resolve_handler(progress)
+                self.lastprogress = progress
+                # enter closingphase cause a process can take long to
+                # terminate
+                self.state = 'closingforresolve'
 
             elif progress['status'] == 'reject':
                 self.lastdata = progress['data']
-                self._call_reject_handler(progress)
+                self.lastprogress = progress
+                # enter closingphase cause a process can take long to
+                # terminate
+                self.state = 'closingforreject'
         else:
             if not self.current_child_process.is_alive():
                 message = '[{}] Child process terminated unexpectedly with code {}.'.format(
@@ -248,44 +291,3 @@ def catchstacktrace(func):
             con.reject({'exc': msg})
 
     return wrapper
-
-
-class TestError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return repr(self.msg)
-
-if __name__ == '__main__':
-
-    #
-    # little test that the tracback of a childprocess gets catched
-    #
-
-    # def test_func(pq):
-    #     print 'Process: ', os.getpid()
-    #     try:
-    #         pq.progress({'msg': 'test_func_has_started'})
-    #         raise TestError('This exception got thrown for testing purposes')
-    #     except Exception:
-    #         msg = "".join(_format_exc_info(*sys.exc_info()))
-    #         pq.reject({'exc': msg})
-
-    @catchstacktrace
-    def test_func(pq):
-        pq.progress({'msg': 'test_func_has_started'})
-        raise TestError('This exception got thrown for testing purposes')
-
-    def on_reject(data):
-        print 'para rejected, got data:'
-        print data['exc']
-
-    print 'Process: ', os.getpid()
-    para = Para(test_func, (), 'testaction')
-    para.then(None, on_reject, None)
-    para.run()
-
-    while not para.state == 'rejected':
-        Clock.tick()
-
-    print 'test good'
