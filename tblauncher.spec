@@ -9,6 +9,8 @@ import primitive_git
 # https://github.com/kivy/kivy/pull/3652/files?short_path=90047c6
 from kivy.tools.packaging.pyinstaller_hooks import get_hooks
 
+from kivy.deps import sdl2, glew
+
 # Create the build number
 primitive_git.save_git_sha1_to_file('.', primitive_git.build_sha1_file)
 
@@ -28,6 +30,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
+          *[Tree(p) for p in (sdl2.dep_bins + glew.dep_bins)],
           name='tblauncher.exe',
           debug=False,
           strip=None,

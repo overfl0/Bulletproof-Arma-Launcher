@@ -56,7 +56,7 @@ try:
             Config.set('graphics', 'resizable', 0)
             Config.set('graphics', 'width', 1000)
             Config.set('graphics', 'height', 666)
-            Config.set('graphics', 'borderless', 1)
+            Config.set('graphics', 'borderless', 0)
         else:
             Config.set('graphics', 'resizable', 0)
             Config.set('graphics', 'width', 400)
