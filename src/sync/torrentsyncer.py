@@ -32,8 +32,6 @@ from sync.integrity import check_mod_directories, check_files_mtime_correct, is_
 from utils.metadatafile import MetadataFile
 from time import sleep
 
-from kivy.logger import Logger
-
 
 class TorrentSyncer(object):
     _update_interval = 1
@@ -50,6 +48,7 @@ class TorrentSyncer(object):
         super(TorrentSyncer, self).__init__()
         self.result_queue = result_queue
         self.mod = mod
+        self.force_termination = False
 
     def decode_utf8(self, message):
         """Wrapper that prints the decoded message if an error occurs."""
@@ -280,8 +279,13 @@ class TorrentSyncer(object):
             if s.error:
                 break
 
+            # We are cancelling the downloads
+            if self.result_queue.wants_termination():
+                Logger.info('TorrentSyncer wants termination')
+                self.force_termination = True
+
             # If finished downloading, request pausing the torrent to synchronize data to disk
-            if torrent_handle.is_seed() and not finished_downloading:
+            if (torrent_handle.is_seed() or self.force_termination) and not finished_downloading:
                 finished_downloading = True
 
                 # Stop the torrent to force syncing everything to disk
@@ -294,11 +298,6 @@ class TorrentSyncer(object):
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
             s = torrent_handle.status()
-
-            if self.result_queue.wants_termination():
-                # WARNING: You probably have to remove Logger, it probably
-                # doesn't work when packaged with pyinstaller
-                Logger.info('TorrentSyncer wants termination')
 
 
         self.handle_torrent_progress(s)
@@ -314,6 +313,9 @@ class TorrentSyncer(object):
         resume_data = libtorrent.bencode(torrent_handle.write_resume_data())
         metadata_file.set_torrent_resume_data(resume_data)
         metadata_file.write_data()
+
+        if self.force_termination:
+            return False
 
         # Remove unused files
         assert(torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
