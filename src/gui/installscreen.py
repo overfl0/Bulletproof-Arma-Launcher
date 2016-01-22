@@ -111,7 +111,7 @@ class Controller(object):
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
-        version = 'Alpha 5'
+        version = 'Alpha 6'
         footer_text = '{}\nBuild: {}'.format(version,
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
