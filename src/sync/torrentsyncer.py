@@ -77,7 +77,10 @@ class TorrentSyncer(object):
         This setting entirely disables the balancing and unthrottles all connections."""
         settings.mixed_mode_algorithm = 0
 
-        self.session = libtorrent.session()
+        # Fingerprint = 'LT1080' == LibTorrent 1.0.8.0
+        fingerprint = libtorrent.fingerprint(b'LT', *(int(i) for i in libtorrent.version.split('.')))
+
+        self.session = libtorrent.session(fingerprint=fingerprint)
         self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.
 
         # TODO: self.session.set_download_rate_limit(down_rate)
