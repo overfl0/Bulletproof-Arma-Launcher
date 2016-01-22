@@ -137,23 +137,6 @@ def get_mod_descriptions(para, launcher_moddir):
     return mods
 
 
-def _check_already_installed_with_six(mod):
-    """returns true if mod is installed already with withsix, otherwise false"""
-
-    # check user path
-    install_path = Arma.get_user_path()
-    mod_path = os.path.join(install_path, mod.foldername, '.synqinfo')
-
-    if os.path.isfile(mod_path):
-        return True
-
-    # check system path
-    install_path = Arma.get_installation_path()
-    mod_path = os.path.join(install_path, mod.foldername, '.synqinfo')
-
-    return os.path.isfile(mod_path)
-
-
 def _prepare_and_check(messagequeue, launcher_moddir):
     # WARNING: This methods gets called in a different process
 
@@ -169,13 +152,6 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
     for m in mod_list:
-        try:
-            r = _check_already_installed_with_six(m)
-        except SoftwareNotInstalled:
-            r = False
-        if r:
-            messagequeue.progress({'msg': 'Mod ' + m.foldername + ' already installed with withSix'})
-
         # TODO: Change this to a static function
         syncer = TorrentSyncer(messagequeue, m)
         m.up_to_date = syncer.is_complete_quick()
