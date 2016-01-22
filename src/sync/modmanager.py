@@ -15,7 +15,6 @@ from __future__ import unicode_literals
 import multiprocessing
 from multiprocessing import Queue
 import os
-import json
 import sys
 
 from datetime import datetime
@@ -30,10 +29,8 @@ from third_party.arma import Arma, SoftwareNotInstalled
 from utils.devmode import devmode
 from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
-from utils.process import Process
 from utils.process import Para
 from utils.testtools_compat import _format_exc_info
-from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
 
@@ -80,23 +77,20 @@ def requests_get_or_reject(para, domain, *args, **kwargs):
     return res
 
 
-def get_mod_descriptions(para, launcher_moddir):
+def get_mod_descriptions(para):
     """
     helper function to get the moddescriptions from the server
 
     this function is ment be used threaded or multiprocesses, you have
     to pass in a queue
     """
-    downloadurlPrefix = 'http://launcher.tacbf.com/tacbf/updater/torrents/'
-
-
     para.progress({'msg': 'Downloading mod descriptions'})
-    domain = 'launcher.tacbf.com'
-    url = 'http://{}/tacbf/updater/metadata.json'.format(domain)
-    data = None
-    res = requests_get_or_reject(para, domain, url, verify=False, timeout=10)
 
-    mods = []
+    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
+    metadata_path = devmode.get_metadata_path(default='/tacbf/updater/metadata.json')
+    url = 'http://{}{}'.format(domain, metadata_path)
+
+    res = requests_get_or_reject(para, domain, url, verify=False, timeout=10)
 
     if res.status_code != 200:
         para.reject({'details': '{}\n{}\n\n{}'.format(
@@ -105,34 +99,42 @@ def get_mod_descriptions(para, launcher_moddir):
     else:
         try:
             data = res.json()
-        except ValueError as e:
+        except ValueError:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             para.reject({'details': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') not in ("2", "3", "4", "4.1", "5", "6"):
+        if data.get('alpha') not in ("4.1", "5", "6"):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
-            return []
+            return ''
 
-        for md in data['mods']:
+    para.progress({'msg': 'Downloading mods descriptions finished'})
 
-            # parse timestamp
-            tsstr = md.get('torrent-timestamp')
-            md['torrent-timestamp'] = parse_timestamp(tsstr)
-            md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
-                md['foldername'], tsstr)
+    return data
 
-            mod = Mod.fromDict(md)
-            mod.clientlocation = launcher_moddir
-            mods.append(mod)
+def process_description_data(para, data, launcher_moddir):
+    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
+    downloadurlPrefix = 'http://{}/tacbf/updater/torrents/'.format(domain)
 
-            Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
+    mods = []
 
-        para.progress({'msg': 'Downloading mods descriptions finished', 'mods': mods})
+    for md in data['mods']:
+
+        # parse timestamp
+        tsstr = md.get('torrent-timestamp')
+        md['torrent-timestamp'] = parse_timestamp(tsstr)
+        md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
+            md['foldername'], tsstr)
+
+        mod = Mod.fromDict(md)
+        mod.clientlocation = launcher_moddir
+        mods.append(mod)
+
+        Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
 
     return mods
 
@@ -141,7 +143,8 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     # WARNING: This methods gets called in a different process
 
     # download mod descriptions first
-    mod_list = get_mod_descriptions(messagequeue, launcher_moddir)
+    mod_descriptions_data = get_mod_descriptions(messagequeue)
+    mod_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
 
     # Debug mode: decrease the number of mods to download
     mods_filter = devmode.get_mods_filter()
@@ -244,16 +247,6 @@ def _tfr_post_download_hook(message_queue, mod):
 def _sync_all(message_queue, launcher_moddir, mods):
     """Run syncers for all the mods sequentially and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
-
-    # cba_mod = Mod(
-    #     foldername='@CBA_A3',
-    #     clientlocation=launcher_moddir,
-    #     synctype='http',
-    #     downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
-    #
-    # cba_syncer = HttpSyncer(message_queue, cba_mod)
-    # cba_syncer.sync()
-
     # debussy_mod = Mod(
     #     foldername='@debussybattle',  # The mod name MUST match directory name!
     #     clientlocation=launcher_moddir,
