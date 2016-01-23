@@ -32,6 +32,7 @@ class LauncherConfig(Model):
         {'name': 'self_update', 'defaultValue': False},
         {'name': 'launcher_basedir'},
         {'name': 'launcher_moddir'},
+        {'name': 'mod_data_cache', 'defaultValue': None}
     ]
 
     def __init__(self):
@@ -140,6 +141,12 @@ class Settings(object):
 
     def set_launcher_moddir(self, value):
         return self.launcher_config.set('launcher_moddir', value)
+
+    def set_mod_data_cache(self, value):
+        self.set('mod_data_cache', value)
+
+    def get_mod_data_cache(self):
+        return self.launcher_config.get('mod_data_cache')
 
     def parse_args(self, argv):
         self.parser = argparse.ArgumentParser()

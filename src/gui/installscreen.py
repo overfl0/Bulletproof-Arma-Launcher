@@ -28,10 +28,11 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.logger import Logger
 
-from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from sync.modmanager import ModManager
 from third_party import teamspeak
+from utils.data.jsonstore import JsonStore
 from utils.primitive_git import get_git_sha1_auto
+from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 
 
 class InstallScreen(Screen):
@@ -206,8 +207,15 @@ Install Steam and restart the launcher."""
 
     def on_download_mod_description_resolve(self, progress):
         mod_description_data = progress['data']
-        # TODO: Save mod_description_data to cache
-#         self.data_tmp = mod_description_data
+
+        # Save mod_description_data to cache
+        # FIXME: Why does this have to be so complicated? What is JsonStore
+        # and why should I care? I should just have to do settings.set_sth() and
+        # settings.save() and be done with it!
+        settings = kivy.app.App.get_running_app().settings
+        store = JsonStore(settings.config_path)
+        settings.set_mod_data_cache(mod_description_data)
+        store.save(settings.launcher_config)
 
         # Continue with processing mod_description data
         self.para = self.mod_manager.prepare_and_check(mod_description_data)
@@ -247,14 +255,15 @@ Install Steam and restart the launcher."""
         ErrorPopup(details=details, message=message).open()
 
         # Carry on with the execution! :)
-        # On error read from cache and carry on
-#         data = read_from_cache
-#
-#         # If no cache, then whine a bit
-#         self.para = self.mod_manager.prepare_and_check(data)
-#         self.para.then(self.on_checkmods_resolve,
-#                        self.on_checkmods_reject,
-#                        self.on_checkmods_progress)
+        # Read data from cache and continue if successful
+        settings = kivy.app.App.get_running_app().settings
+        mod_data = settings.get_mod_data_cache()
+
+        if mod_data:
+            self.para = self.mod_manager.prepare_and_check(mod_data)
+            self.para.then(self.on_checkmods_resolve,
+                           self.on_checkmods_reject,
+                           self.on_checkmods_progress)
 
     # Checkmods callbacks ######################################################
 
