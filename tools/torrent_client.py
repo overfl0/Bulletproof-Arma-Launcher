@@ -23,6 +23,7 @@ def print_session_logs(session):
     for alert in alerts:
         print "Message:", alert.message()
 
+
 def download_torrent(torrent_file, download_throttle, upload_throttle):
     global torrent_handle
     settings = libtorrent.session_settings()
@@ -44,11 +45,10 @@ def download_torrent(torrent_file, download_throttle, upload_throttle):
     torrent_metadata = libtorrent.bdecode(file_contents)
     torrent_info = libtorrent.torrent_info(torrent_metadata)
 
-    params = {
-            'save_path': os.getcwd(),
-            'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
-            'ti': torrent_info
-        }
+    params = {'save_path': os.getcwd(),
+              'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
+              'ti': torrent_info
+              }
 
     torrent_handle = session.add_torrent(params)
 

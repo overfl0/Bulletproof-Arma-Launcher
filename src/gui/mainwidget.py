@@ -23,11 +23,14 @@ from gui.messagebox import MessageBox
 
 from utils.devmode import devmode
 
+
 class TestError(Exception):
     def __init__(self, msg):
         self.msg = msg
+
     def __str__(self):
         return repr(self.msg)
+
 
 def test_exc_in_process():
     """function for testing if the exceptions gets rethrown into
@@ -37,6 +40,7 @@ def test_exc_in_process():
     time.sleep(2)
     raise TestError('This is a test error')
 
+
 class MainWidget(Widget):
     """
     View Class
@@ -44,6 +48,7 @@ class MainWidget(Widget):
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
         self.controller = Controller(self)
+
 
 class Controller(object):
     def __init__(self, widget):
@@ -55,8 +60,8 @@ class Controller(object):
 
     def on_testpopupbutton_release(self, btn):
         return  # Disable this for the alpha release
-        #raise TestError('This is an test error')
-        #self.get_status_image().set_image('attention')
+        # raise TestError('This is an test error')
+        # self.get_status_image().set_image('attention')
 
     def on_next_frame(self, dt):
         # Only show the notification in alpha branch

@@ -32,6 +32,7 @@ Please make sure you're not reporting an issue that has already been reported.""
 POPUP_TITLE = """An error occurred"""
 CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
 
+
 def open_hyperlink(obj, ref):
     import webbrowser
 
@@ -58,8 +59,9 @@ class ErrorPopup(Popup):
             ti = TextInput(text=details, size_hint_y=0.7)
             bl.add_widget(ti)
 
-        super(ErrorPopup, self).__init__(title=POPUP_TITLE,
-            content=bl, size_hint=(None, None), size=(600, 400))
+        super(ErrorPopup, self).__init__(
+            title=POPUP_TITLE, content=bl, size_hint=(None, None), size=(600, 400))
+
 
 def error_popup_decorator(func):
     def wrapper(*args, **kwargs):
@@ -70,10 +72,11 @@ def error_popup_decorator(func):
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             msg = 'Build: {}\n{}'.format(build, stacktrace)
             # p = ErrorPopup(details=msg)
-            #p.open()
+            # p.open()
             MessageBox(msg, CRITICAL_POPUP_TITLE)
 
     return wrapper
+
 
 class PopupHandler(ExceptionHandler):
     def handle_exception(self, inst):

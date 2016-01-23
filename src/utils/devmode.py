@@ -21,6 +21,7 @@ DEVMODE_FILE_NAME = 'devmode.conf'
 # class DevModeException(Exception):
 #    pass
 
+
 class DevMode(object):
     '''
     This is a simple class that loads a json file and allows access to its elements

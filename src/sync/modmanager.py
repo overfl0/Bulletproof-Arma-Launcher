@@ -129,8 +129,8 @@ def process_description_data(para, data, launcher_moddir):
         # parse timestamp
         tsstr = md.get('torrent-timestamp')
         md['torrent-timestamp'] = parse_timestamp(tsstr)
-        md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
-            md['foldername'], tsstr)
+        md['downloadurl'] = "{}{}-{}.torrent".format(
+            downloadurlPrefix, md['foldername'], tsstr)
 
         mod = Mod.fromDict(md)
         mod.clientlocation = launcher_moddir
@@ -174,7 +174,7 @@ def _tfr_post_download_hook(message_queue, mod):
                                     'title': title,
                                     'markup': markup
                                 }
-                               }, 1.0)
+                                }, 1.0)
 
     tfr_directory = '@task_force_radio'
     if mod.foldername != tfr_directory:
@@ -197,7 +197,7 @@ def _tfr_post_download_hook(message_queue, mod):
         1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
             to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
         2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
-            path_ts_plugins, path_installed_plugins))
+        path_ts_plugins, path_installed_plugins))
 
     run_admin_message = textwrap.dedent("""
         Task Force Arrowhead Radio has been downloaded or updated.
@@ -211,7 +211,7 @@ def _tfr_post_download_hook(message_queue, mod):
         1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
             to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
         2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
-            path_ts_plugins, path_installed_plugins))
+        path_ts_plugins, path_installed_plugins))
 
     installation_succeeded_message = textwrap.dedent("""
         Task Force Arrowhead Radio has been downloaded or updated.
@@ -263,7 +263,7 @@ def _sync_all(message_queue, launcher_moddir, mods):
         syncer = TorrentSyncer(message_queue, m)
         sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
-        if sync_ok == False:  # Alpha undocumented feature: stop processing on a reject()
+        if sync_ok is False:  # Alpha undocumented feature: stop processing on a reject()
             return
 
         # Will only fire up if mod == TFR

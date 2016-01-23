@@ -15,6 +15,7 @@ from nose.plugins.attrib import attr
 
 from third_party.arma import Arma
 
+
 class ArmaTest(unittest.TestCase):
 
     def setUp(self):

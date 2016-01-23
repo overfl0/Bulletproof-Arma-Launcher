@@ -22,6 +22,7 @@ from kivy.properties import ObjectProperty, ReferenceListProperty
 from kivy.properties import NumericProperty
 from kivy.graphics import Line, Color
 
+
 class BorderBehavior(Widget):
     borders = ObjectProperty(None)
     bordersHoover = ObjectProperty(None)

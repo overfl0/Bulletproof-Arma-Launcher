@@ -16,6 +16,7 @@ import errno
 import os
 import sys
 
+
 def is_pyinstaller_bundle():
     """Is the program ran as a PyInstaller bundle? (as opposed to a simple python script)."""
     return getattr(sys, 'frozen', False)
@@ -136,4 +137,5 @@ def mkdir_p(path):
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
-        else: raise
+        else:
+            raise

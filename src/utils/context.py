@@ -16,6 +16,7 @@ import errno
 
 from contextlib import contextmanager
 
+
 @contextmanager
 def ignore_exceptions(*exceptions):
     """Ignore exceptions raised inside the with block.

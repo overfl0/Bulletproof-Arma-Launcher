@@ -75,6 +75,7 @@ _default_source_encoding = "ascii"
 # Pattern specified in <http://www.python.org/dev/peps/pep-0263/>
 _cookie_search = re.compile("coding[:=]\s*([-\w.]+)").search
 
+
 def _detect_encoding(lines):
     """Get the encoding of a Python source file from a list of lines as bytes
 
@@ -106,6 +107,7 @@ def _detect_encoding(lines):
 class _EncodingTuple(tuple):
     """A tuple type that can have an encoding attribute smuggled on"""
 
+
 def _get_source_encoding(filename):
     """Detect, cache and return the encoding of Python source at filename"""
     try:
@@ -118,6 +120,7 @@ def _get_source_encoding(filename):
             linecache.cache[filename] = newtuple
         return encoding
 
+
 def _get_exception_encoding():
     """Return the encoding we expect messages from the OS to be encoded in"""
     if os.name == "nt":
@@ -128,6 +131,7 @@ def _get_exception_encoding():
     #                no benefit in asking more than once as it's a global
     #                setting that can change after the message is formatted.
     return locale.getlocale(locale.LC_MESSAGES)[1] or "ascii"
+
 
 def _exception_to_text(evalue):
     """Try hard to get a sensible text value out of an exception instance"""
@@ -151,6 +155,8 @@ def _exception_to_text(evalue):
 # GZ 2010-05-23: This function is huge and horrible and I welcome suggestions
 #                on the best way to break it up
 _TB_HEADER = u'Traceback (most recent call last):\n'
+
+
 def _format_exc_info(eclass, evalue, tb, limit=None):
     """Format a stack trace and the exception information as unicode
 

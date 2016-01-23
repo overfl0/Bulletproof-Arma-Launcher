@@ -21,6 +21,7 @@ from kivy.uix.boxlayout import BoxLayout
 
 default_title = """Message"""
 
+
 def open_hyperlink(obj, ref):
     import webbrowser
 
@@ -28,6 +29,7 @@ def open_hyperlink(obj, ref):
         ref = ref.encode(sys.getfilesystemencoding())
 
     webbrowser.open(ref)
+
 
 class MessageBox(Popup):
     def __init__(self, text, title=default_title, markup=False):
@@ -40,5 +42,5 @@ class MessageBox(Popup):
         bl.add_widget(la)
         bl.add_widget(button)
 
-        super(MessageBox, self).__init__(title=title,
-              content=bl, size_hint=(None, None), size=(600, 500))
+        super(MessageBox, self).__init__(
+            title=title, content=bl, size_hint=(None, None), size=(600, 500))

@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 from kivy.app import App
 from utils.paths import get_resources_path
 
+
 class BaseApp(App):
     """docstring for BaseApp"""
     def __init__(self):

@@ -17,6 +17,7 @@ import paths
 
 build_sha1_file = 'build.sha1'
 
+
 def get_sha1_from_file(base_dir, relative_path):
     """Try to read base_dir/relative_path. For git head, relative_path should be 'HEAD'.
     If it contains a sha1, return it.
@@ -43,10 +44,12 @@ def get_sha1_from_file(base_dir, relative_path):
 
     return sha1
 
+
 def get_sha1_from_git_controlled(base_repo_dir):
     """Get the sha1 of the last commit of a repository.
     The base_repo_dir should contain a direct '.git' subdirectory"""
     return get_sha1_from_file(os.path.join(base_repo_dir, '.git'), 'HEAD')
+
 
 def get_git_sha1_auto():
     """Get the sha1 of the last commit.
@@ -57,6 +60,7 @@ def get_git_sha1_auto():
         return get_sha1_from_file(paths.get_base_path(), build_sha1_file)
 
     return get_sha1_from_git_controlled(paths.get_base_path())
+
 
 def save_git_sha1_to_file(git_controlled_directory, dump_file):
     """Dump the sha1 to a file that can then be used when wrapped by pyinstaller"""
