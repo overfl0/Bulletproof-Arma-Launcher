@@ -15,10 +15,10 @@ from __future__ import unicode_literals
 from multiprocessing import Queue
 
 import os
-from time import sleep
 
-import requests
 import kivy
+import kivy.app  # To keep PyDev from complaining
+import textwrap
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from gui.messagebox import MessageBox
 
@@ -30,13 +30,8 @@ from kivy.logger import Logger
 
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from sync.modmanager import ModManager
-from sync.modmanager import get_mod_descriptions
-from sync.httpsyncer import HttpSyncer
-from sync.mod import Mod
 from third_party import teamspeak
 from utils.primitive_git import get_git_sha1_auto
-from utils.process import Process
-from utils.process import Para
 
 
 class InstallScreen(Screen):
@@ -45,15 +40,8 @@ class InstallScreen(Screen):
     """
     def __init__(self, **kwargs):
         super(InstallScreen, self).__init__(**kwargs)
-
-        self.statusmessage_map = {
-            'moddescdownload': 'Retreiving Mod Descriptions',
-            'checkmods': 'Checking Mods',
-            'moddownload': 'Retreiving Mod',
-            'syncing': 'Syncing Mods'
-        }
-
         self.controller = Controller(self)
+
 
 class Controller(object):
     def __init__(self, widget):
@@ -74,9 +62,10 @@ class Controller(object):
         # Don't run logic if required third party programs are not installed
         if self.check_requirements(verbose=False):
             # download mod description
-            self.para = self.mod_manager.prepare_and_check()
-            self.para.then(self.on_checkmods_resolve, self.on_checkmods_reject,
-                self.on_checkmods_progress)
+            self.para = self.mod_manager.download_mod_description()
+            self.para.then(self.on_download_mod_description_resolve,
+                           self.on_download_mod_description_reject,
+                           self.on_download_mod_description_progress)
 
             Clock.schedule_interval(self.check_install_button, 0)
             Clock.schedule_interval(self.try_reenable_play_button, 1)
@@ -93,7 +82,8 @@ class Controller(object):
 
     def try_reenable_play_button(self, dt):
         """This function first checks if a game process had been run. Then it checks
-        if that process did terminate. If it did, the play button is reenabled"""
+        if that process did terminate. If it did, the play button is reenabled
+        """
         if self.arma_executable_object is None:
             return
 
@@ -208,6 +198,66 @@ Install Steam and restart the launcher."""
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
         self.view.ids.install_button.enable_progress_animation()
 
+    # Download_mod_description callbacks #######################################
+
+    def on_download_mod_description_progress(self, progress, speed):
+        self.view.ids.status_image.hidden = False
+        self.view.ids.status_label.text = progress['msg']
+
+    def on_download_mod_description_resolve(self, progress):
+        mod_description_data = progress['data']
+        # TODO: Save mod_description_data to cache
+#         self.data_tmp = mod_description_data
+
+        # Continue with processing mod_description data
+        self.para = self.mod_manager.prepare_and_check(mod_description_data)
+        self.para.then(self.on_checkmods_resolve,
+                       self.on_checkmods_reject,
+                       self.on_checkmods_progress)
+
+    def on_download_mod_description_reject(self, data):
+        # TODO: Move boilerplate code to a function
+        # Boilerplate begin
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
+
+        # self.view.ids.install_button.disabled = False
+        self.view.ids.status_image.hidden = True
+        self.view.ids.status_label.text = last_line
+        self.view.ids.install_button.disable_progress_animation()
+
+        self.try_enable_play_button()
+        # Boilerplate end
+
+        # Ugly hack until we have an auto-updater
+        if 'launcher is out of date' in message:
+            message = textwrap.dedent('''
+                This launcher is out of date!
+                You won\'t be able do download mods until you update to the latest version!
+
+                Get it here:
+
+                [ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe[/color][/ref]
+                ''')
+            MessageBox(message, title='Get the new version of the launcher!', markup=True).open()
+            return
+
+        ErrorPopup(details=details, message=message).open()
+
+        # Carry on with the execution! :)
+        # On error read from cache and carry on
+#         data = read_from_cache
+#
+#         # If no cache, then whine a bit
+#         self.para = self.mod_manager.prepare_and_check(data)
+#         self.para.then(self.on_checkmods_resolve,
+#                        self.on_checkmods_reject,
+#                        self.on_checkmods_progress)
+
+    # Checkmods callbacks ######################################################
+
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.hidden = False
         self.view.ids.status_label.text = progress['msg']
@@ -234,27 +284,16 @@ Install Steam and restart the launcher."""
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        #self.view.ids.install_button.disabled = False
+        # self.view.ids.install_button.disabled = False
         self.view.ids.status_image.hidden = True
         self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
-        # Ugly hack until we have an auto-updater
-        if 'launcher is out of date' in message:
-            message = '''This launcher is out of date!
-You won\'t be able do download mods until you update to the latest version!
+        ErrorPopup(details=details, message=message).open()
 
-Get it here:
-
-[ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe[/color][/ref]
-'''
-            popup_box = MessageBox(message, title='Get the new version of the launcher!', markup=True)
-        else:
-            popup_box = ErrorPopup(details=details, message=message)
-
-        popup_box.open()
+    # Sync callbacks ###########################################################
 
     def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
@@ -269,7 +308,6 @@ Get it here:
                                               title=message_box['title'],
                                               markup=message_box['markup'])
             message_box_instance.open()
-
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
@@ -295,8 +333,9 @@ Get it here:
 
         self.try_enable_play_button()
 
-        ep = ErrorPopup(details=details, message=message)
-        ep.open()
+        ErrorPopup(details=details, message=message).open()
+
+    ############################################################################
 
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')

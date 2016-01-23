@@ -20,6 +20,7 @@ import sys
 from datetime import datetime
 
 import kivy
+import kivy.app  # To keep PyDev from complaining
 from kivy.logger import Logger
 import requests
 import textwrap
@@ -77,7 +78,8 @@ def requests_get_or_reject(para, domain, *args, **kwargs):
     return res
 
 
-def get_mod_descriptions(para):
+def _get_mod_descriptions(para):
+    # WARNING: This methods gets called in a different process
     """
     helper function to get the moddescriptions from the server
 
@@ -112,9 +114,9 @@ def get_mod_descriptions(para):
             para.reject({'msg': error_message})
             return ''
 
-    para.progress({'msg': 'Downloading mods descriptions finished'})
+    para.resolve({'msg': 'Downloading mods descriptions finished',
+                  'data': data})
 
-    return data
 
 def process_description_data(para, data, launcher_moddir):
     domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
@@ -139,11 +141,8 @@ def process_description_data(para, data, launcher_moddir):
     return mods
 
 
-def _prepare_and_check(messagequeue, launcher_moddir):
+def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
     # WARNING: This methods gets called in a different process
-
-    # download mod descriptions first
-    mod_descriptions_data = get_mod_descriptions(messagequeue)
     mod_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
 
     # Debug mode: decrease the number of mods to download
@@ -244,6 +243,7 @@ def _tfr_post_download_hook(message_queue, mod):
 
     return True
 
+
 def _sync_all(message_queue, launcher_moddir, mods):
     """Run syncers for all the mods sequentially and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
@@ -294,15 +294,19 @@ class ModManager(object):
         self.mods = None
         self.settings = kivy.app.App.get_running_app().settings
 
-    def prepare_and_check(self):
-        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get_launcher_moddir()), 'checkmods')
+    def download_mod_description(self):
+        self.para = Para(_protected_call, (_get_mod_descriptions,), 'download_description')
+        self.para.run()
+        return self.para
+
+    def prepare_and_check(self, data):
+        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get_launcher_moddir(), data), 'checkmods')
         self.para.then(self.on_prepare_and_check_resolve, None, None)
         self.para.run()
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_protected_call,
-            (_sync_all, self.settings.get_launcher_moddir(), self.mods), 'sync')
+        self.sync_para = Para(_protected_call, (_sync_all, self.settings.get_launcher_moddir(), self.mods), 'sync')
         self.sync_para.then(None, None, self.on_sync_all_progress)
         self.sync_para.run()
         return self.sync_para
