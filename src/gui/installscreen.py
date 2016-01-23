@@ -143,12 +143,14 @@ class Controller(object):
             teamspeak.check_installed()
         except teamspeak.TeamspeakNotInstalled:
             if verbose:
-                message = """Teamspeak does not seem to be installed.
-Having Teamspeak is required in order to play Tactical Battlefield.
+                message = textwrap.dedent('''
+                    Teamspeak does not seem to be installed.
+                    Having Teamspeak is required in order to play Tactical Battlefield.
 
-[ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
+                    [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
 
-Install Teamspeak and restart the launcher."""
+                    Install Teamspeak and restart the launcher.
+                    ''')
                 box = MessageBox(message, title='Teamspeak required!', markup=True)
                 box.open()
 
@@ -158,9 +160,11 @@ Install Teamspeak and restart the launcher."""
             Arma.get_installation_path()
         except ArmaNotInstalled:
             if verbose:
-                message = """Arma 3 does not seem to be installed.
+                message = textwrap.dedent('''
+                    Arma 3 does not seem to be installed.
 
-Having Arma 3 is required in order to play Tactical Battlefield."""
+                    Having Arma 3 is required in order to play Tactical Battlefield.
+                    ''')
                 box = MessageBox(message, title='Arma 3 required!', markup=True)
                 box.open()
 
@@ -170,12 +174,14 @@ Having Arma 3 is required in order to play Tactical Battlefield."""
             Arma.get_steam_exe_path()
         except SteamNotInstalled:
             if verbose:
-                message = """Steam does not seem to be installed.
-Having Steam is required in order to play Tactical Battlefield.
+                message = textwrap.dedent('''
+                    Steam does not seem to be installed.
+                    Having Steam is required in order to play Tactical Battlefield.
 
-[ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
+                    [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
 
-Install Steam and restart the launcher."""
+                    Install Steam and restart the launcher.
+                    ''')
                 box = MessageBox(message, title='Steam required!', markup=True)
                 box.open()
 
