@@ -66,6 +66,7 @@ class Controller(object):
         self.loading_gif = None
         self.mods = None
         self.arma_executable_object = None
+        self.para = None
 
         # TODO: Maybe transform this into a state
         self.play_button_shown = False
