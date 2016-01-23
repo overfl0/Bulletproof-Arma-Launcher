@@ -14,10 +14,10 @@ from __future__ import unicode_literals
 
 import sys
 
-from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from view.chainedpopup import ChainedPopup
 
 default_title = """Message"""
 
@@ -31,7 +31,7 @@ def open_hyperlink(obj, ref):
     webbrowser.open(ref)
 
 
-class MessageBox(Popup):
+class MessageBox(ChainedPopup):
     def __init__(self, text, title=default_title, markup=False):
         bl = BoxLayout(orientation='vertical')
         la = Label(text=text, size_hint_y=0.8, markup=markup)

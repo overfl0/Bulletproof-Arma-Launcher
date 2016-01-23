@@ -17,12 +17,12 @@ import sys
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
 from kivy.uix.label import Label
-from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from utils.primitive_git import get_git_sha1_auto
 from utils.critical_messagebox import MessageBox
 from utils.testtools_compat import _format_exc_info
+from view.chainedpopup import ChainedPopup
 
 DEFAULT_ERROR_MESSAGE = """Critical Error. Please copy the text below and post it on the bugtracker:
 [color=3572b0][ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/ref][/color]
@@ -42,7 +42,7 @@ def open_hyperlink(obj, ref):
     webbrowser.open(ref)
 
 
-class ErrorPopup(Popup):
+class ErrorPopup(ChainedPopup):
     """Show a popup in case an error ocurred.
     Arguments:
     message - The message to be shown in a label.
@@ -84,5 +84,5 @@ class PopupHandler(ExceptionHandler):
         stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         msg = 'Build: {}\n{}'.format(build, stacktrace)
         p = ErrorPopup(details=msg)
-        p.open()
+        p.chain_open()
         return ExceptionManager.PASS

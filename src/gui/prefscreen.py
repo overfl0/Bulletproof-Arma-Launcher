@@ -16,7 +16,7 @@ import os
 
 import kivy
 import kivy.app
-from gui.messagebox import MessageBox
+from view.messagebox import MessageBox
 
 from kivy.clock import Clock
 
@@ -85,7 +85,7 @@ class Controller(object):
 
         if not is_dir_writable(path):
             Logger.error('PrefScreen: directory {} is not writable'.format(path))
-            MessageBox('Directory {} is not writable'.format(path)).open()
+            MessageBox('Directory {} is not writable'.format(path)).chain_open()
             return False
 
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)

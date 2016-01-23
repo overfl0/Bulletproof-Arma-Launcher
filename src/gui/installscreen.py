@@ -20,7 +20,7 @@ import kivy
 import kivy.app  # To keep PyDev from complaining
 import textwrap
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
-from gui.messagebox import MessageBox
+from view.messagebox import MessageBox
 
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
@@ -152,7 +152,7 @@ class Controller(object):
                     Install Teamspeak and restart the launcher.
                     ''')
                 box = MessageBox(message, title='Teamspeak required!', markup=True)
-                box.open()
+                box.chain_open()
 
             return False
 
@@ -166,7 +166,7 @@ class Controller(object):
                     Having Arma 3 is required in order to play Tactical Battlefield.
                     ''')
                 box = MessageBox(message, title='Arma 3 required!', markup=True)
-                box.open()
+                box.chain_open()
 
             return False
 
@@ -183,7 +183,7 @@ class Controller(object):
                     Install Steam and restart the launcher.
                     ''')
                 box = MessageBox(message, title='Steam required!', markup=True)
-                box.open()
+                box.chain_open()
 
             return False
 
@@ -255,7 +255,7 @@ class Controller(object):
 
                 [ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe[/color][/ref]
                 ''')
-            MessageBox(message, title='Get the new version of the launcher!', markup=True).open()
+            MessageBox(message, title='Get the new version of the launcher!', markup=True).chain_open()
             return
 
         # Carry on with the execution! :)
@@ -263,19 +263,19 @@ class Controller(object):
         settings = kivy.app.App.get_running_app().settings
         mod_data = settings.get_mod_data_cache()
 
+        ErrorPopup(details=details, message=message).chain_open()
+
         if mod_data:
             ErrorPopup(message=textwrap.dedent('''
             The launcher could not download mod requirements from the server.
 
             Using cached data from the last time the launcher has been used.
-            ''')).open()
+            ''')).chain_open()
 
             self.para = self.mod_manager.prepare_and_check(mod_data)
             self.para.then(self.on_checkmods_resolve,
                            self.on_checkmods_reject,
                            self.on_checkmods_progress)
-
-        ErrorPopup(details=details, message=message).open()
 
     # Checkmods callbacks ######################################################
 
@@ -312,7 +312,7 @@ class Controller(object):
 
         self.try_enable_play_button()
 
-        ErrorPopup(details=details, message=message).open()
+        ErrorPopup(details=details, message=message).chain_open()
 
     # Sync callbacks ###########################################################
 
@@ -328,7 +328,7 @@ class Controller(object):
             message_box_instance = MessageBox(text=message_box['text'],
                                               title=message_box['title'],
                                               markup=message_box['markup'])
-            message_box_instance.open()
+            message_box_instance.chain_open()
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
@@ -354,7 +354,7 @@ class Controller(object):
 
         self.try_enable_play_button()
 
-        ErrorPopup(details=details, message=message).open()
+        ErrorPopup(details=details, message=message).chain_open()
 
     ############################################################################
 
@@ -377,17 +377,17 @@ class Controller(object):
         except ArmaNotInstalled:
             text = "Arma 3 does not seem to be installed."
             no_arma_info = MessageBox(text, title='Arma not installed!')
-            no_arma_info.open()
+            no_arma_info.chain_open()
 
         except SteamNotInstalled:
             text = "Steam does not seem to be installed."
             no_steam_info = MessageBox(text, title='Steam not installed!')
-            no_steam_info.open()
+            no_steam_info.chain_open()
 
         except OSError as ex:
             text = "Error while launching Arma 3: {}.".format(ex.strerror)
             error_info = MessageBox(text, title='Error while launching Arma 3!')
-            error_info.open()
+            error_info.chain_open()
 
         self.view.ids.install_button.disabled = True
 
