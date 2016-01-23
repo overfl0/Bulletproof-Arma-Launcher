@@ -208,7 +208,7 @@ class Controller(object):
     # Download_mod_description callbacks #######################################
 
     def on_download_mod_description_progress(self, progress, speed):
-        self.view.ids.status_image.hidden = False
+        self.view.ids.status_image.show()
         self.view.ids.status_label.text = progress['msg']
 
     def on_download_mod_description_resolve(self, progress):
@@ -238,7 +238,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         # self.view.ids.install_button.disabled = False
-        self.view.ids.status_image.hidden = True
+        self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 
@@ -258,28 +258,34 @@ class Controller(object):
             MessageBox(message, title='Get the new version of the launcher!', markup=True).open()
             return
 
-        ErrorPopup(details=details, message=message).open()
-
         # Carry on with the execution! :)
         # Read data from cache and continue if successful
         settings = kivy.app.App.get_running_app().settings
         mod_data = settings.get_mod_data_cache()
 
         if mod_data:
+            ErrorPopup(message=textwrap.dedent('''
+            The launcher could not download mod requirements from the server.
+
+            Using cached data from the last time the launcher has been used.
+            ''')).open()
+
             self.para = self.mod_manager.prepare_and_check(mod_data)
             self.para.then(self.on_checkmods_resolve,
                            self.on_checkmods_reject,
                            self.on_checkmods_progress)
 
+        ErrorPopup(details=details, message=message).open()
+
     # Checkmods callbacks ######################################################
 
     def on_checkmods_progress(self, progress, speed):
-        self.view.ids.status_image.hidden = False
+        self.view.ids.status_image.show()
         self.view.ids.status_label.text = progress['msg']
 
     def on_checkmods_resolve(self, progress):
         Logger.debug('InstallScreen: checking mods finished')
-        self.view.ids.status_image.hidden = True
+        self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
         self.view.ids.install_button.text = 'Install'
@@ -300,7 +306,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         # self.view.ids.install_button.disabled = False
-        self.view.ids.status_image.hidden = True
+        self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 
@@ -313,7 +319,7 @@ class Controller(object):
     def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
         self.view.ids.install_button.disabled = True
-        self.view.ids.status_image.hidden = False
+        self.view.ids.status_image.show()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
 
@@ -327,7 +333,7 @@ class Controller(object):
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
         self.view.ids.install_button.disabled = False
-        self.view.ids.status_image.hidden = True
+        self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.install_button.disable_progress_animation()
 
@@ -342,7 +348,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.install_button.disabled = False
-        self.view.ids.status_image.hidden = True
+        self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
         self.view.ids.install_button.disable_progress_animation()
 

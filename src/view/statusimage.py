@@ -17,6 +17,7 @@ from kivy.uix.image import Image
 from kivy.properties import StringProperty, BooleanProperty, DictProperty
 from kivy.logger import Logger
 
+
 class StatusImage(BoxLayout):
     """
     Class can be used to show images for loading indication and other images
@@ -39,6 +40,7 @@ class StatusImage(BoxLayout):
         self.bind(source_map=self.on_source_map_set)
         self.bind(hidden=self.on_hidden_set)
         self._hidden = False
+        self.loaded_image_name = None
 
     def set_image(self, key):
         """
@@ -59,6 +61,8 @@ class StatusImage(BoxLayout):
         else:
             self.image.source = source
 
+        self.loaded_image_name = key
+
     def set_default_image(self):
         """set back the image to default"""
         self.set_image('default')
@@ -70,15 +74,23 @@ class StatusImage(BoxLayout):
         if self._hidden == hidden:
             return
 
-        if hidden == True:
+        if hidden is True:
             self.remove_widget(self.image)
         else:
             self.add_widget(self.image)
 
         self._hidden = hidden
 
-    def hide(self):
-        pass
+    def hide(self, on_error=False):
+        '''Hide the status image widget.
+        on_error - hide the widget even if it is showing an error icon.
+        '''
+        # This name is hardcoded for now. Probably should be rewritten in a better way
+        if on_error is False and self.loaded_image_name == 'attention':
+            return
+
+        self.hidden = True
 
     def show(self):
-        pass
+        '''Show the status image widget.'''
+        self.hidden = False
