@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
     import site
@@ -427,7 +429,7 @@ class TorrentSyncer(object):
             s = torrent_handle.status()
 
         if s.error:
-            self.result_queue.reject({'msg': 'An error occured: {}'.format(s.error)})
+            self.result_queue.reject({'msg': 'An error occured: Libtorrent error: {}'.format(s.error)})
             return False
 
         #print torrent_handle.get_torrent_info()

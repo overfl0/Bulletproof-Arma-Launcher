@@ -8,15 +8,13 @@ import json
 import libtorrent
 import urllib2
 
-import IPython
-
-base_url = "http://91.121.120.221/tacbf/updater/"
+base_url = "http://launcher.tacbf.com/tacbf/updater/"
 json_url = base_url + "metadata.json"
 
 metadata_json = urllib2.urlopen(json_url).read()
 metadata = json.loads(metadata_json)
 
-#print metadata
+# print metadata
 
 def check_file(filename):
     with open(filename, 'rb') as file_handle:
@@ -26,8 +24,7 @@ def check_file(filename):
     torrent_info = libtorrent.torrent_info(torrent_metadata)
 
     for file_info in torrent_info.files():
-        print file_info.filehash.to_string().encode("hex")
-    #IPython.embed()
+        print file_info.filehash.to_bytes().encode("hex")
 
 for mod in metadata["mods"]:
     filename = "{}-{}.torrent".format(mod["foldername"], mod["torrent-timestamp"])
@@ -40,4 +37,4 @@ for mod in metadata["mods"]:
 
     check_file(filename)
 
-# http://91.121.120.221/tacbf/updater/torrents/@AllInArmaTerrainPack-2015-05-17_1431885737.torrent
+# http://launcher.tacbf.com/tacbf/updater/torrents/@AllInArmaTerrainPack-2015-05-17_1431885737.torrent

@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 from multiprocessing import Queue
 
 
@@ -97,7 +99,7 @@ class Controller(object):
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
-        version = 'Alpha 2'
+        version = 'Alpha 3'
         footer_text = '{}\nBuild: {}'.format(version,
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
@@ -215,8 +217,9 @@ To finish the installation of TFR, you need to go to:
 {}
 
 and:
-1) Copy the TeamSpeak3 Client\plugins directory to your Teamspeak directory.
-2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+1) Copy the userconfig\\task_force_radio to your Arma 3\\userconfig directory.
+2) Copy the TeamSpeak3 Client\\plugins directory to your Teamspeak directory.
+3) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
                 os.path.join(mod_dir, '@task_force_radio'))
 
             tfr_info = MessageBox(text, title='Action required!')

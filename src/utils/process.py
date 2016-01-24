@@ -19,6 +19,7 @@ http://stackoverflow.com/questions/24944558/pyinstaller-built-windows-exe-fails-
 They serve as workarounds, for windows issues regarding multiprocessing
 """
 
+from __future__ import unicode_literals
 import multiprocessing.forking
 import multiprocessing
 import os

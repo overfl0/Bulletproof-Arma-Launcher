@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 import argparse, os
 
 from arma.arma import Arma, SoftwareNotInstalled
@@ -83,8 +85,8 @@ class Settings(object):
         except OSError:
             fallback_basedir = self._get_launcher_default_basedir()
             # TODO: Show a regular message box, not a win32 message box
-            MessageBox("Could not create directory {}\nFalling back to {}".format(
-                        launcher_basedir, fallback_basedir), "Error while setting launcher directory")
+            MessageBox('Could not create directory {}\nFalling back to {}'.format(
+                        launcher_basedir, fallback_basedir), 'Error while setting launcher directory')
             launcher_basedir = fallback_basedir
 
         Logger.info('Settings: Ensuring mod dir exists - {}'.format(launcher_moddir))
@@ -93,14 +95,14 @@ class Settings(object):
         except OSError:
             fallback_moddir = self._get_launcher_default_basedir()
             # TODO: Show a regular message box, not a win32 message box
-            MessageBox("Could not create directory {}\nFalling back to {}".format(
-                        launcher_moddir, fallback_moddir), "Error while setting mod directory")
+            MessageBox('Could not create directory {}\nFalling back to {}'.format(
+                        launcher_moddir, fallback_moddir), 'Error while setting mod directory')
             launcher_moddir = fallback_moddir
 
         self.set_launcher_basedir(launcher_basedir)
         self.set_launcher_moddir(launcher_moddir)
-        Logger.info("Settings: Launcher will use basedir: " + self.get_launcher_basedir())
-        Logger.info("Settings: Launcher will use moddir: " + self.get_launcher_moddir())
+        Logger.info('Settings: Launcher will use basedir: ' + self.get_launcher_basedir())
+        Logger.info('Settings: Launcher will use moddir: ' + self.get_launcher_moddir())
 
     def _get_launcher_default_basedir(self):
         """Retrieve users document folder from the registry"""

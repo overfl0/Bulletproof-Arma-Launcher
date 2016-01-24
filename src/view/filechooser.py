@@ -10,6 +10,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals
+
 import os
 
 from kivy.uix.filechooser import FileChooserListView
@@ -37,7 +39,7 @@ class FileChooser(Popup):
                                           size=(900, 600))
 
         # define event for which gets fired if the user hits okay
-        self.register_event_type('on_ok')
+        self.register_event_type(b'on_ok')
 
         Clock.schedule_once(self._on_next_frame, 0)
 
@@ -72,7 +74,7 @@ class FileChooser(Popup):
             return []
 
     def on_ok_button_release(self, btn):
-        self.dispatch('on_ok', self.textinput.text)
+        self.dispatch(b'on_ok', self.textinput.text)
         self.dismiss()
 
     def on_cancel_button_release(self, btn):
