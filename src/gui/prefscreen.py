@@ -70,7 +70,7 @@ class Controller(object):
         self.file_browser_popup = p
 
     def _fbrowser_canceled(self, instance):
-        print 'cancelled, Close self.'
+        Logger.info('cancelled, Close self.')
 
     def _fbrowser_success(self, instance):
         if len(instance.selection) > 0:

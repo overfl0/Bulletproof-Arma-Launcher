@@ -21,6 +21,28 @@ def is_pyinstaller_bundle():
     return getattr(sys, 'frozen', False)
 
 
+def u_to_fs(args):
+    """Convert a list of arguments from unicode to the file system encoding"""
+    return [arg.encode(sys.getfilesystemencoding()) for arg in args]
+
+
+def fs_to_u(args):
+    """Convert a list of arguments from the file system encoding to unicode"""
+    return [arg.decode(sys.getfilesystemencoding()) for arg in args]
+
+
+def fix_unicode_paths():
+    """Convert both argv and sys._MEIPASS (pyinstaller path) to unicode.
+    Contains protection against multiple use.
+    """
+
+    if not isinstance(sys.argv[0], unicode):
+        sys.argv = fs_to_u(sys.argv)
+
+    if hasattr(sys, '_MEIPASS') and not isinstance(sys._MEIPASS, unicode):
+        sys._MEIPASS = sys._MEIPASS.decode(sys.getfilesystemencoding())
+
+
 def _get_topmost_directory():
     """Return the topmost directory by searching for /src/ inside the running script's path."""
     src_dir = '{}src{}'.format(os.path.sep, os.path.sep)
@@ -31,6 +53,7 @@ def _get_topmost_directory():
         return split_dir[0]
 
     return os.path.dirname(real_path)  # Should not happen but better to play it safe
+
 
 def get_external_executable_path(*relative):
     """Return the path of the exe file if packed with PyInstaller or the topmost directory of the repository otherwise.
@@ -43,6 +66,7 @@ def get_external_executable_path(*relative):
         external_path = _get_topmost_directory()
 
     return os.path.join(external_path, *relative)
+
 
 def get_base_path(*relative):
     """Return the path relative to the topmost directory in the repository.
@@ -103,6 +127,7 @@ def is_dir_writable(path):
         return False
 
     return True
+
 
 def mkdir_p(path):
     """Create all directories described by path if they don't exist."""

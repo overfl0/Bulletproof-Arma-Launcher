@@ -18,8 +18,8 @@ from utils.paths import get_external_executable_path
 
 DEVMODE_FILE_NAME = 'devmode.conf'
 
-class DevModeException(Exception):
-    pass
+# class DevModeException(Exception):
+#    pass
 
 class DevMode(object):
     '''
@@ -35,8 +35,10 @@ class DevMode(object):
                 s = f.read()
                 self.devdata = json.loads(s)
 
-        except ValueError as ex:  # Bad JSON data
-            raise DevModeException(ex)
+        except ValueError:  # Bad JSON data
+            raise
+        #    raise DevModeException(ex)  # Note to self:
+        # Do NOT throw exceptions like this! You'll lose stacktrace information!
 
         except:
             self.devdata = {}
