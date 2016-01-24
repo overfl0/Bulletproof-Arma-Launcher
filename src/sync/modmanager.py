@@ -11,11 +11,11 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+
 import multiprocessing
 from multiprocessing import Queue
 import os
 import json
-import traceback
 import sys
 
 from datetime import datetime
@@ -29,6 +29,7 @@ from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
 from utils.process import Para
+from utils.testtools_compat import _format_exc_info
 from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
@@ -95,18 +96,18 @@ def get_mod_descriptions(para, launcher_moddir):
     if res.status_code != 200:
         para.reject({'msg': '{}\n{}\n\n{}'.format(
             'Mods descriptions could not be received from the server',
-            'Status Code: ' + str(res.status_code), res.text)})
+            'Status Code: ' + unicode(res.status_code), res.text)})
     else:
         try:
             data = res.json()
         except ValueError as e:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
-            stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+            stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             para.reject({'msg': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') not in ("2", "3"):
+        if data.get('alpha') not in ("2", "3", "4"):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
@@ -258,8 +259,7 @@ def _protected_call(messagequeue, function, *args, **kwargs):
     try:
         return function(messagequeue, *args, **kwargs)
     except Exception as e:
-        import traceback
-        stacktrace = traceback.format_exc()
+        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
         messagequeue.reject({'msg': error})
 

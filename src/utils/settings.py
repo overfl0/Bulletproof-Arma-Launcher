@@ -69,7 +69,7 @@ class Settings(object):
         self.parser = None
         self.parse_args(argv)
 
-        Logger.info('Settings: loaded args: ' + str(self.launcher_config.data))
+        Logger.info('Settings: loaded args: ' + unicode(self.launcher_config.data))
 
         self.reinit()
 

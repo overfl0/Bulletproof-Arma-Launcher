@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
-import os
+
 import time
 
 from kivy.uix.widget import Widget
@@ -21,7 +21,7 @@ from kivy.clock import Clock
 from view.errorpopup import ErrorPopup
 from gui.messagebox import MessageBox
 
-from utils import paths
+from utils.devmode import devmode
 
 class TestError(Exception):
     def __init__(self, msg):
@@ -70,17 +70,17 @@ knowledgeable and capable of fixing their Arma 3 installation should
 something go awry.
 If you do not meet the above criterion, stop using this launcher now!
 
-Don't forget to report bugs at http://tacbf.com or at
-https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues
+Don't forget to report bugs at:
+[ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/color][/ref]
 
 
                                                                                -- The TacBF launcher team
 """
 
         alpha_title = 'Tactical Battlefield Mod launcher (Alpha)'
-        alpha_box = MessageBox(text=alpha_text, title=alpha_title)
+        alpha_box = MessageBox(text=alpha_text, title=alpha_title, markup=True)
 
-        # Allow developers to silence the alpha popup by creating a 'no_alpha_popup' file in the base directory
-        if not os.path.exists(paths.get_base_path('no_alpha_popup')):
+        # Allow developers to silence the alpha popup
+        if not devmode.get_no_alpha_popup():
             Logger.info('MainWidget: opening alpha popup')
             alpha_box.open()

@@ -45,6 +45,10 @@ try:
 
         # configure kivy
         from kivy.config import Config
+        from utils.paths import get_resources_path
+
+        Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
+        Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
         if not settings.get('update'):
             Config.set('graphics', 'resizable', 0)
@@ -96,6 +100,9 @@ try:
 
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
+
+            title = b'Tactical Battlefield'
+
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
                 self.settings = settings
@@ -107,6 +114,8 @@ try:
 
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
+
+            title = b'Tactical Battlefield Self-updater'
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()
@@ -130,14 +139,15 @@ try:
 
 except Exception as e:
     # Mega catch-all requirements
-    import traceback
+    import sys
 
     from utils.critical_messagebox import MessageBox
     from utils.primitive_git import get_git_sha1_auto
+    from utils.testtools_compat import _format_exc_info
 
     CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
     build = get_git_sha1_auto()
-    stacktrace = "".join(traceback.format_exception(*sys.exc_info()))
+    stacktrace = "".join(_format_exc_info(*sys.exc_info()))
     msg = 'Build: {}\n{}'.format(build, stacktrace)
 
     MessageBox(msg, CRITICAL_POPUP_TITLE)

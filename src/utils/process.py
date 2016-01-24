@@ -20,17 +20,18 @@ They serve as workarounds, for windows issues regarding multiprocessing
 """
 
 from __future__ import unicode_literals
+
 import multiprocessing.forking
 import multiprocessing
 import os
 import sys
 import io
-import traceback
 
 from multiprocessing.queues import SimpleQueue
 from multiprocessing import Lock, Pipe
 from kivy.clock import Clock
 from kivy.logger import Logger
+from utils.testtools_compat import _format_exc_info
 import time
 
 class _Popen(multiprocessing.forking.Popen):
@@ -242,8 +243,8 @@ def catchstacktrace(func):
     def wrapper(con, *args, **kwargs):
         try:
             func(con, *args, **kwargs)
-        except Exception as e:
-            msg = "".join(traceback.format_exception(*sys.exc_info()))
+        except Exception:
+            msg = "".join(_format_exc_info(*sys.exc_info()))
             con.reject({'exc': msg})
 
     return wrapper
@@ -267,7 +268,7 @@ if __name__ == '__main__':
     #         pq.progress({'msg': 'test_func_has_started'})
     #         raise TestError('This exception got thrown for testing purposes')
     #     except Exception as e:
-    #         msg = "".join(traceback.format_exception(*sys.exc_info()))
+    #         msg = "".join(_format_exc_info(*sys.exc_info()))
     #         pq.reject({'exc': msg})
 
     @catchstacktrace

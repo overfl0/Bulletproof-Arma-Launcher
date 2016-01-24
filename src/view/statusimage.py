@@ -11,6 +11,7 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
 from kivy.properties import StringProperty, BooleanProperty
