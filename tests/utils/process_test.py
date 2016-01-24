@@ -14,37 +14,75 @@ import unittest
 import time
 import os
 import shutil
+import sys
+import json
 
+from datetime import datetime
+from datetime import timedelta
 from mock import patch, Mock
 from kivy.clock import Clock
 
 from nose.plugins.attrib import attr
 from utils.process import Para
 
-class ProcessMock(object):
-    """docstring for ProcessMock"""
-    def __init__(self, target=None, args=()):
-        super(ProcessMock, self).__init__()
-        self.target = target
-        self.args = args
-
-    def start(self):
-        self.target(*self.args)
-
-    def join(self):
-        pass
-
 def worker_func(con, arg1, arg2):
     con.resolve('something')
 
-class ModManagerTest(unittest.TestCase):
+def termination_func(con):
+    """this function is run in another process"""
+    con.progress({'msg': 'test_func_has_started'})
+
+    termination_requested = False
+    while termination_requested == False:
+        time.sleep(1)
+        # check if your parent wants your termination
+        termination_requested = con.wants_termination()
+
+    con.resolve('terminating')
+
+def blocking_after_resolving(con):
+    """this function is run in another process"""
+    con.progress({'msg': 'blocking_after_resolving started'})
+    con.resolve('something')
+    time.sleep(5)
+
+class ParaTest(unittest.TestCase):
 
     def setUp(self):
-        pass
+        # To fix the Windows forking system it's necessary to point __main__ to
+        # the module we want to execute in the forked process
+        self.old_main =                     sys.modules["__main__"]
+        self.old_main_file =                sys.modules["__main__"].__file__
+        sys.modules["__main__"] =           sys.modules["tests.utils.process_test"]
+        sys.modules["__main__"].__file__ =  sys.modules["tests.utils.process_test"].__file__
 
-    @patch('utils.process.Process', ProcessMock)
+    def tearDown(self):
+        sys.modules["__main__"] =           self.old_main
+        sys.modules["__main__"].__file__ =  self.old_main_file
+
+    def test_para_should_not_block(self):
+        res_handler = Mock()
+        para = Para(blocking_after_resolving, (), 'testaction')
+        para.then(res_handler, None, None)
+        para.run()
+
+        # para should be ckeckable after a second
+        time.sleep(1)
+
+        s = datetime.now()
+        Clock.tick()
+        e = datetime.now()
+        diff = e - s
+        self.assertTrue(diff < timedelta(0, 1), 'clock tick shorter than one second')
+        while not para.state == 'resolved':
+            time.sleep(0.5)
+            Clock.tick()
+
+        res_handler.assert_called_once_with('something')
+
+
     def test_para_should_resolve(self):
-
+        # do your testing here
         res_handler = Mock()
 
         p = Para(worker_func, (1, 2), 'actionname')
@@ -57,7 +95,6 @@ class ModManagerTest(unittest.TestCase):
 
         res_handler.assert_called_once_with('something')
 
-    @patch('utils.process.Process', ProcessMock)
     def test_para_should_call_res_handler_even_if_already_resolved(self):
 
         res_handler = Mock()
@@ -73,3 +110,30 @@ class ModManagerTest(unittest.TestCase):
 
         p.then(res_handler, None, None)
         res_handler.assert_called_once_with('something')
+
+    def test_para_termination(self):
+        """test if a childprocess can react on termination flag of para"""
+        res_handler = Mock()
+
+        # Build a para. Register termination_test_func which has to be defined
+        # at module scope because of pickling. This function could represent
+        # the libtorrent side. So see above
+        para = Para(termination_func, (), 'testaction')
+
+        # register resolve handler. For reasons it has to be defined on the
+        # module namespace.
+        para.then(res_handler, None, None)
+        para.run()
+
+        # a check loop simulating the parent process waiting for paras
+        # to resolve or reject
+        count = 0
+        while not para.state == 'resolved':
+            time.sleep(0.5)
+            Clock.tick()
+            count += 1
+            # send termination after 2 seconds
+            if count == 4:
+                para.request_termination()
+
+        res_handler.assert_called_once_with('terminating')

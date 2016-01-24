@@ -78,7 +78,7 @@ def main():
     parser.add_argument("-a", "--announce", required=True, action='append', help="Full announce URL. Additional -a add backup trackers")
     parser.add_argument("-c", "--comment", help="Add a comment to the metainfo")
     parser.add_argument("-o", "--output", help="Set the path and the filename of the created file")
-    parser.add_argument("-w", "--web-seed", action='append', help="Set the web-seed (url-seed as explained in BEP 19). Additional -w add more urls")
+    parser.add_argument("-w", "--web-seed", action='append', default=[], help="Set the web-seed (url-seed as explained in BEP 19). Additional -w add more urls")
     parser.add_argument("directory", help="Data directory")
     #parser.add_argument("-s", "--size", type=int, help="Create a DUMMY torrent of <size>MB. <directory> will be overwritten!", default=50)
 

@@ -55,7 +55,8 @@ class Controller(object):
 
     def on_testpopupbutton_release(self, btn):
         return  # Disable this for the alpha release
-        raise TestError('This is an test error')
+        #raise TestError('This is an test error')
+        #self.get_status_image().set_image('attention')
 
     def on_next_frame(self, dt):
         # Only show the notification in alpha branch
@@ -84,3 +85,7 @@ Don't forget to report bugs at:
         if not devmode.get_no_alpha_popup():
             Logger.info('MainWidget: opening alpha popup')
             alpha_box.open()
+
+    def get_status_image(self):
+        """retrieve the status image from the tree"""
+        return self.view.ids.main_screen_manager.get_screen('install_screen').ids.status_image
