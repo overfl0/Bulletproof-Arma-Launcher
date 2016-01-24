@@ -25,7 +25,13 @@ from utils.singleton import Singleton
 from utils.registry import Registry
 
 # Exceptions:
-class ArmaNotInstalled(Exception):
+class SoftwareNotInstalled(Exception):
+    pass
+
+class ArmaNotInstalled(SoftwareNotInstalled):
+    pass
+
+class SteamNotInstalled(SoftwareNotInstalled):
     pass
 
 
@@ -37,6 +43,7 @@ class Arma(object):
     _arma_registry_path = r"software\bohemia interactive\arma 3"
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
+    _steam_registry_path = r"Software\Valve\Steam"
 
     @staticmethod
     def get_custom_path():
@@ -90,6 +97,19 @@ class Arma(object):
         return os.path.join(Arma.get_installation_path(), executable)
 
     @staticmethod
+    def get_steam_exe_path():
+        """Returns the path to the steam executable.
+
+        Raises SteamNotInstalled if steam is not installed."""
+
+        try:
+            # Optionally, there is also SteamPath
+            return Registry.ReadValueCurrentUser(Arma._steam_registry_path, 'SteamExe')  # SteamPath
+
+        except Registry.Error:
+            raise SteamNotInstalled()
+
+    @staticmethod
     def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True):
         """Run the game in a separate process.
 
@@ -98,15 +118,20 @@ class Arma(object):
         The battleye variable allows to run the battleye-enhanced version of the game.
 
         Raises ArmaNotInstalled if Arma is not installed.
+        Raises SteamNotInstalled if Steam is not installed.
         Raises OSError if running the executable fails."""
 
-        arma_path = Arma.get_executable_path(battleye=battleye)
-        game_args = [arma_path]
+        # http://feedback.arma3.com/view.php?id=23435
+        # Correct launching method when steam is turned off:
+        # steam.exe -applaunch 107410 -usebe -nolauncher -connect=IP -port=PORT -mod=<modparameters>
+
+        steam_exe_path = Arma.get_steam_exe_path()
+        game_args = [steam_exe_path, '-applaunch', '107410']
 
         if battleye:
-            game_args.extend(['0', '1'])
+            game_args.append('-usebe')
 
-        game_args.extend(['-nosplash', '-skipIntro'])
+        game_args.extend(['-nosplash', '-skipIntro', '-nolauncher'])
 
         if mod_list:
             modlist_argument = '-mod=' + ';'.join(mod_list)

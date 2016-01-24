@@ -18,7 +18,7 @@ from time import sleep
 
 import requests
 import kivy
-from arma.arma import Arma, ArmaNotInstalled
+from arma.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from autoupdater import autoupdater
 from gui.messagebox import MessageBox
 
@@ -82,18 +82,22 @@ class Controller(object):
         if self.arma_executable_object is None:
             return
 
-        returncode = self.arma_executable_object.poll()
-        if returncode is None:  # The game has not terminated yet
-            return
+        # TODO: Since we started to launch the game via steam.exe (as opposed to arma3battleye.exe)
+        # the check below would only check if Steam has terminated on the first run (of steam)
+        # On all subsequent runs steam terminates almost instantaneously (as an instance is already running.
+        # Should probably check running processes for "arma3.exe" or something.
+        # returncode = self.arma_executable_object.poll()
+        # if returncode is None:  # The game has not terminated yet
+        #     return
 
-        print 'Arma has terminated with code: {}'.format(returncode)
+        # print 'Arma has terminated with code: {}'.format(returncode)
         # Allow the game to be run once again.
         self.view.ids.install_button.disabled = False
         self.arma_executable_object = None
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
-        version = 'Alpha 1'
+        version = 'Alpha 2'
         footer_text = '{}\nBuild: {}'.format(version,
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
@@ -201,16 +205,19 @@ class Controller(object):
         # This should be removed and reimplemented once the ParaAll is implemented
         finished = progress.get('workaround_finished')
         if finished == '@task_force_radio':
+            settings = kivy.app.App.get_running_app().settings
+            mod_dir = settings.get_launcher_moddir()
             text = """Task Force Arrowhead Radio has been downloaded or updated.
 
 Automatic installation of TFR is not yet implemented.
 To finish the installation of TFR, you need to go to:
 
-C:\Users\<user>\Documents\TacBF Launcher\mods\@task_force_radio
+{}
 
 and:
 1) Copy the TeamSpeak3 Client\plugins directory to your Teamspeak directory.
-2) Enable the TFR plugin in Settings->Plugins in Teamspeak."""
+2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+                os.path.join(mod_dir, '@task_force_radio'))
 
             tfr_info = MessageBox(text, title='Action required!')
             tfr_info.open()
@@ -250,10 +257,22 @@ and:
             mods_paths.append(mod_full_path)
 
         try:
-            self.arma_executable_object = Arma.run_game(mod_list=mods_paths)
+            custom_args = ['-noFilePatching']  # TODO: Make this user selectable
+            self.arma_executable_object = Arma.run_game(mod_list=mods_paths, custom_args=custom_args)
+
         except ArmaNotInstalled:
             text = "Arma 3 does not seem to be installed."
             no_arma_info = MessageBox(text, title='Arma not installed!')
             no_arma_info.open()
+
+        except SteamNotInstalled:
+            text = "Steam does not seem to be installed."
+            no_steam_info = MessageBox(text, title='Steam not installed!')
+            no_steam_info.open()
+
+        except OSError as ex:
+            text = "Error while launching Arma 3: {}.".format(str(ex))  # TODO: FIXME: Funny letters in polish locale with str()
+            error_info = MessageBox(text, title='Error while launching Arma 3!')
+            error_info.open()
 
         self.view.ids.install_button.disabled = True

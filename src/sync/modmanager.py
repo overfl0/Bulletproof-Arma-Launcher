@@ -23,7 +23,7 @@ import kivy
 from kivy.logger import Logger
 import requests
 
-from arma.arma import Arma, ArmaNotInstalled
+from arma.arma import Arma, SoftwareNotInstalled
 from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Process
@@ -65,7 +65,7 @@ def download_metadata(para):
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') != "1":
+        if data.get('alpha') not in ("1", "2"):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
@@ -164,7 +164,7 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     for m in mod_list:
         try:
             r = _check_already_installed_with_six(m)
-        except ArmaNotInstalled:
+        except SoftwareNotInstalled:
             r = False
         if r:
             messagequeue.progress({'msg': 'Mod ' + m.foldername + ' already installed with withSix'})

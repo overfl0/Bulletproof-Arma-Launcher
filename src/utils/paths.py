@@ -10,6 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+import errno
 import sys, os
 
 def is_pyinstaller_bundle():
@@ -27,6 +28,7 @@ def get_base_path(*relative):
 
     return os.path.join(base_path, *relative)
 
+
 def get_source_path(*relative):
     """Returns the path relative to the source directory of the program.
     Relative is optional. If relative is not passed, Returns the path to the source directory of the program."""
@@ -35,6 +37,7 @@ def get_source_path(*relative):
     else:
         return get_base_path('src', *relative)
 
+
 def get_resources_path(*relative):
     """Returns the path relative to the resources directory of the program.
     Relative is optional. If relative is not passed, Returns the path to the resources directory of the program."""
@@ -42,3 +45,37 @@ def get_resources_path(*relative):
         return get_base_path(*relative)
     else:
         return get_base_path('resources', *relative)
+
+
+def is_dir_writable(path):
+    """Checks if the directory passed as the argument is writable.
+    Actually, the only portable and correct way to do this is to create a
+    temporary file inside the directory and check if that succeeds."""
+
+    import tempfile
+
+    if not os.path.isdir(path):
+        return False
+
+    try:
+        # Using mktemp because the other "safe" functions take several seconds
+        # to fail on directories you don't have write rights to.
+        # Would love to do tempfile.TemporaryFile instead :(
+        temporary_file_path = tempfile.mktemp(dir=path, prefix="TacBF_temp_") 
+        f = open(temporary_file_path, 'wb+')
+        f.close()
+        os.remove(temporary_file_path)
+
+    except:  # If anything bad happens, stay on the safe side
+        return False
+
+    return True
+
+def mkdir_p(path):
+    """Create all directories described by path if they don't exist"""
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise

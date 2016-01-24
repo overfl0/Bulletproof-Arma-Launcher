@@ -33,7 +33,7 @@ def test_exc_in_process():
     """
     pass
     time.sleep(2)
-    raise TestError('This is an test error')
+    raise TestError('This is a test error')
 
 class MainWidget(Widget):
     """
@@ -48,7 +48,7 @@ class Controller(object):
         super(Controller, self).__init__()
         self.view = widget
 
-        # this effectivly calls on_next_frame, when the view is ready
+        # this effectively calls on_next_frame, when the view is ready
         Clock.schedule_once(self.on_next_frame, 0)
 
     def on_testpopupbutton_release(self, btn):

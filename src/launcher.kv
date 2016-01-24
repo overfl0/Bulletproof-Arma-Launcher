@@ -54,13 +54,14 @@
                     source: app.resource_path('images/button-hammer.png')
                     allow_stretch: False
                     pos: self.parent.pos
-            HoverButton:
-                on_release: root.controller.on_testpopupbutton_release(self)
-                Image:
-                    id: testpopupbutton
-                    source: app.resource_path('images/button-com.png')
-                    allow_stretch: False
-                    pos: self.parent.pos
+#             HoverButton:
+#                 disabled: True
+#                 on_release: root.controller.on_testpopupbutton_release(self)
+#                 Image:
+#                     id: testpopupbutton
+#                     source: app.resource_path('images/button-com.png')
+#                     allow_stretch: False
+#                     pos: self.parent.pos
             HoverButton:
                 on_release: app.root.ids.main_screen_manager.current = 'install_screen'
                 Image:
@@ -164,6 +165,37 @@
 
     BoxLayout:
         orientation: 'vertical'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 60
+            Label:
+                text: 'Mods Directory:'
+                text_size: self.width, self.height
+                halign: 'left'
+                width: 200
+                size_hint_x: None
+                pos_hint: { 'center_y': 0.7 } # Change or remove this if you're changing the label's text
+
+            TextInput:
+                id: path_text_input
+                text: 'some/path/to/the/mods/dir'
+                multiline: False
+                background_color: 0.3, 0.3, 0.3, 0.7
+                foreground_color: 0.9, 0.9, 0.9, 1
+                text_size: self.width, self.height
+                font_size: 20
+                height: 40
+                width: 660
+                size_hint: None, None
+                readonly: True
+
+            Button:
+                size_hint: None, None
+                height: 40
+                text: 'Choose Path'
+                on_release: root.controller.on_choose_path_button_release(self)
 
         Label:
             text: 'In Beta, this will be a place for Settings'
