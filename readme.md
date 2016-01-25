@@ -14,6 +14,9 @@ Open LiClipse, select the default workspace and run ```launcher.py```
 Run ```kivy.bat``` inside the Kivy installation and, using the console that popped up, go to the src directory of the launcher and execute
 `python launcher.py`
 
+##### Fake Steam, Arma, TeamSpeak installation
+To fake Steam, Arma, TeamSpeak installation and set several other internal variables, copy ```devmode_sample.conf``` to ```devmode.conf``` and put it in the same directory as you're running the launcher from. Then, uncomment and/or modify its contents accordingly.
+
 # Running The Tests
 
 To run the Tests cd into the src dir and run,
