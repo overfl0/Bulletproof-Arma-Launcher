@@ -156,7 +156,7 @@ def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
     for m in mod_list:
         # TODO: Change this to a static function
         syncer = TorrentSyncer(messagequeue, m)
-        m.up_to_date = syncer.is_complete_quick()
+        m.up_to_date = syncer.is_complete_quick(m)
 
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
 

@@ -88,7 +88,8 @@ class TorrentSyncer(object):
 
         self.session.set_settings(settings)
 
-    def get_torrent_info_from_string(self, bencoded):
+    @staticmethod
+    def get_torrent_info_from_string(bencoded):
         """Get torrent metadata from a bencoded string and return info structure."""
 
         torrent_metadata = libtorrent.bdecode(bencoded)
@@ -96,14 +97,15 @@ class TorrentSyncer(object):
 
         return torrent_info
 
-    def get_torrent_info_from_file(self, filename):
+    @staticmethod
+    def get_torrent_info_from_file(filename):
         """Get torrent_info structure from a file.
         The file should contain a bencoded string - the contents of a .torrent file."""
 
         with open(filename, 'rb') as file_handle:
             file_contents = file_handle.read()
 
-            return self.get_torrent_info_from_string(file_contents)
+            return TorrentSyncer.get_torrent_info_from_string(file_contents)
 
     def get_session_logs(self):
         """Get alerts from torrent engine and forward them to the manager process"""
@@ -119,8 +121,7 @@ class TorrentSyncer(object):
 
         return torrent_log
 
-    # TODO: Make this a static function
-    def is_complete_quick(self):
+    def is_complete_quick(self, mod):
         """Performs a quick check to see if the mod *seems* to be correctly installed.
         This check assumes no external changes have been made to the mods.
 
@@ -130,7 +131,7 @@ class TorrentSyncer(object):
         4. Check if files have the right size and modification time (very quick)
         5. Check if there are no superfluous files in the directory (very quick)"""
 
-        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.foldername))
+        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
 
         # (1) Check if metadata can be opened
         try:
@@ -145,7 +146,7 @@ class TorrentSyncer(object):
             return False
 
         # (3)
-        if metadata_file.get_torrent_url() != self.mod.downloadurl:
+        if metadata_file.get_torrent_url() != mod.downloadurl:
             Logger.info('Torrent urls differ. Marking as not complete')
             return False
 
@@ -155,7 +156,7 @@ class TorrentSyncer(object):
             Logger.info('Could not get torrent file content. Marking as not complete')
             return False
 
-        torrent_info = self.get_torrent_info_from_string(torrent_content)
+        torrent_info = TorrentSyncer.get_torrent_info_from_string(torrent_content)
 
         resume_data_bencoded = metadata_file.get_torrent_resume_data()
         if not resume_data_bencoded:
@@ -169,18 +170,18 @@ class TorrentSyncer(object):
         # file_path, size, mtime
         files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
 
-        if not check_files_mtime_correct(self.mod.clientlocation, files_data):
+        if not check_files_mtime_correct(mod.clientlocation, files_data):
             Logger.info('Some files seem to have been modified in the meantime. Marking as not complete')
             return False
 
         # (5) Check if there are no additional files in the directory
         checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
         files_list = checksums.keys()
-        if not check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='warn'):
+        if not check_mod_directories(files_list, mod.clientlocation, on_superfluous='warn'):
             Logger.info('Superfluous files in mod directory. Marking as not complete')
             return False
 
-        return is_complete_tfr_hack(self.mod.name, files_list, checksums)
+        return is_complete_tfr_hack(mod.name, files_list, checksums)
 
     def create_add_torrent_flags(self):
         f = libtorrent.add_torrent_params_flags_t
@@ -377,7 +378,7 @@ if __name__ == '__main__':
     # print "Dirs: ", dirs
     # print "Top dirs", top_dirs
 
-    is_complete = ts.is_complete_quick()
+    is_complete = ts.is_complete_quick(mod)
     print "Is complete:", is_complete
 
     if not is_complete:
