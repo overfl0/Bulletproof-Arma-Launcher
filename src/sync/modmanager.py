@@ -24,6 +24,7 @@ import kivy.app  # To keep PyDev from complaining
 from kivy.logger import Logger
 import requests
 import textwrap
+import torrent_utils
 
 from third_party import teamspeak
 from third_party.arma import Arma, SoftwareNotInstalled
@@ -156,7 +157,7 @@ def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
     for m in mod_list:
         # TODO: Change this to a static function
         syncer = TorrentSyncer(messagequeue, m)
-        m.up_to_date = syncer.is_complete_quick(m)
+        m.up_to_date = torrent_utils.is_complete_quick(m)
 
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
 

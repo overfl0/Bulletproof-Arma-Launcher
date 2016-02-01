@@ -26,10 +26,12 @@ if __name__ == "__main__":
 
 import libtorrent
 import os
+import torrent_utils
 
 from kivy.logger import Logger
-from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack
+from sync.integrity import check_mod_directories
 from utils.metadatafile import MetadataFile
+from utils.unicode_helpers import decode_utf8, encode_utf8
 from time import sleep
 
 
@@ -50,26 +52,10 @@ class TorrentSyncer(object):
         self.mod = mod
         self.force_termination = False
 
-    def decode_utf8(self, message):
-        """Wrapper that prints the decoded message if an error occurs."""
-        try:
-            return message.decode('utf-8')
-        except UnicodeDecodeError as ex:
-            error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-            raise UnicodeError(error_message)
-
-    def encode_utf8(self, message):
-        """Wrapper that prints the encoded message if an error occurs."""
-        try:
-            return message.encode('utf-8')
-        except UnicodeEncodeError as ex:
-            error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-            raise UnicodeError(error_message)
-
     def init_libtorrent(self):
         """Perform the initialization of things that should be initialized once"""
         settings = libtorrent.session_settings()
-        settings.user_agent = self.encode_utf8('TacBF (libtorrent/{})'.format(self.decode_utf8(libtorrent.version)))
+        settings.user_agent = encode_utf8('TacBF (libtorrent/{})'.format(decode_utf8(libtorrent.version)))
         """When running on a network where the bandwidth is in such an abundance
         that it's virtually infinite, this algorithm is no longer necessary, and
         might even be harmful to throughput. It is adviced to experiment with the
@@ -88,25 +74,6 @@ class TorrentSyncer(object):
 
         self.session.set_settings(settings)
 
-    @staticmethod
-    def get_torrent_info_from_string(bencoded):
-        """Get torrent metadata from a bencoded string and return info structure."""
-
-        torrent_metadata = libtorrent.bdecode(bencoded)
-        torrent_info = libtorrent.torrent_info(torrent_metadata)
-
-        return torrent_info
-
-    @staticmethod
-    def get_torrent_info_from_file(filename):
-        """Get torrent_info structure from a file.
-        The file should contain a bencoded string - the contents of a .torrent file."""
-
-        with open(filename, 'rb') as file_handle:
-            file_contents = file_handle.read()
-
-            return TorrentSyncer.get_torrent_info_from_string(file_contents)
-
     def get_session_logs(self):
         """Get alerts from torrent engine and forward them to the manager process"""
         torrent_log = []
@@ -115,99 +82,18 @@ class TorrentSyncer(object):
                                             # Use alert.handle in the future to get the torrent handle
         for alert in alerts:
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
-            message = self.decode_utf8(alert.message())
+            message = decode_utf8(alert.message())
             Logger.info("Alerts: Category: {}, Message: {}".format(alert.category(), message))
             torrent_log.append({'message': message, 'category': alert.category()})
 
         return torrent_log
-
-    def is_complete_quick(self, mod):
-        """Performs a quick check to see if the mod *seems* to be correctly installed.
-        This check assumes no external changes have been made to the mods.
-
-        1. Check if metadata file exists and can be opened (instant)
-        2. Check if torrent is not dirty [download completed successfully] (instant)
-        3. Check if torrent url matches (instant)
-        4. Check if files have the right size and modification time (very quick)
-        5. Check if there are no superfluous files in the directory (very quick)"""
-
-        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
-
-        # (1) Check if metadata can be opened
-        try:
-            metadata_file.read_data(ignore_open_errors=False)
-        except IOError:
-            Logger.info('Metadata file could not be read successfully. Marking as not complete')
-            return False
-
-        # (2)
-        if metadata_file.get_dirty():
-            Logger.info('Torrent marked as dirty (not completed successfully). Marking as not complete')
-            return False
-
-        # (3)
-        if metadata_file.get_torrent_url() != mod.downloadurl:
-            Logger.info('Torrent urls differ. Marking as not complete')
-            return False
-
-        # Get data required for (4) and (5)
-        torrent_content = metadata_file.get_torrent_content()
-        if not torrent_content:
-            Logger.info('Could not get torrent file content. Marking as not complete')
-            return False
-
-        torrent_info = TorrentSyncer.get_torrent_info_from_string(torrent_content)
-
-        resume_data_bencoded = metadata_file.get_torrent_resume_data()
-        if not resume_data_bencoded:
-            Logger.info('Could not get resume data. Marking as not complete')
-            return False
-        resume_data = libtorrent.bdecode(resume_data_bencoded)
-
-        # (4)
-        file_sizes = resume_data['file sizes']
-        files = torrent_info.files()
-        # file_path, size, mtime
-        files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
-
-        if not check_files_mtime_correct(mod.clientlocation, files_data):
-            Logger.info('Some files seem to have been modified in the meantime. Marking as not complete')
-            return False
-
-        # (5) Check if there are no additional files in the directory
-        checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
-        files_list = checksums.keys()
-        if not check_mod_directories(files_list, mod.clientlocation, on_superfluous='warn'):
-            Logger.info('Superfluous files in mod directory. Marking as not complete')
-            return False
-
-        return is_complete_tfr_hack(mod.name, files_list, checksums)
-
-    def create_add_torrent_flags(self):
-        f = libtorrent.add_torrent_params_flags_t
-
-        flags = 0
-        flags |= f.flag_apply_ip_filter  # default
-        flags |= f.flag_update_subscribe  # default
-        # flags |= f.flag_merge_resume_trackers  # default off
-        # flags |= f.flag_paused
-        flags |= f.flag_auto_managed
-        flags |= f.flag_override_resume_data
-        # flags |= f.flag_seed_mode
-        # flags |= f.flag_upload_mode
-        # flags |= f.flag_share_mode
-        flags |= f.flag_duplicate_is_error  # default?
-
-        # no_recheck_incomplete_resume
-
-        return flags
 
     def handle_torrent_progress(self, s):
         """Just log the download progress for now."""
         download_fraction = s.progress
         download_kBps = s.download_rate / 1024
         upload_kBps = s.upload_rate / 1024
-        state = self.decode_utf8(s.state.name)
+        state = decode_utf8(s.state.name)
 
         progress_message = '[{}] {}: {:0.2f}% ({:0.2f} KB/s)'.format(
                            self.mod.foldername, state, download_fraction * 100.0,
@@ -251,9 +137,9 @@ class TorrentSyncer(object):
 
         # === Torrent parameters ===
         params = {
-            'save_path': self.encode_utf8(self.mod.clientlocation),
+            'save_path': encode_utf8(self.mod.clientlocation),
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
-            'flags': self.create_add_torrent_flags()
+            'flags': torrent_utils.create_add_torrent_flags()
         }
 
         # Configure torrent source
@@ -261,7 +147,7 @@ class TorrentSyncer(object):
             torrent_info = self.get_torrent_info_from_file(self.mod.downloadurl[len('file://'):])
             params['ti'] = torrent_info
         else:  # Torrent from url
-            params['url'] = self.encode_utf8(self.mod.downloadurl)
+            params['url'] = encode_utf8(self.mod.downloadurl)
 
         # Add optional resume data
         resume_data = metadata_file.get_torrent_resume_data()
@@ -306,7 +192,7 @@ class TorrentSyncer(object):
         Logger.info('Sync: terminated loop')
 
         if s.error:
-            self.result_queue.reject({'details': 'An error occured: Libtorrent error: {}'.format(self.decode_utf8(s.error))})
+            self.result_queue.reject({'details': 'An error occured: Libtorrent error: {}'.format(decode_utf8(s.error))})
             return False
 
         # Save data that could come in handy in the future to a metadata file
@@ -378,7 +264,7 @@ if __name__ == '__main__':
     # print "Dirs: ", dirs
     # print "Top dirs", top_dirs
 
-    is_complete = ts.is_complete_quick(mod)
+    is_complete = torrent_utils.is_complete_quick(mod)
     print "Is complete:", is_complete
 
     if not is_complete:
