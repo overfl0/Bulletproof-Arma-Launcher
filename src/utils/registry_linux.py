@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 # if "unittest" not in sys.modules.keys():
 #     raise Exception("Registry not implemented on Linux. Dummy class for unit tests only!")
 
+
 # Dummy class with fake methods
 class Registry(object):
     Error = OSError

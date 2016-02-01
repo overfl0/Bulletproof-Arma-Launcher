@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 
 import hashlib
 
+
 def hash_for_file(path, algorithm=hashlib.algorithms[0], block_size=256 * 128, human_readable=True):
     """
     Block size directly depends on the block size of your filesystem
@@ -49,8 +50,10 @@ def hash_for_file(path, algorithm=hashlib.algorithms[0], block_size=256 * 128, h
         file_hash = hash_algo.digest()
     return file_hash
 
+
 def md5(path, human_readable=False):
     return hash_for_file(path, 'md5', human_readable=human_readable)
+
 
 def sha1(path, human_readable=False):
     return hash_for_file(path, 'sha1', human_readable=human_readable)

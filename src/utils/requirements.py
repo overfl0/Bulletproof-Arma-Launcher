@@ -20,21 +20,23 @@ from utils import paths
 from utils.testtools_compat import _format_exc_info
 
 if not paths.is_pyinstaller_bundle():
-    from pkg_resources import require, \
-                              DistributionNotFound, \
-                              VersionConflict
+    from pkg_resources import \
+        require, \
+        DistributionNotFound, \
+        VersionConflict
 
 else:
     # Pyinstaller does not handle pkg_resources well. Create dummy exceptions
     # This should be safe as PyInstaller should already take care of dependencies
     class DistributionNotFound(Exception):
         pass
+
     class VersionConflict(Exception):
         pass
 
-
 libtorrent_least_required_version = '0.16.18'
 kivy_least_required_version = '1.8.0'
+
 
 def check_libraries_requirements():
     """Check if the required dependencies are met.
@@ -63,7 +65,6 @@ def check_libraries_requirements():
         except ImportError:
             raise DistributionNotFound('libtorrent')
 
-
         # Kivy requirements
         try:
             import multiprocessing
@@ -83,7 +84,6 @@ def check_libraries_requirements():
                   "\nAvast DeepScreen is known to fail here."
             MessageBox(msg, 'Kivy error')
             sys.exit(1)
-
 
     except VersionConflict as ex:
         message = 'Wrong library version. Installed: {}. Required: {}'.format(ex.args[0], ex.args[1])

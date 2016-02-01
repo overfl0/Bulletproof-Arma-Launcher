@@ -49,9 +49,11 @@ MB_SETFOREGROUND =        0x00010000
 MB_TOPMOST =              0x00040000
 MB_SERVICE_NOTIFICATION = 0x00200000
 
-"""The purpose of this message box is to give some information to the user when something
-goes so wrong that we cannot even be sure that kivy is running"""
+
 def MessageBox(message, title, flags=MB_ICONEXCLAMATION):
+    """The purpose of this message box is to give some information to the user when something
+    goes so wrong that we cannot even be sure that kivy is running.
+    """
     # Print to console if any present
     print repr(title)
     print repr(message)

@@ -188,13 +188,13 @@ class TorrentSyncer(object):
         flags = 0
         flags |= f.flag_apply_ip_filter  # default
         flags |= f.flag_update_subscribe  # default
-        #flags |= f.flag_merge_resume_trackers  # default off
-        #flags |= f.flag_paused
+        # flags |= f.flag_merge_resume_trackers  # default off
+        # flags |= f.flag_paused
         flags |= f.flag_auto_managed
         flags |= f.flag_override_resume_data
-        #flags |= f.flag_seed_mode
-        #flags |= f.flag_upload_mode
-        #flags |= f.flag_share_mode
+        # flags |= f.flag_seed_mode
+        # flags |= f.flag_upload_mode
+        # flags |= f.flag_share_mode
         flags |= f.flag_duplicate_is_error  # default?
 
         # no_recheck_incomplete_resume
@@ -213,10 +213,10 @@ class TorrentSyncer(object):
                            download_kBps)
         self.result_queue.progress({'msg': progress_message,
                                     'log': self.get_session_logs(),
-                                   }, download_fraction)
+                                    }, download_fraction)
 
-        Logger.debug('%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
-              (s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
+        Logger.debug('%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' %
+                     (s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
 
     def sync(self, force_sync=False):
         """
@@ -233,7 +233,6 @@ class TorrentSyncer(object):
         if not self.session:
             self.init_libtorrent()
 
-
         # === Metadata handling ===
         metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.foldername))
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
@@ -248,7 +247,6 @@ class TorrentSyncer(object):
 
         metadata_file.write_data()
         # End of metadata handling
-
 
         # === Torrent parameters ===
         params = {
@@ -301,7 +299,6 @@ class TorrentSyncer(object):
             # TODO: Save resume_data periodically
             sleep(self._update_interval)
             s = torrent_handle.status()
-
 
         self.handle_torrent_progress(s)
 

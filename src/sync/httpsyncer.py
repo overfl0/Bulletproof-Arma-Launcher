@@ -22,6 +22,7 @@ import shutil
 from kivy.logger import Logger
 from utils.process import Process
 
+
 class HttpSyncer(object):
     """
     example syncer implementation
@@ -135,10 +136,3 @@ class HttpSyncer(object):
 
             self.result_queue.progress({'msg': '[%s] Downloading finished.' % self.mod.foldername}, 100)
             # self.result_queue.resolve({'msg': 'Downloading mod finished: ' + self.mod.foldername})
-
-
-        # with SevenZFile(os.path.join(downloaddir, fname)) as zfile:
-        #     zfile.extractall(downloaddir)
-        #
-        # shutil.move(os.path.join(downloaddir, self.mod.foldername), self.mod.clientlocation)
-        # shutil.rmtree(downloaddir)

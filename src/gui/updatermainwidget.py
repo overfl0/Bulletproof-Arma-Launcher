@@ -13,6 +13,7 @@
 from __future__ import unicode_literals
 
 import kivy
+import kivy.app  # To keep PyDev from complaining
 import os
 import textwrap
 import time
@@ -24,13 +25,16 @@ from kivy.uix.widget import Widget
 from autoupdater import autoupdater
 from utils import paths
 
+
 class UpdateException(Exception):
     pass
+
 
 class UpdaterMainWidget(Widget):
     def __init__(self, **kwargs):
         super(UpdaterMainWidget, self).__init__(**kwargs)
         self.controller = Controller(self)
+
 
 class Controller(object):
     """docstring for UpdaterMainWidgetController"""
@@ -43,7 +47,7 @@ class Controller(object):
 
         self.app_settings = kivy.app.App.get_running_app().settings
         self.program_to_update = self.app_settings.get('update')
-        #if self.program_to_update:
+        # if self.program_to_update:
         #    self.program_to_update = os.path.realpath(self.program_to_update)
 
         Clock.schedule_interval(self.check_button_availability, 0.1)

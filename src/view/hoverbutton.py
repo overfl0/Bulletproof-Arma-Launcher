@@ -20,7 +20,6 @@ from kivy.properties import NumericProperty, ObjectProperty, BooleanProperty, St
 from kivy.clock import Clock
 
 
-
 class HoverButton(Button):
     """
     lightly extended button implementation
@@ -43,17 +42,17 @@ class HoverButton(Button):
 
     def check_hover(self, instance, value):
 
-        if (self.x <= value[0] <= self.x + self.width and
-            self.y <= value[1] <= self.y + self.height):
+        if self.x <= value[0] <= self.x + self.width and \
+           self.y <= value[1] <= self.y + self.height:
 
-            if self.mouse_hover == False:
+            if self.mouse_hover is False:
                 self.mouse_hover = True
 
-        elif self.mouse_hover == True:
+        elif self.mouse_hover is True:
             self.mouse_hover = False
 
     def _on_mouse_hover(self, instance, value):
-        if (value == True):
+        if (value is True):
             self.background_normal_orig = self.background_normal
             self.background_normal = self.background_hover
         else:

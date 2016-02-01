@@ -37,6 +37,7 @@ contained in a given directory are in fact listed in the torrent (no superfluous
 files on disk).
 '''
 
+
 class IntegrityTest(unittest.TestCase):
 
     def setUp(self):

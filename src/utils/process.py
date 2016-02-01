@@ -34,6 +34,7 @@ from kivy.logger import Logger
 from utils.testtools_compat import _format_exc_info
 import time
 
+
 class _Popen(multiprocessing.forking.Popen):
     def __init__(self, *args, **kw):
         if hasattr(sys, 'frozen'):
@@ -55,6 +56,7 @@ class _Popen(multiprocessing.forking.Popen):
 
         # fix for request finding the certificates
         # see http://stackoverflow.com/questions/17158529/fixing-ssl-certificate-error-in-exe-compiled-with-py2exe-or-pyinstaller
+
 
 class Process(multiprocessing.Process):
     _Popen = _Popen
@@ -111,6 +113,7 @@ class ConnectionWrapper(object):
                 return True
         return False
 
+
 class Para(object):
 
     JOIN_TIMEOUT_GRANULATION = 0.1
@@ -131,7 +134,7 @@ class Para(object):
         super(Para, self).__init__()
         self.messagequeue = None
         self.func = func
-        #self.protected_func = catchstacktrace(func)
+        # self.protected_func = catchstacktrace(func)
         self.args = args
         self.action_name = action_name
         self.current_child_process = None
@@ -142,8 +145,8 @@ class Para(object):
         # the state of a para can be
         # pending, rejected or resolved or closingforreject and closingforresolve
         self.state = 'pending'
-        self.lastdata = None # cached data from the last resolve or reject
-        self.lastprogress = None # cached progress data from the last resolve or reject
+        self.lastdata = None  # cached data from the last resolve or reject
+        self.lastprogress = None  # cached progress data from the last resolve or reject
 
     def is_open(self):
         """simple method which queries whenever the para is still in processing."""
@@ -217,7 +220,7 @@ class Para(object):
         self._reset()
 
     def _reset(self):
-        #self.current_child_process.join()
+        # self.current_child_process.join()
         self.parent_conn.close()
         self.current_child_process = None
         Clock.unschedule(self.handle_messagequeue)
@@ -281,6 +284,7 @@ class Para(object):
                     self.action_name, self.current_child_process.exitcode)
                 self.lastdata = {'data': {'msg': message}}
                 self._call_reject_handler(self.lastdata)
+
 
 def catchstacktrace(func):
     def wrapper(con, *args, **kwargs):

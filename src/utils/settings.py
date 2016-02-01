@@ -12,7 +12,8 @@
 
 from __future__ import unicode_literals
 
-import argparse, os
+import argparse
+import os
 
 from kivy.logger import Logger
 from third_party.arma import Arma, SoftwareNotInstalled
@@ -22,14 +23,16 @@ from utils.data.model import Model
 from utils.paths import mkdir_p
 from utils.registry import Registry
 
+
 class LauncherConfig(Model):
     """Container class for storing configuration"""
 
     fields = [
         {'name': 'use_exception_popup', 'defaultValue': False},
-        {'name': 'self_update', 'defaultValue': False},
+        {'name': 'update', 'defaultValue': False},
         {'name': 'launcher_basedir'},
         {'name': 'launcher_moddir'},
+        {'name': 'mod_data_cache', 'defaultValue': None}
     ]
 
     def __init__(self):
@@ -45,7 +48,6 @@ class Settings(object):
     # the folder name where everything gets store. This will get the last
     # part of the launcher_basedir
     _LAUNCHER_DIR = 'TacBF Launcher'
-
 
     def __init__(self, argv):
         super(Settings, self).__init__()
@@ -84,7 +86,7 @@ class Settings(object):
             fallback_basedir = self._get_launcher_default_basedir()
             # TODO: Show a regular message box, not a win32 message box
             MessageBox('Could not create directory {}\nFalling back to {}'.format(
-                        launcher_basedir, fallback_basedir), 'Error while setting launcher directory')
+                       launcher_basedir, fallback_basedir), 'Error while setting launcher directory')
             launcher_basedir = fallback_basedir
 
         Logger.info('Settings: Ensuring mod dir exists - {}'.format(launcher_moddir))
@@ -94,7 +96,7 @@ class Settings(object):
             fallback_moddir = self._get_launcher_default_basedir()
             # TODO: Show a regular message box, not a win32 message box
             MessageBox('Could not create directory {}\nFalling back to {}'.format(
-                        launcher_moddir, fallback_moddir), 'Error while setting mod directory')
+                       launcher_moddir, fallback_moddir), 'Error while setting mod directory')
             launcher_moddir = fallback_moddir
 
         self.set_launcher_basedir(launcher_basedir)
@@ -140,6 +142,12 @@ class Settings(object):
     def set_launcher_moddir(self, value):
         return self.launcher_config.set('launcher_moddir', value)
 
+    def set_mod_data_cache(self, value):
+        self.set('mod_data_cache', value)
+
+    def get_mod_data_cache(self):
+        return self.launcher_config.get('mod_data_cache')
+
     def parse_args(self, argv):
         self.parser = argparse.ArgumentParser()
 
@@ -155,8 +163,8 @@ class Settings(object):
         settings_data = self.parser.parse_args(argv)
 
         for f in self.launcher_config.fields:
-            value  = getattr(settings_data, f['name'], None)
-            if value != None:
+            value = getattr(settings_data, f['name'], None)
+            if value is not None:
                 self.launcher_config.set(f['name'], value)
 
     def get(self, key):
