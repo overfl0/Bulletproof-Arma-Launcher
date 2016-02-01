@@ -1,5 +1,5 @@
 # Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Copyright (C) 2016 TacBF Installer Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
