@@ -17,6 +17,7 @@ import errno
 import json
 import os
 
+
 class MetadataFile(object):
     """File that contains metadata about mods and is located in the root directory of each mod"""
     """TODO: Maybe screw the whole json part and just bencode everything?"""
