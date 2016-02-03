@@ -52,3 +52,10 @@ rebuild the spec file. A newly spec file will not work, see kivy packaging wiki:
 `pyinstaller --name tblauncher --onefile src\launcher.py`
 
 However, this should normally not be required as the spec file should already be present.
+
+# Communication
+
+Feel free to reach the developers of the Tactical Battlefield mod and the Launcher on their respective discord channels:
+
+* [#general](https://discordapp.com/channels/106788078437281792/106788078437281792)
+* [#launcher](https://discordapp.com/channels/106788078437281792/106792735066894336)
