@@ -11,7 +11,9 @@
 #             dash_offset: 5
 #             dash_length: 3
 
-
+#
+# Section: defaults for widtgets
+#
 <HoverButton>
     border: 1,1,1,1
     size_hint_x: None
@@ -20,6 +22,14 @@
     background_normal: app.resource_path('images/borderimage.png')
     background_down: app.resource_path('images/borderimage.png')
     background_hover: app.resource_path('images/borderimage-hover.png')
+
+<BaseTextInput@TextInput>
+    background_color: 0.3, 0.3, 0.3, 0.7
+    foreground_color: 0.9, 0.9, 0.9, 1
+
+<BaseNumberInput@NumberInput>
+    background_color: 0.3, 0.3, 0.3, 0.7
+    foreground_color: 0.9, 0.9, 0.9, 1
 
 <SeedingCheckBox@CheckBox>
     width: 30
@@ -33,11 +43,25 @@
 
 <SpeedLabel@Label>
     size_hint_x: None
-    width: 150
+    width: 200
     valign: 'middle'
     text_size: self.size
     halign: 'left'
 
+<SpeedInput@BaseNumberInput>
+    size_hint: None, None
+    width: 80
+    height: 40
+    multiline: False
+    text_size: self.width, self.height
+    font_size: 18
+    valign: 'middle'
+    pos_hint: {'center_y': 0.5}
+    padding: [5, ( self.height - self.line_height ) / 2]
+
+# Section: Main View of the application
+#          this defines the structure of screens and the top
+#          navigation bar
 <MainWidget>
     id: main_widget
     size: 1000, 1000
@@ -101,6 +125,7 @@
             InstallScreen:
             PrefScreen:
 
+# Section: Screen where install related stuff is
 <InstallScreen>:
     name: 'install_screen'
 
@@ -173,9 +198,7 @@
                     valign: 'bottom'
                     text: 'Build: N/A'
 
-
-
-
+# Section: Screen for settings and configuration
 <PrefScreen>:
     name: 'pref_screen'
 
@@ -194,12 +217,10 @@
                 size_hint_x: None
                 pos_hint: { 'center_y': 0.7 } # Change or remove this if you're changing the label's text
 
-            TextInput:
+            BaseTextInput:
                 id: path_text_input
                 text: 'some/path/to/the/mods/dir'
                 multiline: False
-                background_color: 0.3, 0.3, 0.3, 0.7
-                foreground_color: 0.9, 0.9, 0.9, 1
                 text_size: self.width, self.height
                 font_size: 20
                 height: 40
@@ -245,18 +266,26 @@
             height: 50
             size_hint: 1, None
             SpeedLabel:
-                text: 'Upload-Speed'
-            NumberInput:
+                text: 'Max-Upload-Speed'
+            SpeedInput:
+            Label:
+                width: 10
+                size_hint_x: None
+            SpeedLabel:
+                text: 'Kb/s'
 
         BoxLayout:
             orientation: 'horizontal'
             size_hint: 1, None
             height: 50
             SpeedLabel:
-                text: 'Download-Speed'
-            Slider:
-                min: 0
-                max: 100
+                text: 'Max-Download-Speed'
+            SpeedInput:
+            Label:
+                width: 10
+                size_hint_x: None
+            SpeedLabel:
+                text: 'Kb/s'
 
         Label:
             text: 'In Beta, this will be a place for Settings'

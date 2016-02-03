@@ -17,7 +17,7 @@ from kivy.uix.textinput import TextInput
 
 class NumberInput(TextInput):
 
-    pat = re.compile('[0-9]+')
+    pat = re.compile('[-0-9]+')
 
     def insert_text(self, substring, from_undo=False):
         if self.pat.match(substring):
