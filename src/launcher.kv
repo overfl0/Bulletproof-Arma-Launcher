@@ -1,5 +1,6 @@
 ﻿#:kivy 1.4
 
+# comment in the follwing to get borders around all widgets for debugging
 # <Widget>:
 #     canvas.after:
 #         Color:
@@ -18,6 +19,23 @@
     background_normal: app.resource_path('images/borderimage.png')
     background_down: app.resource_path('images/borderimage.png')
     background_hover: app.resource_path('images/borderimage-hover.png')
+
+<SeedingCheckBox@CheckBox>
+    width: 30
+    size_hint_x: None
+    group: 'seedingtype'
+
+<SeedingLabel@Label>
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
+
+<SpeedLabel@Label>
+    size_hint_x: None
+    width: 150
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
 
 <MainWidget>
     id: main_widget
@@ -193,6 +211,53 @@
                 height: 40
                 text: 'Choose Path'
                 on_release: root.controller.on_choose_path_button_release(self)
+
+        Label:
+            size_hint_y: None
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            height: 60
+            text: 'Seedingoptions'
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, None
+            BoxLayout:
+                orientation: 'horizontal'
+                SeedingCheckBox:
+                SeedingLabel:
+                    text: 'while not playing'
+            BoxLayout:
+                orientation: 'horizontal'
+                SeedingCheckBox:
+                SeedingLabel:
+                    text: 'while stacktrace is on the toilette'
+            BoxLayout:
+                orientation: 'horizontal'
+                SeedingCheckBox:
+                SeedingLabel:
+                    text: 'everytime'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            height: 50
+            size_hint: 1, None
+            SpeedLabel:
+                text: 'Upload-Speed'
+            Slider:
+                min: 0
+                max: 100
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, None
+            height: 50
+            SpeedLabel:
+                text: 'Download-Speed'
+            Slider:
+                min: 0
+                max: 100
 
         Label:
             text: 'In Beta, this will be a place for Settings'
