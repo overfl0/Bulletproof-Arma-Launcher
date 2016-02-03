@@ -25,6 +25,7 @@ pytt_directory = os.path.join(file_directory, 'Pytt')
 # Allow relative imports when the script is run from the command line
 site.addsitedir(os.path.abspath(pytt_directory))
 
+
 def quiet_unlink_files(directory, filenames):
     for filename in filenames:
         try:

@@ -14,11 +14,14 @@ from __future__ import unicode_literals
 
 from kivy.app import App
 from utils.paths import get_resources_path
+from utils.popupchain import PopupChain
+
 
 class BaseApp(App):
     """docstring for BaseApp"""
     def __init__(self):
         super(BaseApp, self).__init__()
+        self.popup_chain = PopupChain()
 
     @staticmethod
     def resource_path(relative):

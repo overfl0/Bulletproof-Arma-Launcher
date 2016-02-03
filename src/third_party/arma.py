@@ -30,9 +30,12 @@ from utils.singleton import Singleton
 from utils.registry import Registry
 
 from . import SoftwareNotInstalled
+
+
 # Exceptions:
 class ArmaNotInstalled(SoftwareNotInstalled):
     pass
+
 
 class SteamNotInstalled(SoftwareNotInstalled):
     pass

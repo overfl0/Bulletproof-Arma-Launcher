@@ -22,6 +22,7 @@ from utils.admin import run_admin
 from utils.devmode import devmode
 from utils.registry import Registry
 
+
 class TeamspeakNotInstalled(SoftwareNotInstalled):
     pass
 
@@ -38,9 +39,9 @@ def _parse_windows_cmdline(cmdline):
     raw = ref.from_address(ptr)
     args = [arg for arg in raw]
     ctypes.windll.kernel32.LocalFree(ptr)
-    
+
     return args
-    
+
 
 def get_executable_path():
     """Return the path of the teamspeak executable."""

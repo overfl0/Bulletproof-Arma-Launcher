@@ -15,12 +15,12 @@ from __future__ import unicode_literals
 import multiprocessing
 from multiprocessing import Queue
 import os
-import json
 import sys
 
 from datetime import datetime
 
 import kivy
+import kivy.app  # To keep PyDev from complaining
 from kivy.logger import Logger
 import requests
 import textwrap
@@ -30,10 +30,8 @@ from third_party.arma import Arma, SoftwareNotInstalled
 from utils.devmode import devmode
 from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
-from utils.process import Process
 from utils.process import Para
 from utils.testtools_compat import _format_exc_info
-from sync.httpsyncer import HttpSyncer
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
 
@@ -80,23 +78,21 @@ def requests_get_or_reject(para, domain, *args, **kwargs):
     return res
 
 
-def get_mod_descriptions(para, launcher_moddir):
+def _get_mod_descriptions(para):
+    # WARNING: This methods gets called in a different process
     """
     helper function to get the moddescriptions from the server
 
     this function is ment be used threaded or multiprocesses, you have
     to pass in a queue
     """
-    downloadurlPrefix = 'http://launcher.tacbf.com/tacbf/updater/torrents/'
-
-
     para.progress({'msg': 'Downloading mod descriptions'})
-    domain = 'launcher.tacbf.com'
-    url = 'http://{}/tacbf/updater/metadata.json'.format(domain)
-    data = None
-    res = requests_get_or_reject(para, domain, url, verify=False, timeout=10)
 
-    mods = []
+    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
+    metadata_path = devmode.get_metadata_path(default='/tacbf/updater/metadata.json')
+    url = 'http://{}{}'.format(domain, metadata_path)
+
+    res = requests_get_or_reject(para, domain, url, verify=False, timeout=10)
 
     if res.status_code != 200:
         para.reject({'details': '{}\n{}\n\n{}'.format(
@@ -105,60 +101,49 @@ def get_mod_descriptions(para, launcher_moddir):
     else:
         try:
             data = res.json()
-        except ValueError as e:
+        except ValueError:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
             para.reject({'details': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') not in ("2", "3", "4", "4.1", "5"):
+        if data.get('alpha') not in ("4.1", "5", "6"):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
-            return []
+            return ''
 
-        for md in data['mods']:
+    para.resolve({'msg': 'Downloading mods descriptions finished',
+                  'data': data})
 
-            # parse timestamp
-            tsstr = md.get('torrent-timestamp')
-            md['torrent-timestamp'] = parse_timestamp(tsstr)
-            md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
-                md['foldername'], tsstr)
 
-            mod = Mod.fromDict(md)
-            mod.clientlocation = launcher_moddir
-            mods.append(mod)
+def process_description_data(para, data, launcher_moddir):
+    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
+    downloadurlPrefix = 'http://{}/tacbf/updater/torrents/'.format(domain)
 
-            Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
+    mods = []
 
-        para.progress({'msg': 'Downloading mods descriptions finished', 'mods': mods})
+    for md in data['mods']:
+
+        # parse timestamp
+        tsstr = md.get('torrent-timestamp')
+        md['torrent-timestamp'] = parse_timestamp(tsstr)
+        md['downloadurl'] = "{}{}-{}.torrent".format(
+            downloadurlPrefix, md['foldername'], tsstr)
+
+        mod = Mod.fromDict(md)
+        mod.clientlocation = launcher_moddir
+        mods.append(mod)
+
+        Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
 
     return mods
 
 
-def _check_already_installed_with_six(mod):
-    """returns true if mod is installed already with withsix, otherwise false"""
-
-    # check user path
-    install_path = Arma.get_user_path()
-    mod_path = os.path.join(install_path, mod.foldername, '.synqinfo')
-
-    if os.path.isfile(mod_path):
-        return True
-
-    # check system path
-    install_path = Arma.get_installation_path()
-    mod_path = os.path.join(install_path, mod.foldername, '.synqinfo')
-
-    return os.path.isfile(mod_path)
-
-
-def _prepare_and_check(messagequeue, launcher_moddir):
+def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
     # WARNING: This methods gets called in a different process
-
-    # download mod descriptions first
-    mod_list = get_mod_descriptions(messagequeue, launcher_moddir)
+    mod_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
 
     # Debug mode: decrease the number of mods to download
     mods_filter = devmode.get_mods_filter()
@@ -169,13 +154,6 @@ def _prepare_and_check(messagequeue, launcher_moddir):
     # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
     for m in mod_list:
-        try:
-            r = _check_already_installed_with_six(m)
-        except SoftwareNotInstalled:
-            r = False
-        if r:
-            messagequeue.progress({'msg': 'Mod ' + m.foldername + ' already installed with withSix'})
-
         # TODO: Change this to a static function
         syncer = TorrentSyncer(messagequeue, m)
         m.up_to_date = syncer.is_complete_quick()
@@ -196,7 +174,7 @@ def _tfr_post_download_hook(message_queue, mod):
                                     'title': title,
                                     'markup': markup
                                 }
-                               }, 1.0)
+                                }, 1.0)
 
     tfr_directory = '@task_force_radio'
     if mod.foldername != tfr_directory:
@@ -219,7 +197,7 @@ def _tfr_post_download_hook(message_queue, mod):
         1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
             to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
         2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
-            path_ts_plugins, path_installed_plugins))
+        path_ts_plugins, path_installed_plugins))
 
     run_admin_message = textwrap.dedent("""
         Task Force Arrowhead Radio has been downloaded or updated.
@@ -233,7 +211,7 @@ def _tfr_post_download_hook(message_queue, mod):
         1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
             to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
         2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
-            path_ts_plugins, path_installed_plugins))
+        path_ts_plugins, path_installed_plugins))
 
     installation_succeeded_message = textwrap.dedent("""
         Task Force Arrowhead Radio has been downloaded or updated.
@@ -265,19 +243,10 @@ def _tfr_post_download_hook(message_queue, mod):
 
     return True
 
+
 def _sync_all(message_queue, launcher_moddir, mods):
     """Run syncers for all the mods sequentially and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
-
-    # cba_mod = Mod(
-    #     foldername='@CBA_A3',
-    #     clientlocation=launcher_moddir,
-    #     synctype='http',
-    #     downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
-    #
-    # cba_syncer = HttpSyncer(message_queue, cba_mod)
-    # cba_syncer.sync()
-
     # debussy_mod = Mod(
     #     foldername='@debussybattle',  # The mod name MUST match directory name!
     #     clientlocation=launcher_moddir,
@@ -294,7 +263,7 @@ def _sync_all(message_queue, launcher_moddir, mods):
         syncer = TorrentSyncer(message_queue, m)
         sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
-        if sync_ok == False:  # Alpha undocumented feature: stop processing on a reject()
+        if sync_ok is False:  # Alpha undocumented feature: stop processing on a reject()
             return
 
         # Will only fire up if mod == TFR
@@ -325,15 +294,19 @@ class ModManager(object):
         self.mods = None
         self.settings = kivy.app.App.get_running_app().settings
 
-    def prepare_and_check(self):
-        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get_launcher_moddir()), 'checkmods')
+    def download_mod_description(self):
+        self.para = Para(_protected_call, (_get_mod_descriptions,), 'download_description')
+        self.para.run()
+        return self.para
+
+    def prepare_and_check(self, data):
+        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get_launcher_moddir(), data), 'checkmods')
         self.para.then(self.on_prepare_and_check_resolve, None, None)
         self.para.run()
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_protected_call,
-            (_sync_all, self.settings.get_launcher_moddir(), self.mods), 'sync')
+        self.sync_para = Para(_protected_call, (_sync_all, self.settings.get_launcher_moddir(), self.mods), 'sync')
         self.sync_para.then(None, None, self.on_sync_all_progress)
         self.sync_para.run()
         return self.sync_para

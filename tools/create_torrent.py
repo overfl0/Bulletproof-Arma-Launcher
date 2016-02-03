@@ -16,6 +16,7 @@ import argparse
 import libtorrent
 import os
 
+
 def create_dummy_file(filename, size_mb):
     with open(filename, "wb") as file_handle:
         value = "A" * 1024 * 1024
@@ -65,7 +66,7 @@ def create_torrent(directory, announces=None, output=None, comment=None, web_see
 
     for web_seed in web_seeds:
         t.add_url_seed(web_seed)
-    #t.add_http_seed("http://...")
+    # t.add_http_seed("http://...")
 
     libtorrent.set_piece_hashes(t, os.path.dirname(directory))
 
@@ -80,14 +81,14 @@ def main():
     parser.add_argument("-o", "--output", help="Set the path and the filename of the created file")
     parser.add_argument("-w", "--web-seed", action='append', default=[], help="Set the web-seed (url-seed as explained in BEP 19). Additional -w add more urls")
     parser.add_argument("directory", help="Data directory")
-    #parser.add_argument("-s", "--size", type=int, help="Create a DUMMY torrent of <size>MB. <directory> will be overwritten!", default=50)
+    # parser.add_argument("-s", "--size", type=int, help="Create a DUMMY torrent of <size>MB. <directory> will be overwritten!", default=50)
 
     args = parser.parse_args()
 
     create_torrent(directory=args.directory, announces=args.announce, comment=args.comment,
                    output=args.output, web_seeds=args.web_seed)
 
-    #create_dumy_torrent_file_with_dir(args.size)
+    # create_dumy_torrent_file_with_dir(args.size)
 
 if __name__ == "__main__":
     main()

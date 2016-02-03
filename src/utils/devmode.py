@@ -21,11 +21,15 @@ DEVMODE_FILE_NAME = 'devmode.conf'
 # class DevModeException(Exception):
 #    pass
 
+
 class DevMode(object):
     '''
     This is a simple class that loads a json file and allows access to its elements
     with a get_<element_name>() getter.
-    If not found, the getter returns None.
+    If not found, the getter returns None or the <default> argument passed to the getter.
+
+    Usage: devmode.get_something()           -> <something> or <None> if doesn't exist.
+           devmode.get_sth_else(default=123) -> <sth_else> or <123> if doesn't exist.
     '''
 
     def __init__(self):
@@ -45,7 +49,7 @@ class DevMode(object):
 
     def __getattribute__(self, name):
         if name.startswith("get_"):
-            return lambda: object.__getattribute__(self, 'devdata').get(name[4:])
+            return lambda default = None: self.devdata.get(name[4:], default)
 
         return object.__getattribute__(self, name)
 

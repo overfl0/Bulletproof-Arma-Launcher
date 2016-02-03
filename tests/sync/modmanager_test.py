@@ -21,6 +21,7 @@ from sync.modmanager import ModManager
 from sync.mod import Mod
 from sync.httpsyncer import HttpSyncer
 
+
 class ModManagerTest(unittest.TestCase):
 
     def setUp(self):
@@ -48,7 +49,7 @@ class ModManagerTest(unittest.TestCase):
             name='@CBA_A3',
             clientlocation='../tests/',
             synctype='http',
-            downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z');
+            downloadurl='http://dev.withsix.com/attachments/download/22231/CBA_A3_RC4.7z')
 
         m._sync_single_mod(mod)
 
@@ -58,7 +59,7 @@ class ModManagerTest(unittest.TestCase):
             time.sleep(1)
             stat = m.query_status()
 
-            if stat == None:
+            if stat is None:
                 continue
 
             if stat['status'] == 'downloading':

@@ -23,6 +23,7 @@ import win32process
 from win32com.shell import shellcon
 from win32com.shell.shell import ShellExecuteEx
 
+
 class AdminTask(object):
     def __init__(self, process):
         """Constructor. Pass the process handle as parameter."""
@@ -42,13 +43,14 @@ class AdminTask(object):
         Return the process exit code if it has terminated or None otherwise.
         """
 
-        object = win32event.WaitForSingleObject(self.process_handle, timeout)
-        if object == win32event.WAIT_TIMEOUT:
+        obj = win32event.WaitForSingleObject(self.process_handle, timeout)
+        if obj == win32event.WAIT_TIMEOUT:
             return None
 
         self.returncode = win32process.GetExitCodeProcess(self.process_handle)
 
         return self.returncode
+
 
 def run_admin(executable, args):
     """Run executable as an administrator.
@@ -70,7 +72,6 @@ def run_admin(executable, args):
                                  lpParameters=params)
 
     except pywintypes.error as ex:
-        # TODO: What if the password is incorrect?
         if ex.winerror == 1223:
             return None  # The operation was canceled by the user.
         raise

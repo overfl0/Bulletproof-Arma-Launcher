@@ -15,10 +15,12 @@ from __future__ import unicode_literals
 from kivy.logger import Logger
 from kivy.uix.widget import Widget
 
+
 class UpdaterMainWidget(Widget):
     def __init__(self, **kwargs):
         super(UpdaterMainWidget, self).__init__(**kwargs)
         self.controller = Controller(self)
+
 
 class Controller(object):
     """docstring for UpdaterMainWidgetController"""

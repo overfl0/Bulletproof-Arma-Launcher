@@ -12,9 +12,10 @@
 
 from __future__ import unicode_literals
 
+
 class Model(object):
     """
-    a simple model implementation to have a good seperation of data storage
+    a simple model implementation to have a good separation of data storage
     logic. Do not use this class directly. You should inherit from it
 
     Every child class has to specify a class variable called "fields". This

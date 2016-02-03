@@ -25,26 +25,30 @@ from kivy.clock import Clock
 from nose.plugins.attrib import attr
 from utils.process import Para
 
+
 def worker_func(con, arg1, arg2):
     con.resolve('something')
+
 
 def termination_func(con):
     """this function is run in another process"""
     con.progress({'msg': 'test_func_has_started'})
 
     termination_requested = False
-    while termination_requested == False:
+    while termination_requested is False:
         time.sleep(1)
         # check if your parent wants your termination
         termination_requested = con.wants_termination()
 
     con.resolve('terminating')
 
+
 def blocking_after_resolving(con):
     """this function is run in another process"""
     con.progress({'msg': 'blocking_after_resolving started'})
     con.resolve('something')
     time.sleep(5)
+
 
 class ParaTest(unittest.TestCase):
 
@@ -80,7 +84,6 @@ class ParaTest(unittest.TestCase):
 
         res_handler.assert_called_once_with('something')
 
-
     def test_para_should_resolve(self):
         # do your testing here
         res_handler = Mock()
@@ -90,7 +93,7 @@ class ParaTest(unittest.TestCase):
         p.run()
         self.assertIsNotNone(p)
 
-        for i in range(1,120):
+        for _ in range(1, 120):
             Clock.tick()
 
         res_handler.assert_called_once_with('something')
@@ -103,7 +106,7 @@ class ParaTest(unittest.TestCase):
         p.run()
         self.assertIsNotNone(p)
 
-        for i in range(1,120):
+        for _ in range(1, 120):
             Clock.tick()
 
         self.assertEqual(p.state, 'resolved')

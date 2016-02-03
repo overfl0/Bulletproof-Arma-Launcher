@@ -12,6 +12,7 @@
 
 from __future__ import unicode_literals
 
+
 class Mod(object):
     """encapsulate data needed for a mod"""
     def __init__(
@@ -49,7 +50,7 @@ class Mod(object):
         return m
 
     def __repr__(self):
-        s = '[Mod: {} -- utcts: {} -- {} -- durl: {}]'.format(self.foldername,
-                self.torrent_timestamp, self.name, self.downloadurl)
+        s = '[Mod: {} -- utcts: {} -- {} -- durl: {}]'.format(
+            self.foldername, self.torrent_timestamp, self.name, self.downloadurl)
 
         return s
