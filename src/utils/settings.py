@@ -16,6 +16,7 @@ import argparse
 import os
 
 from kivy.logger import Logger
+from kivy.event import EventDispatcher
 from third_party.arma import Arma, SoftwareNotInstalled
 from utils.critical_messagebox import MessageBox
 from utils.data.jsonstore import JsonStore
@@ -23,6 +24,9 @@ from utils.data.model import Model
 from utils.paths import mkdir_p
 from utils.registry import Registry
 
+# str variant of the unicode string on_change
+# kivys api only works with non unicode strings
+ON_CHANGE = 'on_change'.encode('ascii')
 
 class LauncherConfig(Model):
     """Container class for storing configuration"""
@@ -39,7 +43,7 @@ class LauncherConfig(Model):
         super(LauncherConfig, self).__init__()
 
 
-class Settings(object):
+class Settings(EventDispatcher):
     """docstring for Settings"""
 
     # path to the registry entry which holds the users document path
@@ -55,8 +59,10 @@ class Settings(object):
         # get the basedir for config files. This has to be the same everytime
         self.config_path = os.path.join(self._get_launcher_default_basedir(), 'config.json')
 
-        # init LauncherConfig
+        # init LauncherConfig and bind to on change event
         self.launcher_config = LauncherConfig()
+        self.launcher_config.bind(on_change=self.on_launcher_config_change)
+        self.register_event_type(ON_CHANGE)
 
         # load config
         try:
@@ -172,3 +178,11 @@ class Settings(object):
     def set(self, key, value):
         """proxy method to the underlying LauncherConfig model"""
         self.launcher_config.set(key, value)
+        return self
+
+    def on_change(self, old_value, new_value):
+        Logger.debug('Settings: settings changed. New value is: {}'.format(new_value))
+
+    def on_launcher_config_change(self, launcher_config, old_value, new_value):
+        """refire the on_change event of the settings model"""
+        self.dispatch(ON_CHANGE, old_value, new_value)

@@ -91,11 +91,11 @@ class Controller(object):
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
         store = JsonStore(self.settings.config_path)
         self.settings.set_launcher_moddir(path)
-        store.save(self.settings.launcher_config)
-        self.settings.reinit()
+        #store.save(self.settings.launcher_config)
+        #self.settings.reinit()
         # Fixme: Workaround: resave the settings in case something went wrong
         # with reinit and the paths have changed again
-        store.save(self.settings.launcher_config)
+        #store.save(self.settings.launcher_config)
         self.view.ids.path_text_input.text = self.settings.get_launcher_moddir()
 
         if self.file_browser_popup:

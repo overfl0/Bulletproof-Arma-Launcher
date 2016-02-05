@@ -18,7 +18,6 @@ from kivy.event import EventDispatcher
 # kivys api only works with non unicode strings
 ON_CHANGE = 'on_change'.encode('ascii')
 
-
 class Model(EventDispatcher):
     """
     a simple model implementation to have a good separation of data storage
