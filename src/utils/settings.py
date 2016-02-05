@@ -44,7 +44,34 @@ class LauncherConfig(Model):
 
 
 class Settings(EventDispatcher):
-    """docstring for Settings"""
+    """
+    Settings class is a manager and validation layer to the underlying
+    LauncherConfig model which can be used to save user preferences.
+    In any case it is recommended to use the set_* and get_* methods defined
+    in this class in favour to setting values directly using the set method
+    of the LauncherConfig class.
+
+    For convinience, the Settings-Class proxies the set and get method of
+    the underlying Model and refires the on_change event.
+
+    Path definitions:
+        launcher_default_basedir -> this path must be CONSTANT, is build up
+            from the users document-root and the constant _LAUNCHER_DIR and is
+            NOT saved to disc
+
+        config_path -> launcher_default_basedir + "config.json"
+            place where the config gets stored
+
+        launcher_basedir -> can be set by user, and determines where stuff
+            regarding the launcher gets stored
+
+        launcher_moddir -> can be set by user, and determines where mods are
+            stored
+
+    """
+
+    # save automaticly to disc if changes to the settings are made
+    AUTO_SAVE_ON_CHANGE = True
 
     # path to the registry entry which holds the users document path
     _USER_DOCUMENT_PATH = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
@@ -77,39 +104,6 @@ class Settings(EventDispatcher):
 
         Logger.info('Settings: loaded args: ' + unicode(self.launcher_config.data))
 
-        self.reinit()
-
-    def reinit(self):
-        """recreate directories if something changed"""
-
-        launcher_basedir = self.get_launcher_basedir()
-        launcher_moddir = self.get_launcher_moddir()
-
-        Logger.info('Settings: Ensuring basedir exists - {}'.format(launcher_basedir))
-        try:
-            mkdir_p(launcher_basedir)
-        except OSError:
-            fallback_basedir = self._get_launcher_default_basedir()
-            # TODO: Show a regular message box, not a win32 message box
-            MessageBox('Could not create directory {}\nFalling back to {}'.format(
-                       launcher_basedir, fallback_basedir), 'Error while setting launcher directory')
-            launcher_basedir = fallback_basedir
-
-        Logger.info('Settings: Ensuring mod dir exists - {}'.format(launcher_moddir))
-        try:
-            mkdir_p(launcher_moddir)
-        except OSError:
-            fallback_moddir = self._get_launcher_default_basedir()
-            # TODO: Show a regular message box, not a win32 message box
-            MessageBox('Could not create directory {}\nFalling back to {}'.format(
-                       launcher_moddir, fallback_moddir), 'Error while setting mod directory')
-            launcher_moddir = fallback_moddir
-
-        self.set_launcher_basedir(launcher_basedir)
-        self.set_launcher_moddir(launcher_moddir)
-        Logger.info('Settings: Launcher will use basedir: ' + self.get_launcher_basedir())
-        Logger.info('Settings: Launcher will use moddir: ' + self.get_launcher_moddir())
-
     def _get_launcher_default_basedir(self):
         """Retrieve users document folder from the registry"""
         user_docs = Registry.ReadValueCurrentUser(Settings._USER_DOCUMENT_PATH, 'Personal')
@@ -124,8 +118,22 @@ class Settings(EventDispatcher):
 
         return basedir
 
-    def set_launcher_basedir(self, value):
-        return self.launcher_config.set('launcher_basedir', value)
+    def set_launcher_basedir(self, launcher_basedir):
+        """
+        sets the user defined launcher_basedir and ensures it is created. If
+        something goes wrong nothing is done
+        """
+        Logger.info('Settings: Ensuring basedir exists - {}'.format(launcher_basedir))
+        try:
+            mkdir_p(launcher_basedir)
+        except OSError:
+            # TODO: Show a regular message box, not a win32 message box
+            MessageBox('Could not create directory {}\n Setting will stay on {}'.format(
+                        launcher_basedir, self.get_launcher_basedir()),
+                    'Error while setting launcher directory')
+            return self
+
+        return self.launcher_config.set('launcher_basedir', launcher_basedir)
 
     def get_launcher_moddir(self):
         """Try to get the mod directory from the settings.
@@ -145,8 +153,22 @@ class Settings(EventDispatcher):
 
         return moddir
 
-    def set_launcher_moddir(self, value):
-        return self.launcher_config.set('launcher_moddir', value)
+    def set_launcher_moddir(self, launcher_moddir):
+        """
+        sets the user defined launcher_basedir and ensures it is created. If
+        something goes wrong nothing is done
+        """
+        Logger.info('Settings: Ensuring mod dir exists - {}'.format(launcher_moddir))
+        try:
+            mkdir_p(launcher_moddir)
+        except OSError:
+            fallback_moddir = self.get_launcher_moddir()
+            # TODO: Show a regular message box, not a win32 message box
+            MessageBox('Could not create directory {}\nFalling back to {}'.format(
+                       launcher_moddir, fallback_moddir), 'Error while setting mod directory')
+            return self
+
+        return self.launcher_config.set('launcher_moddir', launcher_moddir)
 
     def set_mod_data_cache(self, value):
         self.set('mod_data_cache', value)
@@ -169,6 +191,7 @@ class Settings(EventDispatcher):
         for f in self.launcher_config.fields:
             value = getattr(settings_data, f['name'], None)
             if value is not None:
+                # TODO: suspend events here
                 self.launcher_config.set(f['name'], value)
 
     def get(self, key):
@@ -180,9 +203,9 @@ class Settings(EventDispatcher):
         self.launcher_config.set(key, value)
         return self
 
-    def on_change(self, old_value, new_value):
+    def on_change(self, key, old_value, new_value):
         Logger.debug('Settings: settings changed. New value is: {}'.format(new_value))
 
-    def on_launcher_config_change(self, launcher_config, old_value, new_value):
+    def on_launcher_config_change(self, launcher_config, key, old_value, new_value):
         """refire the on_change event of the settings model"""
-        self.dispatch(ON_CHANGE, old_value, new_value)
+        self.dispatch(ON_CHANGE, key, old_value, new_value)

@@ -53,4 +53,4 @@ class ModelTest(unittest.TestCase):
         Clock.tick()
         Clock.tick()
         Clock.tick()
-        m.assert_called_once_with(e, False, True)
+        m.assert_called_once_with(e, 'self_update', False, True)

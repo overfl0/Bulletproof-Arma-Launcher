@@ -65,7 +65,7 @@ class Model(EventDispatcher):
         old_value = self.data[key]
         if old_value != value:
             self.data[key] = value
-            self.dispatch(ON_CHANGE, old_value, value)
+            self.dispatch(ON_CHANGE, key, old_value, value)
 
         return self
 
