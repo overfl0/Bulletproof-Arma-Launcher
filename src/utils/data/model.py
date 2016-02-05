@@ -42,7 +42,8 @@ class Model(EventDispatcher):
         is invoked if present and has to the new value which then gets saved
         To cancel the set method return a ModelInterceptorError
 
-        The get interceptor is analog.
+        The get interceptor is analog, except that you should not use
+        ModelInterceptorError as return value
 
     i.e.:
         fields: [
@@ -92,6 +93,8 @@ class Model(EventDispatcher):
             interceptor = getattr(self, 'set_' + key)
         if hasattr(interceptor, '__call__'):
             value = interceptor(value)
+            if isinstance(value, ModelInterceptorError):
+                return self
 
         old_value = self.data[key]
         if old_value != value:

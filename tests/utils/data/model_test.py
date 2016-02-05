@@ -16,7 +16,7 @@ from mock import patch, Mock, MagicMock
 from kivy.clock import Clock
 
 from nose.plugins.attrib import attr
-from utils.data.model import Model
+from utils.data.model import Model, ModelInterceptorError
 
 class ExampleModel(Model):
 
@@ -37,6 +37,9 @@ class ExampleModel(Model):
     def get_launcher_moddir(self, value):
         return value.upper()
 
+    def set_mod_data_cache(self, value):
+        return ModelInterceptorError()
+
 class ModelTest(unittest.TestCase):
 
     def setUp(self):
@@ -52,6 +55,9 @@ class ModelTest(unittest.TestCase):
 
         e = e.set('launcher_moddir', 'somethingelse')
         self.assertEqual(e.get('launcher_moddir'), 'SOMETHINGELSE')
+
+        e = e.set('mod_data_cache', 'somethingelse')
+        self.assertEqual(e.get('mod_data_cache'), None)
 
     def test_models_set_method_is_returning_model_itself(self):
         e = ExampleModel()
