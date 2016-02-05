@@ -31,6 +31,12 @@ class ExampleModel(Model):
     def __init__(self):
         super(ExampleModel, self).__init__()
 
+    def set_launcher_basedir(self, value):
+        return value.upper()
+
+    def get_launcher_moddir(self, value):
+        return value.upper()
+
 class ModelTest(unittest.TestCase):
 
     def setUp(self):
@@ -39,10 +45,19 @@ class ModelTest(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_model_should_call_interceptors(self):
+        e = ExampleModel()
+        e = e.set('launcher_basedir', 'something')
+        self.assertEqual(e.get('launcher_basedir'), 'SOMETHING')
+
+        e = e.set('launcher_moddir', 'somethingelse')
+        self.assertEqual(e.get('launcher_moddir'), 'SOMETHINGELSE')
+
     def test_models_set_method_is_returning_model_itself(self):
         e = ExampleModel()
         e = e.set('self_update', True)
         self.assertIsInstance(e, ExampleModel)
+        self.assertIn('self_update', e.data)
 
     def test_model_should_fire_change_event(self):
         e = ExampleModel()

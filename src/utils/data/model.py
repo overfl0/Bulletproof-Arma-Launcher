@@ -18,13 +18,31 @@ from kivy.event import EventDispatcher
 # kivys api only works with non unicode strings
 ON_CHANGE = 'on_change'.encode('ascii')
 
+class ModelInterceptorError:
+    pass
+
 class Model(EventDispatcher):
     """
     a simple model implementation to have a good separation of data storage
     logic. Do not use this class directly. You should inherit from it
 
     Every child class has to specify a class variable called "fields". This
-    should be an array of field names
+    should be an array of field configurations.
+    These can have the following keys:
+        name - the name of the field used for the get and set methods
+        defaultValue - a value which is set on the instanciation of the model
+        persist - boolean flag, whether the field should be persisted or not
+                  defaults to true
+
+    Setter/Getter-Interceptors:
+        Given a field with the name "attribute_one", you are able to define
+        the methods called set_attribute_one(value) and get_attribute_one().
+
+        In case model.set('attribute_one', new_value) is called, set_attribute_one
+        is invoked if present and has to the new value which then gets saved
+        To cancel the set method return a ModelInterceptorError
+
+        The get interceptor is analog.
 
     i.e.:
         fields: [
@@ -49,7 +67,14 @@ class Model(EventDispatcher):
         """
         get a data value from the model instance
         """
-        return self.data[key]
+        value = self.data[key]
+        interceptor = None
+        if hasattr(self, 'get_' + key):
+            interceptor = getattr(self, 'get_' + key)
+        if hasattr(interceptor, '__call__'):
+            value = interceptor(value)
+
+        return value
 
     def set(self, key, value):
         """
@@ -62,6 +87,12 @@ class Model(EventDispatcher):
 
         on_change is only getting fired if value really changed
         """
+        interceptor = None
+        if hasattr(self, 'set_' + key):
+            interceptor = getattr(self, 'set_' + key)
+        if hasattr(interceptor, '__call__'):
+            value = interceptor(value)
+
         old_value = self.data[key]
         if old_value != value:
             self.data[key] = value
