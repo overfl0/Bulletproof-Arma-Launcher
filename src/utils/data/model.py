@@ -12,8 +12,14 @@
 
 from __future__ import unicode_literals
 
+from kivy.event import EventDispatcher
 
-class Model(object):
+# str variant of the unicode string on_change
+# kivys api only works with non unicode strings
+ON_CHANGE = 'on_change'.encode('ascii')
+
+
+class Model(EventDispatcher):
     """
     a simple model implementation to have a good separation of data storage
     logic. Do not use this class directly. You should inherit from it
@@ -33,6 +39,7 @@ class Model(object):
     def __init__(self):
         super(Model, self).__init__()
 
+        self.register_event_type(ON_CHANGE)
         self.data = {}
 
         # init data fields
@@ -49,4 +56,12 @@ class Model(object):
         """
         set data
         """
-        self.data[key] = value
+        old_value = self.data[key]
+        if old_value != value:
+            self.data[key] = value
+            self.dispatch(ON_CHANGE, old_value, value)
+
+        return self
+
+    def on_change(self, *args):
+        pass
