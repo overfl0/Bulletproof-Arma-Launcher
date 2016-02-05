@@ -31,9 +31,15 @@ ON_CHANGE = 'on_change'.encode('ascii')
 class LauncherConfig(Model):
     """Container class for storing configuration"""
 
-    fields = [
-        {'name': 'use_exception_popup', 'defaultValue': False},
-        {'name': 'self_update', 'defaultValue': False},
+    fields = [{
+        'name': 'use_exception_popup',
+        'defaultValue': False,
+        'persist': False
+    }, {
+        'name': 'self_update',
+        'defaultValue': False,
+        'persist': False
+    },
         {'name': 'launcher_basedir'},
         {'name': 'launcher_moddir'},
         {'name': 'mod_data_cache', 'defaultValue': None}
@@ -204,7 +210,12 @@ class Settings(EventDispatcher):
         return self
 
     def on_change(self, key, old_value, new_value):
-        Logger.debug('Settings: settings changed. New value is: {}'.format(new_value))
+        Logger.debug('Settings: settings changed. New value for key "{}" is: {}'.format(key, new_value))
+        
+        if self.AUTO_SAVE_ON_CHANGE:
+            Logger.debug('Settings: saving config to: {}'.format(self.config_path))
+            store = JsonStore(self.config_path)
+            store.save(self.launcher_config)
 
     def on_launcher_config_change(self, launcher_config, key, old_value, new_value):
         """refire the on_change event of the settings model"""
