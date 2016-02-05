@@ -55,6 +55,13 @@ class Model(EventDispatcher):
     def set(self, key, value):
         """
         set data
+
+        fires the on_change event with the following args
+            self - the object
+            old_value
+            new_value
+
+        on_change is only getting fired if value really changed
         """
         old_value = self.data[key]
         if old_value != value:
