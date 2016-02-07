@@ -247,24 +247,23 @@ def _sync_all(message_queue, launcher_moddir, mods):
     # WARNING: This methods gets called in a different process
 
     for m in mods:
-        if m.up_to_date:
-            Logger.info('Not downloading mod {} because it is up to date'.format(m.foldername))
-            continue
-
         m.clientlocation = launcher_moddir  # This change does NOT persist in the main launcher (would be nice :()
 
-        syncer = TorrentSyncer(message_queue, m)
-        sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
+    syncer = TorrentSyncer(message_queue, mods)
+    sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
-        if sync_ok is False:  # Alpha undocumented feature: stop processing on a reject()
-            return
+    if sync_ok is False:
+        return
 
-        # Will only fire up if mod == TFR
-        if _tfr_post_download_hook(message_queue, m) == False:
-            return  # Alpha undocumented feature: stop processing on a reject()
+    # Perform post-download hooks for updated mods
+    for m in mods:
+        if not m.up_to_date:
+            # Will only fire up if mod == TFR
+            if _tfr_post_download_hook(message_queue, m) == False:
+                return  # Alpha undocumented feature: stop processing on a reject()
 
-        message_queue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
-                                'workaround_finished': m.foldername}, 1.0)
+            message_queue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
+                                    'workaround_finished': m.foldername}, 1.0)
 
     message_queue.resolve({'msg': 'Downloading mods finished.'})
 
