@@ -12,10 +12,9 @@
 
 import unittest
 
-from mock import patch, Mock, MagicMock
+from mock import patch, MagicMock
 from kivy.clock import Clock
 
-from nose.plugins.attrib import attr
 from utils.data.model import Model, ModelInterceptorError
 
 class ExampleModel(Model):
@@ -31,13 +30,13 @@ class ExampleModel(Model):
     def __init__(self):
         super(ExampleModel, self).__init__()
 
-    def set_launcher_basedir(self, value):
+    def _set_launcher_basedir(self, value):
         return value.upper()
 
-    def get_launcher_moddir(self, value):
+    def _get_launcher_moddir(self, value):
         return value.upper()
 
-    def set_mod_data_cache(self, value):
+    def _set_mod_data_cache(self, value):
         return ModelInterceptorError()
 
 class ModelTest(unittest.TestCase):

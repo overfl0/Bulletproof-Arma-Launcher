@@ -42,10 +42,10 @@ class Model(EventDispatcher):
 
     Setter/Getter-Interceptors:
         Given a field with the name "attribute_one", you are able to define
-        the methods called set_attribute_one(value) and get_attribute_one().
+        the methods called _set_attribute_one(value) and _get_attribute_one().
 
-        In case model.set('attribute_one', new_value) is called, set_attribute_one
-        is invoked if present and has to the new value which then gets saved
+        In case model.set('attribute_one', new_value) is called, _set_attribute_one
+        is invoked if present and has to return the new value which then gets saved.
         To cancel the set method return a ModelInterceptorError
 
         The get interceptor is analog, except that you should not use
@@ -76,8 +76,8 @@ class Model(EventDispatcher):
         """
         value = self.data[key]
         interceptor = None
-        if hasattr(self, 'get_' + key):
-            interceptor = getattr(self, 'get_' + key)
+        if hasattr(self, '_get_' + key):
+            interceptor = getattr(self, '_get_' + key)
         if hasattr(interceptor, '__call__'):
             value = interceptor(value)
 
@@ -95,8 +95,8 @@ class Model(EventDispatcher):
         on_change is only getting fired if value really changed
         """
         interceptor = None
-        if hasattr(self, 'set_' + key):
-            interceptor = getattr(self, 'set_' + key)
+        if hasattr(self, '_set_' + key):
+            interceptor = getattr(self, '_set_' + key)
         if hasattr(interceptor, '__call__'):
             value = interceptor(value)
             if isinstance(value, ModelInterceptorError):
