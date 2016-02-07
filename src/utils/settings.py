@@ -37,7 +37,12 @@ class Settings(Model):
     model which can be used to save user preferences.
 
     This class defines get and set interceptors which should NOT Be
-    called from the outside
+    called from the outside.
+
+    Autosaving:
+        On default, the settins-model saves it self on change. To
+        disable this behaviour, call suspend_autosave(). To reenable
+        the Autosaving call resume_autosave()
 
     Path definitions:
         launcher_default_basedir -> this path must be CONSTANT, is build up
