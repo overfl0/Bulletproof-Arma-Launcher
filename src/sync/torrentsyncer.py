@@ -207,6 +207,7 @@ class TorrentSyncer(object):
         resume_data = libtorrent.bencode(torrent_handle.write_resume_data())
 
         metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+        metadata_file.read_data(ignore_open_errors=False)
         metadata_file.set_torrent_resume_data(resume_data)
         metadata_file.write_data()
 
