@@ -165,15 +165,25 @@ class TorrentSyncer(object):
 
     def pause_all_torrents(self):
         for mod in self.mods:
-                if not mod.torrent_handle.is_valid():
-                    continue
+            if not mod.torrent_handle.is_valid():
+                continue
 
-                mod.torrent_handle.auto_managed(False)
-                mod.torrent_handle.pause()
+            mod.torrent_handle.auto_managed(False)
+            mod.torrent_handle.pause()
+
+    def pause_torrent(self, mod):
+        if mod.torrent_handle.is_valid():
+            mod.torrent_handle.auto_managed(False)
+            mod.torrent_handle.pause()
+
+    def resume_torrent(self, mod):
+        if mod.torrent_handle.is_valid():
+            mod.torrent_handle.auto_managed(True)
+            mod.torrent_handle.resume()
 
     def syncing_finished(self):
         for mod in self.mods:
-            print "Checking mod {}".format(mod.foldername)
+            # print "Checking mod {}".format(mod.foldername)
             # import IPython; IPython.embed()
             # If a handle is not valid (torrent error) we skip it.
             # This contributes to finished torrents.
@@ -186,11 +196,11 @@ class TorrentSyncer(object):
                 continue
 
             if not mod.finished_hook_ran:
-                print "mod {} not mod.finished_hook_ran".format(mod.foldername)
+                # print "mod {} not mod.finished_hook_ran".format(mod.foldername)
                 return False
 
             if not mod.torrent_handle.is_paused():
-                print "mod {} not paused".format(mod.foldername)
+                # print "mod {} not paused".format(mod.foldername)
                 return False
 
         return True
@@ -241,17 +251,13 @@ class TorrentSyncer(object):
                 if self.force_termination:
                     if not mod.torrent_handle.is_paused():  # Don't spam logs
                         Logger.info('Sync: Pausing torrent {} for termination'.format(mod.foldername))
-
-                    mod.torrent_handle.auto_managed(False)
-                    mod.torrent_handle.pause()
+                    self.pause_torrent(mod)
 
                 # If state (2). Request pausing the torrent to synchronize data to disk
                 if not mod.finished_hook_ran and mod.torrent_handle.is_seed():
                     if not mod.torrent_handle.is_paused():
                         Logger.info('Sync: Pausing torrent {} for disk syncing'.format(mod.foldername))
-
-                    mod.torrent_handle.auto_managed(False)
-                    mod.torrent_handle.pause()
+                    self.pause_torrent(mod)
 
                 # If state (3). Run the hooks and maybe start waiting-seed
                 if not mod.finished_hook_ran and mod.torrent_handle.is_paused():
@@ -269,9 +275,7 @@ class TorrentSyncer(object):
                     # only torrent being synced
                     if not self.force_termination and len(self.mods) != 1:
                         Logger.info('Sync: Seeding {} again until all downloads are done.'.format(mod.foldername))
-
-                        mod.torrent_handle.auto_managed(True)
-                        mod.torrent_handle.resume()
+                        self.resume_torrent(mod)
 
             # If all are in state (4)
             if self.all_torrents_ran_finished_hooks():
@@ -366,7 +370,7 @@ if __name__ == '__main__':
     mod1 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@CBA_A3-2015-12-01_1449001363.torrent')
     mod2 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@TacBF-2015-12-31_1451563576.torrent')
     mod3 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@task_force_radio-2015-10-12_1444682049.torrent')
-    mods = [mod2, mod3]
+    mods = [mod1, mod2, mod3]
     # mod = mod_helper('')
     queue = DummyQueue()
 
