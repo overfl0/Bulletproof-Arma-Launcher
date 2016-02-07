@@ -74,6 +74,12 @@ class Settings(Model):
             'name': 'launcher_moddir'
         }, {
             'name': 'mod_data_cache', 'defaultValue': None
+        }, {
+            'name': 'max_upload_speed', 'defaultValue': 0
+        }, {
+            'name': 'max_download_speed', 'defaultValue': 0
+        }, {
+            'name': 'seeding_type', 'defaultValue': 'never'
         }
     ]
 
@@ -115,7 +121,7 @@ class Settings(Model):
 
         return path
 
-    def get_launcher_basedir(self, basedir):
+    def _get_launcher_basedir(self, basedir):
         """interceptor which returnbs the launcher default basedir,
         if the basedir was not user set"""
         if not basedir:
@@ -123,7 +129,7 @@ class Settings(Model):
         else:
             return basedir
 
-    def set_launcher_basedir(self, launcher_basedir):
+    def _set_launcher_basedir(self, launcher_basedir):
         """
         interceptor for launcher_basedir
         sets the user defined launcher_basedir and ensures it is created. If
@@ -141,7 +147,7 @@ class Settings(Model):
 
         return launcher_basedir
 
-    def get_launcher_moddir(self, moddir):
+    def _get_launcher_moddir(self, moddir):
         """
         interceptor for launcher_moddir
         Try to get the mod directory from the settings.
@@ -159,7 +165,7 @@ class Settings(Model):
 
         return moddir
 
-    def set_launcher_moddir(self, launcher_moddir):
+    def _set_launcher_moddir(self, launcher_moddir):
         """
         interceptor for launcher_moddir
         sets the user defined launcher_moddir and ensures it is created. If

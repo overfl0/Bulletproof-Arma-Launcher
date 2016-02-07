@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+"""The NumberInput field"""
 import re
 
 from kivy.logger import Logger
@@ -21,7 +21,23 @@ class NumberInput(TextInput):
 
     def insert_text(self, substring, from_undo=False):
         if self.pat.match(substring):
-            Logger.debug('Matched substring: {}'.format(substring))
+            Logger.debug('Matched substring: {} :: Text is {}'.format(substring, self.text))
             return super(NumberInput, self).insert_text(substring, from_undo=from_undo)
         else:
             return super(NumberInput, self).insert_text('', from_undo=from_undo)
+
+    # def on_focus(self, inputfield, focus):
+    #     """property handler"""
+    #     if self.text == '' and not focus:
+    #         inputfield.text = "0"
+
+    def get_value(self):
+        """get the text as typed number, in this case int"""
+        if self.text == '':
+            return 0
+        else:
+            try:
+                return int(self.text)
+            except ValueError as e:
+                Logger.warn('NumberImput: Could not convert text input. Returning 0')
+                return 0

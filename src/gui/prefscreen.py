@@ -16,13 +16,13 @@ import os
 
 import kivy
 import kivy.app
-from view.messagebox import MessageBox
 
 from kivy.clock import Clock
-
 from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
+from kivy.uix.behaviors import ToggleButtonBehavior
 
+from view.messagebox import MessageBox
 from view.filechooser import FileChooser
 from utils.data.jsonstore import JsonStore
 from utils.paths import is_dir_writable
@@ -52,7 +52,34 @@ class Controller(object):
 
     def check_childs(self, dt):
         inputfield = self.view.ids.path_text_input
+        max_download_speed_input = self.view.ids.max_download_speed_input
+        max_upload_speed_input = self.view.ids.max_upload_speed_input
+        seedingtype_radios = [
+            self.view.ids.sbox_while_not_playing,
+            self.view.ids.sbox_never,
+            self.view.ids.sbox_everytime
+        ]
+
+
+        # init path selection
         inputfield.text = self.settings.get('launcher_moddir')
+
+        # init upload download inputs
+        max_upload_speed_input.text = str(self.settings.get('max_upload_speed'))
+        max_upload_speed_input.bind(
+            focus=self.on_max_upload_speed_input_focus)
+        max_download_speed_input.text = str(self.settings.get('max_download_speed'))
+        max_download_speed_input.bind(
+            focus=self.on_max_download_speed_input_focus)
+
+
+        # init seedingtype
+        Logger.debug('PrefScreen: got radio buttons: {}'.format(seedingtype_radios))
+        for radio in seedingtype_radios:
+            saved = self.settings.get('seeding_type')
+            if radio.seeding_type == saved:
+                radio.active = True
+            radio.bind(active=self.on_radio_button_active)
 
         return False
 
@@ -97,3 +124,17 @@ class Controller(object):
 
         if self.file_browser_popup:
             self.file_browser_popup.dismiss()
+
+    def on_max_download_speed_input_focus(self, numberinput, focus):
+        if not focus:
+            Logger.debug('max_download_speed_input unfocused')
+            self.settings.set('max_download_speed', numberinput.get_value())
+
+    def on_max_upload_speed_input_focus(self, numberinput, focus):
+        if not focus:
+            Logger.debug('max_upload_speed_input unfocused')
+            self.settings.set('max_upload_speed', numberinput.get_value())
+
+    def on_radio_button_active(self, radio_button, active):
+        if active:
+            self.settings.set('seeding_type', radio_button.seeding_type)
