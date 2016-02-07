@@ -9,6 +9,9 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+"""
+Module to hold launcher specific model stuff
+"""
 
 from __future__ import unicode_literals
 
@@ -20,7 +23,7 @@ from kivy.event import EventDispatcher
 from third_party.arma import Arma, SoftwareNotInstalled
 from utils.critical_messagebox import MessageBox
 from utils.data.jsonstore import JsonStore
-from utils.data.model import Model
+from utils.data.model import ModelInterceptorError, Model
 from utils.paths import mkdir_p
 from utils.registry import Registry
 
@@ -28,37 +31,13 @@ from utils.registry import Registry
 # kivys api only works with non unicode strings
 ON_CHANGE = 'on_change'.encode('ascii')
 
-class LauncherConfig(Model):
-    """Container class for storing configuration"""
-
-    fields = [{
-        'name': 'use_exception_popup',
-        'defaultValue': False,
-        'persist': False
-    }, {
-        'name': 'self_update',
-        'defaultValue': False,
-        'persist': False
-    },
-        {'name': 'launcher_basedir'},
-        {'name': 'launcher_moddir'},
-        {'name': 'mod_data_cache', 'defaultValue': None}
-    ]
-
-    def __init__(self):
-        super(LauncherConfig, self).__init__()
-
-
-class Settings(EventDispatcher):
+class Settings(Model):
     """
     Settings class is a manager and validation layer to the underlying
-    LauncherConfig model which can be used to save user preferences.
-    In any case it is recommended to use the set_* and get_* methods defined
-    in this class in favour to setting values directly using the set method
-    of the LauncherConfig class.
+    model which can be used to save user preferences.
 
-    For convinience, the Settings-Class proxies the set and get method of
-    the underlying Model and refires the on_change event.
+    This class defines get and set interceptors which should NOT Be
+    called from the outside
 
     Path definitions:
         launcher_default_basedir -> this path must be CONSTANT, is build up
@@ -75,9 +54,23 @@ class Settings(EventDispatcher):
             stored
 
     """
-
-    # save automaticly to disc if changes to the settings are made
-    AUTO_SAVE_ON_CHANGE = True
+    fields = [
+        {
+            'name': 'use_exception_popup',
+            'defaultValue': False,
+            'persist': False
+        }, {
+            'name': 'self_update',
+            'defaultValue': False,
+            'persist': False
+        }, {
+            'name': 'launcher_basedir'
+        }, {
+            'name': 'launcher_moddir'
+        }, {
+            'name': 'mod_data_cache', 'defaultValue': None
+        }
+    ]
 
     # path to the registry entry which holds the users document path
     _USER_DOCUMENT_PATH = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
@@ -88,19 +81,18 @@ class Settings(EventDispatcher):
 
     def __init__(self, argv):
         super(Settings, self).__init__()
+        # save automaticly to disc if changes to the settings are made
+        self.auto_save_on_change = True
 
         # get the basedir for config files. This has to be the same everytime
-        self.config_path = os.path.join(self._get_launcher_default_basedir(), 'config.json')
-
-        # init LauncherConfig and bind to on change event
-        self.launcher_config = LauncherConfig()
-        self.launcher_config.bind(on_change=self.on_launcher_config_change)
-        self.register_event_type(ON_CHANGE)
+        self.config_path = os.path.join(self.launcher_default_basedir(), 'config.json')
 
         # load config
         try:
             store = JsonStore(self.config_path)
-            self.launcher_config = store.load(self.launcher_config, update=True)
+            # this is ugly self modification, but i dont want to introduce
+            # a settingsmanager
+            store.load(self, update=True)
         except:
             Logger.warn('Settings: Launcher config could not be loaded')
 
@@ -108,24 +100,27 @@ class Settings(EventDispatcher):
         self.parser = None
         self.parse_args(argv)
 
-        Logger.info('Settings: loaded args: ' + unicode(self.launcher_config.data))
+        Logger.info('Settings: loaded args: ' + unicode(self.data))
 
-    def _get_launcher_default_basedir(self):
+    @classmethod
+    def launcher_default_basedir(cls):
         """Retrieve users document folder from the registry"""
-        user_docs = Registry.ReadValueCurrentUser(Settings._USER_DOCUMENT_PATH, 'Personal')
-        path = os.path.join(user_docs, Settings._LAUNCHER_DIR)
+        user_docs = Registry.ReadValueCurrentUser(cls._USER_DOCUMENT_PATH, 'Personal')
+        path = os.path.join(user_docs, cls._LAUNCHER_DIR)
 
         return path
 
-    def get_launcher_basedir(self):
-        basedir = self.launcher_config.get('launcher_basedir')
+    def get_launcher_basedir(self, basedir):
+        """interceptor which returnbs the launcher default basedir,
+        if the basedir was not user set"""
         if not basedir:
-            basedir = self._get_launcher_default_basedir()
-
-        return basedir
+            return self.launcher_default_basedir()
+        else:
+            return basedir
 
     def set_launcher_basedir(self, launcher_basedir):
         """
+        interceptor for launcher_basedir
         sets the user defined launcher_basedir and ensures it is created. If
         something goes wrong nothing is done
         """
@@ -135,19 +130,19 @@ class Settings(EventDispatcher):
         except OSError:
             # TODO: Show a regular message box, not a win32 message box
             MessageBox('Could not create directory {}\n Setting will stay on {}'.format(
-                        launcher_basedir, self.get_launcher_basedir()),
-                    'Error while setting launcher directory')
-            return self
+                launcher_basedir, self.get('launcher_basedir')),
+                       'Error while setting launcher directory')
+            return ModelInterceptorError()
 
-        return self.launcher_config.set('launcher_basedir', launcher_basedir)
+        return launcher_basedir
 
-    def get_launcher_moddir(self):
-        """Try to get the mod directory from the settings.
-        If that fails, use "Arma 3\Tactical Battlefield" directory.
-        If that also fails (because there is no Arma, for example) use basedir\mods.
+    def get_launcher_moddir(self, moddir):
         """
-
-        moddir = self.launcher_config.get('launcher_moddir')
+        interceptor for launcher_moddir
+        Try to get the mod directory from the settings.
+        If that fails, use "Arma 3/Tactical Battlefield" directory.
+        If that also fails (because there is no Arma, for example) use basedir/mods.
+        """
         try:
             if not moddir:
                 moddir = os.path.join(Arma.get_installation_path(), 'Tactical Battlefield')
@@ -155,34 +150,38 @@ class Settings(EventDispatcher):
             pass
 
         if not moddir:
-            moddir = os.path.join(self.get_launcher_basedir(), 'mods')
+            moddir = os.path.join(self.get('launcher_basedir'), 'mods')
 
         return moddir
 
     def set_launcher_moddir(self, launcher_moddir):
         """
-        sets the user defined launcher_basedir and ensures it is created. If
+        interceptor for launcher_moddir
+        sets the user defined launcher_moddir and ensures it is created. If
         something goes wrong nothing is done
         """
         Logger.info('Settings: Ensuring mod dir exists - {}'.format(launcher_moddir))
         try:
             mkdir_p(launcher_moddir)
         except OSError:
-            fallback_moddir = self.get_launcher_moddir()
+            fallback_moddir = self.get('launcher_moddir')
             # TODO: Show a regular message box, not a win32 message box
             MessageBox('Could not create directory {}\nFalling back to {}'.format(
-                       launcher_moddir, fallback_moddir), 'Error while setting mod directory')
-            return self
+                launcher_moddir, fallback_moddir), 'Error while setting mod directory')
+            return ModelInterceptorError()
 
-        return self.launcher_config.set('launcher_moddir', launcher_moddir)
+        return launcher_moddir
 
-    def set_mod_data_cache(self, value):
-        self.set('mod_data_cache', value)
+    def suspend_autosave(self):
+        """disables the auto save mechanic of the model"""
+        self.auto_save_on_change = False
 
-    def get_mod_data_cache(self):
-        return self.launcher_config.get('mod_data_cache')
+    def resume_autosave(self):
+        """enables the auto save mechanic of the model"""
+        self.auto_save_on_change = True
 
     def parse_args(self, argv):
+        """parse arguments from the commandline and write them into the model"""
         self.parser = argparse.ArgumentParser()
 
         self.parser.add_argument("-s", "--self-update",
@@ -194,29 +193,21 @@ class Settings(EventDispatcher):
 
         settings_data = self.parser.parse_args(argv)
 
-        for f in self.launcher_config.fields:
-            value = getattr(settings_data, f['name'], None)
+        self.suspend_autosave()
+        for field in self.fields:
+            value = getattr(settings_data, field['name'], None)
             if value is not None:
-                # TODO: suspend events here
-                self.launcher_config.set(f['name'], value)
-
-    def get(self, key):
-        """proxy method to the underlying LauncherConfig model"""
-        return self.launcher_config.get(key)
-
-    def set(self, key, value):
-        """proxy method to the underlying LauncherConfig model"""
-        self.launcher_config.set(key, value)
-        return self
+                self.set(field['name'], value)
+        self.resume_autosave()
 
     def on_change(self, key, old_value, new_value):
-        Logger.debug('Settings: settings changed. New value for key "{}" is: {}'.format(key, new_value))
-        
-        if self.AUTO_SAVE_ON_CHANGE:
+        """
+        overwrite on_change method of Model
+        """
+        Logger.debug(
+            'Settings: settings changed. New value for key "{}" is: {}'.format(key, new_value))
+
+        if self.auto_save_on_change:
             Logger.debug('Settings: saving config to: {}'.format(self.config_path))
             store = JsonStore(self.config_path)
-            store.save(self.launcher_config)
-
-    def on_launcher_config_change(self, launcher_config, key, old_value, new_value):
-        """refire the on_change event of the settings model"""
-        self.dispatch(ON_CHANGE, key, old_value, new_value)
+            store.save(self)

@@ -9,6 +9,9 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+"""
+Module implementing a simple model
+"""
 
 from __future__ import unicode_literals
 
@@ -18,7 +21,10 @@ from kivy.event import EventDispatcher
 # kivys api only works with non unicode strings
 ON_CHANGE = 'on_change'.encode('ascii')
 
-class ModelInterceptorError:
+class ModelInterceptorError(object):
+    """
+    Error class used to cancel from an interceptor
+    """
     pass
 
 class Model(EventDispatcher):

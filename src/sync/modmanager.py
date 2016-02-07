@@ -300,13 +300,13 @@ class ModManager(object):
         return self.para
 
     def prepare_and_check(self, data):
-        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get_launcher_moddir(), data), 'checkmods')
+        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get('launcher_moddir'), data), 'checkmods')
         self.para.then(self.on_prepare_and_check_resolve, None, None)
         self.para.run()
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_protected_call, (_sync_all, self.settings.get_launcher_moddir(), self.mods), 'sync')
+        self.sync_para = Para(_protected_call, (_sync_all, self.settings.get('launcher_moddir'), self.mods), 'sync')
         self.sync_para.then(None, None, self.on_sync_all_progress)
         self.sync_para.run()
         return self.sync_para

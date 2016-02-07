@@ -52,12 +52,12 @@ class Controller(object):
 
     def check_childs(self, dt):
         inputfield = self.view.ids.path_text_input
-        inputfield.text = self.settings.get_launcher_moddir()
+        inputfield.text = self.settings.get('launcher_moddir')
 
         return False
 
     def on_choose_path_button_release(self, btn):
-        path = self.settings.get_launcher_moddir()
+        path = self.settings.get('launcher_moddir')
 
         Logger.info('opening filechooser with path: ' + path)
 
@@ -91,9 +91,9 @@ class Controller(object):
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
 
         # this will save automaticly
-        self.settings.set_launcher_moddir(path)
-        
-        self.view.ids.path_text_input.text = self.settings.get_launcher_moddir()
+        self.settings.set('launcher_moddir', path)
+
+        self.view.ids.path_text_input.text = self.settings.get('launcher_moddir')
 
         if self.file_browser_popup:
             self.file_browser_popup.dismiss()
