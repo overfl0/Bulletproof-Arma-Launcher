@@ -234,7 +234,6 @@ class TorrentSyncer(object):
                                              .format(mod.foldername)})
             return False
         else:
-            metadata_file.set_version(mod.version)
             metadata_file.set_dirty(False)
             metadata_file.write_data()
 

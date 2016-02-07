@@ -152,11 +152,8 @@ def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
         # Keep only the mods with names starting with any of the giver filters
         mod_list = [mod for mod in mod_list if any(mod.name.startswith(prefix) for prefix in mods_filter)]
 
-    # check if any oth the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
     for m in mod_list:
-        # TODO: Change this to a static function
-        syncer = TorrentSyncer(messagequeue, m)
         m.up_to_date = torrent_utils.is_complete_quick(m)
 
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list})
@@ -248,11 +245,6 @@ def _tfr_post_download_hook(message_queue, mod):
 def _sync_all(message_queue, launcher_moddir, mods):
     """Run syncers for all the mods sequentially and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
-    # debussy_mod = Mod(
-    #     foldername='@debussybattle',  # The mod name MUST match directory name!
-    #     clientlocation=launcher_moddir,
-    #     synctype='torrent',
-    #     downloadurl='file://' + BaseApp.resource_path('debussy.torrent'))
 
     for m in mods:
         if m.up_to_date:

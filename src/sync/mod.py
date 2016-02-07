@@ -23,7 +23,6 @@ class Mod(object):
             downloadurl=None,
             torrent_timestamp="",
             name="",
-            version="",
             up_to_date=False):
         super(Mod, self).__init__()
 
@@ -33,7 +32,6 @@ class Mod(object):
         self.foldername = foldername  # '@CBA_A3'
         self.torrent_timestamp = torrent_timestamp  # datetime
         self.name = name  # 'Community Base Addons v.123.4'
-        self.version = version  # Unused
         self.up_to_date = up_to_date
 
     @classmethod

@@ -83,12 +83,6 @@ class MetadataFile(object):
 
     # Accessors and mutators below
 
-    def set_version(self, version):
-        self.data['version'] = version
-
-    def get_version(self):
-        return self.data.setdefault('version', "0")
-
     def set_torrent_url(self, url):
         self.data['torrent_url'] = url
 
