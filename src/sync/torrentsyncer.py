@@ -214,11 +214,11 @@ class TorrentSyncer(object):
                      checksums for all the files in the torrent description.
 
         Individual torrent states:
-        1) Downloading    -> wait until it starts seeding
-        2) Seeding        -> pause the torrent to sync it to disk
+        1) Downloading    -> Wait until it starts seeding
+        2) Seeding        -> Pause the torrent to sync it to disk
         3) Paused         -> Data has been synced, We can start seeding while
                              waiting for the other torrents to download.
-        4) Waiting seed   -> When all torrents are active seeds, pause to stop
+        4) Waiting seed   -> When all torrents are waiting seeds, pause to stop
         5) Paused to stop -> When all torrents are paused to stop, stop syncing
         """
 
@@ -363,7 +363,7 @@ if __name__ == '__main__':
         foldername = re.search('(@.*?)-', url).group(1)
 
         return DummyMod(downloadurl=url,
-                        clientlocation="",
+                        clientlocation='',
                         foldername=foldername,
                         name=foldername.replace('@', ''))
 
