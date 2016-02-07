@@ -40,6 +40,11 @@ class Model(EventDispatcher):
         persist - boolean flag, whether the field should be persisted or not
                   defaults to true
 
+    Changes:
+        Everytime trhe models set method is invoked and the value is not equal
+        to the old one, the the on_change event is fired with the arguments
+        key, old_value and new_value
+
     Setter/Getter-Interceptors:
         Given a field with the name "attribute_one", you are able to define
         the methods called _set_attribute_one(value) and _get_attribute_one().
