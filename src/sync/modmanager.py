@@ -257,7 +257,8 @@ def _sync_all(message_queue, launcher_moddir, mods):
 
     # Perform post-download hooks for updated mods
     for m in mods:
-        if not m.up_to_date:
+        # If the mod had to be updated and the download was performed successfully
+        if not m.up_to_date and m.finished_hook_ran:
             # Will only fire up if mod == TFR
             if _tfr_post_download_hook(message_queue, m) == False:
                 return  # Alpha undocumented feature: stop processing on a reject()
