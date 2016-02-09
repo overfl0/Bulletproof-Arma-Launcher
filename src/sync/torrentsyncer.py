@@ -160,7 +160,15 @@ class TorrentSyncer(object):
             total_size = 1
         download_fraction = downloaded_size / total_size
 
-        progress_message = 'Syncing: {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
+        action = 'Syncing:'
+        # If at least one torrent is checking its pieces, show a message
+        for mod in self.mods_with_valid_handle():
+            if mod.status.state == libtorrent.torrent_status.checking_files:
+                action = 'Checking missing pieces:'
+                break
+
+        progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
+                           action,
                            download_fraction * 100.0,
                            status.payload_download_rate / 1024,
                            ' | '.join(unfinished_mods))
