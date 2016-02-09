@@ -115,11 +115,22 @@ class TorrentSyncer(object):
                     mod_name, s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
 
     def mods_with_valid_handle(self):
+        """Return a list of mods with a valid handle."""
         for mod in self.mods:
             if mod.torrent_handle.is_valid():
                 yield mod
 
     def log_session_progress(self):
+        """Log the progress of syncing the torrents.
+        Progress for each individual torrent is written to the log file.
+        Progress for the whole session is shown in the status label.
+
+        - If at least one torrent is downloading its metadata, the progress will
+        be "Downloading metadata..."
+        - If at least one torrent is checking its pieces, the progress will be
+        "Checking missing pieces..."
+        """
+
         session_logs = self.get_session_logs()
 
         # If not all torrents have retrieved metadata, just show a message
@@ -160,6 +171,9 @@ class TorrentSyncer(object):
         Logger.info('Progress: {}'.format(progress_message))
 
     def start_syncing(self, mod, force_sync=False):
+        """Create a torrent handle for a mod to be downloaded.
+        This effectively starts the download.
+        """
         Logger.info('Sync: Downloading {} to {}'.format(mod.downloadurl, mod.clientlocation))
         # TODO: Add the check: mod name == torrent directory name
 
@@ -203,6 +217,10 @@ class TorrentSyncer(object):
         return torrent_handle
 
     def get_torrents_status(self):
+        """Get the status of all torrents with valid handles and cache them in
+        the TorrentSyncer class.
+        This allows us to access this data later without any performance penalty.
+        """
         for mod in self.mods:
             if mod.torrent_handle.is_valid():
                 mod.status = mod.torrent_handle.status()
@@ -214,6 +232,7 @@ class TorrentSyncer(object):
         return all(mod.finished_hook_ran for mod in self.mods)
 
     def pause_all_torrents(self):
+        """Pause all torrents with valid handles."""
         for mod in self.mods:
             if not mod.torrent_handle.is_valid():
                 continue
@@ -222,16 +241,21 @@ class TorrentSyncer(object):
             mod.torrent_handle.pause()
 
     def pause_torrent(self, mod):
+        """Pause a torrent paired with a mod."""
         if mod.torrent_handle.is_valid():
             mod.torrent_handle.auto_managed(False)
             mod.torrent_handle.pause()
 
     def resume_torrent(self, mod):
+        """Resume a torrent paired with a mod."""
         if mod.torrent_handle.is_valid():
             mod.torrent_handle.auto_managed(True)
             mod.torrent_handle.resume()
 
     def syncing_finished(self):
+        """Check whether all torrents are in a state where every torrens has been synced.
+        If this is the case, we can then stop downloading or seeding at any time.
+        """
         for mod in self.mods:
             # print "Checking mod {}".format(mod.foldername)
             # import IPython; IPython.embed()
@@ -361,6 +385,13 @@ class TorrentSyncer(object):
         return sync_success
 
     def torrent_finished_hook(self, mod):
+        """Hook that is called when a torrent has been successfully and fully downloaded.
+        This hook then removes any superfluous files in the directory and updates
+        the metadata file.
+
+        Return whether then mod has been synced successfully and no superfluous
+        files are present in the directory.
+        """
         if not mod.torrent_handle.has_metadata():
             Logger.error('Finished_hook: torrent {} has no metadata!'.format(mod.foldername))
             return False
