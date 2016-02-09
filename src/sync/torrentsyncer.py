@@ -149,10 +149,10 @@ class TorrentSyncer(object):
             total_size = 1
         download_fraction = downloaded_size / total_size
 
-        progress_message = 'Syncing: {:0.2f}% complete. ({:0.2f} KB/s) {}'.format(
+        progress_message = 'Syncing: {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
                            download_fraction * 100.0,
                            status.payload_download_rate / 1024,
-                           ', '.join(unfinished_mods))
+                           ' | '.join(unfinished_mods))
 
         self.result_queue.progress({'msg': progress_message,
                                     'log': self.get_session_logs(),

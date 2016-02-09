@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
+from kivy.uix.widget import Widget
 from kivy.properties import StringProperty, BooleanProperty, DictProperty
 from kivy.logger import Logger
 
@@ -41,6 +42,9 @@ class StatusImage(BoxLayout):
         self.bind(hidden=self.on_hidden_set)
         self._hidden = False
         self.loaded_image_name = None
+        self.orientation = 'vertical'
+        self.add_widget(Widget())  # Filler to force the image to go to the bottom
+                                    # There is probably a better way of doing this...
 
     def set_image(self, key):
         """
