@@ -55,6 +55,7 @@ class TorrentSyncer(object):
 
         for m in mods:
             m.finished_hook_ran = False
+            m.can_save_resume_data = False
 
         self.init_libtorrent()
 
@@ -335,6 +336,14 @@ class TorrentSyncer(object):
                     self.force_termination = True
                     continue  # Torrent is now paused
 
+                # Allow saving fast-resume data only after finishing checking the files of the torrent
+                # If we save the data from a torrent while being checked, this will result
+                # in marking the torrent as having only a fraction of data it really has.
+                if mod.status.state in (libtorrent.torrent_status.downloading,
+                                        libtorrent.torrent_status.finished,
+                                        libtorrent.torrent_status.seeding):
+                    mod.can_save_resume_data = True
+
                 # Shut the torrent if we are terminating
                 if self.force_termination:
                     if not mod.torrent_handle.is_paused():  # Don't spam logs
@@ -373,7 +382,6 @@ class TorrentSyncer(object):
                 Logger.info('Sync: Pausing all torrents for syncing end.')
                 self.pause_all_torrents()
 
-            # TODO: Save resume_data periodically
             sleep(self._update_interval)
             self.get_torrents_status()
 
@@ -385,12 +393,35 @@ class TorrentSyncer(object):
                 sync_success = False
                 continue
 
+            self.save_resume_data(mod)
+
             self.log_torrent_progress(mod.status, mod.foldername)
             if mod.status.error:
                 self.result_queue.reject({'details': 'An error occured: Libtorrent error: {}'.format(decode_utf8(mod.status.error))})
                 sync_success = False
 
         return sync_success
+
+    def save_resume_data(self, mod):
+        """Save the resume data of the mod that will allow a faster restart in the future."""
+        if not mod.torrent_handle.is_valid():
+            return
+
+        if not mod.torrent_handle.has_metadata():
+            return
+
+        if not mod.can_save_resume_data:
+            return
+
+        Logger.info('Sync: saving fast-resume metadata for mod {}'.format(mod.foldername))
+
+        # Save data that could come in handy in the future to a metadata file
+        # Set resume data for quick checksum check
+        resume_data = libtorrent.bencode(mod.torrent_handle.write_resume_data())
+        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+        metadata_file.read_data(ignore_open_errors=False)
+        metadata_file.set_torrent_resume_data(resume_data)
+        metadata_file.write_data()
 
     def torrent_finished_hook(self, mod):
         """Hook that is called when a torrent has been successfully and fully downloaded.
@@ -404,14 +435,8 @@ class TorrentSyncer(object):
             Logger.error('Finished_hook: torrent {} has no metadata!'.format(mod.foldername))
             return False
 
-        # Save data that could come in handy in the future to a metadata file
-        # Set resume data for quick checksum check
-        resume_data = libtorrent.bencode(mod.torrent_handle.write_resume_data())
-
         metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
         metadata_file.read_data(ignore_open_errors=False)
-        metadata_file.set_torrent_resume_data(resume_data)
-        metadata_file.write_data()
 
         # Remove unused files
         torrent_info = mod.torrent_handle.get_torrent_info()
