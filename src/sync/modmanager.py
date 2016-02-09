@@ -252,7 +252,8 @@ def _sync_all(message_queue, launcher_moddir, mods):
     syncer = TorrentSyncer(message_queue, mods)
     sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
-    if sync_ok is False:
+    # If we had an error or we're closing the launcher, don't call post_download_hooks
+    if sync_ok is False or syncer.force_termination:
         return
 
     # Perform post-download hooks for updated mods
