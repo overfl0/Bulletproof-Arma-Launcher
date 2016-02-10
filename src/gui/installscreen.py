@@ -54,6 +54,7 @@ class Controller(object):
         self.mod_manager = ModManager()
         self.loading_gif = None
         self.mods = None
+        self.settings = kivy.app.App.get_running_app().settings
         self.arma_executable_object = None
         self.para = None
 
@@ -80,6 +81,9 @@ class Controller(object):
 
         # bind to application stop event
         application.bind(on_stop=self.on_application_stop)
+
+        # bind to settings change
+        self.settings.bind(on_change=self.on_settings_change)
 
     def try_reenable_play_button(self, dt):
         """This function first checks if a game process had been run. Then it checks
@@ -214,14 +218,9 @@ class Controller(object):
     def on_download_mod_description_resolve(self, progress):
         mod_description_data = progress['data']
 
-        # Save mod_description_data to cache
-        # FIXME: Why does this have to be so complicated? What is JsonStore
-        # and why should I care? I should just have to do settings.set_sth() and
-        # settings.save() and be done with it!
+        # Not even call settings.save() and be done with it!
         settings = kivy.app.App.get_running_app().settings
-        store = JsonStore(settings.config_path)
-        settings.set_mod_data_cache(mod_description_data)
-        store.save(settings.launcher_config)
+        settings.set('mod_data_cache', mod_description_data)
 
         # Continue with processing mod_description data
         self.para = self.mod_manager.prepare_and_check(mod_description_data)
@@ -261,7 +260,7 @@ class Controller(object):
         # Carry on with the execution! :)
         # Read data from cache and continue if successful
         settings = kivy.app.App.get_running_app().settings
-        mod_data = settings.get_mod_data_cache()
+        mod_data = settings.get('mod_data_cache')
 
         ErrorPopup(details=details, message=message).chain_open()
 
@@ -363,7 +362,7 @@ class Controller(object):
 
         # TODO: Move all this logic somewhere else
         settings = kivy.app.App.get_running_app().settings
-        mod_dir = settings.get_launcher_moddir()  # Why from there? This should be in mod.clientlocation but it isn't!
+        mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.clientlocation but it isn't!
 
         mods_paths = []
         for mod in self.mods:
@@ -390,6 +389,10 @@ class Controller(object):
             error_info.chain_open()
 
         self.view.ids.install_button.disabled = True
+
+    def on_settings_change(self, instance, key, old_value, value):
+        Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
+            key, old_value, value))
 
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')

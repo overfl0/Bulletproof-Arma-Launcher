@@ -1,5 +1,7 @@
-﻿#:kivy 1.4
+#:import NumberInput view.numberinput.NumberInput
+#:kivy 1.4
 
+# comment in the follwing to get borders around all widgets for debugging
 # <Widget>:
 #     canvas.after:
 #         Color:
@@ -9,7 +11,9 @@
 #             dash_offset: 5
 #             dash_length: 3
 
-
+#
+# Section: defaults for widtgets
+#
 <HoverButton>
     border: 1,1,1,1
     size_hint_x: None
@@ -19,6 +23,46 @@
     background_down: app.resource_path('images/borderimage.png')
     background_hover: app.resource_path('images/borderimage-hover.png')
 
+<BaseTextInput@TextInput>
+    background_color: 0.3, 0.3, 0.3, 0.7
+    foreground_color: 0.9, 0.9, 0.9, 1
+
+<BaseNumberInput@NumberInput>
+    background_color: 0.3, 0.3, 0.3, 0.7
+    foreground_color: 0.9, 0.9, 0.9, 1
+
+<SeedingCheckBox@CheckBox>
+    width: 30
+    size_hint_x: None
+    group: 'seedingtype'
+    seeding_type: ''
+
+<SeedingLabel@Label>
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
+
+<SpeedLabel@Label>
+    size_hint_x: None
+    width: 200
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
+
+<SpeedInput@BaseNumberInput>
+    size_hint: None, None
+    width: 80
+    height: 40
+    multiline: False
+    text_size: self.width, self.height
+    font_size: 18
+    valign: 'middle'
+    pos_hint: {'center_y': 0.5}
+    padding: [5, ( self.height - self.line_height ) / 2]
+
+# Section: Main View of the application
+#          this defines the structure of screens and the top
+#          navigation bar
 <MainWidget>
     id: main_widget
     size: 1000, 1000
@@ -82,6 +126,7 @@
             InstallScreen:
             PrefScreen:
 
+# Section: Screen where install related stuff is
 <InstallScreen>:
     name: 'install_screen'
 
@@ -154,9 +199,7 @@
                     valign: 'bottom'
                     text: 'Build: N/A'
 
-
-
-
+# Section: Screen for settings and configuration
 <PrefScreen>:
     name: 'pref_screen'
 
@@ -175,12 +218,10 @@
                 size_hint_x: None
                 pos_hint: { 'center_y': 0.7 } # Change or remove this if you're changing the label's text
 
-            TextInput:
+            BaseTextInput:
                 id: path_text_input
                 text: 'some/path/to/the/mods/dir'
                 multiline: False
-                background_color: 0.3, 0.3, 0.3, 0.7
-                foreground_color: 0.9, 0.9, 0.9, 1
                 text_size: self.width, self.height
                 font_size: 20
                 height: 40
@@ -193,6 +234,67 @@
                 height: 40
                 text: 'Choose Path'
                 on_release: root.controller.on_choose_path_button_release(self)
+
+        Label:
+            size_hint_y: None
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            height: 60
+            text: 'Seedingoptions'
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, None
+            BoxLayout:
+                orientation: 'horizontal'
+                SeedingCheckBox:
+                    id: sbox_while_not_playing
+                    seeding_type: 'while_not_playing'
+                SeedingLabel:
+                    text: 'while not playing'
+            BoxLayout:
+                orientation: 'horizontal'
+                SeedingCheckBox:
+                    id: sbox_never
+                    seeding_type: 'never'
+                SeedingLabel:
+                    text: 'while stacktrace is on the toilette'
+            BoxLayout:
+                orientation: 'horizontal'
+                SeedingCheckBox:
+                    id: sbox_everytime
+                    seeding_type: 'everytime'
+                SeedingLabel:
+                    text: 'everytime'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            height: 50
+            size_hint: 1, None
+            SpeedLabel:
+                text: 'Max-Upload-Speed'
+            SpeedInput:
+                id: max_upload_speed_input
+            Label:
+                width: 10
+                size_hint_x: None
+            SpeedLabel:
+                text: 'Kb/s'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, None
+            height: 50
+            SpeedLabel:
+                text: 'Max-Download-Speed'
+            SpeedInput:
+                id: max_download_speed_input
+            Label:
+                width: 10
+                size_hint_x: None
+            SpeedLabel:
+                text: 'Kb/s'
 
         Label:
             text: 'In Beta, this will be a place for Settings'

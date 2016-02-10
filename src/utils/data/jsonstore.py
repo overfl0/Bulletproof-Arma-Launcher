@@ -24,18 +24,28 @@ class JsonStore(object):
         self.filepath = filepath
 
     def save(self, model):
-        Logger.info('JsonStore: Saving model: {} to {} | {}'.format(
-                    model, self.filepath, model.data))
 
-        string = json.dumps(model.data, sort_keys=True,
+
+        # build new dict with items which have persist set not to False
+        dict_to_save = {}
+
+        for field in model.fields:
+            if 'persist' in field and field['persist'] == False:
+                continue
+            else:
+                dict_to_save[field['name']] = model.get(field['name'])
+
+
+        string = json.dumps(dict_to_save, sort_keys=True,
                             indent=4, separators=(',', ': '))
+
+        Logger.info('JsonStore: Saving model: {} to {} | {}'.format(
+                    model, self.filepath, string))
 
         with open(self.filepath, "w") as text_file:
             text_file.write(string)
 
     def load(self, model, update=True):
-        Logger.info('JsonStore: Loading model: {} from {} | {} '.format(
-                    model, self.filepath, model.data))
 
         with open(self.filepath, "r") as text_file:
             data = json.load(text_file)
@@ -43,5 +53,11 @@ class JsonStore(object):
                 model.data.update(data)
             else:
                 model.data = data
+
+        nice_model_data = json.dumps(model.data, sort_keys=True,
+                            indent=4, separators=(',', ': '))
+                            
+        Logger.info('JsonStore: Loaded model: {} from {} | {} '.format(
+                    model, self.filepath, nice_model_data))
 
         return model
