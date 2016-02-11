@@ -9,19 +9,24 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+
+from __future__ import unicode_literals
+
 """The NumberInput field"""
 import re
 
 from kivy.logger import Logger
 from kivy.uix.textinput import TextInput
 
+
 class NumberInput(TextInput):
 
-    pat = re.compile('[-0-9]+')
+    # NOTE: The use of negative numbers is problematic now. It is possible to write "12-34"
+    pat = re.compile('[0-9]+')
 
     def insert_text(self, substring, from_undo=False):
         if self.pat.match(substring):
-            Logger.debug('Matched substring: {} :: Text is {}'.format(substring, self.text))
+            # Logger.debug('Matched substring: {} :: Text is {}'.format(substring, self.text))
             return super(NumberInput, self).insert_text(substring, from_undo=from_undo)
         else:
             return super(NumberInput, self).insert_text('', from_undo=from_undo)
@@ -38,6 +43,6 @@ class NumberInput(TextInput):
         else:
             try:
                 return int(self.text)
-            except ValueError as e:
+            except ValueError:
                 Logger.warn('NumberImput: Could not convert text input. Returning 0')
                 return 0

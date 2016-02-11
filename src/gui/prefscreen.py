@@ -57,9 +57,8 @@ class Controller(object):
         seedingtype_radios = [
             self.view.ids.sbox_while_not_playing,
             self.view.ids.sbox_never,
-            self.view.ids.sbox_everytime
+            self.view.ids.sbox_always
         ]
-
 
         # init path selection
         inputfield.text = self.settings.get('launcher_moddir')
@@ -71,7 +70,6 @@ class Controller(object):
         max_download_speed_input.text = str(self.settings.get('max_download_speed'))
         max_download_speed_input.bind(
             focus=self.on_max_download_speed_input_focus)
-
 
         # init seedingtype
         Logger.debug('PrefScreen: got radio buttons: {}'.format(seedingtype_radios))

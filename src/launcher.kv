@@ -241,7 +241,7 @@
             halign: 'left'
             valign: 'middle'
             height: 60
-            text: 'Seedingoptions'
+            text: 'Seed mods:'
 
         BoxLayout:
             orientation: 'vertical'
@@ -249,52 +249,62 @@
             BoxLayout:
                 orientation: 'horizontal'
                 SeedingCheckBox:
+                    id: sbox_always
+                    seeding_type: 'always'
+                SeedingLabel:
+                    text: 'Always'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                SeedingCheckBox:
                     id: sbox_while_not_playing
                     seeding_type: 'while_not_playing'
                 SeedingLabel:
-                    text: 'while not playing'
+                    text: 'While not playing'
+
             BoxLayout:
                 orientation: 'horizontal'
                 SeedingCheckBox:
                     id: sbox_never
                     seeding_type: 'never'
                 SeedingLabel:
-                    text: 'while stacktrace is on the toilette'
-            BoxLayout:
-                orientation: 'horizontal'
-                SeedingCheckBox:
-                    id: sbox_everytime
-                    seeding_type: 'everytime'
-                SeedingLabel:
-                    text: 'everytime'
+                    text: 'Never'
+
+        Label:
+            size_hint_y: None
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+            height: 100
+            text: '[i]Note: Seeding (uploading mods to other players) helps us tremendously.\nWe don\'t have infinite bandwidth and by sharing yours you can help us speed up the downloads for everyone.\nSharing is caring :)[/i]'
+            markup: True
 
         BoxLayout:
             orientation: 'horizontal'
             height: 50
             size_hint: 1, None
             SpeedLabel:
-                text: 'Max-Upload-Speed'
+                text: 'Max upload speed:'
             SpeedInput:
                 id: max_upload_speed_input
             Label:
                 width: 10
                 size_hint_x: None
             SpeedLabel:
-                text: 'Kb/s'
+                text: 'KB/s   (0 = unlimited)'
 
         BoxLayout:
             orientation: 'horizontal'
             size_hint: 1, None
             height: 50
             SpeedLabel:
-                text: 'Max-Download-Speed'
+                text: 'Max download speed:'
             SpeedInput:
                 id: max_download_speed_input
             Label:
                 width: 10
                 size_hint_x: None
             SpeedLabel:
-                text: 'Kb/s'
+                text: 'KB/s   (0 = unlimited)'
 
-        Label:
-            text: 'In Beta, this will be a place for Settings'
+        Widget:
