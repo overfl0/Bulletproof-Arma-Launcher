@@ -113,6 +113,8 @@ class Controller(object):
             MessageBox('Directory {} is not writable'.format(path)).chain_open()
             return False
 
+        # normalize path
+        path = os.path.abspath(path)
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
 
         # this will save automaticly
