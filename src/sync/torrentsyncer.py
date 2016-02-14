@@ -105,13 +105,6 @@ class TorrentSyncer(object):
         upload_kBps = s.upload_rate / 1024
         state = decode_utf8(s.state.name)
 
-#         progress_message = '[{}] {}: {:0.2f}% ({:0.2f} KB/s)'.format(
-#                            mod_name, state, download_fraction * 100.0,
-#                            download_kBps)
-#         self.result_queue.progress({'msg': progress_message,
-#                                     'log': self.get_session_logs(),
-#                                     }, download_fraction)
-
         Logger.info('Progress: [{}] {:.2f}% complete (down: {:.1f} kB/s up: {:.1f} kB/s peers: {}) {}'.format(
                     mod_name, s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
 
@@ -289,7 +282,11 @@ class TorrentSyncer(object):
         return True
 
     def handle_messages(self):
-        """Handle all incoming messages passed from the main process."""
+        """Handle all incoming messages passed from the main process.
+        For now, the amount of commands is too small to implement a fully
+        fledged message handling mechanism with callbacks and decorators.
+        A simple if/elif will do.
+        """
 
         # We are canceling the downloads
         message = self.result_queue.receive_message()
@@ -302,6 +299,20 @@ class TorrentSyncer(object):
         if command == 'terminate':
             Logger.info('TorrentSyncer wants termination')
             self.force_termination = True
+
+        elif command == 'torrent_settings':
+            session_settings = self.session.get_settings()
+
+            max_upload_speed = params.get('max_upload_speed')
+            max_download_speed = params.get('max_download_speed')
+
+            if max_upload_speed is not None:
+                session_settings['upload_rate_limit'] = max_upload_speed * 1024
+
+            if max_download_speed is not None:
+                session_settings['download_rate_limit'] = max_download_speed * 1024
+
+            self.session.set_settings(session_settings)
 
     def sync(self, force_sync=False):
         """

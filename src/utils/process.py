@@ -128,7 +128,7 @@ class Para(object):
         Args:
             func: a function which is called in another process
             args: the args which are passed to the function func contains
-            action_name: identifier shich is used in the messagequeue. Actually
+            action_name: identifier which is used in the messagequeue. Actually
                          this is optional.
 
         Returns:

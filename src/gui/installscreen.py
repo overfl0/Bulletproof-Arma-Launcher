@@ -394,6 +394,18 @@ class Controller(object):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
             key, old_value, value))
 
+        # Settings to pass to the torrent_syncer
+        if key in ('max_upload_speed', 'max_download_speed'):
+
+            # If we are in the process of syncing things by torrent request an
+            # update of its settings
+            if self.para and self.para.action_name == 'sync':
+                Logger.debug('InstallScreen: Passing setting {}={} to syncing subprocess'.format(key, value))
+                self.para.send_message('torrent_settings', {key: value})
+
+        if key == 'seeding_type':
+            pass  # TODO: React accordingly
+
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')
 
