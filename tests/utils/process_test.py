@@ -38,7 +38,9 @@ def termination_func(con):
     while termination_requested is False:
         time.sleep(1)
         # check if your parent wants your termination
-        termination_requested = con.wants_termination()
+        message = con.receive_message()
+        if message and message.get('command') == 'terminate':
+            termination_requested = True
 
     con.resolve('terminating')
 

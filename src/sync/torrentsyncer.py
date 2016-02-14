@@ -288,6 +288,21 @@ class TorrentSyncer(object):
 
         return True
 
+    def handle_messages(self):
+        """Handle all incoming messages passed from the main process."""
+
+        # We are canceling the downloads
+        message = self.result_queue.receive_message()
+        if not message:
+            return
+
+        command = message.get('command')
+        params = message.get('params')
+
+        if command == 'terminate':
+            Logger.info('TorrentSyncer wants termination')
+            self.force_termination = True
+
     def sync(self, force_sync=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
@@ -315,10 +330,7 @@ class TorrentSyncer(object):
 
         # Loop until state (5). All torrents finished and paused
         while not self.syncing_finished():
-            # We are canceling the downloads
-            if self.result_queue.wants_termination():
-                Logger.info('TorrentSyncer wants termination')
-                self.force_termination = True
+            self.handle_messages()
 
             self.log_session_progress()
 
@@ -478,8 +490,8 @@ if __name__ == '__main__':
         def reject(self, d):
             Logger.error('Reject: {}'.format(unicode(d)))
 
-        def wants_termination(self):
-            return False
+        def receive_message(self):
+            return None
 
     def mod_helper(url):
         import re

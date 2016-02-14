@@ -104,14 +104,17 @@ class ConnectionWrapper(object):
         #         self.put(top)
         self.con.send(msg)
 
-    def wants_termination(self):
-        """Returns true if the parent process wants to terminate the child.
-        The child is in charge of terminating itself"""
-        if self.con.poll():
-            command = self.con.recv()
-            if command == 'terminate':
-                return True
-        return False
+    def receive_message(self):
+        """Get the message passed to the process.
+        Return a dictionary if a message was received
+        Return None otherwise.
+        """
+
+        if not self.con.poll():
+            return None
+
+        message = self.con.recv()
+        return message
 
 
 class Para(object):
@@ -226,15 +229,23 @@ class Para(object):
         Clock.unschedule(self.handle_messagequeue)
         Logger.debug('Para: {} joined process'.format(self))
 
+    def send_message(self, command, params=None):
+        """Note: Feel free to refactor this message passing method"""
+        msg = {'command': command}
+        if params:
+            msg['params'] = params
+
+        self.parent_conn.send(msg)
+
     def request_termination(self):
         """sends a termination command to the child process"""
-        self.parent_conn.send('terminate')
+        self.send_message(command='terminate')
 
     def run(self):
         self.lock = Lock()
         self.parent_conn, child_conn = Pipe()
         self.messagequeue = ConnectionWrapper(self.action_name, self.lock, child_conn)
-        Logger.debug('Para: {} spwaning new process'.format(self))
+        Logger.debug('Para: {} spawning new process'.format(self))
         p = Process(target=self.func, args=(self.messagequeue,) + self.args)
         p.start()
         self.current_child_process = p
