@@ -136,6 +136,13 @@ class Controller(object):
         self.view.ids.install_button.disabled = False
         self.play_button_shown = True
 
+        # Optionally enable seeding if all mods are synced
+        settings = kivy.app.App.get_running_app().settings
+        seeding_type = settings.get('seeding_type')
+
+        if seeding_type != 'never':
+            self.start_syncing(seed=True)
+
     def check_requirements(self, verbose=True):
         """Check if all the required third party programs are installed in the system.
         Return True if the check passed.
@@ -204,8 +211,11 @@ class Controller(object):
         if self.play_button_shown:
             return
 
+        self.start_syncing(seed=False)
+
+    def start_syncing(self, seed=False):
         self.view.ids.install_button.disabled = True
-        self.para = self.mod_manager.sync_all()
+        self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
         self.view.ids.install_button.enable_progress_animation()
 
@@ -399,7 +409,7 @@ class Controller(object):
 
             # If we are in the process of syncing things by torrent request an
             # update of its settings
-            if self.para and self.para.action_name == 'sync':
+            if self.para and self.para.is_open() and self.para.action_name == 'sync':
                 Logger.debug('InstallScreen: Passing setting {}={} to syncing subprocess'.format(key, value))
                 self.para.send_message('torrent_settings', {key: value})
 

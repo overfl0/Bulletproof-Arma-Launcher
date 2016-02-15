@@ -258,7 +258,7 @@ class TorrentSyncer(object):
             mod.torrent_handle.resume()
 
     def syncing_finished(self):
-        """Check whether all torrents are in a state where every torrens has been synced.
+        """Check whether all torrents are in a state where every torrent has been synced.
         If this is the case, we can then stop downloading or seeding at any time.
         """
         for mod in self.mods:
@@ -317,7 +317,7 @@ class TorrentSyncer(object):
 
             self.session.set_settings(session_settings)
 
-    def sync(self, force_sync=False):
+    def sync(self, force_sync=False, seed_after_completion=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
         are described in the torrent file.
@@ -404,7 +404,7 @@ class TorrentSyncer(object):
                         self.resume_torrent(mod)
 
             # If all are in state (4)
-            if self.all_torrents_ran_finished_hooks():
+            if self.all_torrents_ran_finished_hooks() and not seed_after_completion:
                 Logger.info('Sync: Pausing all torrents for syncing end.')
                 self.pause_all_torrents()
 
