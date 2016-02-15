@@ -39,13 +39,16 @@ class TorrentSyncer(object):
     _update_interval = 1
     session = None
 
-    def __init__(self, result_queue, mods):
+    def __init__(self, result_queue, mods, max_download_speed=0, max_upload_speed=0):
         """
         constructor
 
         Args:
             result_queue: the queue object where you can push the dict in
             mods: a mod list that will be synced (or seeded) by sync()
+            max_download_speed: maximum download speed of all the torrents
+            max_upload_speed: maximum upload speed of all the torrents
+            seeding_type: seeding behavior on finished download
         """
         super(TorrentSyncer, self).__init__()
 
@@ -57,9 +60,9 @@ class TorrentSyncer(object):
             m.finished_hook_ran = False
             m.can_save_resume_data = False
 
-        self.init_libtorrent()
+        self.init_libtorrent(max_download_speed, max_upload_speed)
 
-    def init_libtorrent(self):
+    def init_libtorrent(self, max_download_speed=0, max_upload_speed=0):
         """Perform the initialization of things that should be initialized once"""
         if self.session:
             return
@@ -79,8 +82,8 @@ class TorrentSyncer(object):
         self.session = libtorrent.session(fingerprint=fingerprint)
         self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.
 
-        # TODO: self.session.set_download_rate_limit(down_rate)
-        # TODO: self.session.set_upload_rate_limit(up_rate)
+        settings.download_rate_limit = max_download_speed * 1024
+        settings.upload_rate_limit = max_upload_speed * 1024
 
         self.session.set_settings(settings)
 

@@ -242,14 +242,14 @@ def _tfr_post_download_hook(message_queue, mod):
     return True
 
 
-def _sync_all(message_queue, launcher_moddir, mods):
-    """Run syncers for all the mods sequentially and then their post-download hooks."""
+def _sync_all(message_queue, launcher_moddir, mods, max_download_speed, max_upload_speed):
+    """Run syncers for all the mods in parallel and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
 
     for m in mods:
         m.clientlocation = launcher_moddir  # This change does NOT persist in the main launcher (would be nice :()
 
-    syncer = TorrentSyncer(message_queue, mods)
+    syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
     sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
     # If we had an error or we're closing the launcher, don't call post_download_hooks
@@ -300,7 +300,13 @@ class ModManager(object):
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_protected_call, (_sync_all, self.settings.get('launcher_moddir'), self.mods), 'sync')
+        self.sync_para = Para(_protected_call, (
+            _sync_all,
+            self.settings.get('launcher_moddir'),
+            self.mods,
+            self.settings.get('max_download_speed'),
+            self.settings.get('max_upload_speed')
+        ), 'sync')
         self.sync_para.then(None, None, self.on_sync_all_progress)
         self.sync_para.run()
         return self.sync_para
