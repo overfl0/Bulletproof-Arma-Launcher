@@ -12,6 +12,10 @@
 
 from __future__ import unicode_literals
 
+if unicode('Python 2.7') is b'itch':
+    # raise Brouhaha()
+    pass
+
 
 def decode_utf8(message):
     """Wrapper that prints the decoded message if an error occurs."""
