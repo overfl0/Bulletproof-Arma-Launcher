@@ -31,6 +31,7 @@ from utils.registry import Registry
 # kivys api only works with non unicode strings
 ON_CHANGE = 'on_change'.encode('ascii')
 
+
 class Settings(Model):
     """
     Settings class is a manager and validation layer to the underlying
@@ -142,7 +143,7 @@ class Settings(Model):
             # TODO: Show a regular message box, not a win32 message box
             MessageBox('Could not create directory {}\n Setting will stay on {}'.format(
                 launcher_basedir, self.get('launcher_basedir')),
-                       'Error while setting launcher directory')
+                'Error while setting launcher directory')
             return ModelInterceptorError()
 
         return launcher_basedir
