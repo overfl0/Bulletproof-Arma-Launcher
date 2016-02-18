@@ -17,6 +17,7 @@ import errno
 import json
 import os
 
+
 class MetadataFile(object):
     """File that contains metadata about mods and is located in the root directory of each mod"""
     """TODO: Maybe screw the whole json part and just bencode everything?"""
@@ -81,12 +82,6 @@ class MetadataFile(object):
         return data
 
     # Accessors and mutators below
-
-    def set_version(self, version):
-        self.data['version'] = version
-
-    def get_version(self):
-        return self.data.setdefault('version', "0")
 
     def set_torrent_url(self, url):
         self.data['torrent_url'] = url

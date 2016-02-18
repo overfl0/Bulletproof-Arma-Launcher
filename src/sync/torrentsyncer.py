@@ -26,10 +26,12 @@ if __name__ == "__main__":
 
 import libtorrent
 import os
+import torrent_utils
 
 from kivy.logger import Logger
-from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack
+from sync.integrity import check_mod_directories
 from utils.metadatafile import MetadataFile
+from utils.unicode_helpers import decode_utf8, encode_utf8
 from time import sleep
 
 
@@ -37,39 +39,36 @@ class TorrentSyncer(object):
     _update_interval = 1
     session = None
 
-    def __init__(self, result_queue, mod):
+    def __init__(self, result_queue, mods, max_download_speed=0, max_upload_speed=0):
         """
         constructor
 
         Args:
             result_queue: the queue object where you can push the dict in
-            mod: a mod instance you should care about
+            mods: a mod list that will be synced (or seeded) by sync()
+            max_download_speed: maximum download speed of all the torrents
+            max_upload_speed: maximum upload speed of all the torrents
+            seeding_type: seeding behavior on finished download
         """
         super(TorrentSyncer, self).__init__()
+
         self.result_queue = result_queue
-        self.mod = mod
+        self.mods = mods
         self.force_termination = False
 
-    def decode_utf8(self, message):
-        """Wrapper that prints the decoded message if an error occurs."""
-        try:
-            return message.decode('utf-8')
-        except UnicodeDecodeError as ex:
-            error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-            raise UnicodeError(error_message)
+        for m in mods:
+            m.finished_hook_ran = False
+            m.can_save_resume_data = False
 
-    def encode_utf8(self, message):
-        """Wrapper that prints the encoded message if an error occurs."""
-        try:
-            return message.encode('utf-8')
-        except UnicodeEncodeError as ex:
-            error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-            raise UnicodeError(error_message)
+        self.init_libtorrent(max_download_speed, max_upload_speed)
 
-    def init_libtorrent(self):
+    def init_libtorrent(self, max_download_speed=0, max_upload_speed=0):
         """Perform the initialization of things that should be initialized once"""
+        if self.session:
+            return
+
         settings = libtorrent.session_settings()
-        settings.user_agent = self.encode_utf8('TacBF (libtorrent/{})'.format(self.decode_utf8(libtorrent.version)))
+        settings.user_agent = encode_utf8('TacBF (libtorrent/{})'.format(decode_utf8(libtorrent.version)))
         """When running on a network where the bandwidth is in such an abundance
         that it's virtually infinite, this algorithm is no longer necessary, and
         might even be harmful to throughput. It is adviced to experiment with the
@@ -83,27 +82,10 @@ class TorrentSyncer(object):
         self.session = libtorrent.session(fingerprint=fingerprint)
         self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.
 
-        # TODO: self.session.set_download_rate_limit(down_rate)
-        # TODO: self.session.set_upload_rate_limit(up_rate)
+        settings.download_rate_limit = max_download_speed * 1024
+        settings.upload_rate_limit = max_upload_speed * 1024
 
         self.session.set_settings(settings)
-
-    def get_torrent_info_from_string(self, bencoded):
-        """Get torrent metadata from a bencoded string and return info structure."""
-
-        torrent_metadata = libtorrent.bdecode(bencoded)
-        torrent_info = libtorrent.torrent_info(torrent_metadata)
-
-        return torrent_info
-
-    def get_torrent_info_from_file(self, filename):
-        """Get torrent_info structure from a file.
-        The file should contain a bencoded string - the contents of a .torrent file."""
-
-        with open(filename, 'rb') as file_handle:
-            file_contents = file_handle.read()
-
-            return self.get_torrent_info_from_string(file_contents)
 
     def get_session_logs(self):
         """Get alerts from torrent engine and forward them to the manager process"""
@@ -113,154 +95,122 @@ class TorrentSyncer(object):
                                             # Use alert.handle in the future to get the torrent handle
         for alert in alerts:
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
-            message = self.decode_utf8(alert.message())
+            message = decode_utf8(alert.message())
             Logger.info("Alerts: Category: {}, Message: {}".format(alert.category(), message))
             torrent_log.append({'message': message, 'category': alert.category()})
 
         return torrent_log
 
-    # TODO: Make this a static function
-    def is_complete_quick(self):
-        """Performs a quick check to see if the mod *seems* to be correctly installed.
-        This check assumes no external changes have been made to the mods.
-
-        1. Check if metadata file exists and can be opened (instant)
-        2. Check if torrent is not dirty [download completed successfully] (instant)
-        3. Check if torrent url matches (instant)
-        4. Check if files have the right size and modification time (very quick)
-        5. Check if there are no superfluous files in the directory (very quick)"""
-
-        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.foldername))
-
-        # (1) Check if metadata can be opened
-        try:
-            metadata_file.read_data(ignore_open_errors=False)
-        except IOError:
-            Logger.info('Metadata file could not be read successfully. Marking as not complete')
-            return False
-
-        # (2)
-        if metadata_file.get_dirty():
-            Logger.info('Torrent marked as dirty (not completed successfully). Marking as not complete')
-            return False
-
-        # (3)
-        if metadata_file.get_torrent_url() != self.mod.downloadurl:
-            Logger.info('Torrent urls differ. Marking as not complete')
-            return False
-
-        # Get data required for (4) and (5)
-        torrent_content = metadata_file.get_torrent_content()
-        if not torrent_content:
-            Logger.info('Could not get torrent file content. Marking as not complete')
-            return False
-
-        torrent_info = self.get_torrent_info_from_string(torrent_content)
-
-        resume_data_bencoded = metadata_file.get_torrent_resume_data()
-        if not resume_data_bencoded:
-            Logger.info('Could not get resume data. Marking as not complete')
-            return False
-        resume_data = libtorrent.bdecode(resume_data_bencoded)
-
-        # (4)
-        file_sizes = resume_data['file sizes']
-        files = torrent_info.files()
-        # file_path, size, mtime
-        files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
-
-        if not check_files_mtime_correct(self.mod.clientlocation, files_data):
-            Logger.info('Some files seem to have been modified in the meantime. Marking as not complete')
-            return False
-
-        # (5) Check if there are no additional files in the directory
-        checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
-        files_list = checksums.keys()
-        if not check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='warn'):
-            Logger.info('Superfluous files in mod directory. Marking as not complete')
-            return False
-
-        return is_complete_tfr_hack(self.mod.name, files_list, checksums)
-
-    def create_add_torrent_flags(self):
-        f = libtorrent.add_torrent_params_flags_t
-
-        flags = 0
-        flags |= f.flag_apply_ip_filter  # default
-        flags |= f.flag_update_subscribe  # default
-        # flags |= f.flag_merge_resume_trackers  # default off
-        # flags |= f.flag_paused
-        flags |= f.flag_auto_managed
-        flags |= f.flag_override_resume_data
-        # flags |= f.flag_seed_mode
-        # flags |= f.flag_upload_mode
-        # flags |= f.flag_share_mode
-        flags |= f.flag_duplicate_is_error  # default?
-
-        # no_recheck_incomplete_resume
-
-        return flags
-
-    def handle_torrent_progress(self, s):
+    def log_torrent_progress(self, s, mod_name):
         """Just log the download progress for now."""
-        download_fraction = s.progress
+        # download_fraction = s.progress
         download_kBps = s.download_rate / 1024
         upload_kBps = s.upload_rate / 1024
-        state = self.decode_utf8(s.state.name)
+        state = decode_utf8(s.state.name)
 
-        progress_message = '[{}] {}: {:0.2f}% ({:0.2f} KB/s)'.format(
-                           self.mod.foldername, state, download_fraction * 100.0,
-                           download_kBps)
+        Logger.info('Progress: [{}] {:.2f}% complete (down: {:.1f} kB/s up: {:.1f} kB/s peers: {}) {}'.format(
+                    mod_name, s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
+
+    def mods_with_valid_handle(self):
+        """Return a list of mods with a valid handle."""
+        for mod in self.mods:
+            if mod.torrent_handle.is_valid():
+                yield mod
+
+    def log_session_progress(self):
+        """Log the progress of syncing the torrents.
+        Progress for each individual torrent is written to the log file.
+        Progress for the whole session is shown in the status label.
+
+        - If at least one torrent is downloading its metadata, the progress will
+        be "Downloading metadata..."
+        - If at least one torrent is checking its pieces, the progress will be
+        "Checking missing pieces..."
+        """
+
+        session_logs = self.get_session_logs()
+
+        # If not all torrents have retrieved metadata, just show a message
+        if not all(mod.torrent_handle.has_metadata() for mod in self.mods_with_valid_handle()):
+            self.result_queue.progress({'msg': 'Downloading metadata...',
+                                        'log': session_logs,
+                                        }, 0)
+            return
+
+        # We can now assume that every torrent has got the metadata downloaded
+        # so we can get its size on disk
+
+        status = self.session.status()
+
+        total_size = 0.0
+        downloaded_size = 0.0
+        unfinished_mods = []
+
+        for mod in self.mods_with_valid_handle():
+            downloaded_size += mod.status.total_wanted_done
+            total_size += mod.status.total_wanted
+
+            if mod.status.total_wanted_done != mod.status.total_wanted:
+                unfinished_mods.append(mod.foldername)
+
+        if total_size == 0:
+            total_size = 1
+        download_fraction = downloaded_size / total_size
+
+        action = 'Syncing:'
+        # If at least one torrent is checking its pieces, show a message
+        for mod in self.mods_with_valid_handle():
+            if mod.status.state == libtorrent.torrent_status.checking_files:
+                action = 'Checking missing pieces:'
+                break
+
+        progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
+                           action,
+                           download_fraction * 100.0,
+                           status.payload_download_rate / 1024,
+                           ' | '.join(unfinished_mods))
+
         self.result_queue.progress({'msg': progress_message,
                                     'log': self.get_session_logs(),
                                     }, download_fraction)
+        Logger.info('Progress: {}'.format(progress_message))
 
-        Logger.debug('%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' %
-                     (s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
-
-    def sync(self, force_sync=False):
+    def start_syncing(self, mod, force_sync=False):
+        """Create a torrent handle for a mod to be downloaded.
+        This effectively starts the download.
         """
-        Synchronize the mod directory contents to contain exactly the files that
-        are described in the torrent file.
-
-        force_sync - Assume no resume data is available. Manually recheck all the
-                     checksums for all the files in the torrent description.
-        """
-
-        Logger.info('Downloading {} to {}'.format(self.mod.downloadurl, self.mod.clientlocation))
+        Logger.info('Sync: Downloading {} to {}'.format(mod.downloadurl, mod.clientlocation))
         # TODO: Add the check: mod name == torrent directory name
 
-        if not self.session:
-            self.init_libtorrent()
-
         # === Metadata handling ===
-        metadata_file = MetadataFile(os.path.join(self.mod.clientlocation, self.mod.foldername))
+        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
         metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
 
         # If the torrent url changed, invalidate the resume data
         old_torrent_url = metadata_file.get_torrent_url()
-        if old_torrent_url != self.mod.downloadurl or force_sync:
+        if old_torrent_url != mod.downloadurl or force_sync:
             metadata_file.set_torrent_resume_data("")
-            metadata_file.set_torrent_url(self.mod.downloadurl)
+            # print "Setting torrent url to {}".format(mod.downloadurl)
+            metadata_file.set_torrent_url(mod.downloadurl)
 
         metadata_file.write_data()
         # End of metadata handling
 
         # === Torrent parameters ===
         params = {
-            'save_path': self.encode_utf8(self.mod.clientlocation),
+            'save_path': encode_utf8(mod.clientlocation),
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
-            'flags': self.create_add_torrent_flags()
+            'flags': torrent_utils.create_add_torrent_flags()
         }
 
         # Configure torrent source
-        if self.mod.downloadurl.startswith('file://'):  # Local torrent from file
-            torrent_info = self.get_torrent_info_from_file(self.mod.downloadurl[len('file://'):])
+        if mod.downloadurl.startswith('file://'):  # Local torrent from file
+            torrent_info = self.get_torrent_info_from_file(mod.downloadurl[len('file://'):])
             params['ti'] = torrent_info
         else:  # Torrent from url
-            params['url'] = self.encode_utf8(self.mod.downloadurl)
+            params['url'] = encode_utf8(mod.downloadurl)
 
         # Add optional resume data
         resume_data = metadata_file.get_torrent_resume_data()
@@ -269,59 +219,255 @@ class TorrentSyncer(object):
 
         # Launch the download of the torrent
         torrent_handle = self.session.add_torrent(params)
+        return torrent_handle
 
-        # === Main loop ===
-        # Loop while the torrent is not completely downloaded
-        finished_downloading = False
-        s = torrent_handle.status()
+    def get_torrents_status(self):
+        """Get the status of all torrents with valid handles and cache them in
+        the TorrentSyncer class.
+        This allows us to access this data later without any performance penalty.
+        """
+        for mod in self.mods:
+            if mod.torrent_handle.is_valid():
+                mod.status = mod.torrent_handle.status()
 
-        # Loop until finished and paused
-        while not (finished_downloading and torrent_handle.is_paused()):
-            if s.error:
-                break
+    def all_torrents_ran_finished_hooks(self):
+        """Check if all torrents have been downloaded, their files have been
+        synchronized to the disk and their post-download hooks have been run.
+        """
+        return all(mod.finished_hook_ran for mod in self.mods)
 
-            # We are cancelling the downloads
-            if self.result_queue.wants_termination():
-                Logger.info('TorrentSyncer wants termination')
-                self.force_termination = True
+    def pause_all_torrents(self):
+        """Pause all torrents with valid handles."""
+        for mod in self.mods:
+            if not mod.torrent_handle.is_valid():
+                continue
 
-            # If finished downloading, request pausing the torrent to synchronize data to disk
-            if (torrent_handle.is_seed() or self.force_termination) and not finished_downloading:
-                finished_downloading = True
+            mod.torrent_handle.auto_managed(False)
+            mod.torrent_handle.pause()
 
-                # Stop the torrent to force syncing everything to disk
-                Logger.info('Sync: pausing torrent')
-                torrent_handle.auto_managed(False)
-                torrent_handle.pause()
+    def pause_torrent(self, mod):
+        """Pause a torrent paired with a mod."""
+        if mod.torrent_handle.is_valid():
+            mod.torrent_handle.auto_managed(False)
+            mod.torrent_handle.pause()
 
-            self.handle_torrent_progress(s)
+    def resume_torrent(self, mod):
+        """Resume a torrent paired with a mod."""
+        if mod.torrent_handle.is_valid():
+            mod.torrent_handle.auto_managed(True)
+            mod.torrent_handle.resume()
 
-            # TODO: Save resume_data periodically
+    def syncing_finished(self):
+        """Check whether all torrents are in a state where every torrens has been synced.
+        If this is the case, we can then stop downloading or seeding at any time.
+        """
+        for mod in self.mods:
+            # print "Checking mod {}".format(mod.foldername)
+            # import IPython; IPython.embed()
+            # If a handle is not valid (torrent error) we skip it.
+            # This contributes to finished torrents.
+            if not mod.torrent_handle.is_valid():
+                continue
+
+            # Skip torrents that are in an error state
+            if mod.status.error:
+                continue
+
+            # Wait until the hooks are ran if we're not terminating forcefully
+            if not mod.finished_hook_ran and not self.force_termination:
+                # print "mod {} not mod.finished_hook_ran".format(mod.foldername)
+                return False
+
+            if not mod.torrent_handle.is_paused():
+                # print "mod {} not paused".format(mod.foldername)
+                return False
+
+        return True
+
+    def handle_messages(self):
+        """Handle all incoming messages passed from the main process.
+        For now, the amount of commands is too small to implement a fully
+        fledged message handling mechanism with callbacks and decorators.
+        A simple if/elif will do.
+        """
+
+        # We are canceling the downloads
+        message = self.result_queue.receive_message()
+        if not message:
+            return
+
+        command = message.get('command')
+        params = message.get('params')
+
+        if command == 'terminate':
+            Logger.info('TorrentSyncer wants termination')
+            self.force_termination = True
+
+        elif command == 'torrent_settings':
+            session_settings = self.session.get_settings()
+
+            max_upload_speed = params.get('max_upload_speed')
+            max_download_speed = params.get('max_download_speed')
+
+            if max_upload_speed is not None:
+                session_settings['upload_rate_limit'] = max_upload_speed * 1024
+
+            if max_download_speed is not None:
+                session_settings['download_rate_limit'] = max_download_speed * 1024
+
+            self.session.set_settings(session_settings)
+
+    def sync(self, force_sync=False):
+        """
+        Synchronize the mod directory contents to contain exactly the files that
+        are described in the torrent file.
+
+        force_sync - Assume no resume data is available. Manually recheck all the
+                     checksums for all the files in the torrent description.
+
+        Individual torrent states:
+        1) Downloading    -> Wait until it starts seeding
+        2) Seeding        -> Pause the torrent to sync it to disk
+        3) Paused         -> Data has been synced, We can start seeding while
+                             waiting for the other torrents to download.
+        4) Waiting seed   -> When all torrents are waiting seeds, pause to stop
+        5) Paused to stop -> When all torrents are paused to stop, stop syncing
+        """
+
+        sync_success = True
+
+        for mod in self.mods:
+            torrent_handle = self.start_syncing(mod, force_sync)
+            mod.torrent_handle = torrent_handle
+
+        self.get_torrents_status()
+
+        # Loop until state (5). All torrents finished and paused
+        while not self.syncing_finished():
+            self.handle_messages()
+
+            self.log_session_progress()
+
+            for mod in self.mods:
+                if not mod.torrent_handle.is_valid():
+                    Logger.info('Sync: Torrent {} - torrent handle is invalid. Terminating'.format(mod.foldername))
+                    self.force_termination = True
+                    continue
+
+                # It is assumed that all torrents below have a valid torrent_handle
+                self.log_torrent_progress(mod.status, mod.foldername)
+
+                if mod.status.error:
+                    Logger.info('Sync: Torrent {} in error state. Terminating. Error string: {}'.format(mod.foldername, decode_utf8(mod.status.error)))
+                    self.force_termination = True
+                    continue  # Torrent is now paused
+
+                # Allow saving fast-resume data only after finishing checking the files of the torrent
+                # If we save the data from a torrent while being checked, this will result
+                # in marking the torrent as having only a fraction of data it really has.
+                if mod.status.state in (libtorrent.torrent_status.downloading,
+                                        libtorrent.torrent_status.finished,
+                                        libtorrent.torrent_status.seeding):
+                    mod.can_save_resume_data = True
+
+                # Shut the torrent if we are terminating
+                if self.force_termination:
+                    if not mod.torrent_handle.is_paused():  # Don't spam logs
+                        Logger.info('Sync: Pausing torrent {} for termination'.format(mod.foldername))
+                    self.pause_torrent(mod)
+
+                # If state (2). Request pausing the torrent to synchronize data to disk
+                if not mod.finished_hook_ran and mod.torrent_handle.is_seed():
+                    if not mod.torrent_handle.is_paused():
+                        Logger.info('Sync: Pausing torrent {} for disk syncing'.format(mod.foldername))
+                    self.pause_torrent(mod)
+
+                # If state (3). Run the hooks and maybe start waiting-seed
+                if not mod.finished_hook_ran and mod.torrent_handle.is_seed() and mod.torrent_handle.is_paused():
+                    Logger.info('Sync: Torrent {} paused. Running finished_hook'.format(mod.foldername))
+
+                    hook_successful = self.torrent_finished_hook(mod)
+                    if not hook_successful:
+                        self.result_queue.reject({'msg': 'Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
+                                                  .format(mod.foldername)})
+                        Logger.info('Sync: Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
+                                    .format(mod.foldername))
+                        sync_success = False
+                        self.force_termination = True
+
+                    mod.finished_hook_ran = True
+
+                    # Do not go into state (4) if we are terminating or it's the
+                    # only torrent being synced
+                    if not self.force_termination and len(self.mods) != 1:
+                        Logger.info('Sync: Seeding {} again until all downloads are done.'.format(mod.foldername))
+                        self.resume_torrent(mod)
+
+            # If all are in state (4)
+            if self.all_torrents_ran_finished_hooks():
+                Logger.info('Sync: Pausing all torrents for syncing end.')
+                self.pause_all_torrents()
+
             sleep(self._update_interval)
-            s = torrent_handle.status()
+            self.get_torrents_status()
 
-        self.handle_torrent_progress(s)
+        Logger.info('Sync: Main loop exited')
 
-        Logger.info('Sync: terminated loop')
+        for mod in self.mods:
+            if not mod.torrent_handle.is_valid():
+                self.result_queue.reject({'details': 'Mod {} torrent handle is invalid'.format(mod.foldername)})
+                sync_success = False
+                continue
 
-        if s.error:
-            self.result_queue.reject({'details': 'An error occured: Libtorrent error: {}'.format(self.decode_utf8(s.error))})
-            return False
+            self.save_resume_data(mod)
+
+            self.log_torrent_progress(mod.status, mod.foldername)
+            if mod.status.error:
+                self.result_queue.reject({'details': 'An error occured: Libtorrent error: {}'.format(decode_utf8(mod.status.error))})
+                sync_success = False
+
+        return sync_success
+
+    def save_resume_data(self, mod):
+        """Save the resume data of the mod that will allow a faster restart in the future."""
+        if not mod.torrent_handle.is_valid():
+            return
+
+        if not mod.torrent_handle.has_metadata():
+            return
+
+        if not mod.can_save_resume_data:
+            return
+
+        Logger.info('Sync: saving fast-resume metadata for mod {}'.format(mod.foldername))
 
         # Save data that could come in handy in the future to a metadata file
         # Set resume data for quick checksum check
-        resume_data = libtorrent.bencode(torrent_handle.write_resume_data())
+        resume_data = libtorrent.bencode(mod.torrent_handle.write_resume_data())
+        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+        metadata_file.read_data(ignore_open_errors=False)
         metadata_file.set_torrent_resume_data(resume_data)
         metadata_file.write_data()
 
-        if self.force_termination:
+    def torrent_finished_hook(self, mod):
+        """Hook that is called when a torrent has been successfully and fully downloaded.
+        This hook then removes any superfluous files in the directory and updates
+        the metadata file.
+
+        Return whether then mod has been synced successfully and no superfluous
+        files are present in the directory.
+        """
+        if not mod.torrent_handle.has_metadata():
+            Logger.error('Finished_hook: torrent {} has no metadata!'.format(mod.foldername))
             return False
 
+        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+        metadata_file.read_data(ignore_open_errors=False)
+
         # Remove unused files
-        assert(torrent_handle.has_metadata())  # Should have metadata if downloaded correctly
-        torrent_info = torrent_handle.get_torrent_info()
+        torrent_info = mod.torrent_handle.get_torrent_info()
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
-        cleanup_successful = check_mod_directories(files_list, self.mod.clientlocation, on_superfluous='remove')
+        cleanup_successful = check_mod_directories(files_list, mod.clientlocation, on_superfluous='remove')
 
         # Recreate the torrent file and store it in the metadata file for future checks
         recreated_torrent = libtorrent.create_torrent(torrent_info)
@@ -329,15 +475,12 @@ class TorrentSyncer(object):
         metadata_file.set_torrent_content(bencoded_recreated_torrent)
 
         if not cleanup_successful:
-            Logger.info("Could not perform mod {} cleanup. Marking torrent as dirty.".format(self.mod.foldername))
+            Logger.info("Could not perform mod {} cleanup. Marking torrent as dirty.".format(mod.foldername))
             metadata_file.set_dirty(True)
             metadata_file.write_data()
 
-            self.result_queue.reject({'msg': 'Could not perform mod {} cleanup. Make sure the files are not in use by another program.'
-                                             .format(self.mod.foldername)})
             return False
         else:
-            metadata_file.set_version(self.mod.version)
             metadata_file.set_dirty(False)
             metadata_file.write_data()
 
@@ -345,41 +488,49 @@ class TorrentSyncer(object):
 
 
 if __name__ == '__main__':
+    Logger.setLevel(level='INFO')
+
     class DummyMod:
-        downloadurl = "http://archive.org/download/DebussyPrelduesBookI/DebussyPrelduesBookI_archive.torrent"
-        # downloadurl = "file://test.torrent"
-        clientlocation = ""
-        foldername = "DebussyPrelduesBookI"
-        version = "123"
-        name = "name"
+        def __init__(self, downloadurl, clientlocation, foldername, name):
+            self.downloadurl = downloadurl
+            self.clientlocation = clientlocation
+            self.foldername = foldername
+            self.name = name
 
     class DummyQueue:
         def progress(self, d, frac):
-            print 'Progress: {}'.format(unicode(d))
+            Logger.info('Progress: {}'.format(unicode(d)))
 
         def reject(self, d):
-            print 'Reject: {}'.format(unicode(d))
+            Logger.error('Reject: {}'.format(unicode(d)))
 
-    mod = DummyMod()
+        def receive_message(self):
+            return None
+
+    def mod_helper(url):
+        import re
+        foldername = re.search('(@.*?)-', url).group(1)
+
+        return DummyMod(downloadurl=url,
+                        clientlocation='',
+                        foldername=foldername,
+                        name=foldername.replace('@', ''))
+
+    mod1 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@CBA_A3-2015-12-01_1449001363.torrent')
+    mod2 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@TacBF-2015-12-31_1451563576.torrent')
+    mod3 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@task_force_radio-2015-10-12_1444682049.torrent')
+    mods = [mod1, mod2, mod3]
+    # mod = mod_helper('')
     queue = DummyQueue()
 
-    ts = TorrentSyncer(queue, mod)
-    # ts.init_libtorrent()
-    # torrent_info = ts.get_torrent_info_from_file("test.torrent")
+    ts = TorrentSyncer(queue, mods)
 
-    # num_files = torrent_info.num_files()
-    # print num_files
+    completed = []
+    for mod in mods:
+        is_complete = torrent_utils.is_complete_quick(mod)
+        print '{} is complete:'.format(mod.foldername), is_complete
+        completed.append(is_complete)
 
-    # files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
-    # check_mod_directories(files_list)
-
-    # print "File paths: ", file_paths
-    # print "Dirs: ", dirs
-    # print "Top dirs", top_dirs
-
-    is_complete = ts.is_complete_quick()
-    print "Is complete:", is_complete
-
-    if not is_complete:
-        print "Syncing..."
+    if not all(completed):
+        print 'Syncing...'
         ts.sync()

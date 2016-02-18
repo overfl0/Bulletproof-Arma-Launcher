@@ -16,13 +16,13 @@ import os
 
 import kivy
 import kivy.app
-from view.messagebox import MessageBox
 
 from kivy.clock import Clock
-
 from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
+from kivy.uix.behaviors import ToggleButtonBehavior
 
+from view.messagebox import MessageBox
 from view.filechooser import FileChooser
 from utils.data.jsonstore import JsonStore
 from utils.paths import is_dir_writable
@@ -52,12 +52,37 @@ class Controller(object):
 
     def check_childs(self, dt):
         inputfield = self.view.ids.path_text_input
-        inputfield.text = self.settings.get_launcher_moddir()
+        max_download_speed_input = self.view.ids.max_download_speed_input
+        max_upload_speed_input = self.view.ids.max_upload_speed_input
+        seedingtype_radios = [
+            self.view.ids.sbox_while_not_playing,
+            self.view.ids.sbox_never,
+            self.view.ids.sbox_always
+        ]
+
+        # init path selection
+        inputfield.text = self.settings.get('launcher_moddir')
+
+        # init upload download inputs
+        max_upload_speed_input.text = str(self.settings.get('max_upload_speed'))
+        max_upload_speed_input.bind(
+            focus=self.on_max_upload_speed_input_focus)
+        max_download_speed_input.text = str(self.settings.get('max_download_speed'))
+        max_download_speed_input.bind(
+            focus=self.on_max_download_speed_input_focus)
+
+        # init seedingtype
+        Logger.debug('PrefScreen: got radio buttons: {}'.format(seedingtype_radios))
+        for radio in seedingtype_radios:
+            saved = self.settings.get('seeding_type')
+            if radio.seeding_type == saved:
+                radio.active = True
+            radio.bind(active=self.on_radio_button_active)
 
         return False
 
     def on_choose_path_button_release(self, btn):
-        path = self.settings.get_launcher_moddir()
+        path = self.settings.get('launcher_moddir')
 
         Logger.info('opening filechooser with path: ' + path)
 
@@ -88,15 +113,28 @@ class Controller(object):
             MessageBox('Directory {} is not writable'.format(path)).chain_open()
             return False
 
+        # normalize path
+        path = os.path.abspath(path)
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
-        store = JsonStore(self.settings.config_path)
-        self.settings.set_launcher_moddir(path)
-        store.save(self.settings.launcher_config)
-        self.settings.reinit()
-        # Fixme: Workaround: resave the settings in case something went wrong
-        # with reinit and the paths have changed again
-        store.save(self.settings.launcher_config)
-        self.view.ids.path_text_input.text = self.settings.get_launcher_moddir()
+
+        # this will save automaticly
+        self.settings.set('launcher_moddir', path)
+
+        self.view.ids.path_text_input.text = self.settings.get('launcher_moddir')
 
         if self.file_browser_popup:
             self.file_browser_popup.dismiss()
+
+    def on_max_download_speed_input_focus(self, numberinput, focus):
+        if not focus:
+            Logger.debug('max_download_speed_input unfocused')
+            self.settings.set('max_download_speed', numberinput.get_value())
+
+    def on_max_upload_speed_input_focus(self, numberinput, focus):
+        if not focus:
+            Logger.debug('max_upload_speed_input unfocused')
+            self.settings.set('max_upload_speed', numberinput.get_value())
+
+    def on_radio_button_active(self, radio_button, active):
+        if active:
+            self.settings.set('seeding_type', radio_button.seeding_type)

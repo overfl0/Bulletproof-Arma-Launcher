@@ -23,17 +23,15 @@ class Mod(object):
             downloadurl=None,
             torrent_timestamp="",
             name="",
-            version="",
             up_to_date=False):
         super(Mod, self).__init__()
 
-        self.clientlocation = clientlocation
+        self.clientlocation = clientlocation  # 'C:\Arma 3\Tactical Battlefield'
         self.synctype = synctype
-        self.downloadurl = downloadurl
-        self.foldername = foldername
-        self.torrent_timestamp = torrent_timestamp
-        self.name = name
-        self.version = version
+        self.downloadurl = downloadurl  # 'https://my.domain/file.torrent'
+        self.foldername = foldername  # '@CBA_A3'
+        self.torrent_timestamp = torrent_timestamp  # datetime
+        self.name = name  # 'Community Base Addons v.123.4'
         self.up_to_date = up_to_date
 
     @classmethod

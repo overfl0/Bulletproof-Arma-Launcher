@@ -24,6 +24,7 @@ import kivy.app  # To keep PyDev from complaining
 from kivy.logger import Logger
 import requests
 import textwrap
+import torrent_utils
 
 from third_party import teamspeak
 from third_party.arma import Arma, SoftwareNotInstalled
@@ -108,7 +109,7 @@ def _get_mod_descriptions(para):
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') not in ("4.1", "5", "6"):
+        if data.get('alpha') not in ('5', '6'):
             error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
@@ -174,16 +175,12 @@ def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
         mod_list = [mod for mod in mod_list if any(mod.name.startswith(prefix) for prefix in mods_filter)]
 
     # TODO: Perform a better check here. Should compare md5sum with actual launcher, etc...
-    # TODO: Change this to a static function
-    launcher_syncer = TorrentSyncer(messagequeue, launcher)
-    launcher.up_to_date = launcher_syncer.is_complete_quick()
+    launcher.up_to_date = torrent_utils.is_complete_quick(launcher)
 
-    # check if any oth the mods is installed with withSix
+    # check if any of the the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
     for m in mod_list:
-        # TODO: Change this to a static function
-        syncer = TorrentSyncer(messagequeue, m)
-        m.up_to_date = syncer.is_complete_quick()
+        m.up_to_date = torrent_utils.is_complete_quick(m)
 
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list, 'launcher': launcher})
 
@@ -271,34 +268,30 @@ def _tfr_post_download_hook(message_queue, mod):
     return True
 
 
-def _sync_all(message_queue, launcher_moddir, mods):
-    """Run syncers for all the mods sequentially and then their post-download hooks."""
+def _sync_all(message_queue, launcher_moddir, mods, max_download_speed, max_upload_speed):
+    """Run syncers for all the mods in parallel and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
-    # debussy_mod = Mod(
-    #     foldername='@debussybattle',  # The mod name MUST match directory name!
-    #     clientlocation=launcher_moddir,
-    #     synctype='torrent',
-    #     downloadurl='file://' + BaseApp.resource_path('debussy.torrent'))
 
     for m in mods:
-        if m.up_to_date:
-            Logger.info('Not downloading mod {} because it is up to date'.format(m.foldername))
-            continue
-
         m.clientlocation = launcher_moddir  # This change does NOT persist in the main launcher (would be nice :()
 
-        syncer = TorrentSyncer(message_queue, m)
-        sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
+    syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
+    sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
 
-        if sync_ok is False:  # Alpha undocumented feature: stop processing on a reject()
-            return
+    # If we had an error or we're closing the launcher, don't call post_download_hooks
+    if sync_ok is False or syncer.force_termination:
+        return
 
-        # Will only fire up if mod == TFR
-        if _tfr_post_download_hook(message_queue, m) == False:
-            return  # Alpha undocumented feature: stop processing on a reject()
+    # Perform post-download hooks for updated mods
+    for m in mods:
+        # If the mod had to be updated and the download was performed successfully
+        if not m.up_to_date and m.finished_hook_ran:
+            # Will only fire up if mod == TFR
+            if _tfr_post_download_hook(message_queue, m) == False:
+                return  # Alpha undocumented feature: stop processing on a reject()
 
-        message_queue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
-                                'workaround_finished': m.foldername}, 1.0)
+            message_queue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),
+                                    'workaround_finished': m.foldername}, 1.0)
 
     message_queue.resolve({'msg': 'Downloading mods finished.'})
 
@@ -329,13 +322,19 @@ class ModManager(object):
         return self.para
 
     def prepare_and_check(self, data):
-        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get_launcher_moddir(), data), 'checkmods')
+        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get('launcher_moddir'), data), 'checkmods')
         self.para.then(self.on_prepare_and_check_resolve, None, None)
         self.para.run()
         return self.para
 
     def sync_all(self):
-        self.sync_para = Para(_protected_call, (_sync_all, self.settings.get_launcher_moddir(), self.mods), 'sync')
+        self.sync_para = Para(_protected_call, (
+            _sync_all,
+            self.settings.get('launcher_moddir'),
+            self.mods,
+            self.settings.get('max_download_speed'),
+            self.settings.get('max_upload_speed')
+        ), 'sync')
         self.sync_para.then(None, None, self.on_sync_all_progress)
         self.sync_para.run()
         return self.sync_para
