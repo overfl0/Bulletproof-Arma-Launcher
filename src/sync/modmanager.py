@@ -254,7 +254,11 @@ def _sync_all(message_queue, launcher_moddir, mods, max_download_speed, max_uplo
 
     # If we had an error or we're closing the launcher, don't call post_download_hooks
     if sync_ok is False or syncer.force_termination:
-        return
+        # If termination has been forced, issue a resolve so no error is raised.
+        # If not sync_ok, a reject has already been issued
+        if syncer.force_termination:
+            message_queue.resolve({'msg': 'Syncing stopped.'})
+            return
 
     # Perform post-download hooks for updated mods
     for m in mods:
