@@ -15,10 +15,10 @@ from __future__ import unicode_literals
 from multiprocessing import Queue
 
 import os
-
 import kivy
 import kivy.app  # To keep PyDev from complaining
 import textwrap
+import third_party.helpers
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from view.messagebox import MessageBox
 
@@ -29,8 +29,6 @@ from kivy.uix.image import Image
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
-from third_party import teamspeak
-from utils.data.jsonstore import JsonStore
 from utils.primitive_git import get_git_sha1_auto
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 
@@ -62,7 +60,7 @@ class Controller(object):
         self.play_button_shown = False
 
         # Don't run logic if required third party programs are not installed
-        if self.check_requirements(verbose=False):
+        if third_party.helpers.check_requirements(verbose=False):
             # download mod description
             self.para = self.mod_manager.download_mod_description()
             self.para.then(self.on_download_mod_description_resolve,
@@ -73,9 +71,9 @@ class Controller(object):
             Clock.schedule_interval(self.try_reenable_play_button, 1)
 
         else:
-            # This will call check_requirements(dt) which is not really what we
+            # This will check_requirements(dt) which is not really what we
             # want but it is good enough ;)
-            Clock.schedule_interval(self.check_requirements, 1)
+            Clock.schedule_interval(third_party.helpers.check_requirements, 1)
 
         Clock.schedule_once(self.update_footer_label, 0)
 
@@ -120,7 +118,7 @@ class Controller(object):
     def try_enable_play_button(self):
         self.view.ids.install_button.disabled = True
 
-        if not self.check_requirements(verbose=False):
+        if not third_party.helpers.check_requirements(verbose=False):
             return
 
         if not self.mods:
@@ -143,63 +141,6 @@ class Controller(object):
         if seeding_type != 'never':
             self.start_syncing(seed=True)
 
-    def check_requirements(self, verbose=True):
-        """Check if all the required third party programs are installed in the system.
-        Return True if the check passed.
-        If verbose == true, show a message box in case of a failed check.
-        """
-
-        # TODO: move me to a better place
-        try:
-            teamspeak.check_installed()
-        except teamspeak.TeamspeakNotInstalled:
-            if verbose:
-                message = textwrap.dedent('''
-                    Teamspeak does not seem to be installed.
-                    Having Teamspeak is required in order to play Tactical Battlefield.
-
-                    [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
-
-                    Install Teamspeak and restart the launcher.
-                    ''')
-                box = MessageBox(message, title='Teamspeak required!', markup=True)
-                box.chain_open()
-
-            return False
-
-        try:
-            Arma.get_installation_path()
-        except ArmaNotInstalled:
-            if verbose:
-                message = textwrap.dedent('''
-                    Arma 3 does not seem to be installed.
-
-                    Having Arma 3 is required in order to play Tactical Battlefield.
-                    ''')
-                box = MessageBox(message, title='Arma 3 required!', markup=True)
-                box.chain_open()
-
-            return False
-
-        try:
-            Arma.get_steam_exe_path()
-        except SteamNotInstalled:
-            if verbose:
-                message = textwrap.dedent('''
-                    Steam does not seem to be installed.
-                    Having Steam is required in order to play Tactical Battlefield.
-
-                    [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
-
-                    Install Steam and restart the launcher.
-                    ''')
-                box = MessageBox(message, title='Steam required!', markup=True)
-                box.chain_open()
-
-            return False
-
-        return True
-
     def on_install_button_ready(self):
         self.view.ids.install_button.text = 'Checking'
         self.view.ids.install_button.enable_progress_animation()
@@ -214,10 +155,13 @@ class Controller(object):
         self.start_syncing(seed=False)
 
     def start_syncing(self, seed=False):
-        self.view.ids.install_button.disabled = True
+        # Enable clicking on "play" button if we're just seeding
+        if not seed:
+            self.view.ids.install_button.disabled = True
+            self.view.ids.install_button.enable_progress_animation()
+
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
-        self.view.ids.install_button.enable_progress_animation()
 
     # Download_mod_description callbacks #######################################
 
@@ -327,7 +271,7 @@ class Controller(object):
 
     def on_sync_progress(self, progress, percentage):
         Logger.debug('InstallScreen: syncing in progress')
-        self.view.ids.install_button.disabled = True
+
         self.view.ids.status_image.show()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
