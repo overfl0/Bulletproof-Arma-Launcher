@@ -65,7 +65,7 @@ class Controller(object):
                            self.on_download_mod_description_reject,
                            self.on_download_mod_description_progress)
 
-            Clock.schedule_interval(self.check_action_button, 0)
+            Clock.schedule_interval(self.wait_to_init_action_button, 0)
             Clock.schedule_interval(self.try_reenable_play_button, 1)
 
         else:
@@ -108,10 +108,10 @@ class Controller(object):
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
 
-    def check_action_button(self, dt):
+    def wait_to_init_action_button(self, dt):
         if 'action_button' in self.view.ids:
-            self.on_action_button_ready()
-            return False
+            self.action_button_init()
+            return False  # Return False to remove the callback from the scheduler
 
     def try_enable_play_button(self):
         self.view.ids.action_button.disabled = True
@@ -138,7 +138,7 @@ class Controller(object):
         if seeding_type != 'never':
             self.start_syncing(seed=True)
 
-    def on_action_button_ready(self):
+    def action_button_init(self):
         self.view.ids.action_button.text = 'Checking'
         self.view.ids.action_button.enable_progress_animation()
 
