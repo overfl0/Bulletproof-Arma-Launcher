@@ -132,8 +132,7 @@ class Controller(object):
         self.play_button_shown = True
 
         # Optionally enable seeding if all mods are synced
-        settings = kivy.app.App.get_running_app().settings
-        seeding_type = settings.get('seeding_type')
+        seeding_type = self.settings.get('seeding_type')
 
         if seeding_type != 'never':
             self.start_syncing(seed=True)
@@ -169,9 +168,7 @@ class Controller(object):
     def on_download_mod_description_resolve(self, progress):
         mod_description_data = progress['data']
 
-        # Not even call settings.save() and be done with it!
-        settings = kivy.app.App.get_running_app().settings
-        settings.set('mod_data_cache', mod_description_data)
+        self.settings.set('mod_data_cache', mod_description_data)
 
         # Continue with processing mod_description data
         self.para = self.mod_manager.prepare_and_check(mod_description_data)
@@ -210,8 +207,7 @@ class Controller(object):
 
         # Carry on with the execution! :)
         # Read data from cache and continue if successful
-        settings = kivy.app.App.get_running_app().settings
-        mod_data = settings.get('mod_data_cache')
+        mod_data = self.settings.get('mod_data_cache')
 
         ErrorPopup(details=details, message=message).chain_open()
 
