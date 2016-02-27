@@ -128,7 +128,6 @@ class Controller(object):
 
         # switch to play button and a different handler
         self.view.ids.install_button.text = 'Play!'
-        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
         self.view.ids.install_button.disabled = False
         self.play_button_shown = True
 
@@ -148,7 +147,7 @@ class Controller(object):
         # this is a workaround because event is not unbindable, see
         # https://github.com/kivy/kivy/issues/903
         if self.play_button_shown:
-            return
+            return self.on_play_button_release(btn)
 
         self.start_syncing(seed=False)
 
