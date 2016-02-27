@@ -65,7 +65,7 @@ class Controller(object):
                            self.on_download_mod_description_reject,
                            self.on_download_mod_description_progress)
 
-            Clock.schedule_interval(self.check_install_button, 0)
+            Clock.schedule_interval(self.check_action_button, 0)
             Clock.schedule_interval(self.try_reenable_play_button, 1)
 
         else:
@@ -98,7 +98,7 @@ class Controller(object):
 
         # Logger.error('Arma has terminated with code: {}'.format(returncode))
         # Allow the game to be run once again.
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.disabled = False
         self.arma_executable_object = None
 
     def update_footer_label(self, dt):
@@ -108,13 +108,13 @@ class Controller(object):
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
 
-    def check_install_button(self, dt):
-        if 'install_button' in self.view.ids:
-            self.on_install_button_ready()
+    def check_action_button(self, dt):
+        if 'action_button' in self.view.ids:
+            self.on_action_button_ready()
             return False
 
     def try_enable_play_button(self):
-        self.view.ids.install_button.disabled = True
+        self.view.ids.action_button.disabled = True
 
         if not third_party.helpers.check_requirements(verbose=False):
             return
@@ -127,8 +127,8 @@ class Controller(object):
                 return
 
         # switch to play button and a different handler
-        self.view.ids.install_button.text = 'Play!'
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.text = 'Play!'
+        self.view.ids.action_button.disabled = False
         self.play_button_shown = True
 
         # Optionally enable seeding if all mods are synced
@@ -138,11 +138,11 @@ class Controller(object):
         if seeding_type != 'never':
             self.start_syncing(seed=True)
 
-    def on_install_button_ready(self):
-        self.view.ids.install_button.text = 'Checking'
-        self.view.ids.install_button.enable_progress_animation()
+    def on_action_button_ready(self):
+        self.view.ids.action_button.text = 'Checking'
+        self.view.ids.action_button.enable_progress_animation()
 
-    def on_install_button_release(self, btn):
+    def on_action_button_release(self, btn):
         # do nothing if sync was already resolved
         # this is a workaround because event is not unbindable, see
         # https://github.com/kivy/kivy/issues/903
@@ -154,8 +154,8 @@ class Controller(object):
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding
         if not seed:
-            self.view.ids.install_button.disabled = True
-            self.view.ids.install_button.enable_progress_animation()
+            self.view.ids.action_button.disabled = True
+            self.view.ids.action_button.enable_progress_animation()
 
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
@@ -187,10 +187,10 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.install_button.disabled = False
+        # self.view.ids.action_button.disabled = False
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
         self.try_enable_play_button()
         # Boilerplate end
@@ -237,8 +237,8 @@ class Controller(object):
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.install_button.disable_progress_animation()
-        self.view.ids.install_button.text = 'Install'
+        self.view.ids.action_button.disable_progress_animation()
+        self.view.ids.action_button.text = 'Install'
 
         Logger.debug('InstallScreen: got mods:')
         for mod in progress['mods']:
@@ -247,7 +247,7 @@ class Controller(object):
         self.mods = progress['mods']
         self.try_enable_play_button()
 
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.disabled = False
 
     def on_checkmods_reject(self, data):
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
@@ -255,10 +255,10 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.install_button.disabled = False
+        # self.view.ids.action_button.disabled = False
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
@@ -282,10 +282,10 @@ class Controller(object):
 
     def on_sync_resolve(self, progress):
         Logger.info('InstallScreen: syncing finished')
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.disabled = False
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
@@ -297,10 +297,10 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.disabled = False
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
@@ -312,7 +312,7 @@ class Controller(object):
         Logger.info('InstallScreen: User hit play')
 
         third_party.helpers.run_the_game(self.mods)
-        self.view.ids.install_button.disabled = True
+        self.view.ids.action_button.disabled = True
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(

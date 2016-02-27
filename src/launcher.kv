@@ -178,10 +178,10 @@
             size_hint_y: None
 
             HoverButton:
-                id: install_button
+                id: action_button
                 disabled: True
                 width: 300
-                on_release: root.controller.on_install_button_release(self)
+                on_release: root.controller.on_action_button_release(self)
                 text: 'Install'
                 font_name: app.resource_path("fonts/Xolonium-Regular.ttf")
                 font_size: 30
