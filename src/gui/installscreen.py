@@ -14,12 +14,10 @@ from __future__ import unicode_literals
 
 from multiprocessing import Queue
 
-import os
 import kivy
 import kivy.app  # To keep PyDev from complaining
 import textwrap
 import third_party.helpers
-from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from view.messagebox import MessageBox
 
 from kivy.clock import Clock
@@ -314,34 +312,7 @@ class Controller(object):
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')
 
-        # TODO: Move all this logic somewhere else
-        settings = kivy.app.App.get_running_app().settings
-        mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.clientlocation but it isn't!
-
-        mods_paths = []
-        for mod in self.mods:
-            mod_full_path = os.path.join(mod_dir, mod.foldername)
-            mods_paths.append(mod_full_path)
-
-        try:
-            custom_args = []  # TODO: Make this user selectable
-            self.arma_executable_object = Arma.run_game(mod_list=mods_paths, custom_args=custom_args)
-
-        except ArmaNotInstalled:
-            text = "Arma 3 does not seem to be installed."
-            no_arma_info = MessageBox(text, title='Arma not installed!')
-            no_arma_info.chain_open()
-
-        except SteamNotInstalled:
-            text = "Steam does not seem to be installed."
-            no_steam_info = MessageBox(text, title='Steam not installed!')
-            no_steam_info.chain_open()
-
-        except OSError as ex:
-            text = "Error while launching Arma 3: {}.".format(ex.strerror)
-            error_info = MessageBox(text, title='Error while launching Arma 3!')
-            error_info.chain_open()
-
+        third_party.helpers.run_the_game(self.mods)
         self.view.ids.install_button.disabled = True
 
     def on_settings_change(self, instance, key, old_value, value):

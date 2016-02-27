@@ -12,8 +12,11 @@
 
 from __future__ import unicode_literals
 
+import kivy.app
+import os
 import textwrap
 
+from kivy.logger import Logger
 from third_party import teamspeak
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from view.messagebox import MessageBox
@@ -75,3 +78,42 @@ def check_requirements(verbose=True):
         return False
 
     return True
+
+
+def run_the_game(mods):
+    """Run the game with the right parameters.
+    Handle the exceptions by showing an appropriate message on error.
+    """
+
+    Logger.info('Third party: Running the game')
+
+    settings = kivy.app.App.get_running_app().settings
+    mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.clientlocation but it isn't!
+
+    mods_paths = []
+    for mod in mods:
+        mod_full_path = os.path.join(mod_dir, mod.foldername)
+        mods_paths.append(mod_full_path)
+
+    try:
+        custom_args = []  # TODO: Make this user selectable
+        _ = Arma.run_game(mod_list=mods_paths, custom_args=custom_args)
+        # Note: although run_game returns an object, due to the way steam works,
+        # it is unreliable. You never know whether it is the handle to Arma,
+        # Steam or Arma's own launcher.
+        # The only way to be sure is to analyze the process list :(
+
+    except ArmaNotInstalled:
+        text = "Arma 3 does not seem to be installed."
+        no_arma_info = MessageBox(text, title='Arma not installed!')
+        no_arma_info.chain_open()
+
+    except SteamNotInstalled:
+        text = "Steam does not seem to be installed."
+        no_steam_info = MessageBox(text, title='Steam not installed!')
+        no_steam_info.chain_open()
+
+    except OSError as ex:
+        text = "Error while launching Arma 3: {}.".format(ex.strerror)
+        error_info = MessageBox(text, title='Error while launching Arma 3!')
+        error_info.chain_open()
