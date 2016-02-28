@@ -212,7 +212,7 @@ class Controller(object):
         if 'launcher is out of date' in message:
             message = textwrap.dedent('''
                 This launcher is out of date!
-                You won\'t be able do download mods until you update to the latest version!
+                You won\'t be able to download mods until you update to the latest version!
 
                 Get it here:
 
