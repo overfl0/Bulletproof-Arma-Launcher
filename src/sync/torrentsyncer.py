@@ -162,18 +162,27 @@ class TorrentSyncer(object):
             total_size = 1
         download_fraction = downloaded_size / total_size
 
+        session_actual_peers = 0
+
         action = 'Syncing:'
+
         # If at least one torrent is checking its pieces, show a message
         for mod in self.mods_with_valid_handle():
+            session_actual_peers += mod.status.num_peers
             if mod.status.state == libtorrent.torrent_status.checking_files:
                 action = 'Checking missing pieces:'
-                break
 
-        progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
-                           action,
-                           download_fraction * 100.0,
-                           status.payload_download_rate / 1024,
-                           ' | '.join(unfinished_mods))
+        if download_fraction != 1:
+            progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
+                               action,
+                               download_fraction * 100.0,
+                               status.payload_download_rate / 1024,
+                               ' | '.join(unfinished_mods))
+        else:
+            progress_message = 'Seeding: {} peers ({:0.2f} KB/s). Total: {} MB'.format(
+                               session_actual_peers,
+                               status.payload_upload_rate / 1024,
+                               status.total_payload_upload / 1024 / 1024)
 
         self.result_queue.progress({'msg': progress_message,
                                     'log': self.get_session_logs(),
