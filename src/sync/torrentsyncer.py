@@ -178,7 +178,10 @@ class TorrentSyncer(object):
         self.result_queue.progress({'msg': progress_message,
                                     'log': self.get_session_logs(),
                                     }, download_fraction)
-        Logger.info('Progress: {}'.format(progress_message))
+
+        # Don't log at 100% to prevent spamming while seeding
+        if download_fraction != 1:
+            Logger.info('Progress: {}'.format(progress_message))
 
     def start_syncing(self, mod, force_sync=False):
         """Create a torrent handle for a mod to be downloaded.
