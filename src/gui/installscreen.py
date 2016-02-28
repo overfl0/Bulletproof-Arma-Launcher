@@ -53,6 +53,7 @@ class Controller(object):
         self.settings = kivy.app.App.get_running_app().settings
         self.arma_executable_object = None
         self.para = None
+        self.syncing_failed = False
 
         # TODO: Maybe transform this into a state
         self.play_button_shown = False
@@ -107,7 +108,8 @@ class Controller(object):
         # Check if seeding needs to start
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
-                    if not self.para:
+                    # Don't start if syncing failed or if it's already running
+                    if not self.para and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
 
@@ -272,6 +274,7 @@ class Controller(object):
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
 
+        self.syncing_failed = True
         self.try_enable_play_button()
 
         ErrorPopup(details=details, message=message).chain_open()
@@ -316,6 +319,7 @@ class Controller(object):
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
 
+        self.syncing_failed = True
         self.try_enable_play_button()
 
         ErrorPopup(details=details, message=message).chain_open()
