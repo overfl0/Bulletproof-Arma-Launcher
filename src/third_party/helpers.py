@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 import kivy.app
 import os
 import textwrap
+import utils.system_processes
 
 from kivy.logger import Logger
 from third_party import teamspeak
@@ -117,3 +118,48 @@ def run_the_game(mods):
         text = "Error while launching Arma 3: {}.".format(ex.strerror)
         error_info = MessageBox(text, title='Error while launching Arma 3!')
         error_info.chain_open()
+
+    arma_may_be_running(newly_launched=True)
+
+ARMA_PROCESS_EVER_SEEN = False
+ARMA_PROCESS_TERMINATED = True
+
+
+def arma_may_be_running(newly_launched=False):
+    """Check if arma3.exe *may be* running in the system.
+
+    If newly_launched = True, the function will assume that the process may
+    still be being launched and will return True until the exe is found and then
+    disappears from the list of the processes.
+
+    This function returns False if Arma 3 has been found to be running in the
+    past and is not running anymore. This answer is 100% sure.
+
+    If the function returns True it either means Arma is running now (100% sure)
+    or that the process is now being launched but arma3.exe has not yet been
+    seen in the system. In case there is a problem while running Arma, this
+    function will return True forever.
+    It is unknown at this point if there is some other reliable way of telling
+    whether Arma is being launched or not.
+    """
+
+    global ARMA_PROCESS_EVER_SEEN
+    global ARMA_PROCESS_TERMINATED
+
+    if newly_launched:
+        ARMA_PROCESS_EVER_SEEN = False
+        ARMA_PROCESS_TERMINATED = False
+
+    if ARMA_PROCESS_TERMINATED:  # If it is known the process has already terminated, don't iterate through processes
+        return False
+
+    is_process_running = utils.system_processes.program_running('arma3.exe')
+
+    if is_process_running:
+        ARMA_PROCESS_EVER_SEEN = True
+
+    if ARMA_PROCESS_EVER_SEEN and not is_process_running:
+        ARMA_PROCESS_TERMINATED = True
+        return False
+
+    return True
