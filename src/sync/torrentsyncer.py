@@ -102,11 +102,16 @@ class TorrentSyncer(object):
         return torrent_log
 
     def log_torrent_progress(self, s, mod_name):
-        """Just log the download progress for now."""
+        """Just log the download progress for now.
+        Do not log anything if the torrent is 100% completed to prevent spamming
+        while seeding."""
         # download_fraction = s.progress
         download_kBps = s.download_rate / 1024
         upload_kBps = s.upload_rate / 1024
         state = decode_utf8(s.state.name)
+
+        if s.progress == 1:
+            return
 
         Logger.info('Progress: [{}] {:.2f}% complete (down: {:.1f} kB/s up: {:.1f} kB/s peers: {}) {}'.format(
                     mod_name, s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
