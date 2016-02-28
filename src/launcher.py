@@ -82,6 +82,7 @@ try:
         from kivy.base import ExceptionManager
 
         from utils.app import BaseApp
+        from view.numberinput import NumberInput
         from view.hoverbutton import HoverButton
         from view.statusimage import StatusImage
         from view.errorpopup import error_popup_decorator
