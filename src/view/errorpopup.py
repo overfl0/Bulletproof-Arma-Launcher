@@ -24,10 +24,12 @@ from utils.critical_messagebox import MessageBox
 from utils.testtools_compat import _format_exc_info
 from view.chainedpopup import ChainedPopup
 
-DEFAULT_ERROR_MESSAGE = """Critical Error. Please copy the text below and post it on the bugtracker:
-[color=3572b0][ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/ref][/color]
+DEFAULT_ERROR_MESSAGE = """Critical Error.
+If you can't find an answer to your problem [color=3572b0][ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/wiki/Troubleshooting]on the troubleshooting page[/ref][/color]
+copy the text below and post it on the bugtracker:
 
-Please make sure you're not reporting an issue that has already been reported."""
+[color=3572b0][ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/ref][/color]
+"""
 
 POPUP_TITLE = """An error occurred"""
 CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""
