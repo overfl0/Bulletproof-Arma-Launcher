@@ -48,8 +48,12 @@ try:
         # configure kivy
         from kivy.config import Config
         from utils.paths import get_resources_path
+        from utils.devmode import devmode
+
+        default_log_level = devmode.get_log_level('info')
 
         Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
+        Config.set('kivy', 'log_level', default_log_level)
         Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
         if not settings.get('self_update'):
