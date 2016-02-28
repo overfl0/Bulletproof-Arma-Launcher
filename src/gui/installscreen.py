@@ -66,7 +66,7 @@ class Controller(object):
                            self.on_download_mod_description_progress)
 
             Clock.schedule_interval(self.wait_to_init_action_button, 0)
-            Clock.schedule_interval(self.try_reenable_play_button, 1)
+            Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
         else:
             # This will check_requirements(dt) which is not really what we
@@ -81,25 +81,40 @@ class Controller(object):
         # bind to settings change
         self.settings.bind(on_change=self.on_settings_change)
 
-    def try_reenable_play_button(self, dt):
-        """This function first checks if a game process had been run. Then it checks
-        if that process did terminate. If it did, the play button is reenabled
+    def seeding_and_action_button_upkeep(self, dt):
+        """Check if seeding should be performed and if the play button should be available again.
+        Start or stop seeding as needed.
         """
-        if self.arma_executable_object is None:
+
+        # Check if we're ready to run the game - everything has been properly synced
+        # TODO: use a state machine or anything else than comparing strings :(
+        if self.view.ids.action_button.text != 'Play!':
             return
 
-        # TODO: Since we started to launch the game via steam.exe (as opposed to arma3battleye.exe)
-        # the check below would only check if Steam has terminated on the first run (of steam)
-        # On all subsequent runs steam terminates almost instantaneously (as an instance is already running.
-        # Should probably check running processes for "arma3.exe" or something.
-        # returncode = self.arma_executable_object.poll()
-        # if returncode is None:  # The game has not terminated yet
-        #     return
+        arma_is_running = third_party.helpers.arma_may_be_running(newly_launched=False)
 
-        # Logger.error('Arma has terminated with code: {}'.format(returncode))
-        # Allow the game to be run once again.
-        self.view.ids.action_button.disabled = False
-        self.arma_executable_object = None
+        # Start or stop seeding
+        seeding_type = self.settings.get('seeding_type')
+
+        # Check if seeding needs to stop
+        if seeding_type == 'never' or \
+           (seeding_type == 'while_not_playing' and arma_is_running):
+
+            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+                Logger.info('Timer check: stopping seeding.')
+                self.para.request_termination()
+
+        # Check if seeding needs to start
+        elif seeding_type == 'always' or \
+                (seeding_type == 'while_not_playing' and not arma_is_running):
+                    if not self.para:
+                        Logger.info('Timer check: starting seeding.')
+                        self.start_syncing(seed=True)
+
+        if not arma_is_running:
+            # Allow the game to be run once again by enabling the play button.
+            # Logger.info('Timer check: Re-enabling the Play button')
+            self.view.ids.action_button.disabled = False
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
@@ -116,6 +131,7 @@ class Controller(object):
     def try_enable_play_button(self):
         self.view.ids.action_button.disabled = True
 
+        # TODO: Perform this check once, at the start of the launcher
         if not third_party.helpers.check_requirements(verbose=False):
             return
 
@@ -128,14 +144,10 @@ class Controller(object):
 
         # switch to play button and a different handler
         self.view.ids.action_button.text = 'Play!'
-        self.view.ids.action_button.disabled = False
         self.play_button_shown = True
 
-        # Optionally enable seeding if all mods are synced
-        seeding_type = self.settings.get('seeding_type')
-
-        if seeding_type != 'never':
-            self.start_syncing(seed=True)
+        if not third_party.helpers.arma_may_be_running(newly_launched=False):
+            self.view.ids.action_button.disabled = False
 
     def action_button_init(self):
         self.view.ids.action_button.text = 'Checking'
@@ -166,6 +178,7 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
 
     def on_download_mod_description_resolve(self, progress):
+        self.para = None
         mod_description_data = progress['data']
 
         self.settings.set('mod_data_cache', mod_description_data)
@@ -177,6 +190,7 @@ class Controller(object):
                        self.on_checkmods_progress)
 
     def on_download_mod_description_reject(self, data):
+        self.para = None
         # TODO: Move boilerplate code to a function
         # Boilerplate begin
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
@@ -230,6 +244,7 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
 
     def on_checkmods_resolve(self, progress):
+        self.para = None
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
@@ -246,6 +261,7 @@ class Controller(object):
         self.view.ids.action_button.disabled = False
 
     def on_checkmods_reject(self, data):
+        self.para = None
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
         details = data.get('details', None)
         last_line = details if details else message
@@ -263,7 +279,7 @@ class Controller(object):
     # Sync callbacks ###########################################################
 
     def on_sync_progress(self, progress, percentage):
-        Logger.debug('InstallScreen: syncing in progress')
+        # Logger.debug('InstallScreen: syncing in progress')
 
         self.view.ids.status_image.show()
         self.view.ids.status_label.text = progress['msg']
@@ -277,6 +293,7 @@ class Controller(object):
             message_box_instance.chain_open()
 
     def on_sync_resolve(self, progress):
+        self.para = None
         Logger.info('InstallScreen: syncing finished')
         self.view.ids.action_button.disabled = False
         self.view.ids.status_image.hide()
@@ -286,6 +303,7 @@ class Controller(object):
         self.try_enable_play_button()
 
     def on_sync_reject(self, data):
+        self.para = None
         Logger.info('InstallScreen: syncing failed')
 
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
@@ -307,6 +325,13 @@ class Controller(object):
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')
 
+        seeding_type = self.settings.get('seeding_type')
+
+        # Stop seeding if not set to always seed
+        if seeding_type != 'always':
+            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+                self.para.request_termination()
+
         third_party.helpers.run_the_game(self.mods)
         self.view.ids.action_button.disabled = True
 
@@ -323,8 +348,7 @@ class Controller(object):
                 Logger.debug('InstallScreen: Passing setting {}={} to syncing subprocess'.format(key, value))
                 self.para.send_message('torrent_settings', {key: value})
 
-        if key == 'seeding_type':
-            pass  # TODO: React accordingly
+        # Note: seeding is handled in seeding_and_action_button_upkeep()
 
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')
