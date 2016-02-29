@@ -102,11 +102,16 @@ class TorrentSyncer(object):
         return torrent_log
 
     def log_torrent_progress(self, s, mod_name):
-        """Just log the download progress for now."""
+        """Just log the download progress for now.
+        Do not log anything if the torrent is 100% completed to prevent spamming
+        while seeding."""
         # download_fraction = s.progress
         download_kBps = s.download_rate / 1024
         upload_kBps = s.upload_rate / 1024
         state = decode_utf8(s.state.name)
+
+        if s.progress == 1:
+            return
 
         Logger.info('Progress: [{}] {:.2f}% complete (down: {:.1f} kB/s up: {:.1f} kB/s peers: {}) {}'.format(
                     mod_name, s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
@@ -157,23 +162,35 @@ class TorrentSyncer(object):
             total_size = 1
         download_fraction = downloaded_size / total_size
 
+        session_actual_peers = 0
+
         action = 'Syncing:'
+
         # If at least one torrent is checking its pieces, show a message
         for mod in self.mods_with_valid_handle():
+            session_actual_peers += mod.status.num_peers
             if mod.status.state == libtorrent.torrent_status.checking_files:
                 action = 'Checking missing pieces:'
-                break
 
-        progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
-                           action,
-                           download_fraction * 100.0,
-                           status.payload_download_rate / 1024,
-                           ' | '.join(unfinished_mods))
+        if download_fraction != 1:
+            progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
+                               action,
+                               download_fraction * 100.0,
+                               status.payload_download_rate / 1024,
+                               ' | '.join(unfinished_mods))
+        else:
+            progress_message = 'Seeding: {} peers ({:0.2f} KB/s). Total: {} MB'.format(
+                               session_actual_peers,
+                               status.payload_upload_rate / 1024,
+                               status.total_payload_upload / 1024 / 1024)
 
         self.result_queue.progress({'msg': progress_message,
                                     'log': self.get_session_logs(),
                                     }, download_fraction)
-        Logger.info('Progress: {}'.format(progress_message))
+
+        # Don't log at 100% to prevent spamming while seeding
+        if download_fraction != 1:
+            Logger.info('Progress: {}'.format(progress_message))
 
     def start_syncing(self, mod, force_sync=False):
         """Create a torrent handle for a mod to be downloaded.
@@ -258,7 +275,7 @@ class TorrentSyncer(object):
             mod.torrent_handle.resume()
 
     def syncing_finished(self):
-        """Check whether all torrents are in a state where every torrens has been synced.
+        """Check whether all torrents are in a state where every torrent has been synced.
         If this is the case, we can then stop downloading or seeding at any time.
         """
         for mod in self.mods:
@@ -317,7 +334,7 @@ class TorrentSyncer(object):
 
             self.session.set_settings(session_settings)
 
-    def sync(self, force_sync=False):
+    def sync(self, force_sync=False, seed_after_completion=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
         are described in the torrent file.
@@ -404,7 +421,7 @@ class TorrentSyncer(object):
                         self.resume_torrent(mod)
 
             # If all are in state (4)
-            if self.all_torrents_ran_finished_hooks():
+            if self.all_torrents_ran_finished_hooks() and not seed_after_completion:
                 Logger.info('Sync: Pausing all torrents for syncing end.')
                 self.pause_all_torrents()
 

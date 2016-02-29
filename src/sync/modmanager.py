@@ -110,7 +110,7 @@ def _get_mod_descriptions(para):
 
         # Temporary! Ensure alpha version is correct
         if data.get('alpha') not in ('5', '6'):
-            error_message = 'This launcher is out of date! You won\'t be able do download mods until you update to the latest version!'
+            error_message = 'This launcher is out of date! You won\'t be able to download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
             return ''
@@ -268,7 +268,7 @@ def _tfr_post_download_hook(message_queue, mod):
     return True
 
 
-def _sync_all(message_queue, launcher_moddir, mods, max_download_speed, max_upload_speed):
+def _sync_all(message_queue, launcher_moddir, mods, max_download_speed, max_upload_speed, seed):
     """Run syncers for all the mods in parallel and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
 
@@ -276,11 +276,15 @@ def _sync_all(message_queue, launcher_moddir, mods, max_download_speed, max_uplo
         m.clientlocation = launcher_moddir  # This change does NOT persist in the main launcher (would be nice :()
 
     syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
-    sync_ok = syncer.sync(force_sync=False)  # Use force_sync to force full recheck of all the files' checksums
+    sync_ok = syncer.sync(force_sync=False, seed_after_completion=seed)  # Use force_sync to force full recheck of all the files' checksums
 
     # If we had an error or we're closing the launcher, don't call post_download_hooks
     if sync_ok is False or syncer.force_termination:
-        return
+        # If termination has been forced, issue a resolve so no error is raised.
+        # If not sync_ok, a reject has already been issued
+        if syncer.force_termination:
+            message_queue.resolve({'msg': 'Syncing stopped.'})
+            return
 
     # Perform post-download hooks for updated mods
     for m in mods:
@@ -327,13 +331,14 @@ class ModManager(object):
         self.para.run()
         return self.para
 
-    def sync_all(self):
+    def sync_all(self, seed):
         self.sync_para = Para(_protected_call, (
             _sync_all,
             self.settings.get('launcher_moddir'),
             self.mods,
             self.settings.get('max_download_speed'),
-            self.settings.get('max_upload_speed')
+            self.settings.get('max_upload_speed'),
+            seed
         ), 'sync')
         self.sync_para.then(None, None, self.on_sync_all_progress)
         self.sync_para.run()

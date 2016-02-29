@@ -144,7 +144,7 @@ class Settings(Model):
             # TODO: Show a regular message box, not a win32 message box
             MessageBox('Could not create directory {}\n Setting will stay on {}'.format(
                 launcher_basedir, self.get('launcher_basedir')),
-                       'Error while setting launcher directory')
+                'Error while setting launcher directory')
             return ModelInterceptorError()
 
         return launcher_basedir

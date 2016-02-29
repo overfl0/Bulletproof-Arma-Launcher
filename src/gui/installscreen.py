@@ -14,14 +14,13 @@ from __future__ import unicode_literals
 
 from multiprocessing import Queue
 
-import os
-
 import kivy
 import kivy.app  # To keep PyDev from complaining
+import os
 import textwrap
-from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
+import third_party.helpers
+
 from autoupdater import autoupdater
-from view.messagebox import MessageBox
 
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
@@ -30,10 +29,9 @@ from kivy.uix.image import Image
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
-from third_party import teamspeak
-from utils.data.jsonstore import JsonStore
 from utils.primitive_git import get_git_sha1_auto
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
+from view.messagebox import MessageBox
 
 
 class InstallScreen(Screen):
@@ -58,25 +56,25 @@ class Controller(object):
         self.settings = kivy.app.App.get_running_app().settings
         self.arma_executable_object = None
         self.para = None
-
-        # TODO: Maybe transform this into a state
-        self.install_button_disabled = False
+        self.syncing_failed = False
+        self.action_button_action = 'install'  # TODO: create an enum
+        self.launcher = None
 
         # Don't run logic if required third party programs are not installed
-        if self.check_requirements(verbose=False):
+        if third_party.helpers.check_requirements(verbose=False):
             # download mod description
             self.para = self.mod_manager.download_mod_description()
             self.para.then(self.on_download_mod_description_resolve,
                            self.on_download_mod_description_reject,
                            self.on_download_mod_description_progress)
 
-            Clock.schedule_interval(self.check_install_button, 0)
-            Clock.schedule_interval(self.try_reenable_play_button, 1)
+            Clock.schedule_interval(self.wait_to_init_action_button, 0)
+            Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
         else:
-            # This will call check_requirements(dt) which is not really what we
+            # This will check_requirements(dt) which is not really what we
             # want but it is good enough ;)
-            Clock.schedule_interval(self.check_requirements, 1)
+            Clock.schedule_interval(third_party.helpers.check_requirements, 1)
 
         Clock.schedule_once(self.update_footer_label, 0)
 
@@ -86,25 +84,41 @@ class Controller(object):
         # bind to settings change
         self.settings.bind(on_change=self.on_settings_change)
 
-    def try_reenable_play_button(self, dt):
-        """This function first checks if a game process had been run. Then it checks
-        if that process did terminate. If it did, the play button is reenabled
+    def seeding_and_action_button_upkeep(self, dt):
+        """Check if seeding should be performed and if the play button should be available again.
+        Start or stop seeding as needed.
         """
-        if self.arma_executable_object is None:
+
+        # Check if we're ready to run the game - everything has been properly synced
+        # TODO: use a state machine or anything else than comparing strings :(
+        if self.view.ids.action_button.text != 'Play!':
             return
 
-        # TODO: Since we started to launch the game via steam.exe (as opposed to arma3battleye.exe)
-        # the check below would only check if Steam has terminated on the first run (of steam)
-        # On all subsequent runs steam terminates almost instantaneously (as an instance is already running.
-        # Should probably check running processes for "arma3.exe" or something.
-        # returncode = self.arma_executable_object.poll()
-        # if returncode is None:  # The game has not terminated yet
-        #     return
+        arma_is_running = third_party.helpers.arma_may_be_running(newly_launched=False)
 
-        # Logger.error('Arma has terminated with code: {}'.format(returncode))
-        # Allow the game to be run once again.
-        self.view.ids.install_button.disabled = False
-        self.arma_executable_object = None
+        # Start or stop seeding
+        seeding_type = self.settings.get('seeding_type')
+
+        # Check if seeding needs to stop
+        if seeding_type == 'never' or \
+           (seeding_type == 'while_not_playing' and arma_is_running):
+
+            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+                Logger.info('Timer check: stopping seeding.')
+                self.para.request_termination()
+
+        # Check if seeding needs to start
+        elif seeding_type == 'always' or \
+                (seeding_type == 'while_not_playing' and not arma_is_running):
+                    # Don't start if syncing failed or if it's already running
+                    if not self.para and not self.syncing_failed:
+                        Logger.info('Timer check: starting seeding.')
+                        self.start_syncing(seed=True)
+
+        if not arma_is_running:
+            # Allow the game to be run once again by enabling the play button.
+            # Logger.info('Timer check: Re-enabling the Play button')
+            self.view.ids.action_button.disabled = False
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
@@ -113,13 +127,13 @@ class Controller(object):
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
 
-    def check_install_button(self, dt):
-        if 'install_button' in self.view.ids:
-            self.on_install_button_ready()
-            return False
+    def wait_to_init_action_button(self, dt):
+        if 'action_button' in self.view.ids:
+            self.action_button_init()
+            return False  # Return False to remove the callback from the scheduler
 
     def try_enable_play_button(self):
-        self.view.ids.install_button.disabled = True
+        self.view.ids.action_button.disabled = True
 
         if self.launcher:
             launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
@@ -127,13 +141,13 @@ class Controller(object):
 
             if not self.launcher.up_to_date or not same_files:
                 # switch to play button and a different handler
-                self.view.ids.install_button.text = 'Self-upgrade'
-                self.view.ids.install_button.bind(on_release=self.on_self_upgrade_button_release)
-                self.view.ids.install_button.disabled = False  # Note: 'install_button' is the name. The actual action may not be 'install'.
-                self.install_button_disabled = True
+                self.view.ids.action_button.text = 'Self-upgrade'
+                self.action_button_action = 'self-upgrade'
+                self.view.ids.action_button.disabled = False  # Note: 'install_button' is the name. The actual action may not be 'install'.
                 return
 
-        if not self.check_requirements(verbose=False):
+        # TODO: Perform this check once, at the start of the launcher
+        if not third_party.helpers.check_requirements(verbose=False):
             return
 
         if not self.mods:
@@ -144,83 +158,36 @@ class Controller(object):
                 return
 
         # switch to play button and a different handler
-        self.view.ids.install_button.text = 'Play!'
-        self.view.ids.install_button.bind(on_release=self.on_play_button_release)
-        self.view.ids.install_button.disabled = False  # Note: 'install_button' is the name. The actual action may not be 'install'.
-        self.install_button_disabled = True
+        self.view.ids.action_button.text = 'Play!'
+        self.action_button_action = 'play'
 
-    def check_requirements(self, verbose=True):
-        """Check if all the required third party programs are installed in the system.
-        Return True if the check passed.
-        If verbose == true, show a message box in case of a failed check.
-        """
+        if not third_party.helpers.arma_may_be_running(newly_launched=False):
+            self.view.ids.action_button.disabled = False
 
-        # TODO: move me to a better place
-        try:
-            teamspeak.check_installed()
-        except teamspeak.TeamspeakNotInstalled:
-            if verbose:
-                message = textwrap.dedent('''
-                    Teamspeak does not seem to be installed.
-                    Having Teamspeak is required in order to play Tactical Battlefield.
+    def action_button_init(self):
+        self.view.ids.action_button.text = 'Checking'
+        self.view.ids.action_button.enable_progress_animation()
 
-                    [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
-
-                    Install Teamspeak and restart the launcher.
-                    ''')
-                box = MessageBox(message, title='Teamspeak required!', markup=True)
-                box.chain_open()
-
-            return False
-
-        try:
-            Arma.get_installation_path()
-        except ArmaNotInstalled:
-            if verbose:
-                message = textwrap.dedent('''
-                    Arma 3 does not seem to be installed.
-
-                    Having Arma 3 is required in order to play Tactical Battlefield.
-                    ''')
-                box = MessageBox(message, title='Arma 3 required!', markup=True)
-                box.chain_open()
-
-            return False
-
-        try:
-            Arma.get_steam_exe_path()
-        except SteamNotInstalled:
-            if verbose:
-                message = textwrap.dedent('''
-                    Steam does not seem to be installed.
-                    Having Steam is required in order to play Tactical Battlefield.
-
-                    [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
-
-                    Install Steam and restart the launcher.
-                    ''')
-                box = MessageBox(message, title='Steam required!', markup=True)
-                box.chain_open()
-
-            return False
-
-        return True
-
-    def on_install_button_ready(self):
-        self.view.ids.install_button.text = 'Checking'
-        self.view.ids.install_button.enable_progress_animation()
-
-    def on_install_button_release(self, btn):
+    def on_action_button_release(self, btn):
         # do nothing if sync was already resolved
         # this is a workaround because event is not unbindable, see
         # https://github.com/kivy/kivy/issues/903
-        if self.install_button_disabled:
-            return
+        if self.action_button_action == 'play':
+            return self.on_play_button_release(btn)
+        elif self.action_button_action == 'self-upgrade':
+            return self.on_self_upgrade_button_release(btn)
 
-        self.view.ids.install_button.disabled = True
-        self.para = self.mod_manager.sync_all()
+        # Else install everything
+        self.start_syncing(seed=False)
+
+    def start_syncing(self, seed=False):
+        # Enable clicking on "play" button if we're just seeding
+        if not seed:
+            self.view.ids.action_button.disabled = True
+            self.view.ids.action_button.enable_progress_animation()
+
+        self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
-        self.view.ids.install_button.enable_progress_animation()
 
     def on_self_upgrade_button_release(self, btn):
         self.view.ids.install_button.disabled = True
@@ -243,11 +210,10 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
 
     def on_download_mod_description_resolve(self, progress):
+        self.para = None
         mod_description_data = progress['data']
 
-        # Not even call settings.save() and be done with it!
-        settings = kivy.app.App.get_running_app().settings
-        settings.set('mod_data_cache', mod_description_data)
+        self.settings.set('mod_data_cache', mod_description_data)
 
         # Continue with processing mod_description data
         self.para = self.mod_manager.prepare_and_check(mod_description_data)
@@ -256,6 +222,7 @@ class Controller(object):
                        self.on_checkmods_progress)
 
     def on_download_mod_description_reject(self, data):
+        self.para = None
         # TODO: Move boilerplate code to a function
         # Boilerplate begin
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
@@ -263,10 +230,10 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.install_button.disabled = False
+        # self.view.ids.action_button.disabled = False
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
         self.try_enable_play_button()
         # Boilerplate end
@@ -275,7 +242,7 @@ class Controller(object):
         if 'launcher is out of date' in message:
             message = textwrap.dedent('''
                 This launcher is out of date!
-                You won\'t be able do download mods until you update to the latest version!
+                You won\'t be able to download mods until you update to the latest version!
 
                 Get it here:
 
@@ -286,8 +253,7 @@ class Controller(object):
 
         # Carry on with the execution! :)
         # Read data from cache and continue if successful
-        settings = kivy.app.App.get_running_app().settings
-        mod_data = settings.get('mod_data_cache')
+        mod_data = self.settings.get('mod_data_cache')
 
         ErrorPopup(details=details, message=message).chain_open()
 
@@ -310,11 +276,12 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
 
     def on_checkmods_resolve(self, progress):
+        self.para = None
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.install_button.disable_progress_animation()
-        self.view.ids.install_button.text = 'Install'
+        self.view.ids.action_button.disable_progress_animation()
+        self.view.ids.action_button.text = 'Install'
 
         self.launcher = progress['launcher']
 
@@ -325,19 +292,21 @@ class Controller(object):
         self.mods = progress['mods']
         self.try_enable_play_button()
 
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.disabled = False
 
     def on_checkmods_reject(self, data):
+        self.para = None
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
         details = data.get('details', None)
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.install_button.disabled = False
+        # self.view.ids.action_button.disabled = False
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
+        self.syncing_failed = True
         self.try_enable_play_button()
 
         ErrorPopup(details=details, message=message).chain_open()
@@ -345,8 +314,8 @@ class Controller(object):
     # Sync callbacks ###########################################################
 
     def on_sync_progress(self, progress, percentage):
-        Logger.debug('InstallScreen: syncing in progress')
-        self.view.ids.install_button.disabled = True
+        # Logger.debug('InstallScreen: syncing in progress')
+
         self.view.ids.status_image.show()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
@@ -359,15 +328,17 @@ class Controller(object):
             message_box_instance.chain_open()
 
     def on_sync_resolve(self, progress):
+        self.para = None
         Logger.info('InstallScreen: syncing finished')
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.disabled = False
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
         self.try_enable_play_button()
 
     def on_sync_reject(self, data):
+        self.para = None
         Logger.info('InstallScreen: syncing failed')
 
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
@@ -375,11 +346,12 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        self.view.ids.install_button.disabled = False
+        self.view.ids.action_button.disabled = False
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.install_button.disable_progress_animation()
+        self.view.ids.action_button.disable_progress_animation()
 
+        self.syncing_failed = True
         self.try_enable_play_button()
 
         ErrorPopup(details=details, message=message).chain_open()
@@ -389,35 +361,15 @@ class Controller(object):
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')
 
-        # TODO: Move all this logic somewhere else
-        settings = kivy.app.App.get_running_app().settings
-        mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.clientlocation but it isn't!
+        seeding_type = self.settings.get('seeding_type')
 
-        mods_paths = []
-        for mod in self.mods:
-            mod_full_path = os.path.join(mod_dir, mod.foldername)
-            mods_paths.append(mod_full_path)
+        # Stop seeding if not set to always seed
+        if seeding_type != 'always':
+            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+                self.para.request_termination()
 
-        try:
-            custom_args = []  # TODO: Make this user selectable
-            self.arma_executable_object = Arma.run_game(mod_list=mods_paths, custom_args=custom_args)
-
-        except ArmaNotInstalled:
-            text = "Arma 3 does not seem to be installed."
-            no_arma_info = MessageBox(text, title='Arma not installed!')
-            no_arma_info.chain_open()
-
-        except SteamNotInstalled:
-            text = "Steam does not seem to be installed."
-            no_steam_info = MessageBox(text, title='Steam not installed!')
-            no_steam_info.chain_open()
-
-        except OSError as ex:
-            text = "Error while launching Arma 3: {}.".format(ex.strerror)
-            error_info = MessageBox(text, title='Error while launching Arma 3!')
-            error_info.chain_open()
-
-        self.view.ids.install_button.disabled = True
+        third_party.helpers.run_the_game(self.mods)
+        self.view.ids.action_button.disabled = True
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
@@ -428,12 +380,11 @@ class Controller(object):
 
             # If we are in the process of syncing things by torrent request an
             # update of its settings
-            if self.para and self.para.action_name == 'sync':
+            if self.para and self.para.is_open() and self.para.action_name == 'sync':
                 Logger.debug('InstallScreen: Passing setting {}={} to syncing subprocess'.format(key, value))
                 self.para.send_message('torrent_settings', {key: value})
 
-        if key == 'seeding_type':
-            pass  # TODO: React accordingly
+        # Note: seeding is handled in seeding_and_action_button_upkeep()
 
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')
