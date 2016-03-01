@@ -136,7 +136,9 @@ def convert_metadata_to_mod(md, downloadurlPrefix):
 
 
 def get_launcher_description(para, launcher_moddir, metadata):
-    downloadurlPrefix = 'http://91.121.120.221/tacbf/updater/torrents/'
+    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
+    torrents_path = devmode.get_torrents_path(default='/tacbf/updater/torrents')
+    downloadurlPrefix = 'http://{}{}/'.format(domain, torrents_path)
 
     if 'launcher' not in metadata:
         return None
@@ -150,7 +152,8 @@ def get_launcher_description(para, launcher_moddir, metadata):
 
 def process_description_data(para, data, launcher_moddir):
     domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
-    downloadurlPrefix = 'http://{}/tacbf/updater/torrents/'.format(domain)
+    torrents_path = devmode.get_torrents_path(default='/tacbf/updater/torrents')
+    downloadurlPrefix = 'http://{}{}/'.format(domain, torrents_path)
     mods = []
 
     for md in data['mods']:
