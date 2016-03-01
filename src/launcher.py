@@ -126,6 +126,7 @@ try:
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()
+                self.settings = settings
 
             def build(self):
                 logger = logging.getLogger('concurrent.futures')
