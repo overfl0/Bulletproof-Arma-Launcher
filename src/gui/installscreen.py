@@ -143,7 +143,7 @@ class Controller(object):
                 # switch to play button and a different handler
                 self.view.ids.action_button.text = 'Self-upgrade'
                 self.action_button_action = 'self-upgrade'
-                self.view.ids.action_button.disabled = False  # Note: 'install_button' is the name. The actual action may not be 'install'.
+                self.view.ids.action_button.disabled = False  # Note: 'action_button' is the name. The actual action may not be 'install'.
                 return
 
         # TODO: Perform this check once, at the start of the launcher
@@ -190,15 +190,18 @@ class Controller(object):
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
 
     def on_self_upgrade_button_release(self, btn):
-        self.view.ids.install_button.disabled = True
+        self.view.ids.action_button.disabled = True
         self.para = self.mod_manager.sync_launcher()
         self.para.then(self.on_self_upgrade_resolve, self.on_sync_reject, self.on_sync_progress)
-        self.view.ids.install_button.enable_progress_animation()
+        self.view.ids.action_button.enable_progress_animation()
 
     def on_self_upgrade_resolve(self, data):
-        # Should terminate all working paras here.
+        # Terminate working paras here.
+        if self.para and self.para.is_open():
+            self.para.request_termination()
+            Logger.info("sending termination to para action {}".format(self.para.action_name))
 
-        print str(self.launcher)
+        # TODO: Parametrize name?
         executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()

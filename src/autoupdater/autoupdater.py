@@ -100,7 +100,7 @@ def compare_if_same_files(other_executable):
         print ex.message
 
     same_files = my_sha1 == other_sha1
-    Logger.info('Autoupdater: Same files {}'.format(same_files))
+    Logger.info('Autoupdater: Same files: {}'.format(same_files))
     return same_files
 
 

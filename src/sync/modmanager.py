@@ -345,9 +345,15 @@ class ModManager(object):
         self.sync_para.run()
         return self.sync_para
 
-    def sync_launcher(self):
-        self.launcher_sync_para = Para(_protected_call,
-            (_sync_all, self.settings.get_launcher_moddir(), [self.launcher]), 'sync')
+    def sync_launcher(self, seed=False):
+        self.launcher_sync_para = Para(_protected_call, (
+            _sync_all,
+            self.settings.get('launcher_moddir'),
+            [self.launcher],
+            self.settings.get('max_download_speed'),
+            self.settings.get('max_upload_speed'),
+            seed
+        ), 'sync')
         self.launcher_sync_para.then(None, None, self.on_sync_all_progress)
         self.launcher_sync_para.run()
         return self.launcher_sync_para
