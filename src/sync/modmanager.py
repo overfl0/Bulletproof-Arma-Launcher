@@ -174,8 +174,9 @@ def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
         # Keep only the mods with names starting with any of the giver filters
         mod_list = [mod for mod in mod_list if any(mod.name.startswith(prefix) for prefix in mods_filter)]
 
-    # TODO: Perform a better check here. Should compare md5sum with actual launcher, etc...
-    launcher.up_to_date = torrent_utils.is_complete_quick(launcher)
+    if launcher:
+        # TODO: Perform a better check here. Should compare md5sum with actual launcher, etc...
+        launcher.up_to_date = torrent_utils.is_complete_quick(launcher)
 
     # check if any of the the mods is installed with withSix
     messagequeue.progress({'msg': 'Checking mods'})
