@@ -62,7 +62,7 @@ def get_external_executable_path(*relative):
     relative - optional path to append to the returned path
     """
     if hasattr(sys, '_MEIPASS'):
-        external_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+        external_path = os.path.dirname(sys.executable)
     else:
         external_path = _get_topmost_directory()
 
