@@ -24,6 +24,7 @@ os.unlink on file which requires admin permissions:             WindowsError: [E
 os.unlink on file which requires admin permissions and running: WindowsError: [Error 5] Access is denied:
 os.unlink on file running:                                      WindowsError: [Error 32] The process cannot access the file because it is being used by another process:
 file(a, "wb") on file running:                                  IOError: [Errno 13] Permission denied:
+file(a, "wb") on file which requires admin NOT running:         IOError: [Errno 13] Permission denied:
 
 To know if we need UAC, check if the directory is writable
 """
@@ -96,8 +97,8 @@ def compare_if_same_files(other_executable):
             contents = other_file.read()
             other_sha1 = hashlib.sha1(contents).hexdigest()
 
-    except Exception as ex:
-        print ex.message
+    except Exception:
+        raise  # Raise for now
 
     same_files = my_sha1 == other_sha1
     Logger.info('Autoupdater: Same files: {}'.format(same_files))
