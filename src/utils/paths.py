@@ -124,7 +124,7 @@ def is_dir_writable(path):
         f.close()
         os.remove(temporary_file_path)
 
-    except:  # If anything bad happens, stay on the safe side
+    except Exception:  # If anything bad happens, stay on the safe side
         return False
 
     return True

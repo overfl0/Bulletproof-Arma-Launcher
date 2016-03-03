@@ -73,6 +73,6 @@ def save_git_sha1_to_file(git_controlled_directory, dump_file):
         f = open(dump_file, "w")
         f.write(sha1)
         f.close()
-    except:
+    except Exception:
         if f:
             f.close()

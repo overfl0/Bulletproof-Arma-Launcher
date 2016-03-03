@@ -44,7 +44,7 @@ class DevMode(object):
         #    raise DevModeException(ex)  # Note to self:
         # Do NOT throw exceptions like this! You'll lose stacktrace information!
 
-        except:
+        except Exception:
             self.devdata = {}
 
     def __getattribute__(self, name):

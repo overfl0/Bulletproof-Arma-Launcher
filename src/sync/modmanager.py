@@ -65,7 +65,7 @@ def requests_get_or_reject(para, domain, *args, **kwargs):
             reason_errno = ex.message.reason.errno
             if reason_errno == 11004:
                 para.reject({'msg': 'Could not resolve {}. Check your DNS settings.'.format(domain)})
-        except:
+        except Exception:
             para.reject({'msg': 'Could not connect to the metadata server.'})
 
         para.reject({'msg': 'Could not connect to the metadata server.'})

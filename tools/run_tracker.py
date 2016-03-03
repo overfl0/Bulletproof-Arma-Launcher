@@ -30,13 +30,13 @@ def quiet_unlink_files(directory, filenames):
     for filename in filenames:
         try:
             os.unlink(os.path.join(directory, filename))
-        except:
+        except Exception:
             pass
 
 # make sure tornado package is installed
 try:
     import tornado
-except:
+except Exception:
     print "This tracker requires tornado to be installed"
     print "You can install it by issuing the command:"
     print "pip install tornado"

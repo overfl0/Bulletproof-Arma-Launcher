@@ -106,7 +106,7 @@ class Settings(Model):
             # this is ugly self modification, but i dont want to introduce
             # a settingsmanager
             store.load(self, update=True)
-        except:
+        except Exception:
             Logger.warn('Settings: Launcher config could not be loaded')
 
         # parse arguments
