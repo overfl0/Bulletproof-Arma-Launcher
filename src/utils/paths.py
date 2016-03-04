@@ -61,12 +61,24 @@ def get_external_executable_path(*relative):
 
     relative - optional path to append to the returned path
     """
+
     if hasattr(sys, '_MEIPASS'):
-        external_path = os.path.dirname(sys.executable)
+        external_path = os.path.dirname(sys.executable.decode(sys.getfilesystemencoding()))
     else:
         external_path = _get_topmost_directory()
 
     return os.path.join(external_path, *relative)
+
+
+def get_external_executable():
+    """Return the path of the exe file if packed with PyInstaller.
+    If not, raise EnvironmentError.
+    """
+
+    if hasattr(sys, '_MEIPASS'):
+        return sys.executable.decode(sys.getfilesystemencoding())
+    else:
+        raise EnvironmentError('Can\'t get the path of the executable when not packed with pyinstaller!')
 
 
 def get_base_path(*relative):

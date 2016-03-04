@@ -36,6 +36,8 @@ import subprocess
 import sys
 
 from kivy.logger import Logger
+from utils.devmode import devmode
+from utils import paths
 
 '''
 try:
@@ -48,12 +50,13 @@ except NameError:
 '''
 
 
-def get_my_executable_name():
-    return sys.argv[0]
+def get_external_executable():
+    executable = devmode.get_application_executable()
+    if executable:
+        return executable
 
-
-def get_my_executable_pathname():
-    return os.path.realpath(get_my_executable_name())
+    else:
+        return paths.get_external_executable()
 
 
 def call_file_arguments(filename):
@@ -68,13 +71,13 @@ def request_my_update(new_executable):
     """Update the executable being run with a new executable pointed by new_executable.
     The new_executable will be run with the path to this executable and a parameter indicating
     that an update has to take place."""
-    my_executable_path = get_my_executable_pathname()
+    my_executable_path = get_external_executable()
 
     args = call_file_arguments(new_executable)
     args.extend(['--', '-u', my_executable_path])
 
     Logger.info('Autoupdater: Will call with args: [{}]'.format(', '.join(args)))
-    popen_object = subprocess.Popen(args)
+    popen_object = subprocess.Popen(paths.u_to_fs(args))
     # Logger.info('Autoupdater: Got: %s' % popen_object)
     # TODO: Error handling
 
@@ -85,7 +88,7 @@ def compare_if_same_files(other_executable):
     my_sha1 = None
     other_sha1 = None
 
-    my_executable_path = get_my_executable_pathname()
+    my_executable_path = get_external_executable()
     Logger.info('Autoupdater: Comparing {} with {}...'.format(my_executable_path, other_executable))
 
     try:
@@ -106,7 +109,7 @@ def compare_if_same_files(other_executable):
 
 
 def try_perform_substitution(old_executable_name):
-    my_executable_pathname = get_my_executable_pathname()
+    my_executable_pathname = get_external_executable()
     Logger.info('Autoupdater: me: {}'.format(my_executable_pathname))
 
     try:
@@ -122,11 +125,7 @@ def run_updated(old_executable_name):
     Logger.info('Autoupdater: old: {}'.format(old_executable_name))
     args = call_file_arguments(old_executable_name)
 
-    popen_object = subprocess.Popen(args)
-
-
-def perform_elevated_substitution():
-    raise NotImplementedError()
+    popen_object = subprocess.Popen(paths.u_to_fs(args))
 
 
 if __name__ == '__main__':
