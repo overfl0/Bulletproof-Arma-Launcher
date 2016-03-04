@@ -91,17 +91,19 @@ def compare_if_same_files(other_executable):
     my_executable_path = get_external_executable()
     Logger.info('Autoupdater: Comparing {} with {}...'.format(my_executable_path, other_executable))
 
-    try:
-        with file(my_executable_path, 'rb') as my_file:
-            contents = my_file.read()
-            my_sha1 = hashlib.sha1(contents).hexdigest()
+    with file(my_executable_path, 'rb') as my_file:
+        contents = my_file.read()
+        my_sha1 = hashlib.sha1(contents).hexdigest()
 
+    try:
         with file(other_executable, 'rb') as other_file:
             contents = other_file.read()
             other_sha1 = hashlib.sha1(contents).hexdigest()
 
-    except Exception:
-        raise  # Raise for now
+    except IOError as ex:
+        if ex.errno == 2:
+            Logger.info('Autoupdater: Up to date file missing.')
+            return False
 
     same_files = my_sha1 == other_sha1
     Logger.info('Autoupdater: Same files: {}'.format(same_files))
