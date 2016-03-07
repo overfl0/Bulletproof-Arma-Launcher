@@ -77,9 +77,7 @@ def request_my_update(new_executable):
     args.extend(['--', '-u', my_executable_path])
 
     Logger.info('Autoupdater: Will call with args: [{}]'.format(', '.join(args)))
-    popen_object = subprocess.Popen(paths.u_to_fs(args))
-    # Logger.info('Autoupdater: Got: %s' % popen_object)
-    # TODO: Error handling
+    subprocess.Popen(paths.u_to_fs(args))
 
 
 def compare_if_same_files(other_executable):
@@ -127,7 +125,7 @@ def run_updated(old_executable_name):
     Logger.info('Autoupdater: old: {}'.format(old_executable_name))
     args = call_file_arguments(old_executable_name)
 
-    popen_object = subprocess.Popen(paths.u_to_fs(args))
+    subprocess.Popen(paths.u_to_fs(args))
 
 
 if __name__ == '__main__':
