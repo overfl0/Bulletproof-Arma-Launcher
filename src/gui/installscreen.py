@@ -140,6 +140,22 @@ class Controller(object):
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             if not self.launcher.up_to_date or not same_files:
+
+                if autoupdater.require_admin_privileges():
+                    message = textwrap.dedent('''
+                    This launcher is out of date and needs to be updated but it does not have
+                    the required permissions!
+
+
+                    You need to perform one of the following actions:
+
+                    1) Run the launcher as administrator.
+                    2) Or move the launcher to another directory that does not require administrator
+                    privileges and run it again.
+                    ''')
+                    MessageBox(message, title='Administrator permissions required!', markup=True).chain_open()
+                    return
+
                 # switch to play button and a different handler
                 self.view.ids.action_button.text = 'Self-upgrade'
                 self.action_button_action = 'self-upgrade'

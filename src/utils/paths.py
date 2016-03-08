@@ -56,8 +56,8 @@ def _get_topmost_directory():
     return os.path.dirname(real_path)  # Should not happen but better to play it safe
 
 
-def get_external_executable_path(*relative):
-    """Return the path of the exe file if packed with PyInstaller or the topmost directory of the repository otherwise.
+def get_external_executable_dir(*relative):
+    """Return the directory of the exe file if packed with PyInstaller or the topmost directory of the repository otherwise.
 
     relative - optional path to append to the returned path
     """

@@ -67,6 +67,22 @@ def call_file_arguments(filename):
     return [filename]
 
 
+def require_admin_privileges():
+    """Check if the process can overwrite the executable being run or if it needs extra priviledges.
+    For now, this will just get the directory of the executable and try to
+    create a dummy file in there. We assume the executable will have the same
+    permissions as every file in the same directory.
+    If a dummy file cannot be created, it means we probably need administrator
+    provileges to perform the substitution.
+    """
+
+    my_executable_dir = os.path.dirname(get_external_executable())
+    Logger.debug('Autoupdater: executable dir: {}'.format(my_executable_dir))
+    dir_is_writable = paths.is_dir_writable(my_executable_dir)
+    Logger.debug('Autoupdater: dir_is_writable: {}'.format(dir_is_writable))
+    return not dir_is_writable
+
+
 def request_my_update(new_executable):
     """Update the executable being run with a new executable pointed by new_executable.
     The new_executable will be run with the path to this executable and a parameter indicating

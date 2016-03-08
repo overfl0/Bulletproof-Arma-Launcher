@@ -14,7 +14,7 @@ from __future__ import unicode_literals
 
 import json
 
-from utils.paths import get_external_executable_path
+from utils.paths import get_external_executable_dir
 
 DEVMODE_FILE_NAME = 'devmode.conf'
 
@@ -34,7 +34,7 @@ class DevMode(object):
 
     def __init__(self):
         try:
-            devmode_file_path = get_external_executable_path(DEVMODE_FILE_NAME)
+            devmode_file_path = get_external_executable_dir(DEVMODE_FILE_NAME)
             with file(devmode_file_path, "rb") as f:
                 s = f.read()
                 self.devdata = json.loads(s)
