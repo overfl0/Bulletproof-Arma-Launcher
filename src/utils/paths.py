@@ -116,6 +116,47 @@ def get_resources_path(*relative):
         return get_base_path('resources', *relative)
 
 
+def is_file_in_virtual_store(path):
+    """Return if the file pointed by path is present in the VirtualStore path.
+    This is a kind of an ugly hack but we'll see how well this will perform.
+
+    Map the file to its VirtualStore counterpart and check if it is present
+    there. If yes, then the file has been storen to the VirtualStore
+    """
+    real_path = os.path.realpath(path)
+
+    local_app_data = os.environ.get('LOCALAPPDATA')  # C:\Users\user\AppData\Local
+    if not local_app_data:
+        return False
+
+    virtual_store_base = os.path.join(local_app_data, 'VirtualStore')
+
+    # Check for the remaining environmental variables
+    # I *really* hope these are the only ones needed! :-|
+    environ_vars = ['SYSTEMDRIVE', 'PROGRAMFILES', 'PROGRAMFILES(X86)', 'ProgramW6432', 'SYSTEMROOT']
+    for environ_var in environ_vars:
+        # print "Checking for:", environ_var
+        directory = os.environ.get(environ_var)
+        if not directory:  # Environmental variable does not exist
+            continue
+
+        # print 'Does {} starts with {}?'.format(real_path.upper(), directory.upper())
+        if real_path.upper().startswith(directory.upper()):
+            # print 'yes'
+            # C:\Program Files (x86)\file => ...\VirtualStore\Program Files (x86)\file
+            directory_name = os.path.basename(directory)
+            remaining_path = real_path[len(directory) + 1:]
+            mapped_path = os.path.join(virtual_store_base, directory_name, remaining_path)
+
+            # print "Directory_name: {}\nremaining_path: {}\nmapped_path: {}".format(directory_name, remaining_path, mapped_path)
+
+            if os.path.exists(mapped_path):
+                # print 'Exists'
+                return True
+
+    return False
+
+
 def is_dir_writable(path):
     """Check if the directory passed as the argument is writable.
 
@@ -134,7 +175,13 @@ def is_dir_writable(path):
         temporary_file_path = tempfile.mktemp(dir=path, prefix="TacBF_temp_")
         f = open(temporary_file_path, 'wb+')
         f.close()
+
+        is_in_virtual_store = is_file_in_virtual_store(temporary_file_path)
         os.remove(temporary_file_path)
+
+        # If it is in VirtualStore, it means we won't be able to write to that
+        # location even though file creation seemingly succeeded.
+        return not is_in_virtual_store
 
     except Exception:  # If anything bad happens, stay on the safe side
         return False
