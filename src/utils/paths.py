@@ -133,8 +133,8 @@ def is_file_in_virtual_store(path):
             continue
         directory = unicode_helpers.fs_to_u(directory)
 
-        # print 'Does {} starts with {}?'.format(real_path.upper().lower(), directory.upper().lower())
-        if real_path.upper().lower().startswith(directory.upper().lower()):
+        # print 'Does {} starts with {}?'.format(unicode_helpers.casefold(real_path), unicode_helpers.casefold(directory)
+        if unicode_helpers.casefold(real_path).startswith(unicode_helpers.casefold(directory)):
             # C:\Program Files (x86)\file => ...\VirtualStore\Program Files (x86)\file
             directory_name = os.path.basename(directory)
             remaining_path = real_path[len(directory) + 1:]

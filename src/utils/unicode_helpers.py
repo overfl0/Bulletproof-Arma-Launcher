@@ -54,3 +54,8 @@ def u_to_fs_list(args):
 def fs_to_u_list(args):
     """Convert a list of arguments from the file system encoding to unicode"""
     return [fs_to_u(arg) for arg in args]
+
+
+def casefold(s):
+    """Return a version of the string for caseless matching."""
+    return s.upper().lower()

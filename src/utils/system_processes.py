@@ -18,15 +18,10 @@ import sys
 import unicode_helpers
 
 
-def _casefold(s):
-    """Return a version of the string for caseless matching."""
-    return s.upper().lower()
-
-
 def program_running(executable):
     """Return if any process running on the system matches the given name."""
 
-    executable_casefold = _casefold(executable)
+    executable_casefold = unicode_helpers.casefold(executable)
 
     for process in psutil.process_iter():
         try:
@@ -46,7 +41,7 @@ def file_running(path):
     a file with merely the same name as the one requested.
     """
 
-    real_path_casefold = _casefold(os.path.realpath(path))
+    real_path_casefold = unicode_helpers.casefold(os.path.realpath(path))
 
     for process in psutil.process_iter():
         try:
