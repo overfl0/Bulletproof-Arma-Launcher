@@ -20,6 +20,7 @@ import win32con
 import win32event
 import win32process
 
+from utils import unicode_helpers
 from win32com.shell import shellcon
 from win32com.shell.shell import ShellExecuteEx
 
@@ -59,10 +60,10 @@ def run_admin(executable, args):
     """
 
     params = ' '.join('"{}"'.format(arg) for arg in args)
-    params = params.encode(sys.getfilesystemencoding())
+    params = unicode_helpers.u_to_fs(params)
 
     if isinstance(executable, unicode):
-        executable = executable.encode(sys.getfilesystemencoding())
+        executable = unicode_helpers.u_to_fs(executable)
 
     try:
         process = ShellExecuteEx(nShow=win32con.SW_SHOWNORMAL,

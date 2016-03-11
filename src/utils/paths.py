@@ -15,31 +15,12 @@ from __future__ import unicode_literals
 import errno
 import os
 import sys
+import unicode_helpers
 
 
 def is_pyinstaller_bundle():
     """Is the program ran as a PyInstaller bundle? (as opposed to a simple python script)."""
     return getattr(sys, 'frozen', False)
-
-
-def u_to_fs(unicode_string):
-    """Convert an unicode string to the file system encoding"""
-    return unicode_string.encode(sys.getfilesystemencoding())
-
-
-def fs_to_u(fs_string):
-    """Convert a string from the file system encoding to unicode"""
-    return fs_string.decode(sys.getfilesystemencoding())
-
-
-def u_to_fs_list(args):
-    """Convert a list of arguments from unicode to the file system encoding"""
-    return [u_to_fs(arg) for arg in args]
-
-
-def fs_to_u_list(args):
-    """Convert a list of arguments from the file system encoding to unicode"""
-    return [fs_to_u(arg) for arg in args]
 
 
 def fix_unicode_paths():
@@ -48,10 +29,10 @@ def fix_unicode_paths():
     """
 
     if not isinstance(sys.argv[0], unicode):
-        sys.argv = fs_to_u_list(sys.argv)
+        sys.argv = unicode_helpers.fs_to_u_list(sys.argv)
 
     if hasattr(sys, '_MEIPASS') and not isinstance(sys._MEIPASS, unicode):
-        sys._MEIPASS = fs_to_u(sys._MEIPASS)
+        sys._MEIPASS = unicode_helpers.fs_to_u(sys._MEIPASS)
 
 
 def _get_topmost_directory():
@@ -73,7 +54,7 @@ def get_external_executable_dir(*relative):
     """
 
     if hasattr(sys, '_MEIPASS'):
-        external_path = os.path.dirname(sys.executable.decode(sys.getfilesystemencoding()))
+        external_path = os.path.dirname(unicode_helpers.fs_to_u(sys.executable))
     else:
         external_path = _get_topmost_directory()
 
@@ -86,7 +67,7 @@ def get_external_executable():
     """
 
     if hasattr(sys, '_MEIPASS'):
-        return sys.executable.decode(sys.getfilesystemencoding())
+        return unicode_helpers.fs_to_u(sys.executable)
     else:
         raise EnvironmentError('Can\'t get the path of the executable when not packed with pyinstaller!')
 
@@ -138,7 +119,7 @@ def is_file_in_virtual_store(path):
     local_app_data = os.environ.get('LOCALAPPDATA')  # C:\Users\user\AppData\Local
     if not local_app_data:
         return False
-    local_app_data = fs_to_u(local_app_data)
+    local_app_data = unicode_helpers.fs_to_u(local_app_data)
 
     virtual_store_base = os.path.join(local_app_data, 'VirtualStore')
 
@@ -150,7 +131,7 @@ def is_file_in_virtual_store(path):
         directory = os.environ.get(environ_var)
         if not directory:  # Environmental variable does not exist
             continue
-        directory = fs_to_u(directory)
+        directory = unicode_helpers.fs_to_u(directory)
 
         # print 'Does {} starts with {}?'.format(real_path.upper().lower(), directory.upper().lower())
         if real_path.upper().lower().startswith(directory.upper().lower()):

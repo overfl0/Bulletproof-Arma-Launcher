@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 import os
 import psutil
 import sys
+import unicode_helpers
 
 
 def _casefold(s):
@@ -29,7 +30,7 @@ def program_running(executable):
 
     for process in psutil.process_iter():
         try:
-            name = process.name().decode(sys.getfilesystemencoding())
+            name = unicode_helpers.fs_to_u(process.name())
             if _casefold(name) == executable_casefold:
                 return True
 
@@ -49,7 +50,7 @@ def file_running(path):
 
     for process in psutil.process_iter():
         try:
-            exe_path = process.exe().decode(sys.getfilesystemencoding())
+            exe_path = unicode_helpers.fs_to_u(process.exe())
             if _casefold(os.path.realpath(exe_path)) == real_path_casefold:
                 return True
 

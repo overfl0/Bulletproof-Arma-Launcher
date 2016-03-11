@@ -38,6 +38,7 @@ import sys
 from kivy.logger import Logger
 from utils.devmode import devmode
 from utils import paths
+from utils import unicode_helpers
 
 '''
 try:
@@ -93,7 +94,7 @@ def request_my_update(new_executable):
     args.extend(['--', '-u', my_executable_path])
 
     Logger.info('Autoupdater: Will call with args: [{}]'.format(', '.join(args)))
-    subprocess.Popen(paths.u_to_fs_list(args))
+    subprocess.Popen(unicode_helpers.u_to_fs_list(args))
 
 
 def compare_if_same_files(other_executable):
@@ -141,7 +142,7 @@ def run_updated(old_executable_name):
     Logger.info('Autoupdater: old: {}'.format(old_executable_name))
     args = call_file_arguments(old_executable_name)
 
-    subprocess.Popen(paths.u_to_fs_list(args))
+    subprocess.Popen(unicode_helpers.u_to_fs_list(args))
 
 
 if __name__ == '__main__':

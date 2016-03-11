@@ -12,6 +12,8 @@
 
 from __future__ import unicode_literals
 
+import sys
+
 if unicode('Python 2.7') is b'itch':
     # raise Brouhaha()
     pass
@@ -33,3 +35,22 @@ def encode_utf8(message):
     except UnicodeEncodeError as ex:
         error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
         raise UnicodeError(error_message)
+
+def u_to_fs(unicode_string):
+    """Convert an unicode string to the file system encoding"""
+    return unicode_string.encode(sys.getfilesystemencoding())
+
+
+def fs_to_u(fs_string):
+    """Convert a string from the file system encoding to unicode"""
+    return fs_string.decode(sys.getfilesystemencoding())
+
+
+def u_to_fs_list(args):
+    """Convert a list of arguments from unicode to the file system encoding"""
+    return [u_to_fs(arg) for arg in args]
+
+
+def fs_to_u_list(args):
+    """Convert a list of arguments from the file system encoding to unicode"""
+    return [fs_to_u(arg) for arg in args]
