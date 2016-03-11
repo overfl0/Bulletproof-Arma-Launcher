@@ -1,0 +1,1 @@
+python create_torrent.py -a udp://tracker.openbittorrent.com:80 -a udp://tracker.coppersurfer.tk:6969/announce -a udp://tracker.leechers-paradise.org:6969 -o tblauncher_autoupdate-2015-09-14_1442262668.torrent -w http://server:8000/webseed/ tblauncher_autoupdate
