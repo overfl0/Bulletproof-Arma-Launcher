@@ -201,7 +201,7 @@ def install_unpackaged_plugin(path):
 
     args = [get_addon_installer_path(), '-silent', tfr_package]
     return run_admin(args[0], args[1:])
-    # return subprocess.Popen(u_to_fs(args))
+    # return subprocess.Popen(u_to_fs_list(args))
 
 
 def copy_userconfig(path):

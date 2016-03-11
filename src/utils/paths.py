@@ -22,14 +22,24 @@ def is_pyinstaller_bundle():
     return getattr(sys, 'frozen', False)
 
 
-def u_to_fs(args):
+def u_to_fs(unicode_string):
+    """Convert an unicode string to the file system encoding"""
+    return unicode_string.encode(sys.getfilesystemencoding())
+
+
+def fs_to_u(fs_string):
+    """Convert a string from the file system encoding to unicode"""
+    return fs_string.decode(sys.getfilesystemencoding())
+
+
+def u_to_fs_list(args):
     """Convert a list of arguments from unicode to the file system encoding"""
-    return [arg.encode(sys.getfilesystemencoding()) for arg in args]
+    return [u_to_fs(arg) for arg in args]
 
 
-def fs_to_u(args):
+def fs_to_u_list(args):
     """Convert a list of arguments from the file system encoding to unicode"""
-    return [arg.decode(sys.getfilesystemencoding()) for arg in args]
+    return [fs_to_u(arg) for arg in args]
 
 
 def fix_unicode_paths():
@@ -38,10 +48,10 @@ def fix_unicode_paths():
     """
 
     if not isinstance(sys.argv[0], unicode):
-        sys.argv = fs_to_u(sys.argv)
+        sys.argv = fs_to_u_list(sys.argv)
 
     if hasattr(sys, '_MEIPASS') and not isinstance(sys._MEIPASS, unicode):
-        sys._MEIPASS = sys._MEIPASS.decode(sys.getfilesystemencoding())
+        sys._MEIPASS = fs_to_u(sys._MEIPASS)
 
 
 def _get_topmost_directory():
@@ -128,6 +138,7 @@ def is_file_in_virtual_store(path):
     local_app_data = os.environ.get('LOCALAPPDATA')  # C:\Users\user\AppData\Local
     if not local_app_data:
         return False
+    local_app_data = fs_to_u(local_app_data)
 
     virtual_store_base = os.path.join(local_app_data, 'VirtualStore')
 
@@ -139,18 +150,17 @@ def is_file_in_virtual_store(path):
         directory = os.environ.get(environ_var)
         if not directory:  # Environmental variable does not exist
             continue
+        directory = fs_to_u(directory)
 
         # print 'Does {} starts with {}?'.format(real_path.upper(), directory.upper())
         if real_path.upper().startswith(directory.upper()):
-            # print 'yes'
             # C:\Program Files (x86)\file => ...\VirtualStore\Program Files (x86)\file
             directory_name = os.path.basename(directory)
             remaining_path = real_path[len(directory) + 1:]
             mapped_path = os.path.join(virtual_store_base, directory_name, remaining_path)
-
             # print "Directory_name: {}\nremaining_path: {}\nmapped_path: {}".format(directory_name, remaining_path, mapped_path)
 
-            if os.path.exists(mapped_path):
+            if os.path.exists(mapped_path):  # Should be able to pass unicode names here.
                 # print 'Exists'
                 return True
 
