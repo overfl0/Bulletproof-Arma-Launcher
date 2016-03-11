@@ -12,15 +12,45 @@
 
 from __future__ import unicode_literals
 
+import os
 import psutil
+import sys
+
+
+def _casefold(s):
+    """Return a version of the string for caseless matching."""
+    return s.upper().lower()
 
 
 def program_running(executable):
     """Return if any process running on the system matches the given name."""
 
+    executable_casefold = _casefold(executable)
+
     for process in psutil.process_iter():
         try:
-            if process.name() == executable:
+            name = process.name().decode(sys.getfilesystemencoding())
+            if _casefold(name) == executable_casefold:
+                return True
+
+        except psutil.Error:
+            continue
+
+    return False
+
+
+def file_running(path):
+    """Return if any process running on the system matches the file path.
+    This makes sure the process is running from the very same file instead of
+    a file with merely the same name as the one requested.
+    """
+
+    real_path_casefold = _casefold(os.path.realpath(path))
+
+    for process in psutil.process_iter():
+        try:
+            exe_path = process.exe().decode(sys.getfilesystemencoding())
+            if _casefold(os.path.realpath(exe_path)) == real_path_casefold:
                 return True
 
         except psutil.Error:
