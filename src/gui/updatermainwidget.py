@@ -24,6 +24,7 @@ from kivy.uix.widget import Widget
 
 from autoupdater import autoupdater
 from utils import paths
+from utils import system_processes
 
 
 class UpdateException(Exception):
@@ -61,7 +62,7 @@ class Controller(object):
             Logger.info('Autoupdater: {}'.format(wrapped_string))
 
     def on_abort_button_release(self, button):
-        Logger.info('aborting ' + str(self.view.ids))
+        Logger.info('Autoupdater: Aborting update')
         self.view.ids.status_label.text = 'Aborting ...'
 
         kivy.app.App.get_running_app().stop()
@@ -94,6 +95,11 @@ class Controller(object):
             if not os.path.isfile(self.program_to_update):
                 raise UpdateException('File {} does not exist!'.format(self.program_to_update))
 
+            if system_processes.file_running(self.program_to_update):
+                Logger.info('Autoupdater: Executable running. Waiting...')
+                return
+
+            self.set_status_string('Copying the updated launcher...', error=False)
             result = autoupdater.try_perform_substitution(self.program_to_update)
             if result:
                 self.set_status_string('File copied successfully, running the new version now...', error=False)
