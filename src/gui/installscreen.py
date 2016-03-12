@@ -53,7 +53,7 @@ class Controller(object):
         self.view = widget
         self.mod_manager = ModManager()
         self.loading_gif = None
-        self.mods = None
+        self.mods = []
         self.settings = kivy.app.App.get_running_app().settings
         self.arma_executable_object = None
         self.para = None
@@ -111,8 +111,8 @@ class Controller(object):
         # Check if seeding needs to start
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
-                    # Don't start if syncing failed or if it's already running
-                    if not self.para and not self.syncing_failed:
+                    # Don't start if no mods, syncing failed or if it's already running
+                    if self.mods and not self.para and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
 
@@ -171,9 +171,6 @@ class Controller(object):
 
         # TODO: Perform this check once, at the start of the launcher
         if not third_party.helpers.check_requirements(verbose=False):
-            return
-
-        if not self.mods:
             return
 
         for mod in self.mods:
