@@ -134,6 +134,11 @@ class Controller(object):
             return False  # Return False to remove the callback from the scheduler
 
     def try_enable_play_button(self):
+        """Enables or disables the action button (play, install, etc...).
+        As a workaround, for now, returns False if administrator rights are
+        required.
+        """
+
         self.view.ids.action_button.disable()
 
         if self.launcher and is_pyinstaller_bundle():
@@ -142,7 +147,13 @@ class Controller(object):
 
             if not self.launcher.up_to_date or not same_files:
 
+                # switch to play button and a different handler
+                self.view.ids.action_button.text = 'Self-upgrade'
+                self.action_button_action = 'self-upgrade'
+                self.view.ids.action_button.enable()
+
                 if autoupdater.require_admin_privileges():
+                    self.view.ids.action_button.disable()
                     message = textwrap.dedent('''
                     This launcher is out of date and needs to be updated but it does not have
                     the required permissions to create new files!
@@ -155,13 +166,8 @@ class Controller(object):
                     privileges to create files and run it again.
                     ''')
                     MessageBox(message, title='Administrator permissions required!', markup=True).chain_open()
-                    return
 
-                # switch to play button and a different handler
-                self.view.ids.action_button.text = 'Self-upgrade'
-                self.action_button_action = 'self-upgrade'
-                self.view.ids.action_button.enable()
-                return
+                return False
 
         # TODO: Perform this check once, at the start of the launcher
         if not third_party.helpers.check_requirements(verbose=False):
@@ -250,7 +256,6 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.action_button.enable()
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
@@ -310,9 +315,8 @@ class Controller(object):
             Logger.info('InstallScreen: {}'.format(mod))
 
         self.mods = progress['mods']
-        self.try_enable_play_button()
-
-        self.view.ids.action_button.enable()
+        if self.try_enable_play_button() is not False:
+            self.view.ids.action_button.enable()
 
     def on_checkmods_reject(self, data):
         self.para = None
@@ -321,7 +325,6 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.action_button.enable()
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
@@ -350,7 +353,6 @@ class Controller(object):
     def on_sync_resolve(self, progress):
         self.para = None
         Logger.info('InstallScreen: syncing finished')
-        self.view.ids.action_button.enable()
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.action_button.disable_progress_animation()
@@ -366,7 +368,6 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        self.view.ids.action_button.enable()
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()

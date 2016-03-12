@@ -82,9 +82,9 @@ def require_admin_privileges():
     """
 
     my_executable_dir = os.path.dirname(get_external_executable())
-    Logger.debug('Autoupdater: executable dir: {}'.format(my_executable_dir))
+    Logger.info('Autoupdater: executable dir: {}'.format(my_executable_dir))
     dir_is_writable = paths.is_dir_writable(my_executable_dir)
-    Logger.debug('Autoupdater: dir_is_writable: {}'.format(dir_is_writable))
+    Logger.info('Autoupdater: dir_is_writable: {}'.format(dir_is_writable))
     return not dir_is_writable
 
 
