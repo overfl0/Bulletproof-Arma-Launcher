@@ -73,3 +73,11 @@ class HoverButton(Button):
         st = self.animation_states.pop()
         self.text = self.last_text + st
         self.animation_states.insert(0, st)
+
+    def disable(self):
+        """Helper function allowing for setting breakpoints on this action."""
+        self.disabled = True
+
+    def enable(self):
+        """Helper function allowing for setting breakpoints on this action."""
+        self.disabled = False

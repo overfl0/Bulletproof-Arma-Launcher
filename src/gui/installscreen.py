@@ -118,7 +118,7 @@ class Controller(object):
         if not arma_is_running:
             # Allow the game to be run once again by enabling the play button.
             # Logger.info('Timer check: Re-enabling the Play button')
-            self.view.ids.action_button.disabled = False
+            self.view.ids.action_button.enable()
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
@@ -133,7 +133,7 @@ class Controller(object):
             return False  # Return False to remove the callback from the scheduler
 
     def try_enable_play_button(self):
-        self.view.ids.action_button.disabled = True
+        self.view.ids.action_button.disable()
 
         if self.launcher:
             launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
@@ -159,7 +159,7 @@ class Controller(object):
                 # switch to play button and a different handler
                 self.view.ids.action_button.text = 'Self-upgrade'
                 self.action_button_action = 'self-upgrade'
-                self.view.ids.action_button.disabled = False  # Note: 'action_button' is the name. The actual action may not be 'install'.
+                self.view.ids.action_button.enable()
                 return
 
         # TODO: Perform this check once, at the start of the launcher
@@ -178,7 +178,7 @@ class Controller(object):
         self.action_button_action = 'play'
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
-            self.view.ids.action_button.disabled = False
+            self.view.ids.action_button.enable()
 
     def action_button_init(self):
         self.view.ids.action_button.text = 'Checking'
@@ -199,14 +199,14 @@ class Controller(object):
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding
         if not seed:
-            self.view.ids.action_button.disabled = True
+            self.view.ids.action_button.disable()
             self.view.ids.action_button.enable_progress_animation()
 
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
 
     def on_self_upgrade_button_release(self, btn):
-        self.view.ids.action_button.disabled = True
+        self.view.ids.action_button.disable()
         self.para = self.mod_manager.sync_launcher()
         self.para.then(self.on_self_upgrade_resolve, self.on_sync_reject, self.on_sync_progress)
         self.view.ids.action_button.enable_progress_animation()
@@ -249,7 +249,7 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.action_button.disabled = False
+        # self.view.ids.action_button.enable()
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
@@ -311,7 +311,7 @@ class Controller(object):
         self.mods = progress['mods']
         self.try_enable_play_button()
 
-        self.view.ids.action_button.disabled = False
+        self.view.ids.action_button.enable()
 
     def on_checkmods_reject(self, data):
         self.para = None
@@ -320,7 +320,7 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        # self.view.ids.action_button.disabled = False
+        # self.view.ids.action_button.enable()
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
@@ -349,7 +349,7 @@ class Controller(object):
     def on_sync_resolve(self, progress):
         self.para = None
         Logger.info('InstallScreen: syncing finished')
-        self.view.ids.action_button.disabled = False
+        self.view.ids.action_button.enable()
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.action_button.disable_progress_animation()
@@ -365,7 +365,7 @@ class Controller(object):
         last_line = details if details else message
         last_line = last_line.rstrip().split('\n')[-1]
 
-        self.view.ids.action_button.disabled = False
+        self.view.ids.action_button.enable()
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
@@ -388,7 +388,7 @@ class Controller(object):
                 self.para.request_termination()
 
         third_party.helpers.run_the_game(self.mods)
-        self.view.ids.action_button.disabled = True
+        self.view.ids.action_button.disable()
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
