@@ -26,7 +26,7 @@ def program_running(executable):
     for process in psutil.process_iter():
         try:
             name = unicode_helpers.fs_to_u(process.name())
-            if _casefold(name) == executable_casefold:
+            if unicode_helpers.casefold(name) == executable_casefold:
                 return True
 
         except psutil.Error:
@@ -46,7 +46,7 @@ def file_running(path):
     for process in psutil.process_iter():
         try:
             exe_path = unicode_helpers.fs_to_u(process.exe())
-            if _casefold(os.path.realpath(exe_path)) == real_path_casefold:
+            if unicode_helpers.casefold(os.path.realpath(exe_path)) == real_path_casefold:
                 return True
 
         except psutil.Error:

@@ -127,7 +127,7 @@ def compare_if_same_files(other_executable):
 
 def try_perform_substitution(old_executable_name):
     my_executable_pathname = get_external_executable()
-    Logger.info('Autoupdater: me: {}'.format(my_executable_pathname))
+    Logger.info('Autoupdater: new launcher: {}'.format(my_executable_pathname))
 
     try:
         shutil.copy2(my_executable_pathname, old_executable_name)
