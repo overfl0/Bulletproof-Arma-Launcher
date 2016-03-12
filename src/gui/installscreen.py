@@ -30,6 +30,7 @@ from kivy.logger import Logger
 
 from sync.modmanager import ModManager
 from utils.primitive_git import get_git_sha1_auto
+from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.messagebox import MessageBox
 
@@ -135,7 +136,7 @@ class Controller(object):
     def try_enable_play_button(self):
         self.view.ids.action_button.disable()
 
-        if self.launcher:
+        if self.launcher and is_pyinstaller_bundle():
             launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
