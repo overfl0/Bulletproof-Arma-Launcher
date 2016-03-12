@@ -23,12 +23,12 @@ from kivy.logger import Logger
 from kivy.uix.widget import Widget
 
 from autoupdater import autoupdater
+from autoupdater.autoupdater import UpdateException
 from utils import paths
 from utils import system_processes
 
 
-class UpdateException(Exception):
-    pass
+
 
 
 class UpdaterMainWidget(Widget):
@@ -54,7 +54,7 @@ class Controller(object):
         Clock.schedule_interval(self.check_button_availability, 0.1)
 
     def set_status_string(self, status_string, error=True):
-        wrapped_string = '\n'.join(textwrap.wrap(status_string.capitalize(), 55))
+        wrapped_string = '\n'.join(textwrap.wrap(status_string, 55))
         self.view.ids.status_label.text = wrapped_string
         if error:
             Logger.error('Autoupdater: {}'.format(wrapped_string))
@@ -96,27 +96,17 @@ class Controller(object):
                 raise UpdateException('File {} does not exist!'.format(self.program_to_update))
 
             if system_processes.file_running(self.program_to_update):
-                Logger.info('Autoupdater: Executable running. Waiting...')
+                self.set_status_string('Waiting for the launcher to stop...', error=False)
                 return
 
             self.set_status_string('Copying the updated launcher...', error=False)
-            result = autoupdater.try_perform_substitution(self.program_to_update)
-            if result:
-                self.set_status_string('File copied successfully, running the new version now...', error=False)
-                autoupdater.run_updated(self.program_to_update)
+            autoupdater.perform_substitution(self.program_to_update)
 
-                kivy.app.App.get_running_app().stop()
+            self.set_status_string('File copied successfully, running the new version now...', error=False)
+            autoupdater.run_updated(self.program_to_update)
+
+            kivy.app.App.get_running_app().stop()
 
         except UpdateException as ex:
             self.set_status_string(ex.message)
-            return False  # Prevent the function from being called ever again
-
-        except Exception as ex:
-            from utils import critical_messagebox
-            import traceback
-
-            self.set_status_string(ex.message)
-            exception_string = traceback.format_exc()
-            critical_messagebox.MessageBox(exception_string, 'Error')
-
             return False  # Prevent the function from being called ever again

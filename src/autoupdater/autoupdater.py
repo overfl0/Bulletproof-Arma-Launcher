@@ -51,6 +51,10 @@ except NameError:
 '''
 
 
+class UpdateException(Exception):
+    pass
+
+
 def get_external_executable():
     executable = devmode.get_application_executable()
     if executable:
@@ -125,21 +129,23 @@ def compare_if_same_files(other_executable):
     return same_files
 
 
-def try_perform_substitution(old_executable_name):
+def perform_substitution(old_executable_name):
     my_executable_pathname = get_external_executable()
-    Logger.info('Autoupdater: new launcher: {}'.format(my_executable_pathname))
+    Logger.info('Autoupdater: Trying to copy {} over {}'.format(my_executable_pathname, old_executable_name))
 
     try:
         shutil.copy2(my_executable_pathname, old_executable_name)
-        Logger.info('Autoupdater: Copied!')
-        return True
+        Logger.info('Autoupdater: Success! File copied.')
 
-    except IOError:
-        return False
+    except IOError as ex:
+        if ex.errno == 13:  # Permission denied
+            raise UpdateException('Copying failed. Maybe you need Administrator rights?')
+
+        raise
 
 
 def run_updated(old_executable_name):
-    Logger.info('Autoupdater: old: {}'.format(old_executable_name))
+    Logger.info('Autoupdater: Running the updated file: {}'.format(old_executable_name))
     args = call_file_arguments(old_executable_name)
 
     subprocess.Popen(unicode_helpers.u_to_fs_list(args))
