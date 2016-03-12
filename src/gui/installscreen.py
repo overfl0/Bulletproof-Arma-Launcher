@@ -144,14 +144,14 @@ class Controller(object):
                 if autoupdater.require_admin_privileges():
                     message = textwrap.dedent('''
                     This launcher is out of date and needs to be updated but it does not have
-                    the required permissions!
+                    the required permissions to create new files!
 
 
                     You need to perform one of the following actions:
 
                     1) Run the launcher as administrator.
                     2) Or move the launcher to another directory that does not require administrator
-                    privileges and run it again.
+                    privileges to create files and run it again.
                     ''')
                     MessageBox(message, title='Administrator permissions required!', markup=True).chain_open()
                     return
