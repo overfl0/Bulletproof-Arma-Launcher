@@ -16,6 +16,7 @@ import multiprocessing
 from multiprocessing import Queue
 import os
 import sys
+import time
 
 from datetime import datetime
 
@@ -189,6 +190,48 @@ def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_desc
     messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list, 'launcher': launcher})
 
 
+def _tfr_wait_for_user_action(message_queue):
+    """ Wait until the user clicks OK. Ugly workaround but it works ;)
+    During this time, any other messages are DISCARDED!
+
+    This is required because if we don't wait until the user does *something*
+    and just show the UAC prompt, the prompt is going to timeout automatically
+    after 2 minutes of inactivity.
+    By requiring the user to click OK, we are ensuring that he actually is in
+    front of the computer and can act upon the UAC prompt before it timeouts.
+    """
+
+    run_tfr_install_message = textwrap.dedent("""
+        Task Force Arrowhead Radio has been downloaded or updated.
+
+        In order to install the Task Force Radio TeamSpeak plugin you need to run the
+        plugin installer as Administrator.
+        """)
+
+    message_queue.progress({'msg': 'Installing TFR TeamSpeak plugin...',
+                            'tfr_request_action': True,
+                            'message_box': {
+                                'text': run_tfr_install_message,
+                                'title': 'Run TFR TeamSpeak plugin installer!',
+                                'markup': False
+                            }
+                            }, 1.0)
+
+    Logger.info('TFR installer: Waiting for the user to acknowledge TFR installation.')
+    while True:
+
+        message = message_queue.receive_message()
+        if not message:
+            time.sleep(0.5)
+            continue
+
+        command = message.get('command')
+
+        if command == 'tfr_install_as_admin':
+            Logger.info('TFR installer: Received continue command. Installing TFR plugin...')
+            break
+
+
 def _tfr_post_download_hook(message_queue, mod):
     """Copy TFR configuration files and install the TeamSpeak plugin.
     In case of errors, show the appropriate message box.
@@ -250,7 +293,7 @@ def _tfr_post_download_hook(message_queue, mod):
     message_queue.progress({'msg': 'Copying TFR configuration...'}, 1.0)
     teamspeak.copy_userconfig(path=path_userconfig)
 
-    message_queue.progress({'msg': 'Installing TFR TeamSpeak plugin...'}, 1.0)
+    _tfr_wait_for_user_action(message_queue)
     install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
     if not install_instance:
         _show_message_box(message_queue, title='Run TFR TeamSpeak plugin installer!', message=run_admin_message)

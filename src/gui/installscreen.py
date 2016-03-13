@@ -341,6 +341,17 @@ class Controller(object):
 
     # Sync callbacks ###########################################################
 
+    def on_tfr_action(self, msgbox_ignore_me):
+        """A quickly done workaround for asking the user to click OK and carry
+        on with TFR plugin installation.
+        Feel free to refactor me :).
+        """
+        if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            Logger.info('InstallScreen: User acknowledged TFR installation. Sending continue command.')
+            self.para.send_message('tfr_install_as_admin')
+
+        return None  # Returning True would prevent the popup from being closed
+
     def on_sync_progress(self, progress, percentage):
         # Logger.debug('InstallScreen: syncing in progress')
 
@@ -348,11 +359,17 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
 
+        tfr_request_action = progress.get('tfr_request_action')
         message_box = progress.get('message_box')
         if message_box:
+            on_dismiss = None
+            if tfr_request_action:
+                on_dismiss = self.on_tfr_action
+
             message_box_instance = MessageBox(text=message_box['text'],
                                               title=message_box['title'],
-                                              markup=message_box['markup'])
+                                              markup=message_box['markup'],
+                                              on_dismiss=on_dismiss)
             message_box_instance.chain_open()
 
     def on_sync_resolve(self, progress):
