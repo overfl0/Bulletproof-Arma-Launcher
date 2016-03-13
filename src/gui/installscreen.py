@@ -61,6 +61,9 @@ class Controller(object):
         self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
 
+        version = '0.1-alpha7'
+        self.version = version
+
         # Don't run logic if required third party programs are not installed
         if third_party.helpers.check_requirements(verbose=False):
             # download mod description
@@ -123,8 +126,7 @@ class Controller(object):
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
-        version = 'Alpha 6'
-        footer_text = '{}\nBuild: {}'.format(version,
+        footer_text = '{}\nBuild: {}'.format(self.version,
                                              git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
 
@@ -141,12 +143,18 @@ class Controller(object):
 
         self.view.ids.action_button.disable()
 
-        if self.launcher and is_pyinstaller_bundle():
+        if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
+                u_from=self.version, u_to=self.launcher.version):
+
             launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
-            if not self.launcher.up_to_date or not same_files:
+            # Safety check
+            if self.launcher.up_to_date and same_files:
+                Logger.error('Metadata says there is a newer version {} than our version {} but the files are the same. Aborting upgrade request.'
+                             .format(self.launcher.version, self.version))
 
+            else:
                 # switch to play button and a different handler
                 self.view.ids.action_button.text = 'Self-upgrade'
                 self.action_button_action = 'self-upgrade'

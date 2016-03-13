@@ -35,6 +35,7 @@ import shutil
 import subprocess
 import sys
 
+from distutils.version import LooseVersion
 from kivy.logger import Logger
 from utils.devmode import devmode
 from utils import paths
@@ -149,6 +150,14 @@ def run_updated(old_executable_name):
     args = call_file_arguments(old_executable_name)
 
     subprocess.Popen(unicode_helpers.u_to_fs_list(args))
+
+
+def should_update(u_from, u_to):
+    """Compare the versions and tell if u_to is newer than u_from."""
+    my_version = LooseVersion(u_from)
+    proposed_version = LooseVersion(u_to)
+
+    return proposed_version > my_version
 
 
 if __name__ == '__main__':

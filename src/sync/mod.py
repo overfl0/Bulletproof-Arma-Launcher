@@ -19,19 +19,19 @@ class Mod(object):
             self,
             foldername='@noname',
             clientlocation=None,
-            synctype='http',
             downloadurl=None,
-            torrent_timestamp="",
-            name="",
+            torrent_timestamp='',
+            name='',
+            version='0',
             up_to_date=False):
         super(Mod, self).__init__()
 
         self.clientlocation = clientlocation  # 'C:\Arma 3\Tactical Battlefield'
-        self.synctype = synctype
         self.downloadurl = downloadurl  # 'https://my.domain/file.torrent'
         self.foldername = foldername  # '@CBA_A3'
         self.torrent_timestamp = torrent_timestamp  # datetime
         self.name = name  # 'Community Base Addons v.123.4'
+        self.version = version  # "0.1-alpha6" (optional)
         self.up_to_date = up_to_date
 
     @classmethod
@@ -42,13 +42,15 @@ class Mod(object):
         name = d.get('name', "Unknown Mod")
         foldername = d.get('foldername', "@Unknown")
         downloadurl = d.get('downloadurl', "")
+        version = d.get('version', '0')
 
         m = Mod(foldername=foldername, torrent_timestamp=torrent_timestamp,
-                name=name, downloadurl=downloadurl)
+                name=name, downloadurl=downloadurl, version=version)
         return m
 
     def __repr__(self):
-        s = '[Mod: {} -- utcts: {} -- {} -- durl: {}]'.format(
-            self.foldername, self.torrent_timestamp, self.name, self.downloadurl)
+        s = '[Mod: {} -- utcts: {} -- {} -- durl: {} -- version: {}]'.format(
+            self.foldername, self.torrent_timestamp, self.name, self.downloadurl,
+            self.version)
 
         return s
