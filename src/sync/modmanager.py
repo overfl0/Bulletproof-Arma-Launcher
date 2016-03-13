@@ -135,7 +135,7 @@ def convert_metadata_to_mod(md, downloadurlPrefix):
     return mod
 
 
-def get_launcher_description(para, launcher_moddir, metadata):
+def get_launcher_description(para, launcher_basedir, metadata):
     domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
     torrents_path = devmode.get_torrents_path(default='/tacbf/updater/torrents')
     downloadurlPrefix = 'http://{}{}/'.format(domain, torrents_path)
@@ -145,7 +145,7 @@ def get_launcher_description(para, launcher_moddir, metadata):
 
     launcher = metadata['launcher']
     launcher_mod = convert_metadata_to_mod(launcher, downloadurlPrefix)
-    launcher_mod.clientlocation = launcher_moddir  # TODO: Change this
+    launcher_mod.clientlocation = launcher_basedir
 
     return launcher_mod
 
@@ -166,9 +166,9 @@ def process_description_data(para, data, launcher_moddir):
     return mods
 
 
-def _prepare_and_check(messagequeue, launcher_moddir, mod_descriptions_data):
+def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_descriptions_data):
     # WARNING: This methods gets called in a different process
-    launcher = get_launcher_description(messagequeue, launcher_moddir, mod_descriptions_data)
+    launcher = get_launcher_description(messagequeue, launcher_basedir, mod_descriptions_data)
     mod_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
 
     # Debug mode: decrease the number of mods to download
@@ -272,12 +272,9 @@ def _tfr_post_download_hook(message_queue, mod):
     return True
 
 
-def _sync_all(message_queue, launcher_moddir, mods, max_download_speed, max_upload_speed, seed):
+def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     """Run syncers for all the mods in parallel and then their post-download hooks."""
     # WARNING: This methods gets called in a different process
-
-    for m in mods:
-        m.clientlocation = launcher_moddir  # This change does NOT persist in the main launcher (would be nice :()
 
     syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
     sync_ok = syncer.sync(force_sync=False, seed_after_completion=seed)  # Use force_sync to force full recheck of all the files' checksums
@@ -320,7 +317,7 @@ class ModManager(object):
         self.para = None
         self.sync_para = None
         self.launcher_sync_para = None
-        self.mods = None
+        self.mods = []
         self.launcher = None
         self.settings = kivy.app.App.get_running_app().settings
 
@@ -330,7 +327,12 @@ class ModManager(object):
         return self.para
 
     def prepare_and_check(self, data):
-        self.para = Para(_protected_call, (_prepare_and_check, self.settings.get('launcher_moddir'), data), 'checkmods')
+        self.para = Para(_protected_call, (
+            _prepare_and_check,
+            self.settings.get('launcher_moddir'),
+            self.settings.get('launcher_basedir'),
+            data
+        ), 'checkmods')
         self.para.then(self.on_prepare_and_check_resolve, None, None)
         self.para.run()
         return self.para
@@ -338,7 +340,6 @@ class ModManager(object):
     def sync_all(self, seed):
         self.sync_para = Para(_protected_call, (
             _sync_all,
-            self.settings.get('launcher_moddir'),
             self.mods,
             self.settings.get('max_download_speed'),
             self.settings.get('max_upload_speed'),
@@ -351,7 +352,6 @@ class ModManager(object):
     def sync_launcher(self, seed=False):
         self.launcher_sync_para = Para(_protected_call, (
             _sync_all,
-            self.settings.get('launcher_moddir'),
             [self.launcher],
             self.settings.get('max_download_speed'),
             self.settings.get('max_upload_speed'),
