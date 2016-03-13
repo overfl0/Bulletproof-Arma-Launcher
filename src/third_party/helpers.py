@@ -41,6 +41,11 @@ def check_requirements(verbose=True):
                 [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
 
                 Install Teamspeak and restart the launcher.
+
+
+                Note:
+                Some antiviruses may block access to Windows registry resulting in this message.
+                Make sure you grant access to the registry for the launcher.
                 ''')
             box = MessageBox(message, title='Teamspeak required!', markup=True)
             box.chain_open()
@@ -55,6 +60,11 @@ def check_requirements(verbose=True):
                 Arma 3 does not seem to be installed.
 
                 Having Arma 3 is required in order to play Tactical Battlefield.
+
+
+                Note:
+                Some antiviruses may block access to Windows registry resulting in this message.
+                Make sure you grant access to the registry for the launcher.
                 ''')
             box = MessageBox(message, title='Arma 3 required!', markup=True)
             box.chain_open()
@@ -72,6 +82,11 @@ def check_requirements(verbose=True):
                 [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
 
                 Install Steam and restart the launcher.
+
+
+                Note:
+                Some antiviruses may block access to Windows registry resulting in this message.
+                Make sure you grant access to the registry for the launcher.
                 ''')
             box = MessageBox(message, title='Steam required!', markup=True)
             box.chain_open()
