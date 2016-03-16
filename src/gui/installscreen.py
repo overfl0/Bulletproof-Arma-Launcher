@@ -61,7 +61,7 @@ class Controller(object):
         self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
 
-        version = '0.1-alpha7'
+        version = '0.1-alpha7.1'
         self.version = version
 
         # Don't run logic if required third party programs are not installed

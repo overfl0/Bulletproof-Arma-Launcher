@@ -13,8 +13,10 @@
 from __future__ import unicode_literals
 
 import json
+import os
 
 from kivy.logger import Logger
+from utils.paths import mkdir_p
 
 
 class JsonStore(object):
@@ -22,6 +24,16 @@ class JsonStore(object):
     def __init__(self, filepath):
         super(JsonStore, self).__init__()
         self.filepath = filepath
+
+    def _save_to_file(self, filename, contents):
+        """Save to file while ensuring the directory is created."""
+        directories = os.path.dirname(filename)
+
+        if directories and not os.path.isdir(directories):
+            mkdir_p(directories)
+
+        with open(filename, "w") as text_file:
+            text_file.write(contents)
 
     def save(self, model):
 
@@ -42,8 +54,7 @@ class JsonStore(object):
         Logger.info('JsonStore: Saving model: {} to {} | {}'.format(
                     model, self.filepath, string))
 
-        with open(self.filepath, "w") as text_file:
-            text_file.write(string)
+        self._save_to_file(self.filepath, string)
 
     def load(self, model, update=True):
 
