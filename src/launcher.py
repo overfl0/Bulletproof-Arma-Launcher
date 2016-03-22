@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Tactical Battlefield Installer/Updater/Launcher
 # Copyright (C) 2015 TacBF Installer Team.
 #
@@ -108,7 +109,7 @@ try:
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
 
-            title = b'Tactical Battlefield'
+            title = 'Tactical Battlefield'.encode('utf-8')
 
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
@@ -122,7 +123,7 @@ try:
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
 
-            title = b'Tactical Battlefield Self-updater'
+            title = 'Tactical Battlefield updater'.encode('utf-8')
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()
