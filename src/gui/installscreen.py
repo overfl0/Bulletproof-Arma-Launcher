@@ -45,6 +45,11 @@ class InstallScreen(Screen):
 
 
 class Controller(object):
+    play = 'PLAY'
+    checking = 'CHECKING'
+    install = 'INSTALL'
+    self_upgrade = 'UPGRADE'
+
     def __init__(self, widget):
         super(Controller, self).__init__()
 
@@ -95,7 +100,7 @@ class Controller(object):
 
         # Check if we're ready to run the game - everything has been properly synced
         # TODO: use a state machine or anything else than comparing strings :(
-        if self.view.ids.action_button.text != 'Play!':
+        if self.view.ids.action_button.text != Controller.play:
             return
 
         arma_is_running = third_party.helpers.arma_may_be_running(newly_launched=False)
@@ -156,7 +161,7 @@ class Controller(object):
 
             else:
                 # switch to play button and a different handler
-                self.view.ids.action_button.text = 'Self-upgrade'
+                self.view.ids.action_button.text = Controller.self_upgrade
                 self.action_button_action = 'self-upgrade'
                 self.view.ids.action_button.enable()
 
@@ -186,14 +191,14 @@ class Controller(object):
                 return
 
         # switch to play button and a different handler
-        self.view.ids.action_button.text = 'Play!'
+        self.view.ids.action_button.text = Controller.play
         self.action_button_action = 'play'
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
             self.view.ids.action_button.enable()
 
     def action_button_init(self):
-        self.view.ids.action_button.text = 'Checking'
+        self.view.ids.action_button.text = Controller.checking
         self.view.ids.action_button.enable_progress_animation()
 
     def on_action_button_release(self, btn):
@@ -311,7 +316,7 @@ class Controller(object):
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.action_button.disable_progress_animation()
-        self.view.ids.action_button.text = 'Install'
+        self.view.ids.action_button.text = Controller.install
 
         self.launcher = progress['launcher']
 

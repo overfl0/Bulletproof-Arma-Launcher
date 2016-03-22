@@ -53,12 +53,15 @@ class HoverButton(Button):
 
     def _on_mouse_hover(self, instance, value):
         if (value is True):
-            self.background_normal_orig = self.background_normal
-            self.background_normal = self.background_hover
+            # self.background_normal_orig = self.background_normal
+            # self.background_normal = self.background_hover
+            self.color = [1, 1, 0.66, 1]
         else:
-            self.background_normal = self.background_normal_orig
+            # self.background_normal = self.background_normal_orig
+            self.color = [1, 1, 1, 1]
 
     def enable_progress_animation(self):
+        return
         if not self.text_animation_enabled:
             self.last_text = self.text
             Clock.schedule_interval(self.do_progress_animation, 0.5)

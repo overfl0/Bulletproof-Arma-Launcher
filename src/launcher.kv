@@ -18,9 +18,31 @@
     size_hint_x: None
     size_hint_y: None
     width: 100
+    height: 75
     background_normal: app.resource_path('images/borderimage.png')
     background_down: app.resource_path('images/borderimage.png')
     background_hover: app.resource_path('images/borderimage-hover.png')
+    #background_normal: [1, 1, 1, 1]
+    background_color: [1, 1, 1, 0]
+    font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
+    font_size: 32
+
+<BackButton@HoverButton>
+    on_release: app.root.ids.main_screen_manager.current = 'install_screen'
+    text: 'BACK'
+
+#     Image:
+#         source: app.resource_path('images/button-intel.png')
+#         allow_stretch: False
+#         pos: self.parent.pos
+
+<OptionsButton@HoverButton>
+    on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
+    text: 'OPTIONS'
+#     Image:
+#         source: app.resource_path('images/button-hammer.png')
+#         allow_stretch: False
+#         pos: self.parent.pos
 
 <BaseTextInput@TextInput>
     background_color: 0.3, 0.3, 0.3, 0.7
@@ -71,54 +93,36 @@
         pos: root.x, root.y
 
     Image:
+        source: app.resource_path('images/bevel_and_emboss.png')
+        size: 1000, 37
+        pos: 0, 142
 
-        source: app.resource_path('images/logo.png')
-        height: 300
-        width: 500
-        pos: root.x + 22, 410
-        size_hint_x: None
-        size_hint_y: None
+    Image:
+        source: app.resource_path('images/bottom_strip.png')
+        size: 1000, 83
+        pos: 0, 50
+
 
     BoxLayout:
         id: main_box
         size: root.width, root.height
         pos: root.x, root.y
         orientation: 'vertical'
-        padding: 20
+        #padding: 20
         spacing: 12
-        StackLayout:
-            size_hint_y: None
-            orientation: 'rl-tb'
-            spacing: 10
+#         StackLayout:
+#             size_hint_y: None
+#             orientation: 'rl-tb'
+#             spacing: 10
 
-            HoverButton:
-                on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
-                Image:
-                    source: app.resource_path('images/button-hammer.png')
-                    allow_stretch: False
-                    pos: self.parent.pos
-            # HoverButton:
-            #     on_release: root.controller.on_testpopupbutton_release(self)
-            #     Image:
-            #         id: testpopupbutton
-            #         source: app.resource_path('images/button-com.png')
-            #         allow_stretch: False
-            #         pos: self.parent.pos
-            HoverButton:
-                on_release: app.root.ids.main_screen_manager.current = 'install_screen'
-                Image:
-                    source: app.resource_path('images/button-intel.png')
-                    allow_stretch: False
-                    pos: self.parent.pos
-
-        Label:
-            height: 10
-            size_hint_y: None
-            canvas:
-                Line:
-                    points: [self.x + 5, self.y, self.x + self.width - 4.5, self.y]
-                    width: 3
-                    cap: 'square'
+#         Label:
+#             height: 10
+#             size_hint_y: None
+#             canvas:
+#                 Line:
+#                     points: [self.x + 5, self.y, self.x + self.width - 4.5, self.y]
+#                     width: 3
+#                     cap: 'square'
 
         MainScreenManager:
             id: main_screen_manager
@@ -127,9 +131,20 @@
 
 # Section: Screen where install related stuff is
 <InstallScreen>:
+
+    padding: 20
     name: 'install_screen'
 
+    Image:
+        source: app.resource_path('images/logo.png')
+        height: 310
+        width: 151
+        y: 235
+    #    size_hint_x: 1
+    #    size_hint_y: None
+
     BoxLayout:
+        padding: 20
         orientation: 'vertical'
 
         Label:
@@ -153,6 +168,10 @@
                 text_size: self.width - 20, self.height
                 size_hint: (1, 1)
 
+        Widget:
+            height: 15
+            size_hint_y: None
+
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
@@ -163,46 +182,58 @@
                 value: 0
                 height: 20
 
-        StackLayout:
-            id: bullet_stack
-            size_hint_y: None
-            Image:
-                size_hint_x: None
-                width: 500
-                source: app.resource_path('images/gun.png')
-
         BoxLayout:
             orientation: 'horizontal'
             height: 100
             size_hint_y: None
 
+            Widget:
+                size_hint_x: 1
+            Widget:
+                size_hint_x: 1
             HoverButton:
+                size_hint_x: 2
                 id: action_button
                 disabled: True
                 width: 300
                 on_release: root.controller.on_action_button_release(self)
-                text: 'Install'
-                font_name: app.resource_path("fonts/Xolonium-Regular.ttf")
-                font_size: 30
-                text_size: self.width - 20, None
-                halign: 'left'
+                text: 'Placeholder'
+                bold: True
+                font_size: 60
+                #text_size: self.width - 20, None
+                #halign: 'left'
 
-            BoxLayout:
-                Label:
-                    id: footer_label
-                    orientation: 'horizontal'
-                    font_name: app.resource_path("fonts/Xolonium-Regular.ttf")
-                    font_size: 12
-                    text_size: self.width, self.height
-                    halign: 'right'
-                    valign: 'bottom'
-                    text: 'Build: N/A'
+            Widget:
+                size_hint_x: 1
+            OptionsButton:
+                size_hint_x: 1
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Label:
+                id: footer_label
+                orientation: 'horizontal'
+                font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
+                font_size: 12
+                text_size: self.width, self.height
+                halign: 'right'
+                valign: 'bottom'
+                text: 'Build: N/A'
 
 # Section: Screen for settings and configuration
 <PrefScreen>:
     name: 'pref_screen'
+    #background_color: 0.3, 0.3, 0.3, 1
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 0.7
+        Rectangle:
+            pos: 0, 143
+            size: self.size[0], 600
 
     BoxLayout:
+        padding: 20
         orientation: 'vertical'
 
         BoxLayout:
@@ -306,4 +337,13 @@
             SpeedLabel:
                 text: 'KB/s   (0 = unlimited)'
 
+        Widget
+
+        BoxLayout:
+            orientation: 'horizontal'
+            Widget
+            BackButton
+
         Widget:
+            size_hint_y: None
+            height: 30
