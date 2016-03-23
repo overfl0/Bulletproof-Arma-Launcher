@@ -29,6 +29,7 @@ from kivy.uix.image import Image
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
+from utils import browser
 from utils.primitive_git import get_git_sha1_auto
 from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
@@ -212,6 +213,9 @@ class Controller(object):
 
         # Else install everything
         self.start_syncing(seed=False)
+
+    def on_forum_button_release(self, btn):
+        browser.open_hyperlink('http://tacticalbattlefield.net/forum')
 
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding

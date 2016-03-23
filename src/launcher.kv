@@ -44,6 +44,9 @@
 #         allow_stretch: False
 #         pos: self.parent.pos
 
+<ForumButton@HoverButton>
+    text: 'FORUM'
+
 <BaseTextInput@TextInput>
     background_color: 0.3, 0.3, 0.3, 0.7
     foreground_color: 0.9, 0.9, 0.9, 1
@@ -187,8 +190,9 @@
             height: 100
             size_hint_y: None
 
-            Widget:
+            ForumButton:
                 size_hint_x: 1
+                on_release: root.controller.on_forum_button_release(self)
             Widget:
                 size_hint_x: 1
             HoverButton:
