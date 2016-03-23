@@ -81,7 +81,7 @@ class Settings(Model):
         }, {
             'name': 'max_download_speed', 'defaultValue': 0
         }, {
-            'name': 'seeding_type', 'defaultValue': 'never'
+            'name': 'seeding_type', 'defaultValue': 'while_not_playing'
         }
     ]
 
