@@ -17,18 +17,14 @@ import sys
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from utils import browser
 from view.chainedpopup import ChainedPopup
 
 default_title = """Message"""
 
 
 def open_hyperlink(obj, ref):
-    import webbrowser
-
-    if ref[1:].startswith(':\\'):  # C:\, D:\, etc...
-        ref = ref.encode(sys.getfilesystemencoding())
-
-    webbrowser.open(ref)
+    browser.open_hyperlink(ref)
 
 
 class MessageBox(ChainedPopup):
