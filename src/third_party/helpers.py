@@ -19,8 +19,8 @@ import textwrap
 import utils.system_processes
 
 from kivy.logger import Logger
-from third_party import teamspeak
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
+from utils import unicode_helpers
 from view.messagebox import MessageBox
 
 
@@ -136,7 +136,8 @@ def run_the_game(mods):
         no_steam_info.chain_open()
 
     except OSError as ex:
-        text = "Error while launching Arma 3: {}.".format(ex.strerror)
+        error_message = unicode_helpers.fs_to_u(ex.strerror)
+        text = "Error while launching Arma 3: {}.".format(error_message)
         error_info = MessageBox(text, title='Error while launching Arma 3!')
         error_info.chain_open()
 
