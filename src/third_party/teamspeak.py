@@ -18,6 +18,8 @@ import zipfile
 
 from kivy.logger import Logger
 from third_party import SoftwareNotInstalled
+from utils import browser
+from utils import system_processes
 from utils.admin import run_admin
 from utils.devmode import devmode
 from utils.registry import Registry
@@ -129,6 +131,20 @@ def check_installed():
     Logger.debug('TS: addon installer path: {}'.format(addon_installer_path))
     Logger.debug('TS: install location: {}'.format(install_location))
     Logger.debug('TS: config location: {}'.format(config_location))
+
+
+def run_and_connect(url):
+    """Run the teamspeak client and connect to the given server."""
+
+    full_url = 'ts3server://{}'.format(url)
+
+    ts3_path = get_executable_path()
+    if system_processes.file_running(ts3_path):
+        Logger.info('TS: Teamspeak process found running. Assuming it is already connected to the correct server.')
+        return
+
+    Logger.info('TS: Connecting to teamspeak server: {}'.format(url))
+    browser.open_hyperlink(full_url)
 
 
 def create_package_ini_file_contents(path, name, author, version, platforms, description):

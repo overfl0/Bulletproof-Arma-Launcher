@@ -19,6 +19,7 @@ from kivy.base import ExceptionManager
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
+from utils import browser
 from utils.primitive_git import get_git_sha1_auto
 from utils.critical_messagebox import MessageBox
 from utils.testtools_compat import _format_exc_info
@@ -36,12 +37,7 @@ CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bu
 
 
 def open_hyperlink(obj, ref):
-    import webbrowser
-
-    if ref[1:].startswith(':\\'):  # C:\, D:\, etc...
-        ref = ref.encode(sys.getfilesystemencoding())
-
-    webbrowser.open(ref)
+    browser.open_hyperlink(ref)
 
 
 class ErrorPopup(ChainedPopup):

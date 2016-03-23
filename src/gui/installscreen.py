@@ -66,7 +66,7 @@ class Controller(object):
         self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
 
-        version = '0.1-alpha7.1'
+        version = '0.8'
         self.version = version
 
         # Don't run logic if required third party programs are not installed
@@ -131,8 +131,8 @@ class Controller(object):
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
-        footer_text = '{}\nBuild: {}'.format(self.version,
-                                             git_sha1[:7] if git_sha1 else 'N/A')
+        footer_text = 'Version: {}\nBuild: {}'.format(self.version,
+                                                      git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text
 
     def wait_to_init_action_button(self, dt):
