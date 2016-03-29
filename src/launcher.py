@@ -46,8 +46,11 @@ try:
         # sys.argv = sys.argv[0:1]
 
         # configure kivy
+        from kivy import resources
         from kivy.config import Config
-        from utils.paths import get_resources_path
+        from utils.paths import get_resources_path, get_source_path
+
+        resources.resource_add_path(get_source_path())
 
         Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
         Config.set('input', 'mouse', 'mouse,disable_multitouch')
