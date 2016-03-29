@@ -113,7 +113,7 @@ class TorrentSyncer(object):
         if s.progress == 1:
             return
 
-        Logger.info('Progress: [{}] {:.2f}% complete (down: {:.1f} kB/s up: {:.1f} kB/s peers: {}) {}'.format(
+        Logger.info('Progress: [{}] {:.2f}% complete (down: {:.1f} kB/s up: {:.1f} kB/s connections: {}) {}'.format(
                     mod_name, s.progress * 100, download_kBps, upload_kBps, s.num_peers, state))
 
     def mods_with_valid_handle(self):
@@ -179,7 +179,7 @@ class TorrentSyncer(object):
                                status.payload_download_rate / 1024,
                                ' | '.join(unfinished_mods))
         else:
-            progress_message = 'Seeding: {} peers ({:0.2f} KB/s). Total: {} MB'.format(
+            progress_message = 'Seeding: {} connections ({:0.2f} KB/s). Total: {} MB'.format(
                                session_actual_peers,
                                status.payload_upload_rate / 1024,
                                status.total_payload_upload / 1024 / 1024)
