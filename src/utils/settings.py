@@ -24,8 +24,8 @@ from third_party.arma import Arma, SoftwareNotInstalled
 from utils.critical_messagebox import MessageBox
 from utils.data.jsonstore import JsonStore
 from utils.data.model import ModelInterceptorError, Model
-from utils.paths import mkdir_p
-from utils.registry import Registry
+from utils.paths import mkdir_p, get_local_user_directory
+# from utils.registry import Registry
 
 # str variant of the unicode string on_change
 # kivys api only works with non unicode strings
@@ -118,8 +118,9 @@ class Settings(Model):
     @classmethod
     def launcher_default_basedir(cls):
         """Retrieve users document folder from the registry"""
-        user_docs = Registry.ReadValueCurrentUser(cls._USER_DOCUMENT_PATH, 'Personal')
-        path = os.path.join(user_docs, cls._LAUNCHER_DIR)
+        # user_docs = Registry.ReadValueCurrentUser(cls._USER_DOCUMENT_PATH, 'Personal')
+        # old_path = os.path.join(user_docs, cls._LAUNCHER_DIR)
+        path = get_local_user_directory(cls._LAUNCHER_DIR)
 
         return path
 
