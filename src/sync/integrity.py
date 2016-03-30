@@ -12,12 +12,22 @@
 
 from __future__ import unicode_literals
 
+# Allow relative imports when the script is run from the command line
+if __name__ == "__main__":
+    import site
+    import os
+    file_directory = os.path.dirname(os.path.realpath(__file__))
+    site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
+
+import errno
 import itertools
 import os
 import shutil
+import stat
 
 from kivy.logger import Logger
 from third_party.arma import Arma
+from utils import unicode_helpers
 from utils.context import ignore_exceptions
 from utils.hashes import sha1
 from utils.metadatafile import MetadataFile
@@ -219,6 +229,37 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
         success = False
 
     return success
+
+
+def set_files_to_read_write(base_directory, files_list):
+    """Ensures all the files have the write bit set. Useful if some external
+    has set them to read-only.
+    """
+
+    Logger.info('Integrity: Checking read-write file access in directory: {}.'.format(base_directory))
+    for torrent_file in files_list:
+
+        node_path = os.path.join(base_directory, torrent_file)
+        fs_node_path = unicode_helpers.u_to_fs(node_path)
+
+        try:
+            stat_struct = os.lstat(fs_node_path)
+
+        except OSError as e:
+            if e.errno == errno.ENOENT:  # 2 - File not found
+                continue
+
+        # If the file is read-only to the owner, change it to read-write
+        if not stat_struct.st_mode & stat.S_IWUSR:
+            Logger.info('Integrity: Setting write bit to file: {}'.format(node_path))
+            try:
+                os.chmod(fs_node_path, stat_struct.st_mode | stat.S_IWUSR)
+
+            except OSError as ex:
+                if ex.errno == errno.EPERM:  # 13
+                    raise('TODO: Permission denied - admin required')
+                else:
+                    raise
 
 
 def parse_files_list(files_list, checksums, only_subdir=''):
