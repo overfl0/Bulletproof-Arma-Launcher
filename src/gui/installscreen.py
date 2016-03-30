@@ -21,6 +21,7 @@ import textwrap
 import third_party.helpers
 
 from autoupdater import autoupdater
+from config.version import version
 
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
@@ -61,7 +62,6 @@ class Controller(object):
         self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
 
-        version = '0.8'
         self.version = version
 
         # Don't run logic if required third party programs are not installed

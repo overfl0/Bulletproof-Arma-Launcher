@@ -27,10 +27,10 @@ import requests
 import textwrap
 import torrent_utils
 
+from config.version import version
+from distutils.version import LooseVersion
 from third_party import teamspeak
-from third_party.arma import Arma, SoftwareNotInstalled
 from utils.devmode import devmode
-from utils.app import BaseApp
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Para
 from utils.testtools_compat import _format_exc_info
@@ -110,7 +110,8 @@ def _get_mod_descriptions(para):
                 'Mods descriptions could not be parsed', stacktrace)})
 
         # Temporary! Ensure alpha version is correct
-        if data.get('alpha') not in ('5', '6', '0.1-alpha7', '0.1-alpha7.1', '0.8'):
+        required_version = data.get('alpha')
+        if not required_version or LooseVersion(version) < LooseVersion(required_version):
             error_message = 'This launcher is out of date! You won\'t be able to download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
