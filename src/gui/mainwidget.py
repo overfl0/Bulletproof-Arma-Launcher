@@ -68,34 +68,6 @@ class Controller(object):
         # self.get_status_image().set_image('attention')
 
     def on_next_frame(self, dt):
-        # Only show the notification in alpha branch
-        alpha_text = textwrap.dedent('''
-            Welcome to the Tactical Battlefield Mod launcher!
-
-            This is an early alpha version of the launcher and as such it WILL contain bugs!
-            Although we have made every effort possible to ensure safe use of the launcher,
-            we cannot guarantee it.
-
-            Users of this launcher in alpha version are expected to be technically
-            knowledgeable and capable of fixing their Arma 3 installation should
-            something go awry.
-            If you do not meet the above criterion, stop using this launcher now!
-
-            Don't forget to report bugs at:
-            [ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/color][/ref]
-
-
-                                                                                           -- The TacBF launcher team
-            ''')
-
-        alpha_title = 'Tactical Battlefield Mod launcher (Alpha)'
-        alpha_box = MessageBox(text=alpha_text, title=alpha_title, markup=True)
-
-        # Allow developers to silence the alpha popup
-        if not devmode.get_no_alpha_popup():
-            Logger.info('MainWidget: opening alpha popup')
-            alpha_box.chain_open()
-
         # TODO: Remove this in several months when this will not be relevant anymore
         old_dir = self.settings.launcher_default_basedir_old()
 
