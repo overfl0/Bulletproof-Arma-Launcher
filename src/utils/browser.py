@@ -12,10 +12,11 @@
 
 from __future__ import unicode_literals
 
+import thread
 import sys
 import webbrowser
 
-from utils.process import Process
+# from utils.process import Process
 
 
 def _open_hyperlink(url):
@@ -35,5 +36,8 @@ def open_hyperlink(url):
     Calls another process to ensure it terminates right away and does not block
     the main process/thread.
     """
-    p = Process(target=_open_hyperlink, args=[url])
-    p.start()
+    # p = Process(target=_open_hyperlink, args=[url])
+    # p.start()
+    # Honestly, I don't know if using either threads or processes changes anything.
+    # Both seem to freeze the UI at some point.
+    thread.start_new_thread(_open_hyperlink, (url,))
