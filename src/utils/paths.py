@@ -19,6 +19,12 @@ import sys
 import unicode_helpers
 
 
+# the folder name where everything gets stored. This will get the last
+# part of the launcher_basedir
+# TODO: move this to configuration
+_LAUNCHER_DIR = 'TacBF Launcher'
+
+
 def is_pyinstaller_bundle():
     """Is the program ran as a PyInstaller bundle? (as opposed to a simple python script)."""
     return getattr(sys, 'frozen', False)
@@ -128,6 +134,13 @@ def get_local_user_directory(*relative):
 
     directory = os.path.join(local_app_data, *relative)
     return directory
+
+
+def get_launcher_directory(*relative):
+    """Return the directory for storing launcher related data.
+    Optionally append <relative> at the end.
+    """
+    return get_local_user_directory(_LAUNCHER_DIR, *relative)
 
 
 def is_file_in_virtual_store(path):

@@ -220,10 +220,10 @@ class IntegrityTest(unittest.TestCase):
 
     @attr('integration')
     def test_sync_keep_whitelisted_physical_entries(self):
-        self._add_real_file_only('dir1\\.tacbf_meta', force_keep_it=True)
+        self._add_real_file_only('dir1\\tfr.ts3_plugin', force_keep_it=True)
         self._add_real_file_only('dir1\\will_be_removed')
-        self._add_real_file_only('.tacbf_meta\\somefile', force_keep_it=True)
-        self._add_real_file_only('.tacbf_meta\\otherfile', force_keep_it=True)
+        self._add_real_file_only('tfr.ts3_plugin\\somefile', force_keep_it=True)
+        self._add_real_file_only('tfr.ts3_plugin\\otherfile', force_keep_it=True)
         self._add_real_file_only('.synqinfo\\file1', force_keep_it=True)
         self._add_real_file_only('.synqinfo\\file2', force_keep_it=True)
 
@@ -234,9 +234,9 @@ class IntegrityTest(unittest.TestCase):
 
     @attr('integration')
     def test_sync_keep_whitelisted_physical_entries_on_warn(self):
-        self._add_real_file_only('dir1\\.tacbf_meta', force_keep_it=True)
-        self._add_real_file_only('.tacbf_meta\\somefile', force_keep_it=True)
-        self._add_real_file_only('.tacbf_meta\\otherfile', force_keep_it=True)
+        self._add_real_file_only('dir1\\tfr.ts3_plugin', force_keep_it=True)
+        self._add_real_file_only('tfr.ts3_plugin\\somefile', force_keep_it=True)
+        self._add_real_file_only('tfr.ts3_plugin\\otherfile', force_keep_it=True)
         self._add_real_file_only('.synqinfo\\file1', force_keep_it=True)
         self._add_real_file_only('.synqinfo\\file2', force_keep_it=True)
 
@@ -247,9 +247,9 @@ class IntegrityTest(unittest.TestCase):
 
     @attr('integration')
     def test_sync_whitelisted_entries_from_torrent_removed(self):
-        self._add_torrent_file_only('dir1\\.tacbf_meta')
-        self._add_torrent_file_only('.tacbf_meta\\somefile')
-        self._add_torrent_file_only('.tacbf_meta\\otherfile')
+        self._add_torrent_file_only('dir1\\tfr.ts3_plugin')
+        self._add_torrent_file_only('tfr.ts3_plugin\\somefile')
+        self._add_torrent_file_only('tfr.ts3_plugin\\otherfile')
         self._add_torrent_file_only('.synqinfo\\file1')
         self._add_torrent_file_only('.synqinfo\\file2')
 

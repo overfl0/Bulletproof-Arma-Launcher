@@ -95,7 +95,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
         raise Exception('Unknown action: {}'.format(on_superfluous))
 
     # Whitelist our and PWS metadata files
-    whitelist = (MetadataFile.file_name, 'tfr.ts3_plugin', '.synqinfo', '.sync')
+    whitelist = ('tfr.ts3_plugin', '.synqinfo', '.sync')
 
     top_dirs, dirs, file_paths, checksums = parse_files_list(files_list, checksums, check_subdir)
 

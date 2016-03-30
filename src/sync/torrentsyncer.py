@@ -200,7 +200,7 @@ class TorrentSyncer(object):
         # TODO: Add the check: mod name == torrent directory name
 
         # === Metadata handling ===
-        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+        metadata_file = MetadataFile(mod.foldername)
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
         metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
@@ -461,7 +461,7 @@ class TorrentSyncer(object):
         # Save data that could come in handy in the future to a metadata file
         # Set resume data for quick checksum check
         resume_data = libtorrent.bencode(mod.torrent_handle.write_resume_data())
-        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+        metadata_file = MetadataFile(mod.foldername)
         metadata_file.read_data(ignore_open_errors=False)
         metadata_file.set_torrent_resume_data(resume_data)
         metadata_file.write_data()
@@ -478,7 +478,7 @@ class TorrentSyncer(object):
             Logger.error('Finished_hook: torrent {} has no metadata!'.format(mod.foldername))
             return False
 
-        metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+        metadata_file = MetadataFile(mod.foldername)
         metadata_file.read_data(ignore_open_errors=False)
 
         # Remove unused files
