@@ -12,6 +12,8 @@
 
 from __future__ import unicode_literals
 
+import kivy.app
+import os
 import textwrap
 import time
 
@@ -55,6 +57,7 @@ class Controller(object):
     def __init__(self, widget):
         super(Controller, self).__init__()
         self.view = widget
+        self.settings = kivy.app.App.get_running_app().settings
 
         # this effectively calls on_next_frame, when the view is ready
         Clock.schedule_once(self.on_next_frame, 0)
@@ -92,6 +95,38 @@ class Controller(object):
         if not devmode.get_no_alpha_popup():
             Logger.info('MainWidget: opening alpha popup')
             alpha_box.chain_open()
+
+        # TODO: Remove this in several months when this will not be relevant anymore
+        old_dir = self.settings.launcher_default_basedir_old()
+
+        directory_text = textwrap.dedent('''
+            *********************************************************
+            * IMPORTANT!
+            *********************************************************
+
+            [color=FF0000]All settings have been reset for version 1.0![/color]
+
+            Go to OPTIONS and verify whether everything is in order, especially
+            the "Mods directory"!
+
+            *********************************************************
+            * IMPORTANT!
+            *********************************************************
+
+            Please remove [ref={}][color=3572b0]the old directory (click here!)[/color][/ref] manually.
+            It is not deleted automatically for safety reasons
+
+            This is a one time message and will not appear again.
+            '''.format(old_dir))
+
+        directory_title = 'IMPORTANT! Action needed!'
+        directory_box = MessageBox(text=directory_text, title=directory_title, markup=True)
+
+        if os.path.exists(old_dir):
+            notice_already = self.settings.get('basedir_change_notice')
+            if not notice_already:
+                self.settings.set('basedir_change_notice', 1)
+                directory_box.chain_open()
 
     def get_status_image(self):
         """retrieve the status image from the tree"""

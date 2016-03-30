@@ -25,7 +25,6 @@ from utils.critical_messagebox import MessageBox
 from utils.data.jsonstore import JsonStore
 from utils.data.model import ModelInterceptorError, Model
 from utils.paths import mkdir_p, get_local_user_directory
-# from utils.registry import Registry
 
 # str variant of the unicode string on_change
 # kivys api only works with non unicode strings
@@ -70,6 +69,8 @@ class Settings(Model):
             'name': 'update',
             'defaultValue': False,
             'persist': False
+        }, {
+            'name': 'basedir_change_notice', 'defaultValue': 0
         }, {
             'name': 'launcher_basedir'
         }, {
@@ -116,10 +117,20 @@ class Settings(Model):
         Logger.info('Settings: loaded args: ' + unicode(self.data))
 
     @classmethod
+    def launcher_default_basedir_old(cls):
+        """Retrieve OLD document folder. Kept for backward compatibility and WILL BE DEPRECATED.
+        Do not use unless you know what you're doing!
+        """
+        from utils.registry import Registry
+
+        user_docs = Registry.ReadValueCurrentUser(cls._USER_DOCUMENT_PATH, 'Personal')
+        old_path = os.path.join(user_docs, cls._LAUNCHER_DIR)
+
+        return old_path
+
+    @classmethod
     def launcher_default_basedir(cls):
         """Retrieve users document folder from the registry"""
-        # user_docs = Registry.ReadValueCurrentUser(cls._USER_DOCUMENT_PATH, 'Personal')
-        # old_path = os.path.join(user_docs, cls._LAUNCHER_DIR)
         path = get_local_user_directory(cls._LAUNCHER_DIR)
 
         return path
