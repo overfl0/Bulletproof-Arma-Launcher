@@ -193,7 +193,9 @@ def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_desc
 
 def _tfr_wait_for_user_action(message_queue):
     """ Wait until the user clicks OK. Ugly workaround but it works ;)
-    During this time, any other messages are DISCARDED!
+    During this time, any other messages save for 'terminate' are DISCARDED!
+    As a workaround, return the message received (has to be then checked if
+    equal to 'terminate')
 
     This is required because if we don't wait until the user does *something*
     and just show the UAC prompt, the prompt is going to timeout automatically
@@ -230,7 +232,11 @@ def _tfr_wait_for_user_action(message_queue):
 
         if command == 'tfr_install_as_admin':
             Logger.info('TFR installer: Received continue command. Installing TFR plugin...')
-            break
+            return command
+
+        if command == 'terminate':
+            Logger.info('TFR installer: Caller wants termination')
+            return command
 
 
 def _tfr_post_download_hook(message_queue, mod):
@@ -294,7 +300,11 @@ def _tfr_post_download_hook(message_queue, mod):
     message_queue.progress({'msg': 'Copying TFR configuration...'}, 1.0)
     teamspeak.copy_userconfig(path=path_userconfig)
 
-    _tfr_wait_for_user_action(message_queue)
+    command = _tfr_wait_for_user_action(message_queue)
+    if command == 'terminate':  # Workaround for termination request while waiting
+        message_queue.reject({'details': 'Para was asked to terminate by the caller'})
+        return False
+
     install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
     if not install_instance:
         _show_message_box(message_queue, title='Run TFR TeamSpeak plugin installer!', message=run_admin_message)
