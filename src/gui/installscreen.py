@@ -53,16 +53,29 @@ class Controller(object):
 
         self.view = widget
         self.mod_manager = ModManager()
-        self.loading_gif = None
-        self.mods = []
         self.settings = kivy.app.App.get_running_app().settings
-        self.arma_executable_object = None
+        self.version = version
+
+        self.start_mod_checking()
+
+        Clock.schedule_once(self.update_footer_label, 0)
+
+        # bind to application stop event
+        application.bind(on_stop=self.on_application_stop)
+
+        # bind to settings change
+        self.settings.bind(on_change=self.on_settings_change)
+
+    def start_mod_checking(self):
+        """Start the whole process of getting metadata and then checking if all
+        the mods are correctly downloaded.
+        """
+
         self.para = None
+        self.mods = []
         self.syncing_failed = False
         self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
-
-        self.version = version
 
         # Don't run logic if required third party programs are not installed
         if third_party.helpers.check_requirements(verbose=False):
@@ -80,13 +93,34 @@ class Controller(object):
             # want but it is good enough ;)
             Clock.schedule_interval(third_party.helpers.check_requirements, 1)
 
-        Clock.schedule_once(self.update_footer_label, 0)
+    def stop_mod_processing(self):
+        """Forcefully stop any processing and ignore all the para promises.
+        This is used to stop any running processes for restarting all the checks
+        afterwards. (using wait_for_mod_checking_restart())
+        """
 
-        # bind to application stop event
-        application.bind(on_stop=self.on_application_stop)
+        if self.para and self.para.is_open():
+            # self.para.request_termination()
+            self.para.request_termination_and_break_promises()
 
-        # bind to settings change
-        self.settings.bind(on_change=self.on_settings_change)
+        Clock.unschedule(self.seeding_and_action_button_upkeep)
+        Clock.unschedule(self.wait_to_init_action_button)
+
+        self.view.ids.action_button.disable()
+
+    def wait_for_mod_checking_restart(self, dt):
+        """Scheduled method will wait until the para that is running is stopped
+        and then restart the whole mod checking process.
+        This is used when the mod directory has changed and everything needs to
+        be done again, from the beginning.
+        """
+
+        if self.para and self.para.is_open():
+            return  # Keep waiting
+
+        self.start_mod_checking()
+
+        return False  # Unschedule the method
 
     def seeding_and_action_button_upkeep(self, dt):
         """Check if seeding should be performed and if the play button should be available again.
@@ -428,6 +462,11 @@ class Controller(object):
                 self.para.send_message('torrent_settings', {key: value})
 
         # Note: seeding is handled in seeding_and_action_button_upkeep()
+
+        # Mod directory has changed. Restart all the checks from the beginning.
+        if key == 'launcher_moddir':
+            self.stop_mod_processing()
+            Clock.schedule_interval(self.wait_for_mod_checking_restart, 0.2)
 
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')

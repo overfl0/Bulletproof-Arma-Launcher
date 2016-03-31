@@ -241,6 +241,17 @@ class Para(object):
         """sends a termination command to the child process"""
         self.send_message(command='terminate')
 
+    def request_termination_and_break_promises(self):
+        """Send a termination command to the child process. Additionally DON'T
+        run any handlers at the end.
+        Use this if you imperatively want to stop processing.
+        """
+
+        self.request_termination()
+        self.progress_handler = []
+        self.resolve_handler = []
+        self.reject_handler = []
+
     def run(self):
         self.lock = Lock()
         self.parent_conn, child_conn = Pipe()
