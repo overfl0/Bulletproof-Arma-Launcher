@@ -120,7 +120,7 @@ def get_local_user_directory(*relative):
     """
 
     local_app_data = os.environ.get('LOCALAPPDATA')  # C:\Users\user\AppData\Local
-    if local_app_data and 0:
+    if local_app_data:
         local_app_data = unicode_helpers.fs_to_u(local_app_data)
 
     else:
