@@ -23,7 +23,6 @@ from datetime import datetime
 import kivy
 import kivy.app  # To keep PyDev from complaining
 from kivy.logger import Logger
-import requests
 import textwrap
 import torrent_utils
 
@@ -33,6 +32,7 @@ from third_party import teamspeak
 from utils.devmode import devmode
 from utils.primitive_git import get_git_sha1_auto
 from utils.process import Para
+from utils.requests_wrapper import download_url, DownloadException
 from utils.testtools_compat import _format_exc_info
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
@@ -50,36 +50,6 @@ def parse_timestamp(ts):
     return datetime.utcfromtimestamp(float(stamp))
 
 
-def requests_get_or_reject(para, domain, *args, **kwargs):
-    """
-    Helper function that adds our error handling to requests.get.
-    Feel free to refactor it.
-    """
-
-    if not domain:
-        domain = "the domain"
-
-    try:
-        res = requests.get(*args, **kwargs)
-    except requests.exceptions.ConnectionError as ex:
-        try:
-            reason_errno = ex.message.reason.errno
-            if reason_errno == 11004:
-                para.reject({'msg': 'Could not resolve {}. Check your DNS settings.'.format(domain)})
-        except Exception:
-            para.reject({'msg': 'Could not connect to the metadata server.'})
-
-        para.reject({'msg': 'Could not connect to the metadata server.'})
-
-    except requests.exceptions.Timeout:
-        para.reject({'msg': 'The server timed out while downloading metadata information from the server.'})
-
-    except requests.exceptions.RequestException as ex:
-        para.reject({'msg': 'Could not download metadata information from the server.'})
-
-    return res
-
-
 def _get_mod_descriptions(para):
     # WARNING: This methods gets called in a different process
     """
@@ -94,7 +64,10 @@ def _get_mod_descriptions(para):
     metadata_path = devmode.get_metadata_path(default='/tacbf/updater/metadata.json')
     url = 'http://{}{}'.format(domain, metadata_path)
 
-    res = requests_get_or_reject(para, domain, url, verify=False, timeout=10)
+    try:
+        res = download_url(domain, url, verify=False, timeout=10)
+    except DownloadException as ex:
+        para.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
 
     if res.status_code != 200:
         para.reject({'details': '{}\n{}\n\n{}'.format(
