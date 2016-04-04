@@ -193,6 +193,60 @@ class TorrentSyncer(object):
         if download_fraction != 1:
             Logger.info('Progress: {}'.format(progress_message))
 
+    def get_mod_torrent_metadata(self, mod, metadata_file):
+        """Retrieve torrent metadata either from the metadata_file or from associated the file, if not present.
+        return torrent_info, torrent_contents
+        torrent_contents may be None. If that's the case, don't cache it.
+        """
+
+        torrent_info = None
+
+        torrent_content = metadata_file.get_torrent_content()
+        if torrent_content:
+            try:
+                torrent_info = torrent_utils.get_torrent_info_from_bytestring(torrent_content)
+
+            except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
+                error_message = decode_utf8(ex.args[0])
+                Logger.error('TorrentSyncer: could not parse torrent cached metadata: {}'.format(error_message))
+
+        # If no cached torrent metadata content, download it now and cache it
+        if not torrent_info:
+
+            if mod.downloadurl.startswith('file://'):  # Local torrent from file
+                try:
+                    torrent_info = self.get_torrent_info_from_file(mod.downloadurl[len('file://'):])
+
+                except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
+                    error_message = decode_utf8(ex.args[0])
+                    Logger.error('TorrentSyncer: could not parse torrent metadata: {}'.format(error_message))
+                    raise "TODO: Error handling. Stop processing"
+                return torrent_info, None  # Don't cache torrent_content
+
+            else:  # Torrent from url
+                try:
+                    res = requests_wrapper.download_url(mod.downloadurl, verify=False, timeout=10)
+                except requests_wrapper.DownloadException as ex:
+                    self.result_queue.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
+                    raise "TODO: Error handling. Stop processing"
+
+                if res.status_code != 200:
+                    self.result_queue.reject({'details': '{}\n{}\n\n{}'.format(
+                        'Torrent file could not be received from the server',
+                        'Status Code: ' + unicode(res.status_code), res.text)})
+                    raise "TODO: Error handling. Stop processing"
+
+                try:
+                    torrent_content = res.content
+                    torrent_info = torrent_utils.get_torrent_info_from_bytestring(res.content)
+
+                except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
+                    error_message = decode_utf8(ex.args[0])
+                    Logger.error('TorrentSyncer: could not parse torrent metadata: {}'.format(error_message))
+                    raise "TODO: Error handling. Stop processing"
+
+        return torrent_info, torrent_content
+
     def start_syncing(self, mod, force_sync=False):
         """Create a torrent handle for a mod to be downloaded.
         This effectively starts the download.
@@ -231,51 +285,12 @@ class TorrentSyncer(object):
         metadata_file.set_torrent_content(bencoded_recreated_torrent)
         '''
 
-        torrent_info = None
-        torrent_content = metadata_file.get_torrent_content()
-        if torrent_content:
-            try:
-                torrent_info = torrent_utils.get_torrent_info_from_bytestring(torrent_content)
-
-            except RuntimeError as ex:
-                error_message = decode_utf8(ex.args[0])
-                Logger.error('TorrentSyncer: could not parse torrent cached metadata: {}'.format(error_message))
-
-        # If no cached torrent metadata content, download it now and cache it
-        if not torrent_info:
-
-            if mod.downloadurl.startswith('file://'):  # Local torrent from file
-                torrent_info = self.get_torrent_info_from_file(mod.downloadurl[len('file://'):])
-                params['ti'] = torrent_info
-            else:  # Torrent from url
-                try:
-                    res = requests_wrapper.download_url(mod.downloadurl, verify=False, timeout=10)
-                except requests_wrapper.DownloadException as ex:
-                    self.result_queue.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
-                    raise "TODO: Error handling. Stop processing"
-
-                if res.status_code != 200:
-                    self.result_queue.reject({'details': '{}\n{}\n\n{}'.format(
-                        'Torrent file could not be received from the server',
-                        'Status Code: ' + unicode(res.status_code), res.text)})
-                    raise "TODO: Error handling. Stop processing"
-
-                try:
-                    torrent_content = res.content
-                    torrent_info = torrent_utils.get_torrent_info_from_bytestring(res.content)
-
-
-
-                except RuntimeError as ex:  # Raised bylibtorrent.torrent_info()
-                    error_message = decode_utf8(ex.args[0])
-                    Logger.error('TorrentSyncer: could not parse torrent metadata: {}'.format(error_message))
-                    raise "TODO: Error handling. Stop processing"
-
-                # Cache it for future requests
-                metadata_file.set_torrent_content(torrent_content)
-                metadata_file.write_data()
-
+        torrent_info, torrent_content = self.get_mod_torrent_metadata(mod, metadata_file)
         params['ti'] = torrent_info
+
+        # Cache it for future requests
+        metadata_file.set_torrent_content(torrent_content)
+        metadata_file.write_data()
 
         # Add optional resume data
         resume_data = metadata_file.get_torrent_resume_data()
