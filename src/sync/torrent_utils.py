@@ -55,7 +55,7 @@ def is_complete_quick(mod):
         Logger.info('Could not get torrent file content. Marking as not complete')
         return False
 
-    torrent_info = get_torrent_info_from_string(torrent_content)
+    torrent_info = get_torrent_info_from_bytestring(torrent_content)
 
     resume_data_bencoded = metadata_file.get_torrent_resume_data()
     if not resume_data_bencoded:
@@ -83,7 +83,7 @@ def is_complete_quick(mod):
     return is_complete_tfr_hack(mod.name, files_list, checksums)
 
 
-def get_torrent_info_from_string(bencoded):
+def get_torrent_info_from_bytestring(bencoded):
     """Get torrent metadata from a bencoded string and return info structure."""
 
     torrent_metadata = libtorrent.bdecode(bencoded)
@@ -99,7 +99,7 @@ def get_torrent_info_from_file(filename):
     with open(filename, 'rb') as file_handle:
         file_contents = file_handle.read()
 
-        return get_torrent_info_from_string(file_contents)
+        return get_torrent_info_from_bytestring(file_contents)
 
 
 def create_add_torrent_flags():

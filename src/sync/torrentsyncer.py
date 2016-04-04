@@ -30,6 +30,7 @@ import torrent_utils
 
 from kivy.logger import Logger
 from sync.integrity import check_mod_directories
+from utils import requests_wrapper
 from utils.metadatafile import MetadataFile
 from utils.unicode_helpers import decode_utf8, encode_utf8
 from time import sleep
@@ -208,7 +209,8 @@ class TorrentSyncer(object):
         # If the torrent url changed, invalidate the resume data
         old_torrent_url = metadata_file.get_torrent_url()
         if old_torrent_url != mod.downloadurl or force_sync:
-            metadata_file.set_torrent_resume_data("")
+            metadata_file.set_torrent_resume_data('')
+            metadata_file.set_torrent_content('')
             # print "Setting torrent url to {}".format(mod.downloadurl)
             metadata_file.set_torrent_url(mod.downloadurl)
 
@@ -222,12 +224,58 @@ class TorrentSyncer(object):
             'flags': torrent_utils.create_add_torrent_flags()
         }
 
-        # Configure torrent source
-        if mod.downloadurl.startswith('file://'):  # Local torrent from file
-            torrent_info = self.get_torrent_info_from_file(mod.downloadurl[len('file://'):])
-            params['ti'] = torrent_info
-        else:  # Torrent from url
-            params['url'] = encode_utf8(mod.downloadurl)
+        '''
+        # Recreate the torrent file and store it in the metadata file for future checks
+        recreated_torrent = libtorrent.create_torrent(torrent_info)
+        bencoded_recreated_torrent = libtorrent.bencode(recreated_torrent.generate())
+        metadata_file.set_torrent_content(bencoded_recreated_torrent)
+        '''
+
+        torrent_info = None
+        torrent_content = metadata_file.get_torrent_content()
+        if torrent_content:
+            try:
+                torrent_info = torrent_utils.get_torrent_info_from_bytestring(torrent_content)
+
+            except RuntimeError as ex:
+                error_message = decode_utf8(ex.args[0])
+                Logger.error('TorrentSyncer: could not parse torrent cached metadata: {}'.format(error_message))
+
+        # If no cached torrent metadata content, download it now and cache it
+        if not torrent_info:
+
+            if mod.downloadurl.startswith('file://'):  # Local torrent from file
+                torrent_info = self.get_torrent_info_from_file(mod.downloadurl[len('file://'):])
+                params['ti'] = torrent_info
+            else:  # Torrent from url
+                try:
+                    res = requests_wrapper.download_url(mod.downloadurl, verify=False, timeout=10)
+                except requests_wrapper.DownloadException as ex:
+                    self.result_queue.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
+                    raise "TODO: Error handling. Stop processing"
+
+                if res.status_code != 200:
+                    self.result_queue.reject({'details': '{}\n{}\n\n{}'.format(
+                        'Torrent file could not be received from the server',
+                        'Status Code: ' + unicode(res.status_code), res.text)})
+                    raise "TODO: Error handling. Stop processing"
+
+                try:
+                    torrent_content = res.content
+                    torrent_info = torrent_utils.get_torrent_info_from_bytestring(res.content)
+
+
+
+                except RuntimeError as ex:  # Raised bylibtorrent.torrent_info()
+                    error_message = decode_utf8(ex.args[0])
+                    Logger.error('TorrentSyncer: could not parse torrent metadata: {}'.format(error_message))
+                    raise "TODO: Error handling. Stop processing"
+
+                # Cache it for future requests
+                metadata_file.set_torrent_content(torrent_content)
+                metadata_file.write_data()
+
+        params['ti'] = torrent_info
 
         # Add optional resume data
         resume_data = metadata_file.get_torrent_resume_data()
@@ -274,7 +322,7 @@ class TorrentSyncer(object):
             mod.torrent_handle.auto_managed(True)
             mod.torrent_handle.resume()
 
-    def syncing_finished(self):
+    def is_syncing_finished(self):
         """Check whether all torrents are in a state where every torrent has been synced.
         If this is the case, we can then stop downloading or seeding at any time.
         """
@@ -360,7 +408,7 @@ class TorrentSyncer(object):
         self.get_torrents_status()
 
         # Loop until state (5). All torrents finished and paused
-        while not self.syncing_finished():
+        while not self.is_syncing_finished():
             self.handle_messages()
 
             self.log_session_progress()
