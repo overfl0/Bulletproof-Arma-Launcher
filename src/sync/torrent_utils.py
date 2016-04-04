@@ -55,7 +55,11 @@ def is_complete_quick(mod):
         Logger.info('Could not get torrent file content. Marking as not complete')
         return False
 
-    torrent_info = get_torrent_info_from_bytestring(torrent_content)
+    try:
+        torrent_info = get_torrent_info_from_bytestring(torrent_content)
+    except RuntimeError:
+        Logger.info('Could not parse torrent file content. Marking as not complete')
+        return False
 
     resume_data_bencoded = metadata_file.get_torrent_resume_data()
     if not resume_data_bencoded:
