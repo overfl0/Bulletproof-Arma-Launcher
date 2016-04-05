@@ -285,13 +285,6 @@ class TorrentSyncer(object):
             'flags': torrent_utils.create_add_torrent_flags()
         }
 
-        '''
-        # Recreate the torrent file and store it in the metadata file for future checks
-        recreated_torrent = libtorrent.create_torrent(torrent_info)
-        bencoded_recreated_torrent = libtorrent.bencode(recreated_torrent.generate())
-        metadata_file.set_torrent_content(bencoded_recreated_torrent)
-        '''
-
         torrent_info, torrent_content = self.get_mod_torrent_metadata(mod, metadata_file)
         params['ti'] = torrent_info
 
@@ -305,6 +298,10 @@ class TorrentSyncer(object):
             params['resume_data'] = resume_data
 
         mod.libtorrent_params = params
+
+        # Ensure all the files of the torrent are read-write, if they exist
+        files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
+        torrent_utils.ensure_files_are_read_write(mod.clientlocation, files_list, mod.foldername)
 
     def get_torrents_status(self):
         """Get the status of all torrents with valid handles and cache them in
@@ -428,7 +425,7 @@ class TorrentSyncer(object):
         for mod in self.mods:
             try:
                 self.prepare_libtorrent_params(mod, force_sync)
-            except PrepareParametersException as ex:
+            except (PrepareParametersException, torrent_utils.AdminRequiredError) as ex:
                 self.result_queue.reject({'msg': ex.args[0]})
                 sync_success = False
                 return sync_success
@@ -568,10 +565,15 @@ class TorrentSyncer(object):
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
         cleanup_successful = check_mod_directories(files_list, mod.clientlocation, on_superfluous='remove')
 
+        '''
+        # Removed for now because we already have the original torrent file downloaded
+        # and we don't need to artificially recreate it.
+
         # Recreate the torrent file and store it in the metadata file for future checks
         recreated_torrent = libtorrent.create_torrent(torrent_info)
         bencoded_recreated_torrent = libtorrent.bencode(recreated_torrent.generate())
         metadata_file.set_torrent_content(bencoded_recreated_torrent)
+        '''
 
         if not cleanup_successful:
             Logger.info("Could not perform mod {} cleanup. Marking torrent as dirty.".format(mod.foldername))

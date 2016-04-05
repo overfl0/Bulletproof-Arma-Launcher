@@ -12,12 +12,19 @@
 
 from __future__ import unicode_literals
 
+import errno
 import libtorrent
 import os
+import stat
 
 from kivy.logger import Logger
 from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack
 from utils.metadatafile import MetadataFile
+from utils import unicode_helpers
+
+
+class AdminRequiredError(Exception):
+    pass
 
 
 def is_complete_quick(mod):
@@ -104,6 +111,40 @@ def get_torrent_info_from_file(filename):
         file_contents = file_handle.read()
 
         return get_torrent_info_from_bytestring(file_contents)
+
+
+def ensure_files_are_read_write(base_directory, files_list, mod_foldername):
+    """Ensures all the files have the write bit set. Useful if some external
+    has set them to read-only.
+    """
+
+    mod_directory = os.path.join(base_directory, mod_foldername)
+    Logger.info('Torrent_utils: Checking read-write file access in directory: {}.'.format(mod_directory))
+    for torrent_file in files_list:
+
+        node_path = os.path.join(base_directory, torrent_file)
+        fs_node_path = unicode_helpers.u_to_fs(node_path)
+
+        try:
+            stat_struct = os.lstat(fs_node_path)
+
+        except OSError as e:
+            if e.errno == errno.ENOENT:  # 2 - File not found
+                continue
+
+        # If the file is read-only to the owner, change it to read-write
+        if not stat_struct.st_mode & stat.S_IWUSR:
+            Logger.info('Integrity: Setting write bit to file: {}'.format(node_path))
+            try:
+                os.chmod(fs_node_path, stat_struct.st_mode | stat.S_IWUSR)
+
+            except OSError as ex:
+                if ex.errno == errno.EACCES:  # 13
+                    error_message = 'Error: file {} is read-only and cannot be changed. Running the launcher as Administrator may help.'.format(node_path)
+                    Logger.error(error_message)
+                    raise AdminRequiredError(error_message)
+                else:
+                    raise
 
 
 def create_add_torrent_flags():
