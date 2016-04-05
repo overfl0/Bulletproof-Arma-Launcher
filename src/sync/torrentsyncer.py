@@ -36,6 +36,10 @@ from utils.unicode_helpers import decode_utf8, encode_utf8
 from time import sleep
 
 
+class PrepareParametersException(Exception):
+    pass
+
+
 class TorrentSyncer(object):
     _update_interval = 1
     session = None
@@ -218,40 +222,43 @@ class TorrentSyncer(object):
                     torrent_info = self.get_torrent_info_from_file(mod.downloadurl[len('file://'):])
 
                 except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
-                    error_message = decode_utf8(ex.args[0])
-                    Logger.error('TorrentSyncer: could not parse torrent metadata: {}'.format(error_message))
-                    raise "TODO: Error handling. Stop processing"
+                    error_message = 'Could not parse local torrent metadata: {}'.format(decode_utf8(ex.args[0]))
+                    Logger.error('TorrentSyncer: {}'.format(error_message))
+                    raise PrepareParametersException(error_message)
+
                 return torrent_info, None  # Don't cache torrent_content
 
             else:  # Torrent from url
                 try:
-                    res = requests_wrapper.download_url(mod.downloadurl, verify=False, timeout=10)
+                    res = requests_wrapper.download_url(None, mod.downloadurl, verify=False, timeout=10)
                 except requests_wrapper.DownloadException as ex:
-                    self.result_queue.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
-                    raise "TODO: Error handling. Stop processing"
+                    error_message = 'Downloading metadata: {}'.format(ex.args[0])
+                    raise PrepareParametersException(error_message)
 
                 if res.status_code != 200:
                     self.result_queue.reject({'details': '{}\n{}\n\n{}'.format(
                         'Torrent file could not be received from the server',
                         'Status Code: ' + unicode(res.status_code), res.text)})
-                    raise "TODO: Error handling. Stop processing"
+                    raise PrepareParametersException('Torrent file could not be received from the server')
 
                 try:
                     torrent_content = res.content
                     torrent_info = torrent_utils.get_torrent_info_from_bytestring(res.content)
 
                 except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
-                    error_message = decode_utf8(ex.args[0])
-                    Logger.error('TorrentSyncer: could not parse torrent metadata: {}'.format(error_message))
-                    raise "TODO: Error handling. Stop processing"
+                    error_message = 'Could not parse torrent metadata: {}'.format(decode_utf8(ex.args[0]))
+                    Logger.error('TorrentSyncer: {}'.format(error_message))
+                    raise PrepareParametersException(error_message)
 
         return torrent_info, torrent_content
 
-    def start_syncing(self, mod, force_sync=False):
-        """Create a torrent handle for a mod to be downloaded.
-        This effectively starts the download.
+    def prepare_libtorrent_params(self, mod, force_sync=False):
+        """Prepare mod for download over bittorrent.
+        This effectively downloads the .torrent file if its contents are not
+        already cached.
+        Also set all the parameters required by libtorrent.
         """
-        Logger.info('Sync: Downloading {} to {}'.format(mod.downloadurl, mod.clientlocation))
+
         # TODO: Add the check: mod name == torrent directory name
 
         # === Metadata handling ===
@@ -297,9 +304,7 @@ class TorrentSyncer(object):
         if resume_data:  # Quick resume torrent from data saved last time the torrent was run
             params['resume_data'] = resume_data
 
-        # Launch the download of the torrent
-        torrent_handle = self.session.add_torrent(params)
-        return torrent_handle
+        mod.libtorrent_params = params
 
     def get_torrents_status(self):
         """Get the status of all torrents with valid handles and cache them in
@@ -416,8 +421,22 @@ class TorrentSyncer(object):
 
         sync_success = True
 
+        self.result_queue.progress({'msg': 'Downloading metadata...',
+                                    'log': [],
+                                    }, 0)
+
         for mod in self.mods:
-            torrent_handle = self.start_syncing(mod, force_sync)
+            try:
+                self.prepare_libtorrent_params(mod, force_sync)
+            except PrepareParametersException as ex:
+                self.result_queue.reject({'msg': ex.args[0]})
+                sync_success = False
+                return sync_success
+
+        for mod in self.mods:
+            # Launch the download of the torrent
+            Logger.info('Sync: Downloading {} to {}'.format(mod.downloadurl, mod.clientlocation))
+            torrent_handle = self.session.add_torrent(mod.libtorrent_params)
             mod.torrent_handle = torrent_handle
 
         self.get_torrents_status()
@@ -431,7 +450,7 @@ class TorrentSyncer(object):
             for mod in self.mods:
                 if not mod.torrent_handle.is_valid():
                     Logger.info('Sync: Torrent {} - torrent handle is invalid. Terminating'.format(mod.foldername))
-                    self.force_termination = True
+                    self.force_termination = True  # reject will be made once all torrents are done
                     continue
 
                 # It is assumed that all torrents below have a valid torrent_handle
@@ -439,7 +458,7 @@ class TorrentSyncer(object):
 
                 if mod.status.error:
                     Logger.info('Sync: Torrent {} in error state. Terminating. Error string: {}'.format(mod.foldername, decode_utf8(mod.status.error)))
-                    self.force_termination = True
+                    self.force_termination = True  # reject will be made once all torrents are done
                     continue  # Torrent is now paused
 
                 # Allow saving fast-resume data only after finishing checking the files of the torrent
