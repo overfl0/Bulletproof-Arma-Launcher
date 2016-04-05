@@ -365,9 +365,13 @@ class ModManager(object):
         return self.para
 
     def sync_all(self, seed):
+        synced_elements = list(self.mods)
+        if self.launcher:
+            synced_elements.append(self.launcher)
+
         self.sync_para = Para(_protected_call, (
             _sync_all,
-            self.mods,
+            synced_elements,
             self.settings.get('max_download_speed'),
             self.settings.get('max_upload_speed'),
             seed
