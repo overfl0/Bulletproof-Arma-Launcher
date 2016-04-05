@@ -428,7 +428,9 @@ class Controller(object):
         self.view.ids.action_button.disable_progress_animation()
 
         self.syncing_failed = True
-        self.try_enable_play_button()
+        # self.try_enable_play_button()
+        Logger.info('InstallScreen: syncing failed. Enabling the install button to allow installing again.')
+        self.view.ids.action_button.enable()
 
         ErrorPopup(details=details, message=message).chain_open()
 
