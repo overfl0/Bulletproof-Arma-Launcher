@@ -299,7 +299,6 @@ class Controller(object):
         self.view.ids.status_label.text = last_line
         self.view.ids.action_button.disable_progress_animation()
 
-        self.try_enable_play_button()
         # Boilerplate end
 
         # Ugly hack until we have an auto-updater
