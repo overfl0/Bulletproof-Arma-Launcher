@@ -14,8 +14,15 @@ from __future__ import unicode_literals
 
 import errno
 import os
+import platform
 import sys
 import unicode_helpers
+
+
+# the folder name where everything gets stored. This will get the last
+# part of the launcher_basedir
+# TODO: move this to configuration
+_LAUNCHER_DIR = 'TacBF Launcher'
 
 
 def is_pyinstaller_bundle():
@@ -107,6 +114,35 @@ def get_resources_path(*relative):
         return get_base_path('resources', *relative)
 
 
+def get_local_user_directory(*relative):
+    """Return the local user directory. Optionally append <relative> at the end.
+    This means AppData\Local on windows.
+    """
+
+    local_app_data = os.environ.get('LOCALAPPDATA')  # C:\Users\user\AppData\Local
+    if local_app_data:
+        local_app_data = unicode_helpers.fs_to_u(local_app_data)
+
+    else:
+        # No LOCALAPPDATA variable? Try to build it yourself based on the user home
+        home = os.path.expanduser('~')
+
+        if platform.system() == 'Linux':
+            local_app_data = os.path.join(home, '.local', 'share')
+        else:
+            local_app_data = os.path.join(home, 'AppData', 'Local')
+
+    directory = os.path.join(local_app_data, *relative)
+    return directory
+
+
+def get_launcher_directory(*relative):
+    """Return the directory for storing launcher related data.
+    Optionally append <relative> at the end.
+    """
+    return get_local_user_directory(_LAUNCHER_DIR, *relative)
+
+
 def is_file_in_virtual_store(path):
     """Return if the file pointed by path is present in the VirtualStore path.
     This is a kind of an ugly hack but we'll see how well this will perform.
@@ -115,13 +151,7 @@ def is_file_in_virtual_store(path):
     there. If yes, then the file has been storen to the VirtualStore
     """
     real_path = os.path.realpath(path)
-
-    local_app_data = os.environ.get('LOCALAPPDATA')  # C:\Users\user\AppData\Local
-    if not local_app_data:
-        return False
-    local_app_data = unicode_helpers.fs_to_u(local_app_data)
-
-    virtual_store_base = os.path.join(local_app_data, 'VirtualStore')
+    virtual_store_base = get_local_user_directory('VirtualStore')
 
     # Check for the remaining environmental variables
     # I *really* hope these are the only ones needed! :-|

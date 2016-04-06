@@ -37,7 +37,7 @@ def is_complete_quick(mod):
     4. Check if files have the right size and modification time (very quick)
     5. Check if there are no superfluous files in the directory (very quick)"""
 
-    metadata_file = MetadataFile(os.path.join(mod.clientlocation, mod.foldername))
+    metadata_file = MetadataFile(mod.foldername)
 
     # (1) Check if metadata can be opened
     try:

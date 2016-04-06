@@ -17,22 +17,26 @@ import errno
 import json
 import os
 
+from utils.paths import get_launcher_directory
+
 
 class MetadataFile(object):
     """File that contains metadata about mods and is located in the root directory of each mod"""
     """TODO: Maybe screw the whole json part and just bencode everything?"""
-    file_name = '.tacbf_meta'
+    file_extension = '.tacbf_meta'
+    file_directory = 'mods_metadata'
     _encoding = 'utf-8'
 
-    def __init__(self, dir_path):
+    def __init__(self, mod_name):
         super(MetadataFile, self).__init__()
 
-        self.dir_path = os.path.realpath(dir_path)
+        file_name = '{}{}'.format(mod_name, self.file_extension)
+        self.file_path = os.path.join(get_launcher_directory(), self.file_directory, file_name)
         self.data = {}
 
     def get_file_name(self):
         """Returns the full path to the metadata file"""
-        return os.path.join(self.dir_path, self.file_name)
+        return self.file_path
 
     def read_data(self, ignore_open_errors=False):
         """Open the file and read its data to an internal variable

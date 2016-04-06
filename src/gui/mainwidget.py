@@ -12,6 +12,8 @@
 
 from __future__ import unicode_literals
 
+import kivy.app
+import os
 import textwrap
 import time
 
@@ -55,6 +57,7 @@ class Controller(object):
     def __init__(self, widget):
         super(Controller, self).__init__()
         self.view = widget
+        self.settings = kivy.app.App.get_running_app().settings
 
         # this effectively calls on_next_frame, when the view is ready
         Clock.schedule_once(self.on_next_frame, 0)
@@ -65,33 +68,37 @@ class Controller(object):
         # self.get_status_image().set_image('attention')
 
     def on_next_frame(self, dt):
-        # Only show the notification in alpha branch
-        alpha_text = textwrap.dedent('''
-            Welcome to the Tactical Battlefield Mod launcher!
+        # TODO: Remove this in several months when this will not be relevant anymore
+        old_dir = self.settings.launcher_default_basedir_old()
 
-            This is an early alpha version of the launcher and as such it WILL contain bugs!
-            Although we have made every effort possible to ensure safe use of the launcher,
-            we cannot guarantee it.
+        directory_text = textwrap.dedent('''
+            *********************************************************
+            * IMPORTANT!
+            *********************************************************
 
-            Users of this launcher in alpha version are expected to be technically
-            knowledgeable and capable of fixing their Arma 3 installation should
-            something go awry.
-            If you do not meet the above criterion, stop using this launcher now!
+            [color=FF0000]All settings have been reset for version 1.0![/color]
 
-            Don't forget to report bugs at:
-            [ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/color][/ref]
+            Go to OPTIONS and verify whether everything is in order, especially
+            the "Mods directory"!
 
+            *********************************************************
+            * IMPORTANT!
+            *********************************************************
 
-                                                                                           -- The TacBF launcher team
-            ''')
+            Please remove [ref={}][color=3572b0]the old directory (click here!)[/color][/ref] manually.
+            It is not deleted automatically for safety reasons
 
-        alpha_title = 'Tactical Battlefield Mod launcher (Alpha)'
-        alpha_box = MessageBox(text=alpha_text, title=alpha_title, markup=True)
+            This is a one time message and will not appear again.
+            '''.format(old_dir))
 
-        # Allow developers to silence the alpha popup
-        if not devmode.get_no_alpha_popup():
-            Logger.info('MainWidget: opening alpha popup')
-            alpha_box.chain_open()
+        directory_title = 'IMPORTANT! Action needed!'
+        directory_box = MessageBox(text=directory_text, title=directory_title, markup=True)
+
+        if os.path.exists(old_dir):
+            notice_already = self.settings.get('basedir_change_notice')
+            if not notice_already:
+                self.settings.set('basedir_change_notice', 1)
+                directory_box.chain_open()
 
     def get_status_image(self):
         """retrieve the status image from the tree"""
