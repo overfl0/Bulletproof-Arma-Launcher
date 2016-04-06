@@ -44,7 +44,7 @@ class StatusImage(BoxLayout):
         self.loaded_image_name = None
         self.orientation = 'vertical'
         self.add_widget(Widget())  # Filler to force the image to go to the bottom
-                                    # There is probably a better way of doing this...
+        self.add_widget(Widget())  # There is probably a better way of doing this...
 
     def set_image(self, key):
         """
