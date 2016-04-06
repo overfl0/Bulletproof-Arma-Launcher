@@ -135,6 +135,9 @@ class Controller(object):
 
         # Check if we're ready to run the game - everything has been properly synced
         # TODO: use a state machine or anything else than comparing strings :(
+
+        # Note to self: can't use action_button_action because this may be in "checking" state... or whatever.
+        # TODO: refactor all the action_button.text and action_button_action accesses.
         if self.view.ids.action_button.text != Controller.play:
             return
 

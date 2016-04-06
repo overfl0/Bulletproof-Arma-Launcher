@@ -27,7 +27,6 @@ from kivy.logger import Logger
 from third_party.arma import Arma
 from utils.context import ignore_exceptions
 from utils.hashes import sha1
-from utils.metadatafile import MetadataFile
 from third_party import teamspeak
 
 
