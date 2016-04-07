@@ -34,7 +34,7 @@ quotes (") with single quotes (').
 
 # Build
 
-To create a tblauncher.exe executable do the following:
+To create a TB_Launcher.exe executable do the following:
 
 ##### Automatically
 Run ```kivy.bat```, go to the project root directory and then execute ```build.bat```.
@@ -44,12 +44,12 @@ The script will first run tests and then create the executable if the tests pass
 From the project root
 execute:
 
-`python <path/to/kivy/installation>\Python27\Scripts\pyinstaller-script.py tblauncher.spec`
+`python <path/to/kivy/installation>\Python27\Scripts\pyinstaller-script.py launcher.spec`
 
 If necessary execute the following command to
 rebuild the spec file. A newly spec file will not work, see kivy packaging wiki:
 
-`pyinstaller --name tblauncher --onefile src\launcher.py`
+`pyinstaller --name TB_Launcher --onefile src\launcher.py`
 
 However, this should normally not be required as the spec file should already be present.
 

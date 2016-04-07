@@ -9,5 +9,5 @@ tags
 DEV
 build.sha1
 pyinstaller.bat
-tblauncher.exe
+TB_Launcher.exe
 devmode.conf

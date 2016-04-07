@@ -1,8 +1,8 @@
 @echo #########################################################################
 @echo Deleting required files
 @echo #########################################################################
-del tblauncher.exe c:\vagrant\tblauncher 2> NUL
-for /d %%G in ("build\tblauncher\setuptools*.egg") do rmdir /s /q "%%~G"
+del TB_Launcher.exe c:\vagrant\TB_Launcher.exe 2> NUL
+for /d %%G in ("build\TB_Launcher\setuptools*.egg") do rmdir /s /q "%%~G"
 
 @rem uncomment below to skip tests
 @rem goto end_of_tests
@@ -28,6 +28,6 @@ nosetests tests -a "integration" --nocapture
 @echo #########################################################################
 :end_of_tests
 
-python c:\Kivy-1.8.0-py2.7-win32\Python27\Scripts\pyinstaller-script.py tblauncher.spec
-copy dist\tblauncher.exe c:\vagrant
-copy dist\tblauncher.exe .
+python c:\Kivy-1.8.0-py2.7-win32\Python27\Scripts\pyinstaller-script.py launcher.spec
+copy dist\TB_Launcher.exe c:\vagrant
+copy dist\TB_Launcher.exe .

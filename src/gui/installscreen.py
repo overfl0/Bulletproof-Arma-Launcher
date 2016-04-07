@@ -189,7 +189,7 @@ class Controller(object):
         if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
                 u_from=self.version, u_to=self.launcher.version):
 
-            launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
+            launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'TB_Launcher.exe')
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
@@ -276,7 +276,7 @@ class Controller(object):
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
         # TODO: Parametrize name?
-        executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'tblauncher.exe')
+        executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'TB_Launcher.exe')
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 
@@ -321,7 +321,7 @@ class Controller(object):
 
                 Get it here:
 
-                [ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe[/color][/ref]
+                [ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/TB_Launcher.exe][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/TB_Launcher.exe[/color][/ref]
                 ''')
             MessageBox(message, title='Get the new version of the launcher!', markup=True).chain_open()
             return

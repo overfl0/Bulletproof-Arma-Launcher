@@ -7,7 +7,7 @@ https://bitbucket.org/tacbf_launcher/tacbf_launcher
 
 The wrapped exe can be downloaded here:
 https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads
-Direct link: https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/tblauncher.exe
+Direct link: https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/TB_Launcher.exe
 
 Unfortunately, the launcher is regarded as a threat by your antivirus (<Name Here>), as can be seen on this Virustotal report:
 <Report Link Here>
