@@ -26,7 +26,6 @@ from kivy.logger import Logger
 import textwrap
 import torrent_utils
 
-from config.version import version
 from distutils.version import LooseVersion
 from third_party import teamspeak
 from utils.devmode import devmode
@@ -82,9 +81,10 @@ def _get_mod_descriptions(para):
             para.reject({'details': '{}\n\n{}'.format(
                 'Mods descriptions could not be parsed', stacktrace)})
 
-        # Temporary! Ensure alpha version is correct
-        required_version = data.get('alpha')
-        if not required_version or LooseVersion(version) < LooseVersion(required_version):
+        # Protection in case autoupdate is messed up and we have to force a manual update
+        protocol = '1.0'
+        required_protocol = data.get('protocol')
+        if not required_protocol or LooseVersion(protocol) < LooseVersion(required_protocol):
             error_message = 'This launcher is out of date! You won\'t be able to download mods until you update to the latest version!'
             Logger.error(error_message)
             para.reject({'msg': error_message})
