@@ -18,6 +18,7 @@ if __name__ == "__main__":
     site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
 
+import hashlib
 import libtorrent
 import os
 import shutil
@@ -327,7 +328,66 @@ class TorrentSyncer(object):
             print 'Superfluous files in mod directory. Marking as not complete'
             return False
 
+        print self.is_complete_full(torrent_info)
+
+        #import IPython
+        #IPython.embed()
+
         return True
+
+    def is_complete_full(self, torrent_info):
+        """
+        The files are concatenated in the order they are given in torrent_info.
+        Then, hashes are computed for each <piece_size> bytes. If they all match
+        it means the torrent is completed.
+        """
+        # Generate a reversed list. It is reversed to allow a simple pop().
+        rfiles = list(reversed(torrent_info.files()))
+        file_desc = None
+        # TODO: Check if self.mod.foldername really has to be skipped! Check if this is safe
+        # TODO: check with file WITHOUT resume data
+        # TODO: Check with unicode filenames because this is really old code!
+        try:
+            file_struct = rfiles.pop()
+            #print self.mod.clientlocation
+            #print self.mod.foldername
+            #print file_struct.path
+            file_path = os.path.join(self.mod.clientlocation, file_struct.path)
+            file_desc = file(file_path, "rb")
+
+            # Check all the pieces
+            for i in range(torrent_info.num_pieces()):
+                computed_hash = hashlib.sha1()
+                piece_remaining_bytes = torrent_info.piece_size(i)
+
+                # Read bytes from concatenated files
+                while piece_remaining_bytes > 0:
+                    data = file_desc.read(piece_remaining_bytes)
+                    piece_remaining_bytes -= len(data)
+
+                    computed_hash.update(data)
+
+                    if piece_remaining_bytes > 0:
+                        # Got less bytes than expected - file has ended. Grab a new one.
+                        file_desc.close()
+                        file_struct = rfiles.pop()
+                        file_path = os.path.join(self.mod.clientlocation, file_struct.path)
+                        file_desc = file(file_path, "rb")
+
+                print "%r =?= %r" % (computed_hash.digest(), torrent_info.hash_for_piece(i))
+                if computed_hash.digest() != torrent_info.hash_for_piece(i):
+
+                    file_desc.close()
+                    return False
+
+            return True
+
+#        except:
+#            return False
+
+        finally:
+            if file_desc:
+                file_desc.close()
     """
     def create_flags(self):
         f = libtorrent.add_torrent_params_flags_t
@@ -506,6 +566,7 @@ if __name__ == '__main__':
     is_complete = ts.is_complete_quick()
     print "Is complete:", is_complete
 
-    if not is_complete:
+    if not is_complete or 1:
+        #TODO: Why doesn't it sync?!?
         print "Syncing..."
         ts.sync()
