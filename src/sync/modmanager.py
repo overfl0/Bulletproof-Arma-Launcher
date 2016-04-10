@@ -180,8 +180,8 @@ def _tfr_wait_for_user_action(message_queue):
     run_tfr_install_message = textwrap.dedent("""
         Task Force Arrowhead Radio has been downloaded or updated.
 
-        In order to install the Task Force Radio TeamSpeak plugin you need to run the
-        plugin installer as Administrator.
+        The launcher will next prompt you and ask you for permission to install the
+        plugin as Administrator.
         """)
 
     message_queue.progress({'msg': 'Installing TFR TeamSpeak plugin...',
