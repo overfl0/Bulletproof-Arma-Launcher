@@ -36,6 +36,7 @@ def encode_utf8(message):
         error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
         raise UnicodeError(error_message)
 
+
 def u_to_fs(unicode_string):
     """Convert an unicode string to the file system encoding"""
     return unicode_string.encode(sys.getfilesystemencoding())

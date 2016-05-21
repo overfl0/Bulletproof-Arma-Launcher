@@ -18,6 +18,7 @@ import utils.system_processes
 
 from kivy.logger import Logger
 from third_party import SoftwareNotInstalled
+from utils import unicode_helpers
 from utils.registry import Registry
 
 
@@ -64,4 +65,4 @@ def run_faceTrackNoIR():
         return
 
     Logger.info('FaceTrackNoIR: Running file: {}'.format(faceTrackNoIR_path))
-    subprocess.Popen(faceTrackNoIR_path)
+    subprocess.Popen(unicode_helpers.u_to_fs_list([faceTrackNoIR_path]))
