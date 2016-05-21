@@ -2,7 +2,7 @@
 @echo Deleting required files
 @echo #########################################################################
 del TB_Launcher.exe c:\vagrant\TB_Launcher.exe 2> NUL
-for /d %%G in ("build\TB_Launcher\setuptools*.egg") do rmdir /s /q "%%~G"
+for /d %%G in ("build\launcher\setuptools*.egg") do rmdir /s /q "%%~G"
 
 @rem uncomment below to skip tests
 @rem goto end_of_tests
