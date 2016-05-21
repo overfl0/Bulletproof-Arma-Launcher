@@ -12,6 +12,7 @@
 
 from __future__ import unicode_literals
 
+import headtracking
 import kivy.app
 import os
 import teamspeak
@@ -197,6 +198,8 @@ def run_the_game(mods):
     # teamspeak.run_and_connect('31.210.129.135:9989')
     # teamspeak.run_and_connect('ts3.tacbf.com')
     teamspeak.run_and_connect('tacbf.ts3dns.com')
+
+    headtracking.run_faceTrackNoIR()
 
     Logger.info('Third party: Running the game')
 
