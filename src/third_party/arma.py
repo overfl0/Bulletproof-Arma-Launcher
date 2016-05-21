@@ -81,16 +81,14 @@ class Arma(object):
         return path
 
     @staticmethod
-    def get_user_path():
+    def get_user_directory():
 
-        path = None
         try:
             user_docs = Registry.ReadValueCurrentUser(Arma._user_document_path, 'Personal')
-            path = os.path.join(user_docs, 'Arma 3')
         except Registry.Error:
             raise ArmaNotInstalled()
 
-        return path
+        return user_docs
 
     @staticmethod
     def get_executable_path(battleye=True):

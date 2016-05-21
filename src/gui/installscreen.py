@@ -83,6 +83,10 @@ class Controller(object):
         self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
 
+        # Uncomment the code below to enable troubleshooting mode
+        # Clock.schedule_interval(third_party.helpers.check_requirements_troubleshooting, 0)
+        # return
+
         # Don't run logic if required third party programs are not installed
         if third_party.helpers.check_requirements(verbose=False):
             # download mod description

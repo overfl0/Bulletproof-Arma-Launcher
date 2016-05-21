@@ -29,6 +29,82 @@ def cancel_dismiss(instance):
     return True
 
 
+def check_requirements_troubleshooting(dummy_var):
+    """Show a modal popup with all the checked registry values for debugging purposes."""
+
+    from utils.context import ignore_exceptions
+    """Run all the registry checks. If any of them fails, raises TeamspeakNotInstalled()."""
+
+    executable_path = addon_installer_path = install_location = config_location = \
+        steam_path = arma_path = user_path = \
+        '[color=FF0000]*** Cannot get data! ***[/color]'
+
+    with ignore_exceptions(Exception):
+        executable_path = teamspeak.get_executable_path()
+
+    with ignore_exceptions(Exception):
+        addon_installer_path = teamspeak.get_addon_installer_path()
+
+    with ignore_exceptions(Exception):
+        install_location = teamspeak.get_install_location()
+
+    with ignore_exceptions(Exception):
+        config_location = teamspeak.get_config_location()
+
+    with ignore_exceptions(Exception):
+        arma_path = Arma.get_installation_path()
+
+    with ignore_exceptions(Exception):
+        steam_path = Arma.get_steam_exe_path()
+
+    with ignore_exceptions(Exception):
+        user_path = Arma.get_user_directory()
+
+    for _ in xrange(10):
+        Logger.info('')
+
+    message = textwrap.dedent('''
+        All the fields below should point to a location on your drive.
+        If one of those fields says "Cannot get data", it means a program is missing and
+        must be installed.
+        If ALL fields report "Cannot get data" it means something (an antivirus?) is
+        actively blocking access to the registry and you must add an exception in this
+        software for the launcher.
+
+        {}
+
+        TS executable path: {}
+        TS addon installer path: {}
+        TS install location: {}
+        TS config flag: {}
+
+        Arma location: {}
+
+        Steam location: {}
+
+        Sanity check: the value below should ALWAYS be available.
+        User directory: {}
+
+        {}
+        '''.format('*' * 70,
+                   executable_path,
+                   addon_installer_path,
+                   install_location,
+                   config_location,
+                   arma_path,
+                   steam_path,
+                   user_path,
+                   '*' * 70
+                   ))
+    Logger.info(message)
+
+    box = MessageBox(message, title='Launcher registry troubleshooting.', markup=True,
+                     on_dismiss=cancel_dismiss, hide_button=True)
+    box.open()
+
+    return False
+
+
 def check_requirements(verbose=True):
     """Check if all the required third party programs are installed in the system.
     Return True if the check passed.
