@@ -293,6 +293,8 @@ def _tfr_post_download_hook(message_queue, mod):
         message_queue.reject({'details': 'Para was asked to terminate by the caller'})
         return False
 
+    message_queue.progress({'msg': 'Waiting for permission to install the plugin as Administrator...'}, 1.0)
+
     install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
     if not install_instance:
         _show_message_box(message_queue, title='Run TFR TeamSpeak plugin installer!', message=run_admin_message)
