@@ -24,6 +24,11 @@ from utils import unicode_helpers
 from view.messagebox import MessageBox
 
 
+def cancel_dismiss(instance):
+    """Returning true will stop the dispatcher and prevent closing the window."""
+    return True
+
+
 def check_requirements(verbose=True):
     """Check if all the required third party programs are installed in the system.
     Return True if the check passed.
@@ -44,12 +49,15 @@ def check_requirements(verbose=True):
                 Install Teamspeak and restart the launcher.
 
 
-                Note:
-                Some antiviruses may block access to Windows registry resulting in this message.
+
+                [i]Note[/i]:
+                Some antiviruses may block access to Windows registry
+                resulting in this message.
                 Make sure you grant access to the registry for the launcher.
                 ''')
-            box = MessageBox(message, title='Teamspeak required!', markup=True)
-            box.chain_open()
+            box = MessageBox(message, title='Teamspeak required!', markup=True,
+                             on_dismiss=cancel_dismiss, hide_button=True)
+            box.open()
 
         return False
 
@@ -63,12 +71,16 @@ def check_requirements(verbose=True):
                 Having Arma 3 is required in order to play Tactical Battlefield.
 
 
-                Note:
-                Some antiviruses may block access to Windows registry resulting in this message.
+
+                [i]Note[/i]:
+                Some antiviruses may block access to Windows registry
+                resulting in this message.
                 Make sure you grant access to the registry for the launcher.
                 ''')
-            box = MessageBox(message, title='Arma 3 required!', markup=True)
-            box.chain_open()
+
+            box = MessageBox(message, title='Arma 3 required!', markup=True,
+                             on_dismiss=cancel_dismiss, hide_button=True)
+            box.open()
 
         return False
 
@@ -85,12 +97,15 @@ def check_requirements(verbose=True):
                 Install Steam and restart the launcher.
 
 
-                Note:
-                Some antiviruses may block access to Windows registry resulting in this message.
+
+                [i]Note[/i]:
+                Some antiviruses may block access to Windows registry
+                resulting in this message.
                 Make sure you grant access to the registry for the launcher.
                 ''')
-            box = MessageBox(message, title='Steam required!', markup=True)
-            box.chain_open()
+            box = MessageBox(message, title='Steam required!', markup=True,
+                             on_dismiss=cancel_dismiss, hide_button=True)
+            box.open()
 
         return False
 
