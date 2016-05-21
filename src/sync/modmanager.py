@@ -165,7 +165,8 @@ def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_desc
 
 
 def _tfr_wait_for_user_action(message_queue):
-    """ Wait until the user clicks OK. Ugly workaround but it works ;)
+    """Wait until the user clicks OK and they close any running TeamSpeak instance.
+    Ugly workaround but it works ;)
     During this time, any other messages save for 'terminate' are DISCARDED!
     As a workaround, return the message received (has to be then checked if
     equal to 'terminate')
@@ -182,6 +183,8 @@ def _tfr_wait_for_user_action(message_queue):
 
         The launcher will next prompt you and ask you for permission to install the
         plugin as Administrator.
+
+        Close TeamSpeak if it is running to continue with the installation.
         """)
 
     message_queue.progress({'msg': 'Installing TFR TeamSpeak plugin...',
@@ -194,10 +197,20 @@ def _tfr_wait_for_user_action(message_queue):
                             }, 1.0)
 
     Logger.info('TFR installer: Waiting for the user to acknowledge TFR installation.')
+    user_acknowledged = False
     while True:
 
         message = message_queue.receive_message()
         if not message:
+
+            if user_acknowledged:
+                if teamspeak.is_teamspeak_running():
+                    message = 'Waiting for TeamSpeak to be closed. Close TeamSpeak to continue the installation!'
+                    Logger.info('TFR installer: {}'.format(message))
+                    message_queue.progress({'msg': message}, 1.0)
+                else:
+                    break  # We can continue the installation
+
             time.sleep(0.5)
             continue
 
@@ -205,11 +218,13 @@ def _tfr_wait_for_user_action(message_queue):
 
         if command == 'tfr_install_as_admin':
             Logger.info('TFR installer: Received continue command. Installing TFR plugin...')
-            return command
+            user_acknowledged = True
 
         if command == 'terminate':
             Logger.info('TFR installer: Caller wants termination')
             return command
+
+    return 'tfr_install_as_admin'
 
 
 def _tfr_post_download_hook(message_queue, mod):
