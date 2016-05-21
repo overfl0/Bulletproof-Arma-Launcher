@@ -133,13 +133,30 @@ def check_installed():
     Logger.debug('TS: config location: {}'.format(config_location))
 
 
+def is_teamspeak_running():
+    """Check if a TeamSpeak process is running."""
+
+    ts3_path = get_executable_path()
+    # May result in a false negative if you don't have the permission to access
+    # the process
+    if system_processes.file_running(ts3_path):
+        return True
+
+    if system_processes.program_running('ts3client_win32.exe'):
+        return True
+
+    if system_processes.program_running('ts3client_win64.exe'):
+        return True
+
+    return False
+
+
 def run_and_connect(url):
     """Run the teamspeak client and connect to the given server."""
 
     full_url = 'ts3server://{}'.format(url)
 
-    ts3_path = get_executable_path()
-    if system_processes.file_running(ts3_path):
+    if is_teamspeak_running():
         Logger.info('TS: Teamspeak process found running. Assuming it is already connected to the correct server.')
         return
 

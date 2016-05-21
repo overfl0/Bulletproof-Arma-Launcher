@@ -39,6 +39,13 @@ def file_running(path):
     """Return if any process running on the system matches the file path.
     This makes sure the process is running from the very same file instead of
     a file with merely the same name as the one requested.
+
+    ATTENTION: More often than not you will get a Permission Denied error which
+    will prevent the code to retrieve the full path of the process!
+    Thus the code will then think such a process is not running, which is false!
+
+    Use program_running() unless you are 100% sure you will have access to the
+    process you want to check.
     """
 
     real_path_casefold = unicode_helpers.casefold(os.path.realpath(path))
