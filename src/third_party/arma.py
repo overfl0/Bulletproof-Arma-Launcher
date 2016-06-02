@@ -47,6 +47,7 @@ class Arma(object):
 
     # Registry paths
     _arma_registry_path = r"software\bohemia interactive\arma 3"
+    _arma_registry_path_alternate = r"software\Bohemia Interactive Studio\arma 3"
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
     _steam_registry_path = r"Software\Valve\Steam"
@@ -76,7 +77,11 @@ class Arma(object):
             path = Registry.ReadValueUserAndMachine(Arma._arma_registry_path, 'main', check_both_architectures=True)
 
         except Registry.Error:
-            raise ArmaNotInstalled()
+            try:
+                path = Registry.ReadValueUserAndMachine(Arma._arma_registry_path_alternate, 'main', check_both_architectures=True)
+
+            except Registry.Error:
+                raise ArmaNotInstalled()
 
         return path
 
