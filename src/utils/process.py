@@ -272,13 +272,15 @@ class Para(object):
             self.current_child_process.join(0.1)
             if not self.current_child_process.is_alive():
                 self._call_reject_handler(self.lastprogress)
-                return
+
+            return
 
         if self.state == 'closingforresolve':
             self.current_child_process.join(0.1)
             if not self.current_child_process.is_alive():
                 self._call_resolve_handler(self.lastprogress)
-                return
+
+            return
 
         if con.poll():
             progress = con.recv()
