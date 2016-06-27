@@ -75,12 +75,20 @@ class Controller(object):
     def _fbrowser_success(self, instance):
         if len(instance.selection) > 0:
             path = instance.selection[0]
+
         else:
-            Logger.error('PrefScreen: no selection made')
-            return False
+            # No selection made. Assume the user selected the directory he was
+            # already in, so this should work the same as if he hit cancel
+            Logger.error('PrefScreen: no selection made. Doing nothing')
+
+            if self.file_browser_popup:
+                self.file_browser_popup.dismiss()
+
+            return
 
         if not os.path.isdir(path):
             Logger.error('PrefScreen: path is not a dir: ' + path)
+            MessageBox('The selected path does not point to a directory'.format(path)).open()
             return False
 
         if not is_dir_writable(path):
