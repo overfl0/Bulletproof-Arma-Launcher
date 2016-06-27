@@ -23,6 +23,9 @@ from kivy.logger import Logger
 from kivy.clock import Clock
 from view.filebrowser import FileBrowser
 
+# TODO: Port the following patches:
+# https://github.com/kivy/kivy/commit/b1b5da3f0dd38848302703d7c2347e22682c0649
+# https://github.com/kivy/kivy/commit/e75575c2a58a71e9481628045111ddad94ed19e8
 
 class FileChooser(Popup):
     """docstring for FileChooser"""
