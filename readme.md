@@ -1,6 +1,6 @@
 # Install
 
-Manually installing the environment is now quite tricky as it involves, among other things, getting the right version of Kivy (1.8) and patching it with our own custom patches.
+Manually installing the environment is now quite tricky as it involves, among other things, getting the right version of Kivy (1.9.1) and patching it with our own custom patches ([located in the Patches directory](https://bitbucket.org/tacbf_launcher/build_environment/src/master/Patches/) of the `build_environment` repository).
 
 We're trying to make it as easy as possible to start working on the launcher and we have created [a Vagrant configuration file that will create a virtual machine](https://bitbucket.org/tacbf_launcher/build_environment) containing everything that is needed to code right away.
 
@@ -11,8 +11,7 @@ Until issues with Kivy are fixed and the right patches are included in the Kivy 
 Open LiClipse, select the default workspace and run ```launcher.py```
 
 ##### Manually
-Run ```kivy.bat``` inside the Kivy installation and, using the console that popped up, go to the src directory of the launcher and execute
-`python launcher.py`
+Double click `src\launcher.py` or open a command prompt and execute `python src\launcher.py`
 
 ##### Fake Steam, Arma, TeamSpeak installation
 To fake Steam, Arma, TeamSpeak installation and set several other internal variables, copy ```devmode_sample.conf``` to ```devmode.conf``` and put it in the same directory as you're running the launcher from. Then, uncomment and/or modify its contents accordingly.
@@ -37,7 +36,7 @@ quotes (") with single quotes (').
 To create a TB_Launcher.exe executable do the following:
 
 ##### Automatically
-Run ```kivy.bat```, go to the project root directory and then execute ```build.bat```.
+Execute the file ```build.bat```.
 The script will first run tests and then create the executable if the tests pass.
 
 ##### Manually
