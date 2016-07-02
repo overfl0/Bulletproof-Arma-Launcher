@@ -23,6 +23,9 @@ from kivy.logger import Logger
 from kivy.clock import Clock
 from view.filebrowser import FileBrowser
 
+# Until Kivy 1.9.2, you NEED to have the following patches applied;
+# https://github.com/kivy/kivy/commit/b1b5da3f0dd38848302703d7c2347e22682c0649
+# https://github.com/kivy/kivy/commit/e75575c2a58a71e9481628045111ddad94ed19e8
 
 class FileChooser(Popup):
     """docstring for FileChooser"""
@@ -38,9 +41,6 @@ class FileChooser(Popup):
                                           size_hint=(None, None),
                                           size=(900, 600))
 
-        # define event for which gets fired if the user hits okay
-        self.register_event_type(b'on_ok')
-
         Clock.schedule_once(self._on_next_frame, 0)
 
     def _on_next_frame(self, dt):
@@ -49,33 +49,11 @@ class FileChooser(Popup):
 
         return False
 
-    def on_ok(*args):  # Is this function even used anywhere?
-        Logger.info('FileChooser: dispatched: ' + unicode(args))
-        pass
-
     def _fbrowser_canceled(self, instance):
         self.dismiss()
 
     def _fbrowser_success(self, instance):
         pass
 
-    def on_file_chooser_selection(self, fc, value):
-        text = ''
-        if len(value) > 0:
-            text = value[0]
-        self.textinput.text = text
-
     def file_filter(self, folder, path):
-        # we have to correspond to kivys very weird behaivor of evaluating
-        # filters. Check in kivy is: if list(<returnvalue of this function>)
-        if os.path.isdir(path):
-            return [True]
-        else:
-            return []
-
-    def on_ok_button_release(self, btn):
-        self.dispatch(b'on_ok', self.textinput.text)
-        self.dismiss()
-
-    def on_cancel_button_release(self, btn):
-        self.dismiss()
+        return os.path.isdir(path)

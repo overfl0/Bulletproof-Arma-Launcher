@@ -47,11 +47,14 @@ try:
         # sys.argv = sys.argv[0:1]
 
         # configure kivy
+        from kivy import resources
         from kivy.config import Config
-        from utils.paths import get_resources_path
+        from utils.paths import get_resources_path, get_source_path
         from utils.devmode import devmode
 
         default_log_level = devmode.get_log_level('info')
+
+        resources.resource_add_path(get_source_path())
 
         Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
         Config.set('kivy', 'log_level', default_log_level)
@@ -61,7 +64,7 @@ try:
             Config.set('graphics', 'resizable', 0)
             Config.set('graphics', 'width', 1000)
             Config.set('graphics', 'height', 666)
-            Config.set('graphics', 'borderless', 1)
+            Config.set('graphics', 'borderless', 0)
         else:
             Config.set('graphics', 'resizable', 0)
             Config.set('graphics', 'width', 400)

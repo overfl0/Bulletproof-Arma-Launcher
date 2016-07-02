@@ -28,6 +28,6 @@ nosetests tests -a "integration" --nocapture
 @echo #########################################################################
 :end_of_tests
 
-python c:\Kivy-1.8.0-py2.7-win32\Python27\Scripts\pyinstaller-script.py launcher.spec
+python c:\Python27\Scripts\pyinstaller-script.py launcher.spec
 copy dist\TB_Launcher.exe c:\vagrant
 copy dist\TB_Launcher.exe .

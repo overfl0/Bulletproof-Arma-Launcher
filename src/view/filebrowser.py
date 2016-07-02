@@ -156,7 +156,7 @@ Builder.load_string('''
                 size_hint_y: None
                 height: '22dp'
                 text_size: self.size
-                padding_x: '-10dp'
+                padding_x: '10dp'
                 text: abspath(root.path)
                 valign: 'middle'
             TabbedPanel:
@@ -174,7 +174,7 @@ Builder.load_string('''
                         dirselect: root.dirselect
                         rootpath: root.rootpath
                         on_submit: root.dispatch('on_submit')
-                TabbedPanelHeader:
+                TabbedPanelItem:
                     text: 'Icon View'
                     content: icon_view
                     FileBrowserIconView:
@@ -211,7 +211,7 @@ Builder.load_string('''
             on_text_validate:
                 root.filters = self.text.split(',') if self.text else []
             multiline: False
-            text: ','.join(root.filters)
+            text: ','.join([filt for filt in root.filters if isinstance(filt, str)])
         Button:
             id: cancel_button
             size_hint_x: None
