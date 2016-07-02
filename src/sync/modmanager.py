@@ -64,7 +64,7 @@ def _get_mod_descriptions(para):
     url = 'http://{}{}'.format(domain, metadata_path)
 
     try:
-        res = download_url(domain, url, verify=False, timeout=10)
+        res = download_url(domain, url, timeout=10)
     except DownloadException as ex:
         para.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
 
