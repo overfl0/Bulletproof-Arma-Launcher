@@ -71,25 +71,34 @@ class ConnectionWrapper(object):
         self.action_name = action_name
         self.lock = lock
         self.con = con
+        self.broken_pipe = False
 
     # the following methods have to be overwritten for the queue to work
     # under windows, since pickling is needed. Check link:
     # http://stackoverflow.com/questions/18906575/how-to-inherit-from-a-multiprocessing-queue
     def __getstate__(self):
-        return self.action_name, self.lock, self.con
+        return self.action_name, self.lock, self.con, self.broken_pipe
 
     def __setstate__(self, state):
-        self.action_name, self.lock, self.con = state
+        self.action_name, self.lock, self.con, self.broken_pipe = state
+
+    def _send_message(self, msg):
+        '''Send message through the pipe and note the pipe is broken on error.'''
+        try:
+            self.con.send(msg)
+        except (EOFError, IOError):
+            Logger.error('ConnectionWrapper: _send_message: Broken pipe!')
+            self.broken_pipe = True
 
     def reject(self, data=None):
         msg = {'action': self.action_name, 'status': 'reject',
                'data': data}
-        self.con.send(msg)
+        self._send_message(msg)
 
     def resolve(self, data=None):
         msg = {'action': self.action_name, 'status': 'resolve',
                'data': data}
-        self.con.send(msg)
+        self._send_message(msg)
 
     def progress(self, data=None, percentage=0.0):
         msg = {'action': self.action_name, 'status': 'progress',
@@ -102,19 +111,26 @@ class ConnectionWrapper(object):
         #
         #     if top['status'] != 'progress':
         #         self.put(top)
-        self.con.send(msg)
+        self._send_message(msg)
 
     def receive_message(self):
         """Get the message passed to the process.
+        Note the pipe is broken on error.
         Return a dictionary if a message was received
         Return None otherwise.
         """
 
-        if not self.con.poll():
-            return None
+        try:
+            if not self.con.poll():
+                return None
 
-        message = self.con.recv()
-        return message
+            message = self.con.recv()
+            return message
+
+        except (EOFError, IOError):
+            Logger.error('ConnectionWrapper: receive_message: Broken pipe!')
+            self.broken_pipe = True
+            return None
 
 
 class Para(object):
