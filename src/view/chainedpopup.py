@@ -22,7 +22,7 @@ class ChainedPopup(Popup):
     They can be chained by calling the chain_open() method instead of open().
 
     You should NOT mix chain_open() calls with open() calls.
-    Nothing will explode but the latest of these two windows will, end on top.
+    Nothing will explode but the latest of these two windows will end on top.
     """
 
     def __init__(self, *args, **kwargs):

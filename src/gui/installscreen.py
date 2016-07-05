@@ -34,6 +34,7 @@ from utils import browser
 from utils.primitive_git import get_git_sha1_auto
 from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
+from view.gameselectionbox import GameSelectionBox
 from view.messagebox import MessageBox
 
 
@@ -274,8 +275,18 @@ class Controller(object):
             Logger.error('Button more_action pressed when it should not be accessible!')
             return
 
-        Logger.info('Test')
-        pass
+        Logger.info('Opening GameSelectionBox')
+        servers = [
+            {'name': 'EU1', 'uri': '192.168.100.100:1231'},
+            {'name': 'EU2', 'uri': '192.168.100.100:1232'},
+            {'name': 'EU3', 'uri': '192.168.100.100:1233'},
+            {'name': 'EU4', 'uri': '192.168.100.100:1234'},
+            {'name': 'EU5', 'uri': '192.168.100.100:1235'},
+            {'name': 'EU6', 'uri': '192.168.100.100:1236'},
+        ]
+
+        box = GameSelectionBox(servers=servers)
+        box.open()
 
     def on_forum_button_release(self, btn):
         browser.open_hyperlink('http://tacticalbattlefield.net/forum')
