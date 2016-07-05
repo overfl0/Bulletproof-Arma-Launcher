@@ -47,6 +47,9 @@
 <ForumButton@HoverButton>
     text: 'FORUM'
 
+<MorePlayButton@HoverButton>
+    text: 'X' # \u2261 or 2630 For android character
+
 <BaseTextInput@TextInput>
     background_color: 0.3, 0.3, 0.3, 0.7
     foreground_color: 0.9, 0.9, 0.9, 1
@@ -224,6 +227,13 @@
                 halign: 'right'
                 valign: 'bottom'
                 text: 'Build: N/A'
+
+    # This button must be created after the PLAY button so that it is on top of it
+    MorePlayButton:
+        id: more_play
+        font_size: 60
+        pos: -5000, 50  # Stay out of the way for now
+        on_release: root.controller.on_more_play_button_release(self)
 
 # Section: Screen for settings and configuration
 <PrefScreen>:

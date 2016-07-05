@@ -182,6 +182,15 @@ class Controller(object):
             self.action_button_init()
             return False  # Return False to remove the callback from the scheduler
 
+    def enable_more_play_button(self):
+        """Show the "more play options" button."""
+        self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width - self.view.ids.more_play.width
+        self.view.ids.more_play.y = self.view.ids.action_button.y
+
+    def disable_more_play_button(self):
+        """Hide the "more play options" button."""
+        self.view.ids.more_play.x = -5000
+
     def try_enable_play_button(self):
         """Enables or disables the action button (play, install, etc...).
         As a workaround, for now, returns False if administrator rights are
@@ -206,6 +215,7 @@ class Controller(object):
                 self.view.ids.action_button.text = Controller.self_upgrade
                 self.action_button_action = 'self-upgrade'
                 self.view.ids.action_button.enable()
+                self.disable_more_play_button()
 
                 if autoupdater.require_admin_privileges():
                     self.view.ids.action_button.disable()
@@ -235,12 +245,14 @@ class Controller(object):
         # switch to play button and a different handler
         self.view.ids.action_button.text = Controller.play
         self.action_button_action = 'play'
+        self.enable_more_play_button()
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
             self.view.ids.action_button.enable()
 
     def action_button_init(self):
         self.view.ids.action_button.text = Controller.checking
+        self.disable_more_play_button()
         self.view.ids.action_button.enable_progress_animation()
 
     def on_action_button_release(self, btn):
@@ -254,6 +266,16 @@ class Controller(object):
 
         # Else install everything
         self.start_syncing(seed=False)
+
+    def on_more_play_button_release(self, btn):
+        """Allow the user to select optional ways to play the game."""
+
+        if self.action_button_action != 'play':
+            Logger.error('Button more_action pressed when it should not be accessible!')
+            return
+
+        Logger.info('Test')
+        pass
 
     def on_forum_button_release(self, btn):
         browser.open_hyperlink('http://tacticalbattlefield.net/forum')
@@ -361,6 +383,7 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.action_button.disable_progress_animation()
         self.view.ids.action_button.text = Controller.install
+        self.disable_more_play_button()
 
         self.launcher = progress['launcher']
 
