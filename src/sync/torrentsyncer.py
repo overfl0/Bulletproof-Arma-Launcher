@@ -127,6 +127,22 @@ class TorrentSyncer(object):
             if mod.torrent_handle.is_valid():
                 yield mod
 
+    def calculate_eta(self, status, total_size, downloaded_size):
+        ETA = ''
+
+        missing_size = total_size - downloaded_size
+
+        if status.payload_download_rate > 5 * 1024:
+            secs = float(missing_size) / float(status.payload_download_rate)
+
+            secs = int(secs)
+            mins, secs = divmod(secs, 60)
+            hours, mins = divmod(mins, 60)
+
+            ETA = '{:d}:{:02d}:{:02d}'.format(hours, mins, secs)
+
+        return ETA
+
     def log_session_progress(self):
         """Log the progress of syncing the torrents.
         Progress for each individual torrent is written to the log file.
@@ -166,9 +182,8 @@ class TorrentSyncer(object):
         if total_size == 0:
             total_size = 1
         download_fraction = downloaded_size / total_size
-
+        ETA = self.calculate_eta(status, total_size, downloaded_size)
         session_actual_peers = 0
-
         action = 'Syncing:'
 
         # If at least one torrent is checking its pieces, show a message
@@ -178,10 +193,11 @@ class TorrentSyncer(object):
                 action = 'Checking missing pieces:'
 
         if download_fraction != 1:
-            progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s)\n{}'.format(
+            progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s) {}\n{}'.format(
                                action,
                                download_fraction * 100.0,
-                               status.payload_download_rate / 1024,
+                               float(status.payload_download_rate) / 1024.0,
+                               'ETA: {}'.format(ETA) if ETA else '',
                                ' | '.join(unfinished_mods))
         else:
             progress_message = 'Seeding: {} connections ({:0.2f} KB/s). Total: {} MB'.format(
