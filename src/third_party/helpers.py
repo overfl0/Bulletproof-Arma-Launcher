@@ -22,6 +22,7 @@ import utils.system_processes
 from kivy.logger import Logger
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from utils import unicode_helpers
+from utils.devmode import devmode
 from view.messagebox import MessageBox
 
 
@@ -198,10 +199,14 @@ def run_the_game(mods):
     Handle the exceptions by showing an appropriate message on error.
     """
 
-    # TODO: Pass this as a parameter
-    # teamspeak.run_and_connect('31.210.129.135:9989')
-    # teamspeak.run_and_connect('ts3.tacbf.com')
-    teamspeak.run_and_connect('tacbf.ts3dns.com')
+    ts_run_on_start = devmode.get_ts_run_on_start(default=True)
+    if ts_run_on_start:
+        # TODO: Pass this as a parameter
+        # teamspeak.run_and_connect('31.210.129.135:9989')
+        # teamspeak.run_and_connect('ts3.tacbf.com')
+        teamspeak.run_and_connect('tacbf.ts3dns.com')
+    else:
+        Logger.info('Third party: Not running teamspeak because of devmode settings.')
 
     headtracking.run_faceTrackNoIR()
 
