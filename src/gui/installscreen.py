@@ -80,6 +80,7 @@ class Controller(object):
 
         self.para = None
         self.mods = []
+        self.servers = []
         self.syncing_failed = False
         self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
@@ -276,16 +277,7 @@ class Controller(object):
             return
 
         Logger.info('Opening GameSelectionBox')
-        servers = [
-            {'name': 'EU1', 'uri': '192.168.100.100:1231'},
-            {'name': 'EU2', 'uri': '192.168.100.100:1232'},
-            {'name': 'EU3', 'uri': '192.168.100.100:1233'},
-            {'name': 'EU4', 'uri': '192.168.100.100:1234'},
-            {'name': 'EU5', 'uri': '192.168.100.100:1235'},
-            {'name': 'EU6', 'uri': '192.168.100.100:1236'},
-        ]
-
-        box = GameSelectionBox(servers=servers)
+        box = GameSelectionBox(servers=self.servers)
         box.open()
 
     def on_forum_button_release(self, btn):
@@ -335,6 +327,8 @@ class Controller(object):
                        self.on_checkmods_reject,
                        self.on_checkmods_progress)
 
+        self.servers = mod_description_data.get('servers', [])
+
     def on_download_mod_description_reject(self, data):
         self.para = None
         # TODO: Move boilerplate code to a function
@@ -369,6 +363,7 @@ class Controller(object):
 
         ErrorPopup(details=details, message=message).chain_open()
 
+        self.servers = []
         if mod_data:
             ErrorPopup(message=textwrap.dedent('''
             The launcher could not download mod requirements from the server.
@@ -380,6 +375,8 @@ class Controller(object):
             self.para.then(self.on_checkmods_resolve,
                            self.on_checkmods_reject,
                            self.on_checkmods_progress)
+
+            self.servers = mod_data.get('servers', [])
 
     # Checkmods callbacks ######################################################
 
