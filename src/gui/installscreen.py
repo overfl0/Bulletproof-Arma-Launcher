@@ -277,7 +277,7 @@ class Controller(object):
             return
 
         Logger.info('Opening GameSelectionBox')
-        box = GameSelectionBox(servers=self.servers)
+        box = GameSelectionBox(servers=self.servers, mods=self.mods)
         box.open()
 
     def on_forum_button_release(self, btn):

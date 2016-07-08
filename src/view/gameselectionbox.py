@@ -12,6 +12,8 @@
 
 from __future__ import unicode_literals
 
+import third_party
+
 from kivy.logger import Logger
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
@@ -37,26 +39,34 @@ def sanitize_server_list(servers):
     return ret_servers
 
 
-def connect_to_server(server):
-    name = server.get('name', '<no_name>')
-    IP = server.get('ip', '127.0.0.1')
-    port = server.get('port', '0')
-    Logger.info('GameSelectionBox: User selected server: {} ({}:{})'.format(name, IP, port))
-
-
 class GameSelectionBox(Popup):
-    def __init__(self, servers=[], title=default_title, markup=False, on_dismiss=None):
+    def run_and_connect(self, server, mods):
+        ip = port = None
+
+        if server:
+            Logger.info('GameSelectionBox: User selected server: {} ({}:{})'.
+                        format(server['name'], server['ip'], server['port']))
+            ip = server['ip']
+            port = server['port']
+        else:
+            Logger.info('GameSelectionBox: User selected "Run Arma 3"')
+
+        third_party.helpers.run_the_game(mods, ip=ip, port=port)
+
+        self.dismiss()
+
+    def __init__(self, servers=[], mods=[], title=default_title, markup=False, on_dismiss=None):
         bl = BoxLayout(orientation='vertical')
 
         button = Button(text="Run Arma 3") #, size_hint_y=0.2)
-        button.bind(on_release=self.dismiss)
+        button.bind(on_release=lambda x, server=None, mods=mods: self.run_and_connect(server, mods))
         bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer
 
         for server in sanitize_server_list(servers):
             button = Button(text=server.get('name', '<no name>'), size_hint_x=0.8, pos_hint={'center_x': 0.5}) #, size_hint_y=0.2)
-            button.bind(on_release=lambda x, server=server: connect_to_server(server))
+            button.bind(on_release=lambda x, server=server, mods=mods: self.run_and_connect(server, mods))
             bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer

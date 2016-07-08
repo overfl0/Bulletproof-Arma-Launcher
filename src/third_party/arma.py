@@ -126,7 +126,8 @@ class Arma(object):
             raise SteamNotInstalled()
 
     @staticmethod
-    def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True):
+    def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True,
+                 ip=None, port=None):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
@@ -155,6 +156,12 @@ class Arma(object):
 
         if profile_name:
             game_args.extend(['-name=' + profile_name])
+
+        if ip:
+            game_args.extend(['-connect=' + ip])
+
+        if port:
+            game_args.extend(['-port=' + port])
 
         if custom_args:
             game_args.extend(custom_args)
