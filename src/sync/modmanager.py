@@ -39,7 +39,7 @@ from sync.torrentsyncer import TorrentSyncer
 
 def parse_timestamp(ts):
     """
-    parse a time stamp to like this
+    Parse a timestamp that looks like this:
     YYYY-MM-DD_Epoch
 
     we parse Epoch in utc time. After that make sure to use it like utc
@@ -47,6 +47,33 @@ def parse_timestamp(ts):
     s = ts.split('_')
     stamp = s[1]
     return datetime.utcfromtimestamp(float(stamp))
+
+
+def create_timestamp(epoch):
+    """
+    Create a timestamp that looks like this:
+    YYYY-MM-DD_Epoch
+    """
+    return datetime.fromtimestamp(int(epoch)).strftime('%Y-%m-%d_') + str(int(epoch))
+
+
+def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mod):
+    """Create a torrent from a mod on the disk."""
+
+    directory = os.path.join(launcher_moddir, mod.foldername)
+    output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
+    output_path = os.path.join(launcher_basedir, output_file)
+    announces = ['http://launcher.tacbf.com/announce.php']
+    comment = 'TacBF dependency on mod {}'.format(mod.foldername)
+    web_seeds = 'http://launcher.tacbf.com/tacbf/updater/mods/'
+
+    file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
+    file_created_dir = os.path.dirname(file_created)
+
+    from utils import browser
+    browser.open_hyperlink(file_created_dir)
+
+    messagequeue.resolve({'msg': 'File created: {}!'.format(output_file)})
 
 
 def _get_mod_descriptions(para):
@@ -369,6 +396,17 @@ class ModManager(object):
         self.para = Para(_protected_call, (_get_mod_descriptions,), 'download_description')
         self.para.run()
         return self.para
+
+    def make_torrent(self, mod):
+        para = Para(_protected_call, (
+            _make_torrent,
+            self.settings.get('launcher_moddir'),
+            self.settings.get('launcher_basedir'),
+            mod
+        ), 'make_torrent')
+        para.then(None, None, None)
+        para.run()
+        return para
 
     def prepare_and_check(self, data):
         self.para = Para(_protected_call, (

@@ -40,4 +40,5 @@ def open_hyperlink(url):
     # p.start()
     # Honestly, I don't know if using either threads or processes changes anything.
     # Both seem to freeze the UI at some point.
-    thread.start_new_thread(_open_hyperlink, (url,))
+    #thread.start_new_thread(_open_hyperlink, (url,))
+    _open_hyperlink(url)

@@ -171,3 +171,39 @@ def create_add_torrent_flags():
     # no_recheck_incomplete_resume
 
     return flags
+
+
+def create_torrent(directory, announces=None, output=None, comment=None, web_seeds=None):
+    if not output:
+        output = directory + ".torrent"
+
+    # "If a piece size of 0 is specified, a piece_size will be calculated such that the torrent file is roughly 40 kB."
+    piece_size_multiplier = 0
+    piece_size = (16 * 1024) * piece_size_multiplier  # Must be multiple of 16KB
+
+    # http://www.libtorrent.org/make_torrent.html#create-torrent
+    flags = libtorrent.create_torrent_flags_t.calculate_file_hashes
+
+    if not os.path.isdir(directory):
+        raise Exception("The path {} is not a directory".format(directory))
+
+    fs = libtorrent.file_storage()
+    libtorrent.add_files(fs, unicode_helpers.encode_utf8(directory), flags=flags)
+    t = libtorrent.create_torrent(fs, piece_size=piece_size, flags=flags)
+
+    for announce in announces:
+        t.add_tracker(unicode_helpers.encode_utf8(announce))
+
+    if comment:
+        t.set_comment(unicode_helpers.encode_utf8(comment))
+
+    for web_seed in web_seeds:
+        t.add_url_seed(unicode_helpers.encode_utf8(web_seed))
+    # t.add_http_seed("http://...")
+
+    libtorrent.set_piece_hashes(t, unicode_helpers.encode_utf8(os.path.dirname(directory)))
+
+    with open(output, "wb") as file_handle:
+        file_handle.write(libtorrent.bencode(t.generate()))
+
+    return output

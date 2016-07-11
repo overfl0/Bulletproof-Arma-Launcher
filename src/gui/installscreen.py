@@ -35,6 +35,7 @@ from utils.primitive_git import get_git_sha1_auto
 from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.messagebox import MessageBox
+from utils.devmode import devmode
 
 
 class InstallScreen(Screen):
@@ -255,6 +256,21 @@ class Controller(object):
         # Else install everything
         self.start_syncing(seed=False)
 
+    def on_make_torrent_button_release(self, btn):
+        if self.para:
+            ErrorPopup(message='Stop seeding first!').chain_open()
+            return
+
+        for mod in self.mods:
+            if mod.foldername == '@TacBF':
+                self.view.ids.make_torrent.disabled = True
+                self.view.ids.status_image.show()
+                self.view.ids.status_label.text = 'Creating torrent...'
+                self.para = self.mod_manager.make_torrent(mod=mod)
+                self.para.then(self.on_maketorrent_resolve, self.on_maketorrent_reject, None)
+
+                return
+
     def on_forum_button_release(self, btn):
         browser.open_hyperlink('http://tacticalbattlefield.net/forum')
 
@@ -283,6 +299,26 @@ class Controller(object):
         executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'TB_Launcher.exe')
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
+
+    def on_maketorrent_resolve(self, progress):
+        self.para = None
+        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.make_torrent.disabled = False
+        self.view.ids.status_image.hide()
+
+    def on_maketorrent_reject(self, data):
+        self.para = None
+
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
+
+        self.view.ids.status_image.hide()
+        self.view.ids.status_label.text = last_line
+        self.view.ids.action_button.disable_progress_animation()
+
+        ErrorPopup(details=details, message=message).chain_open()
 
     # Download_mod_description callbacks #######################################
 
@@ -361,6 +397,10 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.action_button.disable_progress_animation()
         self.view.ids.action_button.text = Controller.install
+
+        if devmode.get_create_torrents(False):
+            self.view.ids.make_torrent.disabled = False
+            self.view.ids.make_torrent.text = 'CREATE'
 
         self.launcher = progress['launcher']
 

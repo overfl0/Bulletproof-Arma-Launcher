@@ -47,6 +47,9 @@
 <ForumButton@HoverButton>
     text: 'FORUM'
 
+<MakeTorrentButton@HoverButton>
+    disabled: True
+
 <BaseTextInput@TextInput>
     background_color: 0.3, 0.3, 0.3, 0.7
     foreground_color: 0.9, 0.9, 0.9, 1
@@ -207,8 +210,11 @@
                 #text_size: self.width - 20, None
                 #halign: 'left'
 
-            Widget:
+            MakeTorrentButton:
                 size_hint_x: 1
+                id: make_torrent
+                on_release: root.controller.on_make_torrent_button_release(self)
+
             OptionsButton:
                 size_hint_x: 1
 
