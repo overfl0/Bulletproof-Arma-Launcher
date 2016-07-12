@@ -256,21 +256,6 @@ class Controller(object):
         # Else install everything
         self.start_syncing(seed=False)
 
-    def on_make_torrent_button_release(self, btn):
-        if self.para:
-            ErrorPopup(message='Stop seeding first!').chain_open()
-            return
-
-        for mod in self.mods:
-            if mod.foldername == '@TacBF':
-                self.view.ids.make_torrent.disabled = True
-                self.view.ids.status_image.show()
-                self.view.ids.status_label.text = 'Creating torrent...'
-                self.para = self.mod_manager.make_torrent(mod=mod)
-                self.para.then(self.on_maketorrent_resolve, self.on_maketorrent_reject, None)
-
-                return
-
     def on_forum_button_release(self, btn):
         browser.open_hyperlink('http://tacticalbattlefield.net/forum')
 
@@ -299,6 +284,24 @@ class Controller(object):
         executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'TB_Launcher.exe')
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
+
+    def on_make_torrent_button_release(self, btn):
+        if self.para:
+            ErrorPopup(message='Stop seeding first!').chain_open()
+            return
+
+        self.view.ids.action_button.disabled = True
+        self.view.ids.make_torrent.disabled = True
+        self.view.ids.status_image.show()
+        self.view.ids.status_label.text = 'Creating torrents...'
+        self.para = self.mod_manager.make_torrent(mods=self.mods)
+        self.para.then(self.on_maketorrent_resolve,
+                       self.on_maketorrent_reject,
+                       self.on_maketorrent_progress)
+
+    def on_maketorrent_progress(self, progress, _):
+        self.view.ids.status_image.show()
+        self.view.ids.status_label.text = progress['msg']
 
     def on_maketorrent_resolve(self, progress):
         self.para = None

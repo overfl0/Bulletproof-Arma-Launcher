@@ -57,23 +57,34 @@ def create_timestamp(epoch):
     return datetime.fromtimestamp(int(epoch)).strftime('%Y-%m-%d_') + str(int(epoch))
 
 
-def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mod):
-    """Create a torrent from a mod on the disk."""
+def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
+    """Create torrents from mods on the disk."""
 
-    directory = os.path.join(launcher_moddir, mod.foldername)
-    output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
-    output_path = os.path.join(launcher_basedir, output_file)
+    files_created = []
     announces = ['http://launcher.tacbf.com/announce.php']
-    comment = 'TacBF dependency on mod {}'.format(mod.foldername)
     web_seeds = 'http://launcher.tacbf.com/tacbf/updater/mods/'
 
-    file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
-    file_created_dir = os.path.dirname(file_created)
+    counter = 0
+    for mod in mods:
+        counter += 1
+        if mod.up_to_date:
+            continue
 
-    from utils import browser
-    browser.open_hyperlink(file_created_dir)
+        output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
+        output_path = os.path.join(launcher_basedir, output_file)
+        comment = 'TacBF dependency on mod {}'.format(mod.foldername)
+        directory = os.path.join(launcher_moddir, mod.foldername)
 
-    messagequeue.resolve({'msg': 'File created: {}!'.format(output_file)})
+        messagequeue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
+        file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
+        files_created.append(file_created)
+        file_created_dir = os.path.dirname(file_created)
+
+    if files_created:
+        from utils import browser
+        browser.open_hyperlink(file_created_dir)
+
+    messagequeue.resolve({'msg': 'Torrents created: {}'.format(len(files_created))})
 
 
 def _get_mod_descriptions(para):
@@ -397,14 +408,13 @@ class ModManager(object):
         self.para.run()
         return self.para
 
-    def make_torrent(self, mod):
+    def make_torrent(self, mods):
         para = Para(_protected_call, (
             _make_torrent,
             self.settings.get('launcher_moddir'),
             self.settings.get('launcher_basedir'),
-            mod
+            mods
         ), 'make_torrent')
-        para.then(None, None, None)
         para.run()
         return para
 
