@@ -18,7 +18,7 @@ import os
 import stat
 
 from kivy.logger import Logger
-from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack
+from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack, is_whitelisted
 from utils.metadatafile import MetadataFile
 from utils import unicode_helpers
 
@@ -188,7 +188,8 @@ def create_torrent(directory, announces=None, output=None, comment=None, web_see
         raise Exception("The path {} is not a directory".format(directory))
 
     fs = libtorrent.file_storage()
-    libtorrent.add_files(fs, unicode_helpers.encode_utf8(directory), flags=flags)
+    is_not_whitelisted = lambda node: not is_whitelisted(unicode_helpers.decode_utf8(node))
+    libtorrent.add_files(fs, unicode_helpers.encode_utf8(directory), is_not_whitelisted, flags=flags)
     t = libtorrent.create_torrent(fs, piece_size=piece_size, flags=flags)
 
     for announce in announces:
