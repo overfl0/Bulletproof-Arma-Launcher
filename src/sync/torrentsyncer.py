@@ -252,7 +252,7 @@ class TorrentSyncer(object):
 
         return torrent_info, torrent_content
 
-    def prepare_libtorrent_params(self, mod, force_sync=False):
+    def prepare_libtorrent_params(self, mod, force_sync=False, intend_to_seed=False):
         """Prepare mod for download over bittorrent.
         This effectively downloads the .torrent file if its contents are not
         already cached.
@@ -265,7 +265,11 @@ class TorrentSyncer(object):
         metadata_file = MetadataFile(mod.foldername)
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
-        metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
+        # A little bit of a workaround. If we intend to seed, we can assume the data is all right.
+        # This way, if the torrent is closed before checking_resume_data is finished, and the post-
+        # download hook is not fired, the torrent is not left in a state marked as dirty.
+        if not intend_to_seed and not force_sync:
+            metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
 
         # If the torrent url changed, invalidate the resume data
         old_torrent_url = metadata_file.get_torrent_url()
@@ -398,7 +402,7 @@ class TorrentSyncer(object):
 
             self.session.set_settings(session_settings)
 
-    def sync(self, force_sync=False, seed_after_completion=False):
+    def sync(self, force_sync=False, intend_to_seed=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
         are described in the torrent file.
@@ -423,7 +427,7 @@ class TorrentSyncer(object):
 
         for mod in self.mods:
             try:
-                self.prepare_libtorrent_params(mod, force_sync)
+                self.prepare_libtorrent_params(mod, force_sync, intend_to_seed)
             except (PrepareParametersException, torrent_utils.AdminRequiredError) as ex:
                 self.result_queue.reject({'msg': ex.args[0]})
                 sync_success = False
@@ -499,7 +503,7 @@ class TorrentSyncer(object):
                         self.resume_torrent(mod)
 
             # If all are in state (4)
-            if self.all_torrents_ran_finished_hooks() and not seed_after_completion:
+            if self.all_torrents_ran_finished_hooks() and not intend_to_seed:
                 Logger.info('Sync: Pausing all torrents for syncing end.')
                 self.pause_all_torrents()
 
@@ -526,12 +530,15 @@ class TorrentSyncer(object):
     def save_resume_data(self, mod):
         """Save the resume data of the mod that will allow a faster restart in the future."""
         if not mod.torrent_handle.is_valid():
+            Logger.error('save_resume_data: mod is not valid')
             return
 
         if not mod.torrent_handle.has_metadata():
+            Logger.error('save_resume_data: mod has no metadata')
             return
 
         if not mod.can_save_resume_data:
+            Logger.error('save_resume_data: mod cannot save resume data')
             return
 
         Logger.info('Sync: saving fast-resume metadata for mod {}'.format(mod.foldername))

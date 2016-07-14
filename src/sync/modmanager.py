@@ -359,7 +359,7 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     # WARNING: This methods gets called in a different process
 
     syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
-    sync_ok = syncer.sync(force_sync=False, seed_after_completion=seed)  # Use force_sync to force full recheck of all the files' checksums
+    sync_ok = syncer.sync(force_sync=False, intend_to_seed=seed)  # Use force_sync to force full recheck of all the files' checksums
 
     # If we had an error or we're closing the launcher, don't call post_download_hooks
     if sync_ok is False or syncer.force_termination:
