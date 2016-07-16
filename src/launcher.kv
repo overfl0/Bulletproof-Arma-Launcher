@@ -201,17 +201,16 @@
                 on_release: root.controller.on_forum_button_release(self)
             Widget:
                 size_hint_x: 1
-            HoverButton:
+
+            DynamicButton:
                 size_hint_x: 2
                 id: action_button
                 disabled: True
                 width: 300
-                on_release: root.controller.on_action_button_release(self)
-                text: 'Install'
+                # on_release callbacks are bound in installscreen.py
+                text: 'INSTALL'
                 bold: True
                 font_size: 60
-                #text_size: self.width - 20, None
-                #halign: 'left'
 
             MakeTorrentButton:
                 size_hint_x: 1

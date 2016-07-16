@@ -12,8 +12,6 @@
 
 from __future__ import unicode_literals
 
-from copy import copy
-
 from kivy.core.window import Window
 from kivy.uix.button import Button
 from kivy.properties import NumericProperty, ObjectProperty, BooleanProperty, StringProperty

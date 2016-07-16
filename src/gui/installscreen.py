@@ -31,12 +31,13 @@ from kivy.logger import Logger
 
 from sync.modmanager import ModManager
 from utils import browser
+from utils.devmode import devmode
+from utils.fake_enum import enum
 from utils.primitive_git import get_git_sha1_auto
 from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.gameselectionbox import GameSelectionBox
 from view.messagebox import MessageBox
-from utils.devmode import devmode
 
 
 class InstallScreen(Screen):
@@ -48,12 +49,10 @@ class InstallScreen(Screen):
         self.controller = Controller(self)
 
 
-class Controller(object):
-    play = 'PLAY'
-    checking = 'CHECKING'
-    install = 'INSTALL'
-    self_upgrade = 'UPGRADE'
+DynamicButtonStates = enum('play', 'checking', 'install', 'self_upgrade')
 
+
+class Controller(object):
     def __init__(self, widget):
         super(Controller, self).__init__()
 
@@ -83,7 +82,6 @@ class Controller(object):
         self.mods = []
         self.servers = []
         self.syncing_failed = False
-        self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
 
         # Uncomment the code below to enable troubleshooting mode
@@ -141,11 +139,7 @@ class Controller(object):
         """
 
         # Check if we're ready to run the game - everything has been properly synced
-        # TODO: use a state machine or anything else than comparing strings :(
-
-        # Note to self: can't use action_button_action because this may be in "checking" state... or whatever.
-        # TODO: refactor all the action_button.text and action_button_action accesses.
-        if self.view.ids.action_button.text != Controller.play:
+        if self.view.ids.action_button.get_button_state() != DynamicButtonStates.play:
             return
 
         arma_is_running = third_party.helpers.arma_may_be_running(newly_launched=False)
@@ -215,8 +209,7 @@ class Controller(object):
 
             else:
                 # switch to play button and a different handler
-                self.view.ids.action_button.text = Controller.self_upgrade
-                self.action_button_action = 'self-upgrade'
+                self.view.ids.action_button.set_button_state(DynamicButtonStates.self_upgrade)
                 self.view.ids.action_button.enable()
                 self.disable_more_play_button()
 
@@ -246,34 +239,38 @@ class Controller(object):
                 return
 
         # switch to play button and a different handler
-        self.view.ids.action_button.text = Controller.play
-        self.action_button_action = 'play'
+        self.view.ids.action_button.set_button_state(DynamicButtonStates.play)
         self.enable_more_play_button()
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
             self.view.ids.action_button.enable()
 
     def action_button_init(self):
-        self.view.ids.action_button.text = Controller.checking
+        """Set all the callbacks for the dynamic action button."""
+
+        button_states = [
+            (DynamicButtonStates.play,         'PLAY',     self.on_play_button_release),
+            (DynamicButtonStates.checking,     'CHECKING', None),
+            (DynamicButtonStates.install,      'INSTALL',  self.on_install_button_click),
+            (DynamicButtonStates.self_upgrade, 'UPGRADE',  self.on_self_upgrade_button_release)
+        ]
+
+        # Bind text and callbacks for button states
+        for (name, text, callback) in button_states:
+            self.view.ids.action_button.bind_state(name, text, callback)
+
+        self.view.ids.action_button.set_button_state(DynamicButtonStates.checking)
         self.disable_more_play_button()
         self.view.ids.action_button.enable_progress_animation()
 
-    def on_action_button_release(self, btn):
-        # do nothing if sync was already resolved
-        # this is a workaround because event is not unbindable, see
-        # https://github.com/kivy/kivy/issues/903
-        if self.action_button_action == 'play':
-            return self.on_play_button_release(btn)
-        elif self.action_button_action == 'self-upgrade':
-            return self.on_self_upgrade_button_release(btn)
-
-        # Else install everything
+    def on_install_button_click(self, btn):
+        """Just start syncing the mods."""
         self.start_syncing(seed=False)
 
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
-        if self.action_button_action != 'play':
+        if self.view.ids.action_button.get_button_state() != DynamicButtonStates.play:
             Logger.error('Button more_action pressed when it should not be accessible!')
             return
 
@@ -429,7 +426,7 @@ class Controller(object):
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.action_button.disable_progress_animation()
-        self.view.ids.action_button.text = Controller.install
+        self.view.ids.action_button.set_button_state(DynamicButtonStates.install)
         self.disable_more_play_button()
 
         if devmode.get_create_torrents(False):

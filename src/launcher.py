@@ -91,6 +91,7 @@ try:
 
         from utils.app import BaseApp
         from view.numberinput import NumberInput
+        from view.dynamicbutton import DynamicButton
         from view.hoverbutton import HoverButton
         from view.statusimage import StatusImage
         from view.errorpopup import error_popup_decorator
