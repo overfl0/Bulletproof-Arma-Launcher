@@ -36,6 +36,7 @@ from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.gameselectionbox import GameSelectionBox
 from view.messagebox import MessageBox
+from utils.devmode import devmode
 
 
 class InstallScreen(Screen):
@@ -309,6 +310,44 @@ class Controller(object):
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 
+    def on_make_torrent_button_release(self, btn):
+        if self.para:
+            ErrorPopup(message='Stop seeding first!').chain_open()
+            return
+
+        self.view.ids.action_button.disabled = True
+        self.view.ids.make_torrent.disabled = True
+        self.view.ids.status_image.show()
+        self.view.ids.status_label.text = 'Creating torrents...'
+        self.para = self.mod_manager.make_torrent(mods=self.mods)
+        self.para.then(self.on_maketorrent_resolve,
+                       self.on_maketorrent_reject,
+                       self.on_maketorrent_progress)
+
+    def on_maketorrent_progress(self, progress, _):
+        self.view.ids.status_image.show()
+        self.view.ids.status_label.text = progress['msg']
+
+    def on_maketorrent_resolve(self, progress):
+        self.para = None
+        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.make_torrent.disabled = False
+        self.view.ids.status_image.hide()
+
+    def on_maketorrent_reject(self, data):
+        self.para = None
+
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
+
+        self.view.ids.status_image.hide()
+        self.view.ids.status_label.text = last_line
+        self.view.ids.action_button.disable_progress_animation()
+
+        ErrorPopup(details=details, message=message).chain_open()
+
     # Download_mod_description callbacks #######################################
 
     def on_download_mod_description_progress(self, progress, speed):
@@ -392,6 +431,10 @@ class Controller(object):
         self.view.ids.action_button.disable_progress_animation()
         self.view.ids.action_button.text = Controller.install
         self.disable_more_play_button()
+
+        if devmode.get_create_torrents(False):
+            self.view.ids.make_torrent.disabled = False
+            self.view.ids.make_torrent.text = 'CREATE'
 
         self.launcher = progress['launcher']
 

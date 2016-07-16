@@ -30,6 +30,10 @@ from utils.hashes import sha1
 from third_party import teamspeak
 
 
+# Whitelist special files
+WHITELIST_NAME = ('tfr.ts3_plugin', '.synqinfo', '.sync')
+WHITELIST_EXTENSION = ('.zsync',)
+
 def _unlink_safety_assert(base_path, file_path, action="remove"):
     """Asserts that the file_path string starts with base_path string.
     If this is not true then raise an exception"""
@@ -60,8 +64,24 @@ def _raiser(exception):  # I'm sure there must be some builtin to do this :-/
     raise exception
 
 
-def filter_out_whitelisted(elements, whitelist):
-    for whitelist_element in whitelist:
+def is_whitelisted(node_path):
+    """Check if the node full name or if its extension is whitelisted."""
+
+    for whitelist_element in WHITELIST_NAME:
+        if node_path.endswith(os.path.sep + whitelist_element):
+            Logger.debug('is_whitelisted: Returning true for {}'.format(node_path))
+            return True
+
+    for whitelist_element in WHITELIST_EXTENSION:
+        if node_path.endswith(whitelist_element):
+            Logger.debug('is_whitelisted: Returning true for {}'.format(node_path))
+            return True
+
+    return False
+
+
+def filter_out_whitelisted(elements):
+    for whitelist_element in WHITELIST_NAME:
         file_match = os.path.sep + whitelist_element
         dir_match = os.path.sep + whitelist_element + os.path.sep
         elements = set(itertools.ifilterfalse(lambda x: x.endswith(file_match) or dir_match in x, elements))
@@ -89,7 +109,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     that are at least one directory deep in the file structure!
     As all multi-file torrents *require* one root directory that holds those
     files, this should not be an issue.
-    This function will skip files or directories that match the 'whitelist' variable.
+    This function will skip files or directories that match the 'WHITELIST_NAME' variable.
 
     If the dictionary checksums is not None, the files' checksums will be checked.
 
@@ -100,14 +120,11 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     if on_superfluous not in ('warn', 'remove', 'ignore'):
         raise Exception('Unknown action: {}'.format(on_superfluous))
 
-    # Whitelist our and PWS metadata files
-    whitelist = ('tfr.ts3_plugin', '.synqinfo', '.sync')
-
     top_dirs, dirs, file_paths, checksums = parse_files_list(files_list, checksums, check_subdir)
 
     # Remove whitelisted items from the lists
-    dirs = filter_out_whitelisted(dirs, whitelist)
-    file_paths = filter_out_whitelisted(file_paths, whitelist)
+    dirs = filter_out_whitelisted(dirs)
+    file_paths = filter_out_whitelisted(file_paths)
 
     base_directory = os.path.realpath(base_directory)
     Logger.debug('Verifying base_directory: {}'.format(base_directory))
@@ -118,7 +135,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             with ignore_exceptions(KeyError):
                 dirs.remove(directory)
 
-            if directory in whitelist:
+            if directory in WHITELIST_NAME:
                 continue
 
             full_base_path = os.path.join(base_directory, directory)
@@ -131,8 +148,8 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 for file_name in filenames:
                     relative_file_name = os.path.join(relative_path, file_name)
 
-                    if file_name in whitelist:
-                        Logger.debug('File {} in whitelist, skipping...'.format(file_name))
+                    if file_name in WHITELIST_NAME:
+                        Logger.debug('File {} in WHITELIST_NAME, skipping...'.format(file_name))
 
                         with ignore_exceptions(KeyError):
                             file_paths.remove(relative_file_name)
@@ -168,7 +185,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 for dir_name in dirnames[:]:
                     relative_dir_path = os.path.join(relative_path, dir_name)
 
-                    if dir_name in whitelist:
+                    if dir_name in WHITELIST_NAME:
                         dirnames.remove(dir_name)
 
                         with ignore_exceptions(KeyError):

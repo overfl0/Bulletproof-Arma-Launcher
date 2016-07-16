@@ -39,7 +39,7 @@ from sync.torrentsyncer import TorrentSyncer
 
 def parse_timestamp(ts):
     """
-    parse a time stamp to like this
+    Parse a timestamp that looks like this:
     YYYY-MM-DD_Epoch
 
     we parse Epoch in utc time. After that make sure to use it like utc
@@ -47,6 +47,44 @@ def parse_timestamp(ts):
     s = ts.split('_')
     stamp = s[1]
     return datetime.utcfromtimestamp(float(stamp))
+
+
+def create_timestamp(epoch):
+    """
+    Create a timestamp that looks like this:
+    YYYY-MM-DD_Epoch
+    """
+    return datetime.fromtimestamp(int(epoch)).strftime('%Y-%m-%d_') + str(int(epoch))
+
+
+def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
+    """Create torrents from mods on the disk."""
+
+    files_created = []
+    announces = ['http://launcher.tacbf.com/announce.php']
+    web_seeds = 'http://launcher.tacbf.com/tacbf/updater/mods/'
+
+    counter = 0
+    for mod in mods:
+        counter += 1
+        if mod.up_to_date:
+            continue
+
+        output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
+        output_path = os.path.join(launcher_basedir, output_file)
+        comment = 'TacBF dependency on mod {}'.format(mod.foldername)
+        directory = os.path.join(launcher_moddir, mod.foldername)
+
+        messagequeue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
+        file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
+        files_created.append(file_created)
+        file_created_dir = os.path.dirname(file_created)
+
+    if files_created:
+        from utils import browser
+        browser.open_hyperlink(file_created_dir)
+
+    messagequeue.resolve({'msg': 'Torrents created: {}'.format(len(files_created))})
 
 
 def _get_mod_descriptions(para):
@@ -321,7 +359,7 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     # WARNING: This methods gets called in a different process
 
     syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
-    sync_ok = syncer.sync(force_sync=False, seed_after_completion=seed)  # Use force_sync to force full recheck of all the files' checksums
+    sync_ok = syncer.sync(force_sync=False, intend_to_seed=seed)  # Use force_sync to force full recheck of all the files' checksums
 
     # If we had an error or we're closing the launcher, don't call post_download_hooks
     if sync_ok is False or syncer.force_termination:
@@ -369,6 +407,16 @@ class ModManager(object):
         self.para = Para(_protected_call, (_get_mod_descriptions,), 'download_description')
         self.para.run()
         return self.para
+
+    def make_torrent(self, mods):
+        para = Para(_protected_call, (
+            _make_torrent,
+            self.settings.get('launcher_moddir'),
+            self.settings.get('launcher_basedir'),
+            mods
+        ), 'make_torrent')
+        para.run()
+        return para
 
     def prepare_and_check(self, data):
         self.para = Para(_protected_call, (
