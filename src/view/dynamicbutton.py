@@ -58,10 +58,12 @@ class DynamicButton(HoverButton):
             Logger.error('DynamicButton: Trying to set state {} but such state does not exist!'.format(name))
             self.button_state = None
             self.text = '<no text>'
+            self.texture_update()  # Update button texture for size calculation
             return
 
         self.button_state = name
         self.text = button_state.button_text
+        self.texture_update()  # Update button texture for size calculation
 
     def get_button_state(self):
         """Accessor method."""

@@ -175,13 +175,14 @@ class Controller(object):
         self.view.ids.footer_label.text = footer_text
 
     def wait_to_init_action_button(self, dt):
-        if 'action_button' in self.view.ids:
+        # self.view.width is normally set to 100 by default, it seems...
+        if 'action_button' in self.view.ids and self.view.width != 100:
             self.action_button_init()
             return False  # Return False to remove the callback from the scheduler
 
     def enable_more_play_button(self):
         """Show the "more play options" button."""
-        self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width - self.view.ids.more_play.width
+        self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width
         self.view.ids.more_play.y = self.view.ids.action_button.y
 
     def disable_more_play_button(self):
@@ -209,9 +210,8 @@ class Controller(object):
 
             else:
                 # switch to play button and a different handler
-                self.view.ids.action_button.set_button_state(DynamicButtonStates.self_upgrade)
+                self.set_and_resize_action_button(DynamicButtonStates.self_upgrade)
                 self.view.ids.action_button.enable()
-                self.disable_more_play_button()
 
                 if autoupdater.require_admin_privileges():
                     self.view.ids.action_button.disable()
@@ -239,8 +239,7 @@ class Controller(object):
                 return
 
         # switch to play button and a different handler
-        self.view.ids.action_button.set_button_state(DynamicButtonStates.play)
-        self.enable_more_play_button()
+        self.set_and_resize_action_button(DynamicButtonStates.play)
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
             self.view.ids.action_button.enable()
@@ -259,9 +258,25 @@ class Controller(object):
         for (name, text, callback) in button_states:
             self.view.ids.action_button.bind_state(name, text, callback)
 
-        self.view.ids.action_button.set_button_state(DynamicButtonStates.checking)
-        self.disable_more_play_button()
+        self.set_and_resize_action_button(DynamicButtonStates.checking)
         self.view.ids.action_button.enable_progress_animation()
+
+    def set_and_resize_action_button(self, state):
+        """Change the action and the text on a button. Then, resize that button
+        and optionally show the more_play_button.
+        """
+
+        self.view.ids.action_button.set_button_state(state)
+
+        # Position and resize
+        self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
+        self.view.ids.action_button.center_x = self.view.center_x
+
+        # Place the more_actions_button at the right place
+        if state != DynamicButtonStates.play:
+            self.disable_more_play_button()
+        else:
+            self.enable_more_play_button()
 
     def on_install_button_click(self, btn):
         """Just start syncing the mods."""
@@ -426,8 +441,7 @@ class Controller(object):
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.action_button.disable_progress_animation()
-        self.view.ids.action_button.set_button_state(DynamicButtonStates.install)
-        self.disable_more_play_button()
+        self.set_and_resize_action_button(DynamicButtonStates.install)
 
         if devmode.get_create_torrents(False):
             self.view.ids.make_torrent.disabled = False

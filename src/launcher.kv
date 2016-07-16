@@ -202,15 +202,8 @@
             Widget:
                 size_hint_x: 1
 
-            DynamicButton:
-                size_hint_x: 2
-                id: action_button
-                disabled: True
-                width: 300
-                # on_release callbacks are bound in installscreen.py
-                text: 'INSTALL'
-                bold: True
-                font_size: 60
+            Widget:
+                size_hint_x: 1
 
             MakeTorrentButton:
                 size_hint_x: 1
@@ -232,6 +225,14 @@
                 halign: 'right'
                 valign: 'bottom'
                 text: 'Build: N/A'
+
+    DynamicButton:
+        id: action_button
+        disabled: True
+        # on_release callbacks are bound in installscreen.py
+        text: 'INSTALL'
+        font_size: 60
+        pos: -5000, 50  # Stay out of the way for now
 
     # This button must be created after the PLAY button so that it is on top of it
     MorePlayButton:
