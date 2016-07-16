@@ -58,6 +58,7 @@ class GameSelectionBox(Popup):
     def __init__(self, servers=[], mods=[], title=default_title, markup=False, on_dismiss=None):
         bl = BoxLayout(orientation='vertical')
 
+        buttons_count = 2  # Run arma and cancel
         button = Button(text="Run Arma 3") #, size_hint_y=0.2)
         button.bind(on_release=lambda x, server=None, mods=mods: self.run_and_connect(server, mods))
         bl.add_widget(button)
@@ -65,6 +66,7 @@ class GameSelectionBox(Popup):
         bl.add_widget(Widget())  # Spacer
 
         for server in sanitize_server_list(servers):
+            buttons_count += 1
             button = Button(text=server.get('name', '<no name>'), size_hint_x=0.8, pos_hint={'center_x': 0.5}) #, size_hint_y=0.2)
             button.bind(on_release=lambda x, server=server, mods=mods: self.run_and_connect(server, mods))
             bl.add_widget(button)
@@ -75,8 +77,10 @@ class GameSelectionBox(Popup):
         button.bind(on_release=self.dismiss)
         bl.add_widget(button)
 
+        popup_height = 120 + (26 * buttons_count)
+
         super(GameSelectionBox, self).__init__(
-            title=title, content=bl, size_hint=(None, None), size=(200, 300))
+            title=title, content=bl, size_hint=(None, None), size=(200, popup_height))
 
         # Bind an optional handler when the user closes the message
         if on_dismiss:
