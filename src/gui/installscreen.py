@@ -290,6 +290,21 @@ class Controller(object):
         """Just start syncing the mods."""
         self.start_syncing(seed=False)
 
+    def _sanitize_server_list(self, servers):
+        """Filter out only the servers that contain a 'name', 'ip' and 'port' fields."""
+        # TODO: move me somewhere else
+
+        checked_servers = servers[:]
+        extra_server_string = devmode.get_extra_server()
+
+        if extra_server_string:
+            extra_server = {k: v for (k, v) in zip(('name', 'ip', 'port'), extra_server_string.split(':'))}
+            checked_servers.insert(0, extra_server)
+
+        ret_servers = filter(lambda x: all((x.get('name'), x.get('ip'), x.get('port'))), checked_servers)
+
+        return ret_servers
+
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
@@ -298,7 +313,7 @@ class Controller(object):
             return
 
         Logger.info('Opening GameSelectionBox')
-        box = GameSelectionBox(self.run_the_game, servers=self.servers)
+        box = GameSelectionBox(self.run_the_game, self.servers)
         box.open()
 
     def on_forum_button_release(self, btn):
@@ -386,7 +401,7 @@ class Controller(object):
                        self.on_checkmods_reject,
                        self.on_checkmods_progress)
 
-        self.servers = mod_description_data.get('servers', [])
+        self.servers = self._sanitize_server_list(mod_description_data.get('servers', []))
 
     def on_download_mod_description_reject(self, data):
         self.para = None
@@ -435,7 +450,7 @@ class Controller(object):
                            self.on_checkmods_reject,
                            self.on_checkmods_progress)
 
-            self.servers = mod_data.get('servers', [])
+            self.servers = self._sanitize_server_list(mod_data.get('servers', []))
 
     # Checkmods callbacks ######################################################
 
@@ -558,8 +573,13 @@ class Controller(object):
 
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')
+        ip = port = None
 
-        self.run_the_game(None, None)
+        if self.servers:
+            ip = self.servers[0]['ip']
+            port = self.servers[0]['port']
+
+        self.run_the_game(ip, port)
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
