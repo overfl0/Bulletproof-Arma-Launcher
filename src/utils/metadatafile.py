@@ -49,7 +49,7 @@ class MetadataFile(object):
         try:
             with open(self.get_file_name(), 'rb') as file_handle:
                 self.data = json.load(file_handle, encoding=MetadataFile._encoding)
-        except IOError:
+        except (IOError, ValueError):
             if ignore_open_errors:
                 pass
             else:

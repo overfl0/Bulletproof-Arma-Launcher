@@ -42,7 +42,7 @@ def is_complete_quick(mod):
     # (1) Check if metadata can be opened
     try:
         metadata_file.read_data(ignore_open_errors=False)
-    except IOError:
+    except (IOError, ValueError):
         Logger.info('Metadata file could not be read successfully. Marking as not complete')
         return False
 
