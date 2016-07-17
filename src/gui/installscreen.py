@@ -117,7 +117,7 @@ class Controller(object):
         Clock.unschedule(self.seeding_and_action_button_upkeep)
         Clock.unschedule(self.wait_to_init_action_button)
 
-        self.view.ids.action_button.disable()
+        self.disable_action_buttons()
 
     def wait_for_mod_checking_restart(self, dt):
         """Scheduled method will wait until the para that is running is stopped
@@ -166,7 +166,7 @@ class Controller(object):
         if not arma_is_running:
             # Allow the game to be run once again by enabling the play button.
             # Logger.info('Timer check: Re-enabling the Play button')
-            self.view.ids.action_button.enable()
+            self.enable_action_buttons()
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
@@ -180,14 +180,22 @@ class Controller(object):
             self.action_button_init()
             return False  # Return False to remove the callback from the scheduler
 
-    def enable_more_play_button(self):
+    def show_more_play_button(self):
         """Show the "more play options" button."""
         self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width
         self.view.ids.more_play.y = self.view.ids.action_button.y
 
-    def disable_more_play_button(self):
+    def hide_more_play_button(self):
         """Hide the "more play options" button."""
         self.view.ids.more_play.x = -5000
+
+    def enable_action_buttons(self):
+        self.view.ids.more_play.enable()
+        self.view.ids.action_button.enable()
+
+    def disable_action_buttons(self):
+        self.view.ids.more_play.disable()
+        self.view.ids.action_button.disable()
 
     def try_enable_play_button(self):
         """Enables or disables the action button (play, install, etc...).
@@ -195,7 +203,7 @@ class Controller(object):
         required.
         """
 
-        self.view.ids.action_button.disable()
+        self.disable_action_buttons()
 
         if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
                 u_from=self.version, u_to=self.launcher.version):
@@ -211,10 +219,10 @@ class Controller(object):
             else:
                 # switch to play button and a different handler
                 self.set_and_resize_action_button(DynamicButtonStates.self_upgrade)
-                self.view.ids.action_button.enable()
+                self.enable_action_buttons()
 
                 if autoupdater.require_admin_privileges():
-                    self.view.ids.action_button.disable()
+                    self.disable_action_buttons()
                     message = textwrap.dedent('''
                     This launcher is out of date and needs to be updated but it does not have
                     the required permissions to create new files!
@@ -242,7 +250,7 @@ class Controller(object):
         self.set_and_resize_action_button(DynamicButtonStates.play)
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
-            self.view.ids.action_button.enable()
+            self.enable_action_buttons()
 
     def action_button_init(self):
         """Set all the callbacks for the dynamic action button."""
@@ -274,9 +282,9 @@ class Controller(object):
 
         # Place the more_actions_button at the right place
         if state != DynamicButtonStates.play:
-            self.disable_more_play_button()
+            self.hide_more_play_button()
         else:
-            self.enable_more_play_button()
+            self.show_more_play_button()
 
     def on_install_button_click(self, btn):
         """Just start syncing the mods."""
@@ -299,14 +307,14 @@ class Controller(object):
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding
         if not seed:
-            self.view.ids.action_button.disable()
+            self.disable_action_buttons()
             self.view.ids.action_button.enable_progress_animation()
 
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
 
     def on_self_upgrade_button_release(self, btn):
-        self.view.ids.action_button.disable()
+        self.disable_action_buttons()
         self.para = self.mod_manager.sync_launcher()
         self.para.then(self.on_self_upgrade_resolve, self.on_sync_reject, self.on_sync_progress)
         self.view.ids.action_button.enable_progress_animation()
@@ -327,8 +335,8 @@ class Controller(object):
             ErrorPopup(message='Stop seeding first!').chain_open()
             return
 
-        self.view.ids.action_button.disabled = True
-        self.view.ids.make_torrent.disabled = True
+        self.disable_action_buttons()
+        self.view.ids.make_torrent.disable()
         self.view.ids.status_image.show()
         self.view.ids.status_label.text = 'Creating torrents...'
         self.para = self.mod_manager.make_torrent(mods=self.mods)
@@ -343,7 +351,7 @@ class Controller(object):
     def on_maketorrent_resolve(self, progress):
         self.para = None
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.make_torrent.disabled = False
+        self.view.ids.make_torrent.enable()
         self.view.ids.status_image.hide()
 
     def on_maketorrent_reject(self, data):
@@ -444,7 +452,7 @@ class Controller(object):
         self.set_and_resize_action_button(DynamicButtonStates.install)
 
         if devmode.get_create_torrents(False):
-            self.view.ids.make_torrent.disabled = False
+            self.view.ids.make_torrent.enable()
             self.view.ids.make_torrent.text = 'CREATE'
 
         self.launcher = progress['launcher']
@@ -455,7 +463,7 @@ class Controller(object):
 
         self.mods = progress['mods']
         if self.try_enable_play_button() is not False:
-            self.view.ids.action_button.enable()
+            self.enable_action_buttons()
 
     def on_checkmods_reject(self, data):
         self.para = None
@@ -531,7 +539,7 @@ class Controller(object):
         self.syncing_failed = True
         # self.try_enable_play_button()
         Logger.info('InstallScreen: syncing failed. Enabling the install button to allow installing again.')
-        self.view.ids.action_button.enable()
+        self.enable_action_buttons()
 
         ErrorPopup(details=details, message=message).chain_open()
 
@@ -548,7 +556,7 @@ class Controller(object):
                 self.para.request_termination()
 
         third_party.helpers.run_the_game(self.mods)
-        self.view.ids.action_button.disable()
+        self.disable_action_buttons()
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
