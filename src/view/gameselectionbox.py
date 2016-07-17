@@ -21,7 +21,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.widget import Widget
 from utils.devmode import devmode
 
-default_title = """Connect to server:"""
+default_title = '''Connect to server:'''
 
 
 def sanitize_server_list(servers):
@@ -40,27 +40,18 @@ def sanitize_server_list(servers):
 
 
 class GameSelectionBox(Popup):
-    def run_and_connect(self, server, mods):
-        ip = port = None
-
-        if server:
-            Logger.info('GameSelectionBox: User selected server: {} ({}:{})'.
-                        format(server['name'], server['ip'], server['port']))
-            ip = server['ip']
-            port = server['port']
-        else:
-            Logger.info('GameSelectionBox: User selected "Run Arma 3"')
-
-        third_party.helpers.run_the_game(mods, ip=ip, port=port)
-
+    def close_and_run(self, func, *args):
+        """There is probably a simpler way of doing this but oh well..."""
         self.dismiss()
+        func(*args)
 
-    def __init__(self, servers=[], mods=[], title=default_title, markup=False, on_dismiss=None):
+    def __init__(self, on_selection, servers=[], title=default_title,
+                 markup=False, on_dismiss=None):
         bl = BoxLayout(orientation='vertical')
 
         buttons_count = 2  # Run arma and cancel
-        button = Button(text="Run Arma 3") #, size_hint_y=0.2)
-        button.bind(on_release=lambda x, server=None, mods=mods: self.run_and_connect(server, mods))
+        button = Button(text='Run Arma 3') #, size_hint_y=0.2)
+        button.bind(on_release=lambda x, on_selection=on_selection: self.close_and_run(on_selection, None, None))
         bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer
@@ -68,19 +59,19 @@ class GameSelectionBox(Popup):
         for server in sanitize_server_list(servers):
             buttons_count += 1
             button = Button(text=server.get('name', '<no name>'), size_hint_x=0.8, pos_hint={'center_x': 0.5}) #, size_hint_y=0.2)
-            button.bind(on_release=lambda x, server=server, mods=mods: self.run_and_connect(server, mods))
+            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server['ip'], server['port']))
             bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer
 
-        button = Button(text="Cancel")#, size_hint_y=0.2)
+        button = Button(text='Cancel')#, size_hint_y=0.2)
         button.bind(on_release=self.dismiss)
         bl.add_widget(button)
 
         popup_height = 120 + (26 * buttons_count)
 
         super(GameSelectionBox, self).__init__(
-            title=title, content=bl, size_hint=(None, None), size=(200, popup_height))
+            title=default_title, content=bl, size_hint=(None, None), size=(200, popup_height))
 
         # Bind an optional handler when the user closes the message
         if on_dismiss:

@@ -298,7 +298,7 @@ class Controller(object):
             return
 
         Logger.info('Opening GameSelectionBox')
-        box = GameSelectionBox(servers=self.servers, mods=self.mods)
+        box = GameSelectionBox(self.run_the_game, servers=self.servers)
         box.open()
 
     def on_forum_button_release(self, btn):
@@ -545,9 +545,7 @@ class Controller(object):
 
     ############################################################################
 
-    def on_play_button_release(self, btn):
-        Logger.info('InstallScreen: User hit play')
-
+    def run_the_game(self, ip=None, port=None):
         seeding_type = self.settings.get('seeding_type')
 
         # Stop seeding if not set to always seed
@@ -555,8 +553,13 @@ class Controller(object):
             if self.para and self.para.is_open() and self.para.action_name == 'sync':
                 self.para.request_termination()
 
-        third_party.helpers.run_the_game(self.mods)
+        third_party.helpers.run_the_game(self.mods, ip=ip, port=port)
         self.disable_action_buttons()
+
+    def on_play_button_release(self, btn):
+        Logger.info('InstallScreen: User hit play')
+
+        self.run_the_game(None, None)
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
