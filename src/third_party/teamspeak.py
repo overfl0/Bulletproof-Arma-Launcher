@@ -239,12 +239,15 @@ def install_unpackaged_plugin(path):
 
 def copy_userconfig(path):
     """Copy and overwrite the files at <path> to the userconfig directory inside Arma 3 directory."""
-    # TODO: Move this somewhere else
-    import distutils.dir_util
+    try:
+        # TODO: Move this somewhere else
+        import distutils.dir_util
 
-    from third_party.arma import Arma
+        from third_party.arma import Arma
 
-    Arma.get_installation_path()
-    userconfig_path = os.path.join(Arma.get_installation_path(), 'userconfig')
+        Arma.get_installation_path()
+        userconfig_path = os.path.join(Arma.get_installation_path(), 'userconfig')
 
-    distutils.dir_util.copy_tree(path, userconfig_path)
+        distutils.dir_util.copy_tree(path, userconfig_path)
+    except:
+        pass  # userconfig is going to be removed from our TFR installation very soon anyway
