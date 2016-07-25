@@ -304,6 +304,7 @@ class TorrentSyncer(object):
         mod.libtorrent_params = params
 
         # Ensure all the files and directories are read-write
+        torrent_utils.ensure_directory_exists(mod.clientlocation)
         torrent_utils.ensure_directory_is_read_write(mod.clientlocation, mod.foldername)
 
     def get_torrents_status(self):

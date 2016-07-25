@@ -16,11 +16,12 @@ import errno
 import libtorrent
 import os
 import stat
+import textwrap
 
 from kivy.logger import Logger
 from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack, is_whitelisted
 from utils.metadatafile import MetadataFile
-from utils import unicode_helpers
+from utils import paths, unicode_helpers
 
 
 class AdminRequiredError(Exception):
@@ -113,6 +114,73 @@ def get_torrent_info_from_file(filename):
         return get_torrent_info_from_bytestring(file_contents)
 
 
+def set_node_read_write(node_path):
+    """Set file or directory to read-write by removing the read-only bit."""
+
+    fs_node_path = unicode_helpers.u_to_fs(node_path)
+
+    try:
+        stat_struct = os.lstat(fs_node_path)
+
+    except OSError as e:
+        Logger.error('Torrent_utils: exception')
+        if e.errno == errno.ENOENT:  # 2 - File not found
+            Logger.info('Torrent_utils: file not found')
+            return
+
+    # If the file is read-only to the owner, change it to read-write
+    if not stat_struct.st_mode & stat.S_IWUSR:
+        Logger.info('Integrity: Setting write bit to file: {}'.format(node_path))
+        try:
+            os.chmod(fs_node_path, stat_struct.st_mode | stat.S_IWUSR)
+
+        except OSError as ex:
+            if ex.errno == errno.EACCES:  # 13
+                error_message = textwrap.dedent('''
+                    Error: file/directory is read-only and cannot be changed:
+                    {}
+
+                    Running the launcher as Administrator may help.
+
+                    If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
+                    ''').format(node_path)
+                Logger.error(error_message)
+                raise AdminRequiredError(error_message)
+            else:
+                raise
+
+
+def ensure_directory_exists(base_directory):
+    """Ensure the directory passed as the argument exists.
+    First try creating the directory and if that fails, try to mitigate the problem
+    by setting the parent directory to read-write and retrying the directory
+    creation. If that fails, raise an AdminRequiredError.
+    """
+
+    try:
+        paths.mkdir_p(base_directory)
+
+    except OSError:
+        # Try fixing the situation by setting parent directory to read-write
+        set_node_read_write(os.path.dirname(base_directory))
+
+        try:
+            # Try again
+            paths.mkdir_p(base_directory)
+
+        except OSError:
+            error_message = textwrap.dedent('''
+                Error: directory cannot be created:
+                {}
+
+                Creating it manually or running the launcher as Administrator may help.
+
+                If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
+                ''').format(base_directory)
+            Logger.error(error_message)
+            raise AdminRequiredError(error_message)
+
+
 def ensure_directory_is_read_write(base_directory, mod_foldername):
     """Ensures all the files in the mod's directory have the write bit set.
     Useful if some external tool has set them to read-only.
@@ -125,31 +193,8 @@ def ensure_directory_is_read_write(base_directory, mod_foldername):
         for node_name in [''] + filenames + dirnames:
 
             node_path = os.path.join(dirpath, node_name)
-            fs_node_path = unicode_helpers.u_to_fs(node_path)
             Logger.info('Torrent_utils: Checking node: {}.'.format(node_path))
-
-            try:
-                stat_struct = os.lstat(fs_node_path)
-
-            except OSError as e:
-                Logger.error('Torrent_utils: exception')
-                if e.errno == errno.ENOENT:  # 2 - File not found
-                    Logger.info('Torrent_utils: file not found')
-                    continue
-
-            # If the file is read-only to the owner, change it to read-write
-            if not stat_struct.st_mode & stat.S_IWUSR:
-                Logger.info('Integrity: Setting write bit to file: {}'.format(node_path))
-                try:
-                    os.chmod(fs_node_path, stat_struct.st_mode | stat.S_IWUSR)
-
-                except OSError as ex:
-                    if ex.errno == errno.EACCES:  # 13
-                        error_message = 'Error: file {} is read-only and cannot be changed. Running the launcher as Administrator may help.'.format(node_path)
-                        Logger.error(error_message)
-                        raise AdminRequiredError(error_message)
-                    else:
-                        raise
+            set_node_read_write(node_path)
 
 
 def create_add_torrent_flags():
