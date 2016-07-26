@@ -4,6 +4,8 @@
 import site
 site.addsitedir(os.path.join(os.getcwd(), 'src', 'utils'))
 import primitive_git
+site.addsitedir(os.path.join(os.getcwd(), 'src'))
+from config import config
 
 # If the import below produces some errors, you need to patch your Kivy installation:
 # https://github.com/kivy/kivy/pull/3652/files?short_path=90047c6
@@ -30,7 +32,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='TB_Launcher.exe',
+          name='{}.exe'.format(config.executable_name),
           *[Tree(p) for p in (sdl2.dep_bins + glew.dep_bins)],
           debug=False,
           strip=None,

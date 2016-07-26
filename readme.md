@@ -33,7 +33,7 @@ quotes (") with single quotes (').
 
 # Build
 
-To create a TB_Launcher.exe executable do the following:
+To create a <launcher_name>.exe executable do the following:
 
 ##### Automatically
 Execute the file ```build.bat```.
@@ -48,7 +48,7 @@ execute:
 If necessary execute the following command to
 rebuild the spec file. A newly spec file will not work, see kivy packaging wiki:
 
-`pyinstaller --name TB_Launcher --onefile src\launcher.py`
+`pyinstaller --name <launcher name> --onefile src\launcher.py`
 
 However, this should normally not be required as the spec file should already be present.
 

@@ -26,7 +26,7 @@ class Mod(object):
             up_to_date=False):
         super(Mod, self).__init__()
 
-        self.clientlocation = clientlocation  # 'C:\Arma 3\Tactical Battlefield'
+        self.clientlocation = clientlocation  # 'C:\Arma 3\<default_mod_dir>'
         self.downloadurl = downloadurl  # 'https://my.domain/file.torrent'
         self.foldername = foldername  # '@CBA_A3'
         self.torrent_timestamp = torrent_timestamp  # datetime

@@ -43,6 +43,8 @@ try:
         from utils.settings import Settings
         settings = Settings(sys.argv[1:])
 
+        from config import config
+
         # HACK: clear sys.argv for kivy. Keep only the first element
         # sys.argv = sys.argv[0:1]
 
@@ -56,7 +58,7 @@ try:
 
         resources.resource_add_path(get_source_path())
 
-        Config.set('kivy', 'window_icon', get_resources_path('icons/tb.ico'))
+        Config.set('kivy', 'window_icon', get_resources_path(config.icon))
         Config.set('kivy', 'log_level', default_log_level)
         Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
@@ -113,7 +115,7 @@ try:
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
 
-            title = 'Tactical Battlefield'.encode('utf-8')
+            title = config.launcher_name.encode('utf-8')
 
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
@@ -127,7 +129,7 @@ try:
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
 
-            title = 'Tactical Battlefield updater'.encode('utf-8')
+            title = '{} updater'.format(config.launcher_name).encode('utf-8')
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()

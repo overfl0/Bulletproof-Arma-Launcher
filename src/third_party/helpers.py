@@ -19,6 +19,7 @@ import teamspeak
 import textwrap
 import utils.system_processes
 
+from config import config
 from kivy.logger import Logger
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from utils import unicode_helpers
@@ -120,7 +121,7 @@ def check_requirements(verbose=True):
         if verbose:
             message = textwrap.dedent('''
                 Teamspeak does not seem to be installed.
-                Having Teamspeak is required in order to play Tactical Battlefield.
+                Having Teamspeak is required in order to play {}.
 
                 [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
 
@@ -132,7 +133,7 @@ def check_requirements(verbose=True):
                 Some antiviruses may block access to Windows registry
                 resulting in this message.
                 Make sure you grant access to the registry for the launcher.
-                ''')
+                '''.format(config.launcher_name))
             box = MessageBox(message, title='Teamspeak required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)
             box.open()
@@ -145,7 +146,7 @@ def check_requirements(verbose=True):
         if verbose:
             message = textwrap.dedent('''
                 Steam does not seem to be installed.
-                Having Steam is required in order to play Tactical Battlefield.
+                Having Steam is required in order to play {}.
 
                 [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
 
@@ -156,7 +157,7 @@ def check_requirements(verbose=True):
                 Some antiviruses may block access to Windows registry
                 resulting in this message.
                 Make sure you grant access to the registry for the launcher.
-                ''')
+                '''.format(config.launcher_name))
             box = MessageBox(message, title='Steam required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)
             box.open()
