@@ -203,8 +203,8 @@ def run_the_game(mods, ip=None, port=None):
     if ts_run_on_start:
         # TODO: Pass this as a parameter
         # teamspeak.run_and_connect('31.210.129.135:9989')
-        # teamspeak.run_and_connect('ts3.tacbf.com')
-        teamspeak.run_and_connect('tacbf.ts3dns.com')
+        teamspeak.run_and_connect('ts3.tacbf.com')
+        # teamspeak.run_and_connect('tacbf.ts3dns.com')
     else:
         Logger.info('Third party: Not running teamspeak because of devmode settings.')
 
