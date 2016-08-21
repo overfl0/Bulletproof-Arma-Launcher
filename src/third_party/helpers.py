@@ -194,17 +194,15 @@ def check_requirements(verbose=True):
     return True
 
 
-def run_the_game(mods, ip=None, port=None):
+def run_the_game(mods, ip=None, port=None, teamspeak_url=None):
     """Run the game with the right parameters.
     Handle the exceptions by showing an appropriate message on error.
     """
 
     ts_run_on_start = devmode.get_ts_run_on_start(default=True)
     if ts_run_on_start:
-        # TODO: Pass this as a parameter
-        # teamspeak.run_and_connect('31.210.129.135:9989')
-        teamspeak.run_and_connect('ts3.tacbf.com')
-        # teamspeak.run_and_connect('tacbf.ts3dns.com')
+        if teamspeak_url:
+            teamspeak.run_and_connect(teamspeak_url)
     else:
         Logger.info('Third party: Not running teamspeak because of devmode settings.')
 
