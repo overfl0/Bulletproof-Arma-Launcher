@@ -106,18 +106,37 @@ def _get_mod_descriptions(para):
     except DownloadException as ex:
         para.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
 
-    if res.status_code != 200:
-        para.reject({'details': '{}\n{}\n\n{}'.format(
-            'Mods descriptions could not be received from the server',
-            'Status Code: ' + unicode(res.status_code), res.text)})
+
+    if res.status_code == 404:
+        message = textwrap.dedent('''
+            Metadata could not be downloaded from the master server.
+            Reason: file not found on the server (HTTP 404).
+
+            This may be because the mods are updated on the server right now.
+            Please try again in a few minutes.
+        ''')
+        para.reject({'msg': message})
+
+    elif res.status_code != 200:
+        message = textwrap.dedent('''
+            Metadata could not be downloaded from the master server.
+            HTTP error code: {}
+
+            Contact the server owner to fix this issue.
+        '''.format(unicode(res.status_code)))
+        para.reject({'msg': message})
+
     else:
         try:
             data = res.json()
         except ValueError:
             Logger.error('ModManager: Failed to parse mods descriptions json!')
-            stacktrace = "".join(_format_exc_info(*sys.exc_info()))
-            para.reject({'details': '{}\n\n{}'.format(
-                'Mods descriptions could not be parsed', stacktrace)})
+            message = textwrap.dedent('''
+                Failed to parse metadata received from the master server.
+
+                Contact the server owner to fix this issue.
+            '''.format(unicode(res.status_code)))
+            para.reject({'msg': message})
 
         # Protection in case autoupdate is messed up and we have to force a manual update
         protocol = '1.0'

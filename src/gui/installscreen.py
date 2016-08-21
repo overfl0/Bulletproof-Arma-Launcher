@@ -438,16 +438,16 @@ class Controller(object):
             MessageBox(message, title='Get the new version of the launcher!', markup=True).chain_open()
             return
 
-        # Carry on with the execution! :)
-        # Read data from cache and continue if successful
-        mod_data = self.settings.get('mod_data_cache')
-
         ErrorPopup(details=details, message=message).chain_open()
 
         self.servers = []
+
+        # Carry on with the execution! :)
+        # Read data from cache and continue if successful
+        mod_data = self.settings.get('mod_data_cache')
         if mod_data:
             ErrorPopup(message=textwrap.dedent('''
-            The launcher could not download mod requirements from the server.
+            The launcher could not download mod requirements from the master server.
 
             Using cached data from the last time the launcher has been used.
             ''')).chain_open()
