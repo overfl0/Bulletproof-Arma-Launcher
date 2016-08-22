@@ -132,6 +132,14 @@ def check_installed():
     Logger.debug('TS: install location: {}'.format(install_location))
     Logger.debug('TS: config location: {}'.format(config_location))
 
+    if not os.path.isfile(addon_installer_path):
+        raise TeamspeakNotInstalled('Could not find TeamSpeak addon installer which should be located at:\n{}'.
+                                    format(addon_installer_path))
+
+    if not os.path.isfile(executable_path):
+        raise TeamspeakNotInstalled('Could not find TeamSpeak executable which should be located at:\n{}'.
+                                    format(executable_path))
+
 
 def is_teamspeak_running():
     """Check if a TeamSpeak process is running."""

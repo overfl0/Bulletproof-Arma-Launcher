@@ -117,13 +117,20 @@ def check_requirements(verbose=True):
     # TODO: move me to a better place
     try:
         teamspeak.check_installed()
-    except teamspeak.TeamspeakNotInstalled:
+    except teamspeak.TeamspeakNotInstalled as ex:
         if verbose:
+            try:
+                detailed_message = ex.args[0]
+                detailed_message += '\n\n'
+
+            except IndexError:
+                detailed_message = ''
+
             message = textwrap.dedent('''
-                Teamspeak does not seem to be installed.
+                Teamspeak does not seem to be correctly installed.
                 Having Teamspeak is required in order to play {}.
 
-                [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
+                {}[ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
 
                 Install Teamspeak and restart the launcher.
 
@@ -133,7 +140,8 @@ def check_requirements(verbose=True):
                 Some antiviruses may block access to Windows registry
                 resulting in this message.
                 Make sure you grant access to the registry for the launcher.
-                '''.format(config.launcher_name))
+                ''').format(config.launcher_name, detailed_message)
+
             box = MessageBox(message, title='Teamspeak required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)
             box.open()
@@ -195,17 +203,15 @@ def check_requirements(verbose=True):
     return True
 
 
-def run_the_game(mods, ip=None, port=None):
+def run_the_game(mods, ip=None, port=None, teamspeak_url=None):
     """Run the game with the right parameters.
     Handle the exceptions by showing an appropriate message on error.
     """
 
     ts_run_on_start = devmode.get_ts_run_on_start(default=True)
     if ts_run_on_start:
-        # TODO: Pass this as a parameter
-        # teamspeak.run_and_connect('31.210.129.135:9989')
-        # teamspeak.run_and_connect('ts3.tacbf.com')
-        teamspeak.run_and_connect('tacbf.ts3dns.com')
+        if teamspeak_url:
+            teamspeak.run_and_connect(teamspeak_url)
     else:
         Logger.info('Third party: Not running teamspeak because of devmode settings.')
 

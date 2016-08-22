@@ -257,10 +257,10 @@ class Controller(object):
         """Set all the callbacks for the dynamic action button."""
 
         button_states = [
-            (DynamicButtonStates.play,         'PLAY',     self.on_play_button_release),
-            (DynamicButtonStates.checking,     'CHECKING', None),
-            (DynamicButtonStates.install,      'INSTALL',  self.on_install_button_click),
-            (DynamicButtonStates.self_upgrade, 'UPGRADE',  self.on_self_upgrade_button_release)
+            (DynamicButtonStates.play, 'PLAY', self.on_play_button_release),
+            (DynamicButtonStates.checking, 'CHECKING', None),
+            (DynamicButtonStates.install, 'INSTALL', self.on_install_button_click),
+            (DynamicButtonStates.self_upgrade, 'UPGRADE', self.on_self_upgrade_button_release)
         ]
 
         # Bind text and callbacks for button states
@@ -291,7 +291,7 @@ class Controller(object):
         """Just start syncing the mods."""
         self.start_syncing(seed=False)
 
-    def _sanitize_server_list(self, servers):
+    def _sanitize_server_list(self, servers, default_teamspeak):
         """Filter out only the servers that contain a 'name', 'ip' and 'port' fields."""
         # TODO: move me somewhere else
 
@@ -304,6 +304,11 @@ class Controller(object):
 
         ret_servers = filter(lambda x: all((x.get('name'), x.get('ip'), x.get('port'))), checked_servers)
 
+        # Add the default teamspeak server if not provided
+        for ret_server in ret_servers:
+            if 'teamspeak' not in ret_server:
+                ret_server['teamspeak'] = default_teamspeak
+
         return ret_servers
 
     def on_more_play_button_release(self, btn):
@@ -314,7 +319,7 @@ class Controller(object):
             return
 
         Logger.info('Opening GameSelectionBox')
-        box = GameSelectionBox(self.run_the_game, self.servers)
+        box = GameSelectionBox(self.run_the_game, self.servers, default_teamspeak=self.default_teamspeak_url)
         box.open()
 
     def on_forum_button_release(self, btn):
@@ -401,7 +406,9 @@ class Controller(object):
                        self.on_checkmods_reject,
                        self.on_checkmods_progress)
 
-        self.servers = self._sanitize_server_list(mod_description_data.get('servers', []))
+        self.default_teamspeak_url = mod_description_data.get('teamspeak', None)
+
+        self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
 
     def on_download_mod_description_reject(self, data):
         self.para = None
@@ -431,16 +438,16 @@ class Controller(object):
             MessageBox(message, title='Get the new version of the launcher!', markup=True).chain_open()
             return
 
-        # Carry on with the execution! :)
-        # Read data from cache and continue if successful
-        mod_data = self.settings.get('mod_data_cache')
-
         ErrorPopup(details=details, message=message).chain_open()
 
         self.servers = []
+
+        # Carry on with the execution! :)
+        # Read data from cache and continue if successful
+        mod_data = self.settings.get('mod_data_cache')
         if mod_data:
             ErrorPopup(message=textwrap.dedent('''
-            The launcher could not download mod requirements from the server.
+            The launcher could not download mod requirements from the master server.
 
             Using cached data from the last time the launcher has been used.
             ''')).chain_open()
@@ -450,7 +457,9 @@ class Controller(object):
                            self.on_checkmods_reject,
                            self.on_checkmods_progress)
 
-            self.servers = self._sanitize_server_list(mod_data.get('servers', []))
+            self.default_teamspeak_url = mod_data.get('teamspeak', None)
+
+            self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
 
     # Checkmods callbacks ######################################################
 
@@ -560,7 +569,7 @@ class Controller(object):
 
     ############################################################################
 
-    def run_the_game(self, ip=None, port=None):
+    def run_the_game(self, ip=None, port=None, teamspeak_url=None):
         seeding_type = self.settings.get('seeding_type')
 
         # Stop seeding if not set to always seed
@@ -568,7 +577,7 @@ class Controller(object):
             if self.para and self.para.is_open() and self.para.action_name == 'sync':
                 self.para.request_termination()
 
-        third_party.helpers.run_the_game(self.mods, ip=ip, port=port)
+        third_party.helpers.run_the_game(self.mods, ip=ip, port=port, teamspeak_url=teamspeak_url)
         self.disable_action_buttons()
 
     def on_play_button_release(self, btn):
@@ -578,8 +587,9 @@ class Controller(object):
         if self.servers:
             ip = self.servers[0]['ip']
             port = self.servers[0]['port']
+            teamspeak_url = self.servers[0]['teamspeak']
 
-        self.run_the_game(ip, port)
+        self.run_the_game(ip, port, teamspeak_url)
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(

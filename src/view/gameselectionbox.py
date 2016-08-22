@@ -27,25 +27,25 @@ class GameSelectionBox(Popup):
         func(*args)
 
     def __init__(self, on_selection, servers=[], title=default_title,
-                 markup=False, on_dismiss=None):
+                 markup=False, on_dismiss=None, default_teamspeak=None):
         bl = BoxLayout(orientation='vertical')
 
         buttons_count = 2  # Run arma and cancel
-        button = Button(text='Run Arma 3') #, size_hint_y=0.2)
-        button.bind(on_release=lambda x, on_selection=on_selection: self.close_and_run(on_selection, None, None))
+        button = Button(text='Run Arma 3')  # , size_hint_y=0.2)
+        button.bind(on_release=lambda x, on_selection=on_selection: self.close_and_run(on_selection, None, None, default_teamspeak))
         bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer
 
         for server in servers:
             buttons_count += 1
-            button = Button(text=server.get('name', '<no name>'), size_hint_x=0.8, pos_hint={'center_x': 0.5}) #, size_hint_y=0.2)
-            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server['ip'], server['port']))
+            button = Button(text=server.get('name', '<no name>'), size_hint_x=0.8, pos_hint={'center_x': 0.5})  # , size_hint_y=0.2)
+            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server['ip'], server['port'], server['teamspeak']))
             bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer
 
-        button = Button(text='Cancel')#, size_hint_y=0.2)
+        button = Button(text='Cancel')  # , size_hint_y=0.2)
         button.bind(on_release=self.dismiss)
         bl.add_widget(button)
 
