@@ -114,18 +114,6 @@ class Settings(Model):
         Logger.info('Settings: loaded args: ' + unicode(self.data))
 
     @classmethod
-    def launcher_default_basedir_old(cls):
-        """Retrieve OLD document folder. Kept for backward compatibility and WILL BE DEPRECATED.
-        Do not use unless you know what you're doing!
-        """
-        from utils.registry import Registry
-
-        user_docs = Registry.ReadValueCurrentUser(cls._USER_DOCUMENT_PATH, 'Personal')
-        old_path = os.path.join(user_docs, 'TacBF Launcher')
-
-        return old_path
-
-    @classmethod
     def launcher_default_basedir(cls):
         """Retrieve users document folder from the registry"""
         path = get_launcher_directory()
