@@ -237,7 +237,7 @@ def install_unpackaged_plugin(path):
         author='[TF]Nkey',
         version=version,
         platforms=['win32', 'win64'],
-        description='Task Force Arrowhead Radio.\nPlugin packaged automatically by TacBF launcher team.'
+        description='Task Force Arrowhead Radio.\nPlugin packaged automatically by Torrent Launcher team.'
     )
 
     args = [get_addon_installer_path(), '-silent', tfr_package]

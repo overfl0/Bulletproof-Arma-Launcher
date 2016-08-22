@@ -24,7 +24,7 @@ from utils.paths import get_launcher_directory
 class MetadataFile(object):
     """File that contains metadata about mods and is located in the root directory of each mod"""
     """TODO: Maybe screw the whole json part and just bencode everything?"""
-    file_extension = '.tacbf_meta'
+    file_extension = '.launcher_meta'
     file_directory = 'mods_metadata'
     _encoding = 'utf-8'
 

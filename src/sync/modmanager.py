@@ -14,19 +14,19 @@ from __future__ import unicode_literals
 
 import multiprocessing
 from multiprocessing import Queue
-import os
-import sys
-import time
-
-from datetime import datetime
 
 import kivy
 import kivy.app  # To keep PyDev from complaining
-from kivy.logger import Logger
+import os
+import sys
 import textwrap
+import time
 import torrent_utils
 
+from config import config
+from datetime import datetime
 from distutils.version import LooseVersion
+from kivy.logger import Logger
 from third_party import teamspeak
 from utils.devmode import devmode
 from utils.primitive_git import get_git_sha1_auto
@@ -61,8 +61,8 @@ def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
     """Create torrents from mods on the disk."""
 
     files_created = []
-    announces = ['http://launcher.tacbf.com/announce.php']
-    web_seeds = 'http://launcher.tacbf.com/tacbf/updater/mods/'
+    announces = ['http://{}/announce.php'.format(config.domain)]
+    web_seeds = 'http://{}{}/'.format(config.domain, config.web_seeds_path)
 
     counter = 0
     for mod in mods:
@@ -72,7 +72,7 @@ def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
 
         output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
         output_path = os.path.join(launcher_basedir, output_file)
-        comment = 'TacBF dependency on mod {}'.format(mod.foldername)
+        comment = '{} dependency on mod {}'.format(config.launcher_name, mod.foldername)
         directory = os.path.join(launcher_moddir, mod.foldername)
 
         messagequeue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
@@ -97,8 +97,8 @@ def _get_mod_descriptions(para):
     """
     para.progress({'msg': 'Downloading mod descriptions'})
 
-    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
-    metadata_path = devmode.get_metadata_path(default='/tacbf/updater/metadata.json')
+    domain = devmode.get_launcher_domain(default=config.domain)
+    metadata_path = devmode.get_metadata_path(default=config.metadata_path)
     url = 'http://{}{}'.format(domain, metadata_path)
 
     try:
@@ -168,8 +168,8 @@ def convert_metadata_to_mod(md, downloadurlPrefix):
 
 
 def get_launcher_description(para, launcher_basedir, metadata):
-    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
-    torrents_path = devmode.get_torrents_path(default='/tacbf/updater/torrents')
+    domain = devmode.get_launcher_domain(default=config.domain)
+    torrents_path = devmode.get_torrents_path(default=config.torrents_path)
     downloadurlPrefix = 'http://{}{}/'.format(domain, torrents_path)
 
     if 'launcher' not in metadata:
@@ -183,8 +183,8 @@ def get_launcher_description(para, launcher_basedir, metadata):
 
 
 def process_description_data(para, data, launcher_moddir):
-    domain = devmode.get_launcher_domain(default='launcher.tacbf.com')
-    torrents_path = devmode.get_torrents_path(default='/tacbf/updater/torrents')
+    domain = devmode.get_launcher_domain(default=config.domain)
+    torrents_path = devmode.get_torrents_path(default=config.torrents_path)
     downloadurlPrefix = 'http://{}{}/'.format(domain, torrents_path)
     mods = []
 

@@ -73,7 +73,7 @@ class TorrentSyncer(object):
             return
 
         settings = libtorrent.session_settings()
-        settings.user_agent = encode_utf8('TacBF (libtorrent/{})'.format(decode_utf8(libtorrent.version)))
+        settings.user_agent = encode_utf8('Torrent Launcher (libtorrent/{})'.format(decode_utf8(libtorrent.version)))
         """When running on a network where the bandwidth is in such an abundance
         that it's virtually infinite, this algorithm is no longer necessary, and
         might even be harmful to throughput. It is adviced to experiment with the

@@ -27,7 +27,7 @@ def print_session_logs(session):
 def download_torrent(torrent_file, download_throttle, upload_throttle):
     global torrent_handle
     settings = libtorrent.session_settings()
-    settings.user_agent = 'TacBF_simple_client (libtorrent/{})'.format(libtorrent.version)
+    settings.user_agent = 'Torrent_launcher_simple_client (libtorrent/{})'.format(libtorrent.version)
 
     session = libtorrent.session()
     session.listen_on(6881, 6891)

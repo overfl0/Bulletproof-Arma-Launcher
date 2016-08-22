@@ -323,7 +323,7 @@ class Controller(object):
         box.open()
 
     def on_forum_button_release(self, btn):
-        browser.open_hyperlink('http://tacticalbattlefield.net/forum')
+        browser.open_hyperlink(config.forum_url)
 
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding

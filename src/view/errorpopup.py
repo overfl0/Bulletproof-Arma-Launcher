@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 
 import sys
 
+from config import config
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
 from kivy.uix.label import Label
@@ -26,11 +27,11 @@ from utils.testtools_compat import _format_exc_info
 from view.chainedpopup import ChainedPopup
 
 DEFAULT_ERROR_MESSAGE = """Critical Error.
-If you can't find an answer to your problem [color=3572b0][ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/wiki/Troubleshooting]on the troubleshooting page[/ref][/color]
+If you can't find an answer to your problem [color=3572b0][ref={}]on the troubleshooting page[/ref][/color]
 copy the text below and post it on the bugtracker:
 
-[color=3572b0][ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues]https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues[/ref][/color]
-"""
+[color=3572b0][ref={}]{}[/ref][/color]
+""".format(config.troubleshooting_url, config.bugtracker_url, config.bugtracker_url)
 
 POPUP_TITLE = """An error occurred"""
 CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""

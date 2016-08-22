@@ -18,11 +18,7 @@ import platform
 import sys
 import unicode_helpers
 
-
-# the folder name where everything gets stored. This will get the last
-# part of the launcher_basedir
-# TODO: move this to configuration
-_LAUNCHER_DIR = 'TacBF Launcher'
+from config import config
 
 
 def is_pyinstaller_bundle():
@@ -140,7 +136,7 @@ def get_launcher_directory(*relative):
     """Return the directory for storing launcher related data.
     Optionally append <relative> at the end.
     """
-    return get_local_user_directory(_LAUNCHER_DIR, *relative)
+    return get_local_user_directory(config.settings_directory, *relative)
 
 
 def is_file_in_virtual_store(path):
@@ -193,7 +189,7 @@ def is_dir_writable(path):
         # Using mktemp because the other "safe" functions take several seconds
         # to fail on directories you don't have write rights to.
         # Would love to do tempfile.TemporaryFile instead :(
-        temporary_file_path = tempfile.mktemp(dir=path, prefix="TacBF_temp_")
+        temporary_file_path = tempfile.mktemp(dir=path, prefix="Torrent_Launcher_temp_")
         f = open(temporary_file_path, 'wb+')
         f.close()
 
