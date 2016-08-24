@@ -3,8 +3,9 @@
 # Needed for generating the build number
 import site
 site.addsitedir(os.path.join(os.getcwd(), 'src', 'utils'))
-import primitive_git
 site.addsitedir(os.path.join(os.getcwd(), 'src'))
+
+import primitive_git
 from config import config
 
 # If the import below produces some errors, you need to patch your Kivy installation:
