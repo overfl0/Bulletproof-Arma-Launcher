@@ -5,6 +5,7 @@ import site
 site.addsitedir(os.path.join(os.getcwd(), 'src', 'utils'))
 site.addsitedir(os.path.join(os.getcwd(), 'src'))
 
+import os
 import primitive_git
 from config import config
 
@@ -38,5 +39,5 @@ exe = EXE(pyz,
           debug=False,
           strip=None,
           upx=True,
-          icon='./resources/icons/tb.ico',
+          icon=os.path.join('resources', config.icon),
           console=False )
