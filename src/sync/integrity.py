@@ -19,6 +19,7 @@ if __name__ == "__main__":
     file_directory = os.path.dirname(os.path.realpath(__file__))
     site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
+import errno
 import itertools
 import os
 import shutil
@@ -54,10 +55,22 @@ def _safer_unlink(base_path, file_path):
 
 
 def _safer_rmtree(base_path, directory_path):
-    """Checks if the base_path contains the directory_path and removes directory_path if true"""
+    """Checks if the base_path contains the directory_path and removes directory_path if true.
+    Handles NTFS Junctions and Symlinks"""
 
     _unlink_safety_assert(base_path, directory_path)
-    shutil.rmtree(directory_path)
+    try:
+        # Attempt to delete directory. Will work on empty directories,
+        # NTFS junctions and NTFS symlinks (will delete the links instead of
+        # the content).
+        os.rmdir(directory_path)
+
+    except OSError as ex:
+        if ex.errno == errno.ENOTEMPTY:  # Not empty or not a Symlink/Junction
+            shutil.rmtree(directory_path)
+
+        else:
+            raise
 
 
 def _raiser(exception):  # I'm sure there must be some builtin to do this :-/
