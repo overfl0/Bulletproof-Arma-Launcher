@@ -57,7 +57,7 @@ def find_mods(names):
         for root, _, _ in os.walk(location, topdown=True, followlinks=True):
 
             # infinite loop protection
-            """inode = os.stat(root).st_ino  # Does not work on Windows!
+            """inode = os.lstat(root).st_ino  # Does not work on Windows!
             print inode
             if inode in inodes_visited:
                 Logger.info('Finder: directory already searched: {}'.format(root))

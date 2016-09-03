@@ -310,7 +310,7 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
     for file_path, size, mtime in files_data:
         try:
             full_file_path = os.path.join(base_directory, file_path)
-            file_stat = os.stat(full_file_path)
+            file_stat = os.lstat(full_file_path)
         except OSError:
             Logger.error('Could not perform stat on {}'.format(full_file_path))
             return False
