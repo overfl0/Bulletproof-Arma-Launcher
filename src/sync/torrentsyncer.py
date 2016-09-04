@@ -29,6 +29,7 @@ import os
 import torrent_utils
 
 from kivy.logger import Logger
+from sync import finder
 from sync.integrity import check_mod_directories
 from utils import requests_wrapper
 from utils.metadatafile import MetadataFile
@@ -403,6 +404,54 @@ class TorrentSyncer(object):
 
             self.session.set_settings(session_settings)
 
+    def reuse_downloaded_payload(self):
+        """Verify whether there is any mod that has not been downloaded ever.
+        If such a mod is found, it will be searched for on the disk in order to
+        potentially reuse that data.
+        """
+        self.force_termination = True  # DEBUG
+        missing_mods = []
+
+        Logger.info('Reuse: Checking for missing mods.')
+
+        for mod in self.mods:
+            mod_directory = os.path.join(mod.clientlocation, mod.foldername)
+            if not os.path.lexists(mod_directory):
+                missing_mods.append(mod.foldername)
+
+        if not missing_mods:
+            Logger.info('Reuse: No missing mods. Moving on.')
+            return
+
+        Logger.info('Missing mods: {}'.format(missing_mods))
+
+        self.result_queue.progress({'msg': 'Searching for missing mods on disk...',
+                                    'log': [],
+                                    }, 0)
+
+
+        found_mods = finder.find_mods(missing_mods)
+
+        found_anything = False
+        for missing_mod in missing_mods:
+            if not found_mods[missing_mod]:
+                continue
+
+            found_anything = True
+            self.result_queue.progress({'msg': 'Found possible places for {}'.format(missing_mod),
+                                        'log': [],
+                                        'mod_found_action': {
+                                            'mod_name': missing_mod,
+                                            'locations': found_mods[missing_mod]
+                                        }
+                                        }, 0)
+
+        if found_anything:
+            pass
+            # TODO: Wait for replies from the user
+            # TODO: Refactor me
+
+
     def sync(self, force_sync=False, intend_to_seed=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
@@ -433,6 +482,13 @@ class TorrentSyncer(object):
                 self.result_queue.reject({'msg': ex.args[0]})
                 sync_success = False
                 return sync_success
+
+        self.reuse_downloaded_payload()
+
+        if self.force_termination:
+            Logger.info('Sync: Downloading process was requested to stop before starting the download.')
+            self.result_queue.reject({'details': 'Downloading process was requested to stop before starting the download.'})
+            return
 
         for mod in self.mods:
             # Launch the download of the torrent
