@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 
 import textwrap
 
+from functools import partial
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
@@ -32,6 +33,7 @@ def open_hyperlink(obj, ref):
 class ModReuseBox(ChainedPopup):
     def close_and_run(self, func, *args):
         """There is probably a simpler way of doing this but oh well..."""
+        self.unbind_uid('on_dismiss', self.custom_dismiss_uid)
         self.dismiss()
         func(*args)
 
@@ -83,5 +85,4 @@ class ModReuseBox(ChainedPopup):
             title=default_title, content=bl, size_hint=(None, None), size=(600, popup_height))
 
         # Bind a handler when the user closes the message
-        # FIXME: Throws error when the line below is uncommented
-        # self.bind(on_dismiss=lambda x, location=None, action='ignore', on_selection=on_selection: self.close_and_run(on_selection, location, action))
+        self.custom_dismiss_uid = self.fbind('on_dismiss', lambda x: partial(on_selection, None, 'ignore')())
