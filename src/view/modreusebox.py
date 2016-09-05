@@ -35,7 +35,7 @@ class ModReuseBox(ChainedPopup):
         """There is probably a simpler way of doing this but oh well..."""
         self.unbind_uid('on_dismiss', self.custom_dismiss_uid)
         self.dismiss()
-        func(*args)
+        func(*args[:-1])
 
     def __init__(self, on_selection, mod_name, locations=[], title=default_title,
                  markup=False):
@@ -57,7 +57,7 @@ class ModReuseBox(ChainedPopup):
         bl.add_widget(la)
 
         button = Button(text='Ignore and just download', size_hint_x=0.4, pos_hint={'center_x': 0.5})
-        button.bind(on_release=lambda x, location=None, action='ignore', on_selection=on_selection: self.close_and_run(on_selection, location, action))
+        button.bind(on_release=partial(self.close_and_run, on_selection, None, 'ignore'))
         bl.add_widget(button)
 
         for location in locations:
@@ -70,11 +70,11 @@ class ModReuseBox(ChainedPopup):
             horizontal_box = BoxLayout(orientation='horizontal', spacing=50, width=300)
 
             button = Button(text='Copy contents and synchronize', size=(100, 30))
-            button.bind(on_release=lambda x, location=location, action='copy', on_selection=on_selection: self.close_and_run(on_selection, location, action))
+            button.bind(on_release=partial(self.close_and_run, on_selection, location, 'copy'))
             horizontal_box.add_widget(button)
 
             button = Button(text='Create symbolic link and synchronize', size=(100, 30))
-            button.bind(on_release=lambda x, location=location, action='use', on_selection=on_selection: self.close_and_run(on_selection, location, action))
+            button.bind(on_release=partial(self.close_and_run, on_selection, location, 'use'))
             horizontal_box.add_widget(button)
 
             bl.add_widget(horizontal_box)
