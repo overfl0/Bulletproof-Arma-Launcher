@@ -49,7 +49,7 @@ def find_mods(names):
     # inodes_visited = set()  # Store the inode of each directory to prevent infinite loops
 
     Logger.info('Finder: Searching for mods that have already been downloaded on disk: {}'.format(names))
-    response = dict.fromkeys(names, [])
+    response = {name: [] for name in names}
 
     for location in get_mod_locations():
         Logger.info('Finder: Trying {}'.format(location))
