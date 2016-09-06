@@ -62,7 +62,7 @@ def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
 
     files_created = []
     announces = ['http://{}/announce.php'.format(config.domain)]
-    web_seeds = 'http://{}{}/'.format(config.domain, config.web_seeds_path)
+    web_seeds = ['http://{}{}/'.format(config.domain, config.web_seeds_path)]
 
     counter = 0
     for mod in mods:
