@@ -62,7 +62,7 @@ def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
 
     files_created = []
     announces = ['http://launcher.tacbf.com/announce.php']
-    web_seeds = 'http://launcher.tacbf.com/tacbf/updater/mods/'
+    web_seeds = ['http://launcher.tacbf.com/tacbf/updater/mods/']
 
     counter = 0
     for mod in mods:
