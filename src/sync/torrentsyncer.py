@@ -497,9 +497,8 @@ class TorrentSyncer(object):
 
                     mod.finished_hook_ran = True
 
-                    # Do not go into state (4) if we are terminating or it's the
-                    # only torrent being synced
-                    if not self.force_termination and len(self.mods) != 1:
+                    # Do not go into state (4) if we are terminating
+                    if not self.force_termination:
                         Logger.info('Sync: Seeding {} again until all downloads are done.'.format(mod.foldername))
                         self.resume_torrent(mod)
 
