@@ -61,7 +61,8 @@ def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
     """Create torrents from mods on the disk."""
 
     files_created = []
-    announces = ['http://{}/announce.php'.format(config.domain)]
+    # announces = ['http://{}/announce.php'.format(config.domain)]
+    announces = ['http://5.79.83.193:2710/announce']
     web_seeds = ['http://{}{}/'.format(config.domain, config.web_seeds_path)]
 
     counter = 0
