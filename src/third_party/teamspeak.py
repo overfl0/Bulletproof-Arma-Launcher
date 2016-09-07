@@ -59,7 +59,7 @@ def get_executable_path():
         return args[0]
 
     except Registry.Error:
-        raise TeamspeakNotInstalled()
+        raise TeamspeakNotInstalled('Could not find the TS executable path')
 
     except IndexError:
         raise
@@ -79,7 +79,7 @@ def get_addon_installer_path():
         return args[0]
 
     except Registry.Error:
-        raise TeamspeakNotInstalled()
+        raise TeamspeakNotInstalled('Could not get the TS plugin installer path')
 
     except IndexError:
         raise
@@ -97,7 +97,7 @@ def get_install_location():
         return reg_val
 
     except Registry.Error:
-        raise TeamspeakNotInstalled()
+        raise TeamspeakNotInstalled('Could not get the TS install location')
 
 
 def get_config_location():
@@ -116,7 +116,7 @@ def get_config_location():
         return reg_val
 
     except Registry.Error:
-        raise TeamspeakNotInstalled()
+        raise TeamspeakNotInstalled('Could not get the TS config location information')
 
 
 def check_installed():
