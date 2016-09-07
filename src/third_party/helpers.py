@@ -126,19 +126,11 @@ def check_requirements(verbose=True):
                 detailed_message = ''
 
             message = textwrap.dedent('''
-                Teamspeak does not seem to be correctly installed.
-                Having Teamspeak is required in order to play Tactical Battlefield.
+                Your Teamspeak installation is too old or not installed correctly.
 
-                {}[ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
+                [color=FF0000]{}[/color][ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
 
-                Install Teamspeak and restart the launcher.
-
-
-
-                [i]Note[/i]:
-                Some antiviruses may block access to Windows registry
-                resulting in this message.
-                Make sure you grant access to the registry for the launcher.
+                (Re)Install Teamspeak and restart the launcher.
                 ''').format(detailed_message)
             box = MessageBox(message, title='Teamspeak required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)
@@ -157,12 +149,6 @@ def check_requirements(verbose=True):
                 [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
 
                 Install Steam and restart the launcher.
-
-
-                [i]Note[/i]:
-                Some antiviruses may block access to Windows registry
-                resulting in this message.
-                Make sure you grant access to the registry for the launcher.
                 ''')
             box = MessageBox(message, title='Steam required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)
@@ -176,20 +162,12 @@ def check_requirements(verbose=True):
         if verbose:
             message = textwrap.dedent('''
                 Cannot find Arma 3 installation directory.
-
                 This happens after clicking "Verify integrity of game cache" on Steam.
 
-                To fix this problem you have to run the original Arma 3 launcher once.
-                Afterwards, restart this launcher.
+                [b]To fix this problem you have to run the original Arma 3 launcher once.
+                Afterwards, restart this launcher.[/b]
 
                 [ref=steam://run/107410][color=3572b0]Click here to run the Arma 3 launcher.[/color][/ref]
-
-
-                [i]Note[/i]:
-                Some antiviruses may block access to Windows registry
-                also resulting in this message.
-                If following the steps above did not fix the issue,
-                make sure you grant access to the registry for the launcher.
                 ''')
 
             box = MessageBox(message, title='Arma 3 required!', markup=True,
