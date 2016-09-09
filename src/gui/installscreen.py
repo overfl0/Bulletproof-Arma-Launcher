@@ -19,6 +19,7 @@ import kivy.app  # To keep PyDev from complaining
 import os
 import textwrap
 import third_party.helpers
+import utils.system_processes
 
 from autoupdater import autoupdater
 from config.version import version
@@ -570,6 +571,11 @@ class Controller(object):
     ############################################################################
 
     def run_the_game(self, ip=None, port=None, teamspeak_url=None):
+
+        if utils.system_processes.program_running('arma3launcher.exe'):
+            ErrorPopup(message='Close Bohemia Interactive Arma 3 Launcher first!').chain_open()
+            return
+
         seeding_type = self.settings.get('seeding_type')
 
         # Stop seeding if not set to always seed
