@@ -9,6 +9,11 @@ import sys
 file_directory = os.path.dirname(os.path.realpath(__file__))
 site.addsitedir(os.path.abspath(os.path.join(file_directory, 'src')))
 
+try:
+    os.unlink(os.path.join('src', 'config', 'config.pyc'))
+except:
+    pass
+
 from config import config
 
 full_executable = config.executable_name + '.exe'
@@ -22,6 +27,8 @@ def cleanup(clean_dirs):
 
     quiet_unlink(full_executable)
     quiet_unlink(os.path.join('c:\\vagrant', full_executable))
+
+    remove_pyc_recursive('.')
 
 def tests():
     print_text('Running Unit tests...')
@@ -66,6 +73,12 @@ def quiet_unlink(file_name):
             shutil.rmtree(file_name)
         else:
             os.unlink(file_name)
+
+def remove_pyc_recursive(path):
+    for root, _, files in os.walk(path):
+        for f in [os.path.join(root, _file) for _file in files if _file.endswith('.pyc')]:
+            os.unlink(f)
+
 
 if __name__ == '__main__':
     main()
