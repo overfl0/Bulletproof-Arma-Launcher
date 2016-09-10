@@ -304,10 +304,10 @@ class Controller(object):
 
         ret_servers = filter(lambda x: all((x.get('name'), x.get('ip'), x.get('port'))), checked_servers)
 
-        # Add the default teamspeak server if not provided
+        # Add the default values, if not provided
         for ret_server in ret_servers:
-            if 'teamspeak' not in ret_server:
-                ret_server['teamspeak'] = default_teamspeak
+            ret_server.setdefault('teamspeak', default_teamspeak)
+            ret_server.setdefault('password', None)
 
         return ret_servers
 
@@ -570,7 +570,7 @@ class Controller(object):
 
     ############################################################################
 
-    def run_the_game(self, ip=None, port=None, teamspeak_url=None):
+    def run_the_game(self, ip=None, port=None, password=None, teamspeak_url=None):
 
         if utils.system_processes.program_running('arma3launcher.exe'):
             ErrorPopup(message='Close Bohemia Interactive Arma 3 Launcher first!').chain_open()
@@ -583,19 +583,20 @@ class Controller(object):
             if self.para and self.para.is_open() and self.para.action_name == 'sync':
                 self.para.request_termination()
 
-        third_party.helpers.run_the_game(self.mods, ip=ip, port=port, teamspeak_url=teamspeak_url)
+        third_party.helpers.run_the_game(self.mods, ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
         self.disable_action_buttons()
 
     def on_play_button_release(self, btn):
         Logger.info('InstallScreen: User hit play')
-        ip = port = None
+        ip = port = password = None
 
         if self.servers:
             ip = self.servers[0]['ip']
             port = self.servers[0]['port']
+            password = self.servers[0]['password']
             teamspeak_url = self.servers[0]['teamspeak']
 
-        self.run_the_game(ip, port, teamspeak_url)
+        self.run_the_game(ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(

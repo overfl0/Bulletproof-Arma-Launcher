@@ -127,7 +127,7 @@ class Arma(object):
 
     @staticmethod
     def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True,
-                 ip=None, port=None):
+                 ip=None, port=None, password=None):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
@@ -162,6 +162,9 @@ class Arma(object):
 
         if port:
             game_args.extend(['-port=' + port])
+
+        if password:
+            game_args.extend(['-password=' + password])
 
         if custom_args:
             game_args.extend(custom_args)

@@ -179,7 +179,7 @@ def check_requirements(verbose=True):
     return True
 
 
-def run_the_game(mods, ip=None, port=None, teamspeak_url=None):
+def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
     """Run the game with the right parameters.
     Handle the exceptions by showing an appropriate message on error.
     """
@@ -205,7 +205,7 @@ def run_the_game(mods, ip=None, port=None, teamspeak_url=None):
 
     try:
         custom_args = []  # TODO: Make this user selectable
-        _ = Arma.run_game(mod_list=mods_paths, custom_args=custom_args, ip=ip, port=port)
+        _ = Arma.run_game(mod_list=mods_paths, custom_args=custom_args, ip=ip, port=port, password=password)
         # Note: although run_game returns an object, due to the way steam works,
         # it is unreliable. You never know whether it is the handle to Arma,
         # Steam or Arma's own launcher.
