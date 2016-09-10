@@ -52,7 +52,7 @@ class GameSelectionBox(Popup):
         popup_height = 120 + (26 * buttons_count)
 
         super(GameSelectionBox, self).__init__(
-            title=default_title, content=bl, size_hint=(None, None), size=(200, popup_height))
+            title=default_title, content=bl, size_hint=(None, None), size=(300, popup_height))
 
         # Bind an optional handler when the user closes the message
         if on_dismiss:
