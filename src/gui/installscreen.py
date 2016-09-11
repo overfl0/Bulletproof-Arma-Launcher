@@ -89,7 +89,7 @@ class Controller(object):
         self.launcher = None
 
         # Uncomment the code below to enable troubleshooting mode
-        # Clock.schedule_interval(third_party.helpers.check_requirements_troubleshooting, 0)
+        # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
         # return
 
         # Don't run logic if required third party programs are not installed
@@ -106,7 +106,7 @@ class Controller(object):
         else:
             # This will check_requirements(dt) which is not really what we
             # want but it is good enough ;)
-            Clock.schedule_interval(third_party.helpers.check_requirements, 1)
+            Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
 
     def stop_mod_processing(self):
         """Forcefully stop any processing and ignore all the para promises.
@@ -362,6 +362,11 @@ class Controller(object):
         self.view.ids.make_torrent.disable()
         self.view.ids.status_image.show()
         self.view.ids.status_label.text = 'Creating torrents...'
+
+        mods_to_convert = self.mods
+        if self.launcher:
+            mods_to_convert.append(self.launcher)
+
         self.para = self.mod_manager.make_torrent(mods=self.mods)
         self.para.then(self.on_maketorrent_resolve,
                        self.on_maketorrent_reject,
