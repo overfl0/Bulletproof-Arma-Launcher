@@ -107,6 +107,70 @@ def check_requirements_troubleshooting(dummy_var):
     return False
 
 
+def arma_not_found_workaround(on_ok, on_error):
+    """After performing a file integrity check on Steam, Arma 3 registry entries
+    are removed and the launcher cannot use them to get paths.
+
+    Running the Arma 3 launcher fixes this, although the method they use is very
+    crude - they just scan their local directory for executables and recreate
+    the registry entries if found. The only problem is that only steam knows the
+    launcher's directory.
+
+    So what we do here is we run the launcher and then we wait for it to
+    recreate the entries and then try to kill its process after the fact.
+    """
+
+    from kivy.clock import Clock
+    from kivy.uix.popup import Popup
+    from kivy.uix.label import Label
+
+    arma_not_found_fix_popup = Popup(
+        title='Fixing registry entries',
+        content=Label(text='Running Arma 3 launcher after Steam integrity check.\nPlease wait...'),
+        size_hint=(None, None),
+        size=(400, 200),
+        auto_dismiss=False)
+
+    def start_workaround(dt):
+        arma_not_found_fix_popup.open()
+        try:
+            Arma.run_arma3_launcher()
+
+        except (SteamNotInstalled, OSError):
+            on_error()
+            return
+
+        Clock.schedule_interval(arma_not_found_tick, 1)
+
+    def arma_not_found_tick(dt):
+        Logger.info('Workaround: tick')
+
+        try:
+            Arma.get_installation_path()
+
+        except ArmaNotInstalled:
+            return  # Wait again for the launcher to start and fix things
+
+        # It's okay, everything has been fixed
+        Logger.info('Workaround: Registry entries fixed. Resuming normal workflow.')
+        arma_not_found_fix_popup.dismiss()
+        try:
+            utils.system_processes.kill_program('arma3launcher.exe')
+        except:
+            pass  # Don't care. Let the user bother about it
+
+        on_ok()
+        return False  # Unschedule this function
+
+    try:
+        Arma.get_installation_path()
+        on_ok()  # Everything is OK, go on!
+
+    except ArmaNotInstalled:
+        Logger.error('Helpers: Could not find Arma 3. Trying a workaround...')
+        Clock.schedule_once(start_workaround, 0)
+
+
 def check_requirements(verbose=True):
     """Check if all the required third party programs are installed in the system.
     Return True if the check passed.

@@ -126,6 +126,17 @@ class Arma(object):
             raise SteamNotInstalled()
 
     @staticmethod
+    def run_arma3_launcher():
+        """Run the original arma 3 launcher."""
+        steam_exe_path = Arma.get_steam_exe_path()  # May raise SteamNotInstalled!
+        game_args = [steam_exe_path, '-applaunch', '107410']
+
+        Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
+        popen_object = subprocess.Popen(unicode_helpers.u_to_fs_list(game_args))  # May raise OSError
+
+        return popen_object
+
+    @staticmethod
     def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True,
                  ip=None, port=None, password=None):
         """Run the game in a separate process.
