@@ -57,7 +57,7 @@ def create_timestamp(epoch):
     return datetime.fromtimestamp(int(epoch)).strftime('%Y-%m-%d_') + str(int(epoch))
 
 
-def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
+def _make_torrent(messagequeue, launcher_basedir, mods):
     """Create torrents from mods on the disk."""
 
     files_created = []
@@ -73,7 +73,7 @@ def _make_torrent(messagequeue, launcher_moddir, launcher_basedir, mods):
         output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
         output_path = os.path.join(launcher_basedir, output_file)
         comment = 'TacBF dependency on mod {}'.format(mod.foldername)
-        directory = os.path.join(launcher_moddir, mod.foldername)
+        directory = os.path.join(mod.clientlocation, mod.foldername)
 
         messagequeue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
         file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
@@ -430,7 +430,6 @@ class ModManager(object):
     def make_torrent(self, mods):
         para = Para(_protected_call, (
             _make_torrent,
-            self.settings.get('launcher_moddir'),
             self.settings.get('launcher_basedir'),
             mods
         ), 'make_torrent')

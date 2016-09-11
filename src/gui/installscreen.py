@@ -362,6 +362,11 @@ class Controller(object):
         self.view.ids.make_torrent.disable()
         self.view.ids.status_image.show()
         self.view.ids.status_label.text = 'Creating torrents...'
+
+        mods_to_convert = self.mods
+        if self.launcher:
+            mods_to_convert.append(self.launcher)
+
         self.para = self.mod_manager.make_torrent(mods=self.mods)
         self.para.then(self.on_maketorrent_resolve,
                        self.on_maketorrent_reject,
