@@ -14,14 +14,15 @@ from __future__ import unicode_literals
 
 import os
 import psutil
-import sys
 import unicode_helpers
 
+from kivy.logger import Logger
 
-def program_running(executable):
+
+def program_running(executable_name):
     """Return if any process running on the system matches the given name."""
 
-    executable_casefold = unicode_helpers.casefold(executable)
+    executable_casefold = unicode_helpers.casefold(executable_name)
 
     for process in psutil.process_iter():
         try:
@@ -60,3 +61,20 @@ def file_running(path):
             continue
 
     return False
+
+
+def kill_program(executable_name):
+    """Kill all the programs that match the given name."""
+
+    executable_casefold = unicode_helpers.casefold(executable_name)
+    Logger.info('Iterating processes in search for {}'.format(executable_name))
+
+    for process in psutil.process_iter():
+        try:
+            name = unicode_helpers.fs_to_u(process.name())
+            if unicode_helpers.casefold(name) == executable_casefold:
+                Logger.info('Killing {}!'.format(name))
+                process.kill()
+
+        except psutil.Error:
+            continue

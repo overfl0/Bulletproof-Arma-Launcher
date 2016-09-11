@@ -64,8 +64,7 @@ class Controller(object):
         self.mod_manager = ModManager()
         self.settings = kivy.app.App.get_running_app().settings
         self.version = version
-
-        self.start_mod_checking()
+        self.para = None
 
         Clock.schedule_once(self.update_footer_label, 0)
 
@@ -74,6 +73,9 @@ class Controller(object):
 
         # bind to settings change
         self.settings.bind(on_change=self.on_settings_change)
+
+        third_party.helpers.arma_not_found_workaround(on_ok=self.start_mod_checking,
+                                                      on_error=self.start_mod_checking)
 
     def start_mod_checking(self):
         """Start the whole process of getting metadata and then checking if all
