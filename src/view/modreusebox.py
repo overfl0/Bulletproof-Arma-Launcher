@@ -14,16 +14,14 @@ from __future__ import unicode_literals
 
 import textwrap
 
+from dropdownbox import DropdownBox
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 from view.chainedpopup import ChainedPopup
-from view.behaviors.defaultbuttonbehavior import DefaultButtonBehavior
-from view.behaviors.hoverbehavior import HoverBehavior
-from view.behaviors.bubblebehavior import BubbleBehavior
+from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior
 
-from dropdownbox import DropdownBox
 
 default_title = ''
 
@@ -37,11 +35,6 @@ class DefaultHoverButton(HoverBehavior, BubbleBehavior, DefaultButtonBehavior, B
 
 
 class ModReuseBox(ChainedPopup):
-    def close_and_run(self, func, *args):
-        """There is probably a simpler way of doing this but oh well..."""
-        self.dismiss()
-        func(*args[:-1])
-
     def __init__(self, on_selection, mod_name, locations=None, title=default_title):
         if locations is None:
             locations = []
@@ -69,21 +62,24 @@ class ModReuseBox(ChainedPopup):
             takes no additional space BUT [color=ff3333]may modify the
             original mod on your disk while synchronizing[/color]).''')
         button1 = DefaultHoverButton(text='Use that mod', size=(100, 30), bubble_text=button1_bubble)
-        button1.bind(on_release=lambda x: self.close_and_run(on_selection, dropdown_box.text, 'use'))
+        button1.bind(on_release=self.dismiss)
+        button1.bind(on_release=lambda x: on_selection(dropdown_box.text, 'use'))
         horizontal_box.add_widget(button1)
 
         button2_bubble = textwrap.dedent('''\
             Create a local copy of the mod and download
             the missing files (faster, takes additional space).''')
         button2 = HButton(text='Copy it', size=(100, 30), bubble_text=button2_bubble)
-        button2.bind(on_release=lambda x: self.close_and_run(on_selection, dropdown_box.text, 'copy'))
+        button2.bind(on_release=self.dismiss)
+        button2.bind(on_release=lambda x: on_selection(dropdown_box.text, 'copy'))
         horizontal_box.add_widget(button2)
 
         button3_bubble = textwrap.dedent('''\
             Ignore it and download the whole mod from
             the internet (slower, takes additional space).''')
         button3 = HButton(text='Ignore', size=(100, 30), bubble_text=button3_bubble)
-        button3.bind(on_release=lambda x: self.close_and_run(on_selection, dropdown_box.text, 'ignore'))
+        button3.bind(on_release=self.dismiss)
+        button3.bind(on_release=lambda x: on_selection(dropdown_box.text, 'ignore'))
         horizontal_box.add_widget(button3)
 
         bl.add_widget(horizontal_box)

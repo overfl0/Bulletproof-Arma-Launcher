@@ -18,7 +18,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.dropdown import DropDown
 from view.labelb import LabelB
-from view.behaviors.hoverbehavior import HoverBehavior
+from view.behaviors import HoverBehavior
 
 
 class DropdownBoxEntry(ButtonBehavior, HoverBehavior, LabelB):
