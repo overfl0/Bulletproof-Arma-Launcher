@@ -14,75 +14,81 @@ from __future__ import unicode_literals
 
 import textwrap
 
-from functools import partial
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
-from utils import browser
 from view.chainedpopup import ChainedPopup
-from view.labelb import LabelB
+from view.behaviors.defaultbuttonbehavior import DefaultButtonBehavior
+from view.behaviors.hoverbehavior import HoverBehavior
+from view.behaviors.bubblebehavior import BubbleBehavior
 
-default_title = '''A similar mod seems to already have been downloaded'''
+from dropdownbox import DropdownBox
+
+default_title = ''
 
 
-def open_hyperlink(obj, ref):
-    browser.open_hyperlink(ref)
+class HButton(HoverBehavior, BubbleBehavior, Button):
+    pass
+
+
+class DefaultHoverButton(HoverBehavior, BubbleBehavior, DefaultButtonBehavior, Button):
+    pass
 
 
 class ModReuseBox(ChainedPopup):
     def close_and_run(self, func, *args):
         """There is probably a simpler way of doing this but oh well..."""
-        self.unbind_uid('on_dismiss', self.custom_dismiss_uid)
         self.dismiss()
         func(*args[:-1])
 
-    def __init__(self, on_selection, mod_name, locations=[], title=default_title,
-                 markup=False):
+    def __init__(self, on_selection, mod_name, locations=None, title=default_title):
+        if locations is None:
+            locations = []
+
         bl = BoxLayout(orientation='vertical')
 
         text = textwrap.dedent('''
-            A mod similar to {} has been found on disk.
-
-            You can:
-              1) Ignore it and download the whole mod from the internet (takes additional space).
-              2) Copy its contents and then only download the missing files (faster, takes space).
-              3) Let the launcher use that mod directory by creating a symbolic link (fastest, takes no space BUT may modify the original mod on your disk while synchronizing).
-
-              ''') \
+            The mod [b]{}[/b] has been found in the following location(s):
+            ''') \
             .format(mod_name)
 
-        la = Label(text=text, markup=markup, text_size=(570, None), size_hint=(1, 5))
-        la.bind(on_ref_press=open_hyperlink)
+        la = Label(text=text, markup=True, text_size=(570, None) , size_hint=(1, 2))
         bl.add_widget(la)
 
-        button = Button(text='Ignore and just download', size_hint_x=0.4, pos_hint={'center_x': 0.5})
-        button.bind(on_release=partial(self.close_and_run, on_selection, None, 'ignore'))
-        bl.add_widget(button)
+        dropdown_box = DropdownBox(locations)
+        bl.add_widget(dropdown_box)
 
-        for location in locations:
-            bl.add_widget(Widget())  # Spacer
+        bl.add_widget(Widget(size_hint=(1, 0.5)))  # Spacer
 
-            la = LabelB(text=location, markup=markup, text_size=(570, None), bcolor=(0, 0, 0, 0.3))
-            la.bind(on_ref_press=open_hyperlink)
-            bl.add_widget(la)
+        # Buttons
+        horizontal_box = BoxLayout(orientation='horizontal', spacing=50, width=300)
 
-            horizontal_box = BoxLayout(orientation='horizontal', spacing=50, width=300)
+        button1_bubble = textwrap.dedent('''\
+            Use the mod directly on disk (fastest,
+            takes no additional space BUT [color=ff3333]may modify the
+            original mod on your disk while synchronizing[/color]).''')
+        button1 = DefaultHoverButton(text='Use that mod', size=(100, 30), bubble_text=button1_bubble)
+        button1.bind(on_release=lambda x: self.close_and_run(on_selection, dropdown_box.text, 'use'))
+        horizontal_box.add_widget(button1)
 
-            button = Button(text='Copy contents and synchronize', size=(100, 30))
-            button.bind(on_release=partial(self.close_and_run, on_selection, location, 'copy'))
-            horizontal_box.add_widget(button)
+        button2_bubble = textwrap.dedent('''\
+            Create a local copy of the mod and download
+            the missing files (faster, takes additional space).''')
+        button2 = HButton(text='Copy it', size=(100, 30), bubble_text=button2_bubble)
+        button2.bind(on_release=lambda x: self.close_and_run(on_selection, dropdown_box.text, 'copy'))
+        horizontal_box.add_widget(button2)
 
-            button = Button(text='Create symbolic link and synchronize', size=(100, 30))
-            button.bind(on_release=partial(self.close_and_run, on_selection, location, 'use'))
-            horizontal_box.add_widget(button)
+        button3_bubble = textwrap.dedent('''\
+            Ignore it and download the whole mod from
+            the internet (slower, takes additional space).''')
+        button3 = HButton(text='Ignore', size=(100, 30), bubble_text=button3_bubble)
+        button3.bind(on_release=lambda x: self.close_and_run(on_selection, dropdown_box.text, 'ignore'))
+        horizontal_box.add_widget(button3)
 
-            bl.add_widget(horizontal_box)
+        bl.add_widget(horizontal_box)
 
-        popup_height = 280 + (95 * len(locations))
+        popup_height = 180
 
         super(ModReuseBox, self).__init__(
-            title=default_title, content=bl, size_hint=(None, None), size=(600, popup_height))
-
-        # Bind a handler when the user closes the message
-        self.custom_dismiss_uid = self.fbind('on_dismiss', lambda x: partial(on_selection, None, 'ignore')())
+            title=default_title, content=bl, size_hint=(None, None), size=(600, popup_height), auto_dismiss=False)
