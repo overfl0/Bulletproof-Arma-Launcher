@@ -519,15 +519,22 @@ class Controller(object):
 
         return None  # Returning True would prevent the popup from being closed
 
-    def on_mod_found_decision(self, location, action):
+    def on_mod_found_decision(self, mod_name, location, action):
         """A quickly done workaround for telling the launcher what to do with
         a mod found on disk.
         Feel free to refactor me :).
         """
         if self.para and self.para.is_open() and self.para.action_name == 'sync':
-            Logger.info('InstallScreen: User has made a decision about a mod. Passing it to the subprocess.')
-            Logger.info('InstallScreen: Location: {}, Action: {}'.format(location, action))
-            self.para.send_message('woot! I can\'t believe it!')
+            Logger.info('InstallScreen: User has made a decision about mod {}. Passing it to the subprocess.'.format(mod_name))
+            Logger.debug('InstallScreen: Mod: {}, Location: {}, Action: {}'.format(mod_name, location, action))
+
+            params = {
+                'mod_name': mod_name,
+                'location': location,
+                'action': action
+            }
+
+            self.para.send_message('mod_reuse', params)
 
         return None
 

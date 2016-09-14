@@ -36,7 +36,7 @@ def find_mods(names):
     For efficiency reasons, all mods are searched for at the same time.
 
     Return a dictionary with <names> as keys and a list of proposed locations as
-    values.
+    values. Only mods with found locations are returned.
 
     Note: windows Junctions and Symlinks are treated as directories, even if
     they are broken. If broken, os.walk(onerror=...) will be called.
@@ -49,7 +49,7 @@ def find_mods(names):
     # inodes_visited = set()  # Store the inode of each directory to prevent infinite loops
 
     Logger.info('Finder: Searching for mods that have already been downloaded on disk: {}'.format(names))
-    response = {name: [] for name in names}
+    response = {}
 
     for location in get_mod_locations():
         Logger.info('Finder: Trying {}'.format(location))
@@ -72,7 +72,8 @@ def find_mods(names):
                 # Find the right name in the right case
                 for name in names:
                     if casefold(name) == casefold_base_root:
-                        response[name].append(root)
+                        # response[name].append(root)
+                        response.setdefault(name, []).append(root)
                         break
 
     Logger.info('Finder: probable mods locations: {}'.format(response))

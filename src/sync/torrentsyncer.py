@@ -11,6 +11,7 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+
 # Note: every std::string coming from libtorrent should be decoded from utf-8
 # like that: alert.message().decode('utf-8')
 # Every string submitted to libtorrent should be encoded to utf-8 as well
@@ -26,6 +27,8 @@ if __name__ == "__main__":
 
 import libtorrent
 import os
+import shutil
+import time
 import torrent_utils
 
 from kivy.logger import Logger
@@ -404,18 +407,51 @@ class TorrentSyncer(object):
 
             self.session.set_settings(session_settings)
 
-    def reuse_downloaded_payload(self):
+        elif command == 'mod_reuse':
+            # TODO: Move this somewhere else. Preferably to a separate module
+            for mod in self.mods:
+                if not mod.foldername == params['mod_name']:
+                    continue
+
+                mod.needs_decision = False
+                dest_location = os.path.join(mod.clientlocation, mod.foldername)
+
+                if params['action'] == 'use':
+                    Logger.info('Message: Mod reuse: symlink, mod: {}'.format(mod.foldername))
+                    self.result_queue.progress({'msg': 'Creating junction for mod {}...'.format(mod.foldername), 'log': []}, 0)
+                    import subprocess
+                    subprocess.check_call(['cmd', '/c', 'mklink', '/J', dest_location, params['location']])
+                    # shutil.copytree(params['location'], dest_location)
+                    self.result_queue.progress({'msg': 'Creating junction for mod {} finished!'.format(mod.foldername), 'log': []}, 0)
+
+                elif params['action'] == 'copy':
+                    Logger.info('Message: Mod reuse: copy, mod: {}'.format(mod.foldername))
+                    self.result_queue.progress({'msg': 'Copying mod {}...'.format(mod.foldername), 'log': []}, 0)
+                    shutil.copytree(params['location'], dest_location)
+                    self.result_queue.progress({'msg': 'Copying mod {} finished!'.format(mod.foldername), 'log': []}, 0)
+
+                elif params['action'] == 'ignore':
+                    Logger.info('Message: Mod reuse: ignore, mod: {}'.format(mod.foldername))
+
+                else:
+                    raise Exception('Unknown mod_reuse action: {}'.format(params['action']))
+
+                break
+
+    def reuse_downloaded_mod(self):
         """Verify whether there is any mod that has not been downloaded ever.
         If such a mod is found, it will be searched for on the disk in order to
         potentially reuse that data.
         """
-        self.force_termination = True  # DEBUG
+
         missing_mods = []
 
         Logger.info('Reuse: Checking for missing mods.')
 
         for mod in self.mods:
+            mod.needs_decision = False
             mod_directory = os.path.join(mod.clientlocation, mod.foldername)
+
             if not os.path.lexists(mod_directory):
                 missing_mods.append(mod.foldername)
 
@@ -429,28 +465,31 @@ class TorrentSyncer(object):
                                     'log': [],
                                     }, 0)
 
-
+        # Find potential mods on disk. The mods with potential locations found
+        # are marked as requiring a user decision
         found_mods = finder.find_mods(missing_mods)
+        for mod in self.mods:
+            if mod.foldername in found_mods:
+                mod.needs_decision = True
 
-        found_anything = False
-        for missing_mod in missing_mods:
-            if not found_mods[missing_mod]:
-                continue
-
-            found_anything = True
-            self.result_queue.progress({'msg': 'Found possible places for {}'.format(missing_mod),
+        # For missing mods that have been found
+        for mod_name in found_mods:
+            self.result_queue.progress({'msg': 'Found possible places for {}'.format(mod_name),
                                         'log': [],
                                         'mod_found_action': {
-                                            'mod_name': missing_mod,
-                                            'locations': found_mods[missing_mod]
+                                            'mod_name': mod_name,
+                                            'locations': found_mods[mod_name]
                                         }
                                         }, 0)
 
-        if found_anything:
-            pass
-            # TODO: Wait for replies from the user
-            # TODO: Refactor me
+        while any(mod.needs_decision for mod in self.mods):
+            self.handle_messages()
 
+            if self.force_termination:
+                return
+
+            # Logger.info('Tick')
+            time.sleep(0.5)
 
     def sync(self, force_sync=False, intend_to_seed=False):
         """
@@ -483,8 +522,8 @@ class TorrentSyncer(object):
                 sync_success = False
                 return sync_success
 
-        self.reuse_downloaded_payload()
-
+        self.reuse_downloaded_mod()
+        # return  # DEBUG
         if self.force_termination:
             Logger.info('Sync: Downloading process was requested to stop before starting the download.')
             self.result_queue.reject({'details': 'Downloading process was requested to stop before starting the download.'})

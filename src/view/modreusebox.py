@@ -63,7 +63,7 @@ class ModReuseBox(ChainedPopup):
             original mod on your disk while synchronizing[/color]).''')
         button1 = DefaultHoverButton(text='Use that mod', size=(100, 30), bubble_text=button1_bubble)
         button1.bind(on_release=self.dismiss)
-        button1.bind(on_release=lambda x: on_selection(dropdown_box.text, 'use'))
+        button1.bind(on_release=lambda x: on_selection(mod_name, dropdown_box.text, 'use'))
         horizontal_box.add_widget(button1)
 
         button2_bubble = textwrap.dedent('''\
@@ -71,7 +71,7 @@ class ModReuseBox(ChainedPopup):
             the missing files (faster, takes additional space).''')
         button2 = HButton(text='Copy it', size=(100, 30), bubble_text=button2_bubble)
         button2.bind(on_release=self.dismiss)
-        button2.bind(on_release=lambda x: on_selection(dropdown_box.text, 'copy'))
+        button2.bind(on_release=lambda x: on_selection(mod_name, dropdown_box.text, 'copy'))
         horizontal_box.add_widget(button2)
 
         button3_bubble = textwrap.dedent('''\
@@ -79,7 +79,7 @@ class ModReuseBox(ChainedPopup):
             the internet (slower, takes additional space).''')
         button3 = HButton(text='Ignore', size=(100, 30), bubble_text=button3_bubble)
         button3.bind(on_release=self.dismiss)
-        button3.bind(on_release=lambda x: on_selection(dropdown_box.text, 'ignore'))
+        button3.bind(on_release=lambda x: on_selection(mod_name, dropdown_box.text, 'ignore'))
         horizontal_box.add_widget(button3)
 
         bl.add_widget(horizontal_box)
