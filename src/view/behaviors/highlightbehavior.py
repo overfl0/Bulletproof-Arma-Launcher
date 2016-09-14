@@ -12,16 +12,17 @@
 
 from __future__ import unicode_literals
 
-__all__ = (
-           'BorderBehavior',
-           'BubbleBehavior',
-           'DefaultButtonBehavior',
-           'HighlightBehavior',
-           'HoverBehavior',
-          )
+class HighlightBehavior(object):
+    """Highlights the button when mouse_hover is True
+    """
 
-from borderbehavior import BorderBehavior
-from bubblebehavior import BubbleBehavior
-from defaultbuttonbehavior import DefaultButtonBehavior
-from highlightbehavior import HighlightBehavior
-from hoverbehavior import HoverBehavior
+    def light_the_button(self, instance, hover):
+        if hover:
+            instance.background_color = (1.5, 1.5, 1.5, 1.5)
+        else:
+            instance.background_color = (1, 1, 1, 1)
+
+    def __init__(self, **kwargs):
+        super(HighlightBehavior, self).__init__(**kwargs)
+
+        self.bind(mouse_hover=self.light_the_button)

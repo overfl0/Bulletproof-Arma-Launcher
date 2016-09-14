@@ -20,17 +20,17 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 from view.chainedpopup import ChainedPopup
-from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior
+from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior, HighlightBehavior
 
 
 default_title = ''
 
 
-class HButton(HoverBehavior, BubbleBehavior, Button):
+class HButton(HighlightBehavior, HoverBehavior, BubbleBehavior, Button):
     pass
 
 
-class DefaultHoverButton(HoverBehavior, BubbleBehavior, DefaultButtonBehavior, Button):
+class DefaultHoverButton(HighlightBehavior, HoverBehavior, BubbleBehavior, DefaultButtonBehavior, Button):
     pass
 
 
