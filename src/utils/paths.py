@@ -206,11 +206,34 @@ def is_dir_writable(path):
     return True
 
 
+def is_broken_junction(path):
+    """Check if the directory pointed by path is an NTFS Junction or Symlink
+    that is broken.
+
+    A simple way of checking that is to see if the file exists but cannot be
+    read and returns a "No such file or directory" error.
+    Other ways involve some windows trickery.
+    """
+
+    if os.path.isdir(path):
+        try:
+            os.listdir(path)
+
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                return True  # This is a most probably a broken junction
+
+            raise
+
+    return False
+
+
 def mkdir_p(path):
     """Create all directories described by path if they don't exist."""
     try:
         os.makedirs(path)
-    except OSError as exc:  # Python >2.5
+
+    except OSError as exc:
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:

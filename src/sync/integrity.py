@@ -153,7 +153,9 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
 
             full_base_path = os.path.join(base_directory, directory)
             _unlink_safety_assert(base_directory, full_base_path, action='enter')
-            for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=False):
+            # FIXME: on OSError, this might indicate a broken junction or symlink on windows
+            # Must act accordingly then.
+            for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=True):
                 relative_path = os.path.relpath(dirpath, base_directory)
                 Logger.debug('In directory: {}'.format(relative_path))
 
@@ -308,7 +310,7 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
     for file_path, size, mtime in files_data:
         try:
             full_file_path = os.path.join(base_directory, file_path)
-            file_stat = os.stat(full_file_path)
+            file_stat = os.lstat(full_file_path)
         except OSError:
             Logger.error('Could not perform stat on {}'.format(full_file_path))
             return False
