@@ -1,1 +1,1 @@
-version = u'1.2.4'
+version = u'1.3.0'
