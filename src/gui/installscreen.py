@@ -38,6 +38,7 @@ from utils.primitive_git import get_git_sha1_auto
 from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.gameselectionbox import GameSelectionBox
+from view.modreusebox import ModReuseBox
 from view.messagebox import MessageBox
 
 
@@ -526,6 +527,25 @@ class Controller(object):
 
         return None  # Returning True would prevent the popup from being closed
 
+    def on_mod_found_decision(self, mod_name, location, action):
+        """A quickly done workaround for telling the launcher what to do with
+        a mod found on disk.
+        Feel free to refactor me :).
+        """
+        if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            Logger.info('InstallScreen: User has made a decision about mod {}. Passing it to the subprocess.'.format(mod_name))
+            Logger.debug('InstallScreen: Mod: {}, Location: {}, Action: {}'.format(mod_name, location, action))
+
+            params = {
+                'mod_name': mod_name,
+                'location': location,
+                'action': action
+            }
+
+            self.para.send_message('mod_reuse', params)
+
+        return None
+
     def on_sync_progress(self, progress, percentage):
         # Logger.debug('InstallScreen: syncing in progress')
 
@@ -544,6 +564,16 @@ class Controller(object):
                                               title=message_box['title'],
                                               markup=message_box['markup'],
                                               on_dismiss=on_dismiss)
+            message_box_instance.chain_open()
+
+        # Found possible mods on disk callback
+
+        mod_found_action = progress.get('mod_found_action')
+        if mod_found_action:
+            message_box_instance = ModReuseBox(on_selection=self.on_mod_found_decision,
+                                               mod_name=mod_found_action['mod_name'],
+                                               locations=mod_found_action['locations'],
+                                               )
             message_box_instance.chain_open()
 
     def on_sync_resolve(self, progress):
