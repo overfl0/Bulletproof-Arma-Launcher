@@ -20,7 +20,6 @@ from nose.plugins.attrib import attr
 
 from sync.modmanager import ModManager
 from sync.mod import Mod
-from sync.httpsyncer import HttpSyncer
 
 class AppMock(object):
     """docstring for AppMock"""

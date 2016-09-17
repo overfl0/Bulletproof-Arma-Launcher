@@ -262,7 +262,7 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
     Logger.info('Third party: Running the game')
 
     settings = kivy.app.App.get_running_app().settings
-    mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.clientlocation but it isn't!
+    mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.parent_location but it isn't!
 
     mods_paths = []
     for mod in mods:

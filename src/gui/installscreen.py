@@ -213,7 +213,7 @@ class Controller(object):
         if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
                 u_from=self.version, u_to=self.launcher.version):
 
-            launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, '{}.exe'.format(config.executable_name))
+            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
@@ -350,7 +350,7 @@ class Controller(object):
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
-        executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, '{}.exe'.format(config.executable_name))
+        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 

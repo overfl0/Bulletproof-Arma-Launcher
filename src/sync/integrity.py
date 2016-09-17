@@ -340,7 +340,8 @@ def is_complete_tfr_hack(mod_name, file_paths, checksums):
 
     # If the checked mod is not TFR, happily return rainbows and unicorns
     if not mod_name.startswith("Task Force Arrowhead Radio"):
-        return True
+        if mod_name != "@task_force_radio":
+            return True
 
     arma_path = Arma.get_installation_path()
     userconfig = os.path.join(arma_path, 'userconfig')

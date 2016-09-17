@@ -53,7 +53,7 @@ def is_complete_quick(mod):
         return False
 
     # (3)
-    if metadata_file.get_torrent_url() != mod.downloadurl:
+    if metadata_file.get_torrent_url() != mod.torrent_url:
         Logger.info('Torrent urls differ. Marking as not complete')
         return False
 
@@ -81,18 +81,18 @@ def is_complete_quick(mod):
     # file_path, size, mtime
     files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
 
-    if not check_files_mtime_correct(mod.clientlocation, files_data):
+    if not check_files_mtime_correct(mod.parent_location, files_data):
         Logger.info('Some files seem to have been modified in the meantime. Marking as not complete')
         return False
 
     # (5) Check if there are no additional files in the directory
     checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
     files_list = checksums.keys()
-    if not check_mod_directories(files_list, mod.clientlocation, on_superfluous='warn'):
+    if not check_mod_directories(files_list, mod.parent_location, on_superfluous='warn'):
         Logger.info('Superfluous files in mod directory. Marking as not complete')
         return False
 
-    return is_complete_tfr_hack(mod.name, files_list, checksums)
+    return is_complete_tfr_hack(mod.full_name, files_list, checksums)
 
 
 def get_torrent_info_from_bytestring(bencoded):

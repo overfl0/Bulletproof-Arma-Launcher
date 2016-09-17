@@ -74,7 +74,7 @@ def _make_torrent(messagequeue, launcher_basedir, mods):
         output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
         output_path = os.path.join(launcher_basedir, output_file)
         comment = '{} dependency on mod {}'.format(config.launcher_name, mod.foldername)
-        directory = os.path.join(mod.clientlocation, mod.foldername)
+        directory = os.path.join(mod.parent_location, mod.foldername)
 
         messagequeue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
         file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
@@ -154,12 +154,12 @@ def _get_mod_descriptions(para):
     return data
 
 
-def convert_metadata_to_mod(md, downloadurlPrefix):
+def convert_metadata_to_mod(md, torrent_url_prefix):
     # TODO: This should be a constructor of the Mod class
     # parse timestamp
     tsstr = md.get('torrent-timestamp')
     md['torrent-timestamp'] = parse_timestamp(tsstr)
-    md['downloadurl'] = "{}{}-{}.torrent".format(downloadurlPrefix,
+    md['torrent_url'] = "{}{}-{}.torrent".format(torrent_url_prefix,
                                                  md['foldername'],
                                                  tsstr)
 
@@ -171,14 +171,14 @@ def convert_metadata_to_mod(md, downloadurlPrefix):
 def get_launcher_description(para, launcher_basedir, metadata):
     domain = devmode.get_launcher_domain(default=config.domain)
     torrents_path = devmode.get_torrents_path(default=config.torrents_path)
-    downloadurlPrefix = 'http://{}{}/'.format(domain, torrents_path)
+    torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
 
     if 'launcher' not in metadata:
         return None
 
     launcher = metadata['launcher']
-    launcher_mod = convert_metadata_to_mod(launcher, downloadurlPrefix)
-    launcher_mod.clientlocation = launcher_basedir
+    launcher_mod = convert_metadata_to_mod(launcher, torrent_url_prefix)
+    launcher_mod.parent_location = launcher_basedir
 
     return launcher_mod
 
@@ -186,12 +186,12 @@ def get_launcher_description(para, launcher_basedir, metadata):
 def process_description_data(para, data, launcher_moddir):
     domain = devmode.get_launcher_domain(default=config.domain)
     torrents_path = devmode.get_torrents_path(default=config.torrents_path)
-    downloadurlPrefix = 'http://{}{}/'.format(domain, torrents_path)
+    torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
     mods = []
 
     for md in data['mods']:
-        mod = convert_metadata_to_mod(md, downloadurlPrefix)
-        mod.clientlocation = launcher_moddir
+        mod = convert_metadata_to_mod(md, torrent_url_prefix)
+        mod.parent_location = launcher_moddir
         mods.append(mod)
 
         Logger.debug('ModManager: Got mods descriptions: ' + repr(md))
@@ -208,7 +208,7 @@ def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_desc
     mods_filter = devmode.get_mods_filter()
     if mods_filter:
         # Keep only the mods with names starting with any of the giver filters
-        mod_list = [mod for mod in mod_list if any(mod.name.startswith(prefix) for prefix in mods_filter)]
+        mod_list = [mod for mod in mod_list if any(mod.full_name.startswith(prefix) for prefix in mods_filter)]
 
     if launcher:
         # TODO: Perform a better check here. Should compare md5sum with actual launcher, etc...
@@ -304,7 +304,7 @@ def _tfr_post_download_hook(message_queue, mod):
     if mod.foldername != tfr_directory:
         return
 
-    path_tfr = os.path.join(mod.clientlocation, tfr_directory)
+    path_tfr = os.path.join(mod.parent_location, tfr_directory)
     path_userconfig = os.path.join(path_tfr, 'userconfig')
     path_ts3_addon = os.path.join(path_tfr, 'TeamSpeak 3 Client')
     path_ts_plugins = os.path.join(path_ts3_addon, 'plugins')
