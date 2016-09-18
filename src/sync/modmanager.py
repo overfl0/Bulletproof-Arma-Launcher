@@ -404,16 +404,13 @@ class ModManager(object):
     """docstring for ModManager"""
     def __init__(self):
         super(ModManager, self).__init__()
-        self.para = None
-        self.sync_para = None
-        self.launcher_sync_para = None
         self.mods = []
         self.launcher = None
         self.settings = kivy.app.App.get_running_app().settings
 
     def download_mod_description(self):
-        self.para = protected_para(_get_mod_descriptions, (), 'download_description')
-        return self.para
+        para = protected_para(_get_mod_descriptions, (), 'download_description')
+        return para
 
     def make_torrent(self, mods):
         para = protected_para(
@@ -427,7 +424,7 @@ class ModManager(object):
         return para
 
     def prepare_and_check(self, data):
-        self.para = protected_para(
+        para = protected_para(
             _prepare_and_check,
             (
                 self.settings.get('launcher_moddir'),
@@ -438,14 +435,14 @@ class ModManager(object):
             then=(self.on_prepare_and_check_resolve, None, None)
         )
 
-        return self.para
+        return para
 
     def sync_all(self, seed):
         synced_elements = list(self.mods)
         if self.launcher:
             synced_elements.append(self.launcher)
 
-        self.sync_para = protected_para(
+        para = protected_para(
             _sync_all,
             (
                 synced_elements,
@@ -457,10 +454,10 @@ class ModManager(object):
             then=(None, None, self.on_sync_all_progress)
         )
 
-        return self.sync_para
+        return para
 
     def sync_launcher(self, seed=False):
-        self.launcher_sync_para = protected_para(
+        para = protected_para(
             _sync_all,
             (
                 [self.launcher],
@@ -472,7 +469,7 @@ class ModManager(object):
             then=(None, None, self.on_sync_all_progress)
         )
 
-        return self.launcher_sync_para
+        return para
 
     def on_prepare_and_check_resolve(self, data):
         Logger.info('ModManager: Got mods ' + repr(data['mods']))
