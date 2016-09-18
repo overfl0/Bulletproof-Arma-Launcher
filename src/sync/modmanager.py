@@ -34,6 +34,108 @@ from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
 
 
+class ModManager(object):
+    """docstring for ModManager"""
+    def __init__(self):
+        super(ModManager, self).__init__()
+        self.mods = []
+        self.launcher = None
+        self.settings = kivy.app.App.get_running_app().settings
+
+    def download_mod_description(self):
+        para = protected_para(_get_mod_descriptions, (), 'download_description')
+        return para
+
+    def make_torrent(self, mods):
+        para = protected_para(
+            _make_torrent,
+            (
+                self.settings.get('launcher_basedir'),
+                mods
+            ),
+            'make_torrent'
+        )
+        return para
+
+    def prepare_and_check(self, data):
+        para = protected_para(
+            _prepare_and_check,
+            (
+                self.settings.get('launcher_moddir'),
+                self.settings.get('launcher_basedir'),
+                data
+            ),
+            'checkmods',
+            then=(self.on_prepare_and_check_resolve, None, None)
+        )
+
+        return para
+
+    def sync_all(self, seed):
+        synced_elements = list(self.mods)
+        if self.launcher:
+            synced_elements.append(self.launcher)
+
+        para = protected_para(
+            _sync_all,
+            (
+                synced_elements,
+                self.settings.get('max_download_speed'),
+                self.settings.get('max_upload_speed'),
+                seed
+            ),
+            'sync',
+            then=(None, None, self.on_sync_all_progress)
+        )
+
+        return para
+
+    def sync_launcher(self, seed=False):
+        para = protected_para(
+            _sync_all,
+            (
+                [self.launcher],
+                self.settings.get('max_download_speed'),
+                self.settings.get('max_upload_speed'),
+                seed
+            ),
+            'sync',
+            then=(None, None, self.on_sync_all_progress)
+        )
+
+        return para
+
+    def on_prepare_and_check_resolve(self, data):
+        Logger.info('ModManager: Got mods ' + repr(data['mods']))
+        self.mods = data['mods']
+        self.launcher = data['launcher']
+
+    def on_sync_all_progress(self, data, progress):
+        Logger.debug('ModManager: Sync progress ' + repr(data))
+        # Todo: modlist could be a class of its own
+
+        mod_synchronised = data.get('workaround_finished')
+        if mod_synchronised:
+            for mod in self.mods:
+                if mod.foldername == mod_synchronised:
+                    mod.up_to_date = True
+
+
+################################################################################
+################################## ATTENTION!!! ################################
+################################################################################
+#
+#
+# Everything below this comment is run IN A DIFFERENT PROCESS!
+# To communicate with the main program, you have to use the resolve(), reject()
+# and progress() calls of the message queue!
+#
+#
+################################################################################
+################################## ATTENTION!!! ################################
+################################################################################
+
+
 def parse_timestamp(ts):
     """
     Parse a timestamp that looks like this:
@@ -86,7 +188,6 @@ def _make_torrent(messagequeue, launcher_basedir, mods):
 
 
 def _get_mod_descriptions(para):
-    # WARNING: This methods gets called in a different process
     """
     helper function to get the moddescriptions from the server
 
@@ -197,7 +298,6 @@ def process_description_data(para, data, launcher_moddir):
 
 
 def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_descriptions_data):
-    # WARNING: This methods gets called in a different process
     launcher = get_launcher_description(messagequeue, launcher_basedir, mod_descriptions_data)
     mod_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
 
@@ -286,7 +386,6 @@ def _tfr_post_download_hook(message_queue, mod):
     """Copy TFR configuration files and install the TeamSpeak plugin.
     In case of errors, show the appropriate message box.
     """
-    # WARNING: This methods gets called in a different process
 
     def _show_message_box(message_queue, title, message, markup=True):
         message_queue.progress({'msg': 'Installing TFR TeamSpeak plugin...',
@@ -373,7 +472,6 @@ def _tfr_post_download_hook(message_queue, mod):
 
 def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     """Run syncers for all the mods in parallel and then their post-download hooks."""
-    # WARNING: This methods gets called in a different process
 
     syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
     sync_ok = syncer.sync(force_sync=False, intend_to_seed=seed)  # Use force_sync to force full recheck of all the files' checksums
@@ -398,93 +496,6 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
                                     'workaround_finished': m.foldername}, 1.0)
 
     message_queue.resolve({'msg': 'Downloading mods finished.'})
-
-
-class ModManager(object):
-    """docstring for ModManager"""
-    def __init__(self):
-        super(ModManager, self).__init__()
-        self.mods = []
-        self.launcher = None
-        self.settings = kivy.app.App.get_running_app().settings
-
-    def download_mod_description(self):
-        para = protected_para(_get_mod_descriptions, (), 'download_description')
-        return para
-
-    def make_torrent(self, mods):
-        para = protected_para(
-            _make_torrent,
-            (
-                self.settings.get('launcher_basedir'),
-                mods
-            ),
-            'make_torrent'
-        )
-        return para
-
-    def prepare_and_check(self, data):
-        para = protected_para(
-            _prepare_and_check,
-            (
-                self.settings.get('launcher_moddir'),
-                self.settings.get('launcher_basedir'),
-                data
-            ),
-            'checkmods',
-            then=(self.on_prepare_and_check_resolve, None, None)
-        )
-
-        return para
-
-    def sync_all(self, seed):
-        synced_elements = list(self.mods)
-        if self.launcher:
-            synced_elements.append(self.launcher)
-
-        para = protected_para(
-            _sync_all,
-            (
-                synced_elements,
-                self.settings.get('max_download_speed'),
-                self.settings.get('max_upload_speed'),
-                seed
-            ),
-            'sync',
-            then=(None, None, self.on_sync_all_progress)
-        )
-
-        return para
-
-    def sync_launcher(self, seed=False):
-        para = protected_para(
-            _sync_all,
-            (
-                [self.launcher],
-                self.settings.get('max_download_speed'),
-                self.settings.get('max_upload_speed'),
-                seed
-            ),
-            'sync',
-            then=(None, None, self.on_sync_all_progress)
-        )
-
-        return para
-
-    def on_prepare_and_check_resolve(self, data):
-        Logger.info('ModManager: Got mods ' + repr(data['mods']))
-        self.mods = data['mods']
-        self.launcher = data['launcher']
-
-    def on_sync_all_progress(self, data, progress):
-        Logger.debug('ModManager: Sync progress ' + repr(data))
-        # Todo: modlist could be a class of its own
-
-        mod_synchronised = data.get('workaround_finished')
-        if mod_synchronised:
-            for mod in self.mods:
-                if mod.foldername == mod_synchronised:
-                    mod.up_to_date = True
 
 
 if __name__ == '__main__':
