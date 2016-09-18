@@ -31,6 +31,7 @@ from multiprocessing.queues import SimpleQueue
 from multiprocessing import Lock, Pipe
 from kivy.clock import Clock
 from kivy.logger import Logger
+from utils.primitive_git import get_git_sha1_auto
 from utils.testtools_compat import _format_exc_info
 import time
 
@@ -153,7 +154,6 @@ class Para(object):
         super(Para, self).__init__()
         self.messagequeue = None
         self.func = func
-        # self.protected_func = catchstacktrace(func)
         self.args = args
         self.action_name = action_name
         self.current_child_process = None
@@ -325,13 +325,28 @@ class Para(object):
                 self.lastdata = {'data': {'msg': message}}
                 self._call_reject_handler(self.lastdata)
 
+# TODO: Maybe make a decorator out of this
+def _protected_call(messagequeue, function, *args, **kwargs):
+    try:
+        return function(messagequeue, *args, **kwargs)
+    except Exception:
+        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
+        error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
+        messagequeue.reject({'details': error})
 
-def catchstacktrace(func):
-    def wrapper(con, *args, **kwargs):
-        try:
-            func(con, *args, **kwargs)
-        except Exception:
-            msg = "".join(_format_exc_info(*sys.exc_info()))
-            con.reject({'exc': msg})
 
-    return wrapper
+def protected_para(func, args, action_name, then=None):
+    """Wrap a function with a catch-all try/except clause.
+    On error a reject() is sent.
+    """
+
+    para = Para(_protected_call, (func,) + args, action_name)
+
+    # Optionally bind events before running the Para
+    if then:
+        para.then(*then)
+
+    para.run()
+    return para
+
+

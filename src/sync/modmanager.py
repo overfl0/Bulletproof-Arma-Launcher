@@ -18,7 +18,6 @@ from multiprocessing import Queue
 import kivy
 import kivy.app  # To keep PyDev from complaining
 import os
-import sys
 import textwrap
 import time
 import torrent_utils
@@ -29,10 +28,8 @@ from distutils.version import LooseVersion
 from kivy.logger import Logger
 from third_party import teamspeak
 from utils.devmode import devmode
-from utils.primitive_git import get_git_sha1_auto
-from utils.process import Para
+from utils.process import protected_para
 from utils.requests_wrapper import download_url, DownloadException
-from utils.testtools_compat import _format_exc_info
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
 
@@ -403,15 +400,6 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     message_queue.resolve({'msg': 'Downloading mods finished.'})
 
 
-def _protected_call(messagequeue, function, *args, **kwargs):
-    try:
-        return function(messagequeue, *args, **kwargs)
-    except Exception:
-        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
-        error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
-        messagequeue.reject({'details': error})
-
-
 class ModManager(object):
     """docstring for ModManager"""
     def __init__(self):
@@ -424,28 +412,32 @@ class ModManager(object):
         self.settings = kivy.app.App.get_running_app().settings
 
     def download_mod_description(self):
-        self.para = Para(_protected_call, (_get_mod_descriptions,), 'download_description')
-        self.para.run()
+        self.para = protected_para(_get_mod_descriptions, (), 'download_description')
         return self.para
 
     def make_torrent(self, mods):
-        para = Para(_protected_call, (
+        para = protected_para(
             _make_torrent,
-            self.settings.get('launcher_basedir'),
-            mods
-        ), 'make_torrent')
-        para.run()
+            (
+                self.settings.get('launcher_basedir'),
+                mods
+            ),
+            'make_torrent'
+        )
         return para
 
     def prepare_and_check(self, data):
-        self.para = Para(_protected_call, (
+        self.para = protected_para(
             _prepare_and_check,
-            self.settings.get('launcher_moddir'),
-            self.settings.get('launcher_basedir'),
-            data
-        ), 'checkmods')
-        self.para.then(self.on_prepare_and_check_resolve, None, None)
-        self.para.run()
+            (
+                self.settings.get('launcher_moddir'),
+                self.settings.get('launcher_basedir'),
+                data
+            ),
+            'checkmods',
+            then=(self.on_prepare_and_check_resolve, None, None)
+        )
+
         return self.para
 
     def sync_all(self, seed):
@@ -453,27 +445,33 @@ class ModManager(object):
         if self.launcher:
             synced_elements.append(self.launcher)
 
-        self.sync_para = Para(_protected_call, (
+        self.sync_para = protected_para(
             _sync_all,
-            synced_elements,
-            self.settings.get('max_download_speed'),
-            self.settings.get('max_upload_speed'),
-            seed
-        ), 'sync')
-        self.sync_para.then(None, None, self.on_sync_all_progress)
-        self.sync_para.run()
+            (
+                synced_elements,
+                self.settings.get('max_download_speed'),
+                self.settings.get('max_upload_speed'),
+                seed
+            ),
+            'sync',
+            then=(None, None, self.on_sync_all_progress)
+        )
+
         return self.sync_para
 
     def sync_launcher(self, seed=False):
-        self.launcher_sync_para = Para(_protected_call, (
+        self.launcher_sync_para = protected_para(
             _sync_all,
-            [self.launcher],
-            self.settings.get('max_download_speed'),
-            self.settings.get('max_upload_speed'),
-            seed
-        ), 'sync')
-        self.launcher_sync_para.then(None, None, self.on_sync_all_progress)
-        self.launcher_sync_para.run()
+            (
+                [self.launcher],
+                self.settings.get('max_download_speed'),
+                self.settings.get('max_upload_speed'),
+                seed
+            ),
+            'sync',
+            then=(None, None, self.on_sync_all_progress)
+        )
+
         return self.launcher_sync_para
 
     def on_prepare_and_check_resolve(self, data):
