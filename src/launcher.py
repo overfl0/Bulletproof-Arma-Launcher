@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
