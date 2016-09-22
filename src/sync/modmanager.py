@@ -344,9 +344,6 @@ def _tfr_post_download_hook(message_queue, mod):
         To finish the installation of TFR, you need to enable the TFR plugin in
         Settings->Plugins in Teamspeak.""")
 
-    message_queue.progress({'msg': 'Copying TFR configuration...'}, 1.0)
-    teamspeak.copy_userconfig(path=path_userconfig)
-
     command = _tfr_wait_for_user_action(message_queue)
     if command == 'terminate':  # Workaround for termination request while waiting
         message_queue.reject({'details': 'Para was asked to terminate by the caller'})
