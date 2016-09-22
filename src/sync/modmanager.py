@@ -306,7 +306,6 @@ def _tfr_post_download_hook(message_queue, mod):
         return
 
     path_tfr = os.path.join(mod.parent_location, tfr_directory)
-    path_userconfig = os.path.join(path_tfr, 'userconfig')
     path_ts3_addon = os.path.join(path_tfr, 'TeamSpeak 3 Client')
     path_ts_plugins = os.path.join(path_ts3_addon, 'plugins')
     path_installed_plugins = os.path.join(teamspeak.get_install_location(), 'plugins')
@@ -319,9 +318,9 @@ def _tfr_post_download_hook(message_queue, mod):
 
         To finish the installation of TFR, you need to:
 
-        1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
-            to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
-        2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+        Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
+        to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
+        """.format(
         path_ts_plugins, path_installed_plugins))
 
     run_admin_message = textwrap.dedent("""
@@ -333,16 +332,10 @@ def _tfr_post_download_hook(message_queue, mod):
 
         If you do not want to do that, you need to:
 
-        1) Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
-            to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
-        2) Enable the TFR plugin in Settings->Plugins in Teamspeak.""".format(
+        Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
+        to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
+        """.format(
         path_ts_plugins, path_installed_plugins))
-
-    installation_succeeded_message = textwrap.dedent("""
-        Task Force Arrowhead Radio has been downloaded or updated.
-
-        To finish the installation of TFR, you need to enable the TFR plugin in
-        Settings->Plugins in Teamspeak.""")
 
     command = _tfr_wait_for_user_action(message_queue)
     if command == 'terminate':  # Workaround for termination request while waiting
@@ -362,8 +355,6 @@ def _tfr_post_download_hook(message_queue, mod):
             _show_message_box(message_queue, title='TFR TeamSpeak plugin installation failed!', message=installation_failed_message)
             message_queue.reject({'details': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
             return False
-        else:
-            _show_message_box(message_queue, title='Action required!', message=installation_succeeded_message)
 
     else:
         message_queue.reject({'msg': 'The user cancelled the TeamSpeak plugin installation.'})
