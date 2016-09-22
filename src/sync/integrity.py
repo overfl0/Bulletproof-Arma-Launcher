@@ -25,7 +25,6 @@ import os
 import shutil
 
 from kivy.logger import Logger
-from third_party.arma import Arma
 from utils.context import ignore_exceptions
 from utils.hashes import sha1
 from third_party import teamspeak
@@ -333,28 +332,13 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
 def is_complete_tfr_hack(mod_name, file_paths, checksums):
     """This is a hackish check if Task Force Arrowhead Radio mod has been
     correctly installed.
-    To be fully installed, files contained in the userconfig subdirectory
-    must be present in in Arma 3/userconfig directory. Additionally, a check
-    if plugins have been copied to Teamspeak directory is made.
+    A check if plugins have been copied to Teamspeak directory is made.
     """
 
     # If the checked mod is not TFR, happily return rainbows and unicorns
     if not mod_name.startswith("Task Force Arrowhead Radio"):
         if mod_name != "@task_force_radio":
             return True
-
-    arma_path = Arma.get_installation_path()
-    userconfig = os.path.join(arma_path, 'userconfig')
-
-    retval = check_mod_directories(file_paths, base_directory=userconfig,
-                                   check_subdir='@task_force_radio\\userconfig',
-                                   on_superfluous='ignore')
-
-    if not retval:
-        Logger.debug('TFR userconfig not populated. Marking as not fully installed')
-        return retval
-    else:
-        Logger.debug('TFR userconfig files OK.')
 
     teamspeak_path = teamspeak.get_install_location()
     teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
