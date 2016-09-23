@@ -15,7 +15,26 @@ from __future__ import unicode_literals
 import hashlib
 
 
-def hash_for_file(path, algorithm=hashlib.algorithms[0], block_size=256 * 128, human_readable=True):
+def _hash_for_file(handle, algorithm=hashlib.algorithms[0], block_size=256 * 128, human_readable=True):
+    if algorithm not in hashlib.algorithms:
+        raise NameError('The algorithm "{algorithm}" you specified is '
+                        'not a member of "hashlib.algorithms"'.format(algorithm=algorithm))
+
+    hash_algo = hashlib.new(algorithm)  # According to hashlib documentation using new()
+                                        # will be slower then calling using named
+                                        # constructors, ex.: hashlib.md5()
+
+    for chunk in iter(lambda: handle.read(block_size), b''):
+        hash_algo.update(chunk)
+
+    if human_readable:
+        file_hash = hash_algo.hexdigest()
+    else:
+        file_hash = hash_algo.digest()
+    return file_hash
+
+
+def hash_for_file(handle, algorithm=hashlib.algorithms[0], block_size=256 * 128, human_readable=True):
     """
     Block size directly depends on the block size of your filesystem
     to avoid performances issues
@@ -26,7 +45,7 @@ def hash_for_file(path, algorithm=hashlib.algorithms[0], block_size=256 * 128, h
     > Block size:               4096
 
     Input:
-        path: a path
+        handle: a handle. May be a file name or a file pointer
         algorithm: an algorithm in hashlib.algorithms
                    ATM: ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
         block_size: a multiple of 128 corresponding to the block size of your filesystem
@@ -34,26 +53,18 @@ def hash_for_file(path, algorithm=hashlib.algorithms[0], block_size=256 * 128, h
     Output:
         hash
     """
-    if algorithm not in hashlib.algorithms:
-        raise NameError('The algorithm "{algorithm}" you specified is '
-                        'not a member of "hashlib.algorithms"'.format(algorithm=algorithm))
 
-    hash_algo = hashlib.new(algorithm)  # According to hashlib documentation using new()
-                                        # will be slower then calling using named
-                                        # constructors, ex.: hashlib.md5()
-    with open(path, 'rb') as f:
-        for chunk in iter(lambda: f.read(block_size), b''):
-            hash_algo.update(chunk)
-    if human_readable:
-        file_hash = hash_algo.hexdigest()
+    if hasattr(handle, 'read'):
+        # Is a file object
+        return _hash_for_file(handle, algorithm, block_size, human_readable)
     else:
-        file_hash = hash_algo.digest()
-    return file_hash
+        with open(handle, 'rb') as f:
+            return _hash_for_file(f, algorithm, block_size, human_readable)
 
 
-def md5(path, human_readable=False):
-    return hash_for_file(path, 'md5', human_readable=human_readable)
+def md5(handle, human_readable=False):
+    return hash_for_file(handle, 'md5', human_readable=human_readable)
 
 
-def sha1(path, human_readable=False):
-    return hash_for_file(path, 'sha1', human_readable=human_readable)
+def sha1(handle, human_readable=False):
+    return hash_for_file(handle, 'sha1', human_readable=human_readable)
