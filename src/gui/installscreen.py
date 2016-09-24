@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -516,14 +517,14 @@ class Controller(object):
 
     # Sync callbacks ###########################################################
 
-    def on_tfr_action(self, msgbox_ignore_me):
+    def on_tsplugin_action(self, msgbox_ignore_me):
         """A quickly done workaround for asking the user to click OK and carry
-        on with TFR plugin installation.
+        on with a TS plugin installation.
         Feel free to refactor me :).
         """
         if self.para and self.para.is_open() and self.para.action_name == 'sync':
-            Logger.info('InstallScreen: User acknowledged TFR installation. Sending continue command.')
-            self.para.send_message('tfr_install_as_admin')
+            Logger.info('InstallScreen: User acknowledged TS pluing installation. Sending continue command.')
+            self.para.send_message('tsplugin_install_as_admin')
 
         return None  # Returning True would prevent the popup from being closed
 
@@ -553,12 +554,12 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
 
-        tfr_request_action = progress.get('tfr_request_action')
+        tsplugin_request_action = progress.get('tsplugin_request_action')
         message_box = progress.get('message_box')
         if message_box:
             on_dismiss = None
-            if tfr_request_action:
-                on_dismiss = self.on_tfr_action
+            if tsplugin_request_action:
+                on_dismiss = self.on_tsplugin_action
 
             message_box_instance = MessageBox(text=message_box['text'],
                                               title=message_box['title'],

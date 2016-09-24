@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -665,6 +666,9 @@ class TorrentSyncer(object):
         torrent_info = mod.torrent_handle.get_torrent_info()
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
         cleanup_successful = check_mod_directories(files_list, mod.parent_location, on_superfluous='remove')
+
+        # Workaround. This should be moved to some kind of Mod class method or something...
+        mod.files_list = files_list
 
         '''
         # Removed for now because we already have the original torrent file downloaded

@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -111,7 +112,7 @@ class ParaTest(unittest.TestCase):
         for _ in range(1, 120):
             Clock.tick()
 
-        #self.assertEqual(p.state, 'resolved')
+        # self.assertEqual(p.state, 'resolved')
 
         p.then(res_handler, None, None)
         res_handler.assert_called_once_with('something')
