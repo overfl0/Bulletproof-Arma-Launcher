@@ -34,6 +34,7 @@ from utils.primitive_git import get_git_sha1_auto
 from utils.process import Para
 from utils.requests_wrapper import download_url, DownloadException
 from utils.testtools_compat import _format_exc_info
+from sync import integrity
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
 
@@ -286,8 +287,8 @@ def _tsplugin_wait_for_requirements(message_queue):
     return 'tsplugin_install_as_admin'
 
 
-def _tfr_post_download_hook(message_queue, mod):
-    """Install the TeamSpeak plugin.
+def _try_installing_teamspeak_plugins(message_queue, mod):
+    """Install any Teamspeak plugins found in the mod files.
     In case of errors, show the appropriate message box.
     """
     # WARNING: This methods gets called in a different process
@@ -301,42 +302,20 @@ def _tfr_post_download_hook(message_queue, mod):
                                 }
                                 }, 1.0)
 
-    tfr_directory = '@task_force_radio'
-    if mod.foldername != tfr_directory:
+    ts3_plugin_files_to_process = []
+    ts3_plugins_files = [file_path for file_path in mod.files_list if file_path.endswith('.ts3_plugin')]
+
+    # Ignore Those files if everything is already installed
+    for ts3_plugin_file in ts3_plugins_files:
+        ts3_plugin_full_path = os.path.join(mod.parent_location, ts3_plugin_file)
+
+        if not integrity.is_ts3_plugin_installed(ts3_plugin_full_path):
+            ts3_plugin_files_to_process.append(ts3_plugin_file)
+
+    if not ts3_plugin_files_to_process:
         return
 
-    path_tfr = os.path.join(mod.parent_location, tfr_directory)
-    path_ts3_addon = os.path.join(path_tfr, 'TeamSpeak 3 Client')
-    path_ts_plugins = os.path.join(path_ts3_addon, 'plugins')
-    path_installed_plugins = os.path.join(teamspeak.get_install_location(), 'plugins')
-
-    installation_failed_message = textwrap.dedent("""
-        A mod containing a Teamspeak plugin has been downloaded or updated.
-
-        Automatic installation of a Teamspeak plugin failed.
-
-
-        To finish the installation of the Teamspeak plugin, you need to:
-
-        Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
-        to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
-        """.format(
-        path_ts_plugins, path_installed_plugins))
-
-    run_admin_message = textwrap.dedent("""
-        A mod containing a Teamspeak plugin has been downloaded or updated.
-
-        In order to install the TeamSpeak plugin you need to run the
-        plugin installer as Administrator.
-
-
-        If you do not want to do that, you need to:
-
-        Manually copy the files from [ref={}][color=3572b0]TeamSpeak 3 Client\\plugins[/color][/ref] directory
-        to [ref={}][color=3572b0]your Teamspeak directory[/color][/ref].
-        """.format(
-        path_ts_plugins, path_installed_plugins))
-
+    # Inform the user he is about to be asked to install TS plugins
     command = _tsplugin_wait_for_requirements(message_queue)
     if command == 'terminate':  # Workaround for termination request while waiting
         message_queue.reject({'details': 'Para was asked to terminate by the caller'})
@@ -344,21 +323,51 @@ def _tfr_post_download_hook(message_queue, mod):
 
     message_queue.progress({'msg': 'Waiting for permission to install the plugin as Administrator...'}, 1.0)
 
-    install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
-    if not install_instance:
-        _show_message_box(message_queue, title='Run TeamSpeak plugin installer!', message=run_admin_message)
-        install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
+    for ts3_plugin_file in ts3_plugin_files_to_process:
 
-    if install_instance:
-        exit_code = install_instance.wait()
-        if exit_code != 0:
-            _show_message_box(message_queue, title='TeamSpeak plugin installation failed!', message=installation_failed_message)
-            message_queue.reject({'details': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
+        ts3_plugin_full_path = os.path.join(mod.parent_location, ts3_plugin_file)
+
+        installation_failed_message = textwrap.dedent("""
+            A mod containing a Teamspeak plugin has been downloaded or updated.
+
+            Automatic installation of a Teamspeak plugin failed.
+
+
+            To finish the installation of the Teamspeak plugin, you need to:
+
+            Manually install the plugin: [ref={}][color=3572b0]>> Click here! <<[/color][/ref]
+            """.format(ts3_plugin_full_path))
+
+        run_admin_message = textwrap.dedent("""
+            A mod containing a Teamspeak plugin has been downloaded or updated.
+
+            In order to install the TeamSpeak plugin you need to run the
+            plugin installer as Administrator.
+
+
+            If you do not want to do that, you need to:
+
+            Manually install the plugin: [ref={}][color=3572b0]>> Click here! <<[/color][/ref]
+            """.format(ts3_plugin_full_path))
+
+        #install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
+        install_instance = teamspeak.install_ts3_plugin(path=ts3_plugin_full_path)
+
+        if not install_instance:
+            _show_message_box(message_queue, title='Run TeamSpeak plugin installer!', message=run_admin_message)
+            #install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
+            install_instance = teamspeak.install_ts3_plugin(path=ts3_plugin_full_path)
+
+        if install_instance:
+            exit_code = install_instance.wait()
+            if exit_code != 0:
+                _show_message_box(message_queue, title='TeamSpeak plugin installation failed!', message=installation_failed_message)
+                message_queue.reject({'details': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
+                return False
+
+        else:
+            message_queue.reject({'msg': 'The user cancelled the TeamSpeak plugin installation.'})
             return False
-
-    else:
-        message_queue.reject({'msg': 'The user cancelled the TeamSpeak plugin installation.'})
-        return False
 
     return True
 
@@ -383,7 +392,7 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
         # If the mod had to be updated and the download was performed successfully
         if not m.up_to_date and m.finished_hook_ran:
             # Will only fire up if mod == TFR
-            if _tfr_post_download_hook(message_queue, m) == False:
+            if _try_installing_teamspeak_plugins(message_queue, m) == False:
                 return  # Alpha undocumented feature: stop processing on a reject()
 
             message_queue.progress({'msg': '[%s] Mod synchronized.' % (m.foldername,),

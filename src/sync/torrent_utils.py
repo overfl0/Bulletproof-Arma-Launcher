@@ -19,7 +19,7 @@ import stat
 import textwrap
 
 from kivy.logger import Logger
-from sync.integrity import check_mod_directories, check_files_mtime_correct, is_complete_tfr_hack, is_whitelisted
+from sync.integrity import check_mod_directories, check_files_mtime_correct, are_ts_plugins_installed, is_whitelisted
 from utils.metadatafile import MetadataFile
 from utils import paths, unicode_helpers
 
@@ -86,13 +86,14 @@ def is_complete_quick(mod):
         return False
 
     # (5) Check if there are no additional files in the directory
+    # TODO: Check if these checksums are even needed now
     checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
     files_list = checksums.keys()
     if not check_mod_directories(files_list, mod.parent_location, on_superfluous='warn'):
         Logger.info('Superfluous files in mod directory. Marking as not complete')
         return False
 
-    return is_complete_tfr_hack(mod.full_name, files_list, checksums)
+    return are_ts_plugins_installed(mod.parent_location, mod.full_name, files_list)
 
 
 def get_torrent_info_from_bytestring(bencoded):

@@ -667,6 +667,9 @@ class TorrentSyncer(object):
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
         cleanup_successful = check_mod_directories(files_list, mod.parent_location, on_superfluous='remove')
 
+        # Workaround. This should be moved to some kind of Mod class method or something...
+        mod.files_list = files_list
+
         '''
         # Removed for now because we already have the original torrent file downloaded
         # and we don't need to artificially recreate it.

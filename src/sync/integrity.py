@@ -329,23 +329,46 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
     return True
 
 
-def is_complete_tfr_hack(mod_name, file_paths, checksums):
-    """This is a hackish check if Task Force Arrowhead Radio mod has been
-    correctly installed.
-    A check if plugins have been copied to Teamspeak directory is made.
-    """
-
-    # If the checked mod is not TFR, happily return rainbows and unicorns
-    if not mod_name.startswith("Task Force Arrowhead Radio"):
-        if mod_name != "@task_force_radio":
-            return True
+def is_ts3_plugin_installed(ts3_plugin_full_path):
+    """Check if the given .ts3_plugin file is installed."""
 
     teamspeak_path = teamspeak.get_install_location()
-    teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
-    retval = check_mod_directories(file_paths, base_directory=teamspeak_plugins,
-                                   check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
+    checksums = teamspeak.compute_checksums_for_ts3_plugin(ts3_plugin_full_path)
+    retval = check_mod_directories(checksums.keys(), base_directory=teamspeak_path,
                                    on_superfluous='ignore', checksums=checksums)
 
-    Logger.debug('Teamspeak plugins synchronized: {}'.format(retval))
-
     return retval
+
+def are_ts_plugins_installed(mod_parent_location, mod_name, file_paths):
+    """Check if all ts3_plugin files contained inside the mod files are
+    installed.
+    """
+
+    # teamspeak_path = teamspeak.get_install_location()
+
+    for file_path in file_paths:
+        if not file_path.endswith('.ts3_plugin'):
+            continue
+
+        file_location = os.path.join(mod_parent_location, file_path)
+        retval = is_ts3_plugin_installed(file_location)
+
+        if not retval:
+            return retval
+
+    return True
+
+
+    # If the checked mod is not TFR, happily return rainbows and unicorns
+#     if not mod_name.startswith("Task Force Arrowhead Radio"):
+#         if mod_name != "@task_force_radio":
+#             return True
+#
+#     teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
+#     retval = check_mod_directories(file_paths, base_directory=teamspeak_plugins,
+#                                    check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
+#                                    on_superfluous='ignore', checksums=checksums)
+#
+#     Logger.debug('Teamspeak plugins synchronized: {}'.format(retval))
+#
+#     return retval

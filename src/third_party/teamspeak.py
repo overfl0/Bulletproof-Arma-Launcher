@@ -22,6 +22,7 @@ from utils import browser
 from utils import system_processes
 from utils.admin import run_admin
 from utils.devmode import devmode
+from utils.hashes import sha1
 from utils.registry import Registry
 
 
@@ -248,3 +249,32 @@ def install_unpackaged_plugin(path):
     )
 
     return install_ts3_plugin(tfr_package)
+
+
+def compute_checksums_for_ts3_plugin(zip_filename):
+    """Create a dictionary of file paths (with separators matching the OS
+    separator) along with SHA1 checksums of those files.
+    """
+    checksums = {}
+
+    with zipfile.ZipFile(zip_filename) as zip_handle:
+        for file_info in zip_handle.infolist():
+            # Ignore package.ini
+            if file_info.filename == 'package.ini':
+                continue
+
+            # Ignore directories
+            if file_info.filename.endswith('/'):
+                continue
+
+            handle = zip_handle.open(file_info)
+            try:
+                checksum = sha1(handle)
+            finally:
+                handle.close()
+
+            # The separator for zip files is always '/' internally
+            filename_os = file_info.filename.replace('/', os.path.sep)
+            checksums[filename_os] = checksum
+
+    return checksums
