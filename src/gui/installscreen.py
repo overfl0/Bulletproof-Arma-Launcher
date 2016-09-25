@@ -508,7 +508,7 @@ class Controller(object):
         self.disable_action_buttons()
 
         self.syncing_failed = True
-        self.try_enable_play_button()
+        #self.try_enable_play_button()
 
         ErrorPopup(details=details, message=message).chain_open()
 
