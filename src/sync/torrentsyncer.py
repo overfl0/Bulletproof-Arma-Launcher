@@ -29,6 +29,7 @@ if __name__ == "__main__":
 import libtorrent
 import os
 import shutil
+import textwrap
 import time
 import torrent_utils
 
@@ -240,18 +241,31 @@ class TorrentSyncer(object):
                     error_message = 'Downloading metadata: {}'.format(ex.args[0])
                     raise PrepareParametersException(error_message)
 
-                if res.status_code != 200:
-                    self.result_queue.reject({'details': '{}\n{}\n\n{}'.format(
-                        'Torrent file could not be received from the server',
-                        'Status Code: ' + unicode(res.status_code), res.text)})
-                    raise PrepareParametersException('Torrent file could not be received from the server')
+                if res.status_code == 404:
+                    message = textwrap.dedent('''\
+                        Torrent file could not be downloaded from the master server.
+                        Reason: file not found on the server (HTTP 404).
+
+                        This may be because the mods are updated on the server right now.
+                        Please try again in a few minutes.
+                        ''')
+                    raise PrepareParametersException(message)
+
+                elif res.status_code != 200:
+                    message = textwrap.dedent('''\
+                        Torrent file could not be downloaded from the master server.
+                        HTTP error code: {}
+
+                        Contact the master server owner to fix this issue.
+                        '''.format(unicode(res.status_code)))
+                    raise PrepareParametersException(message)
 
                 try:
                     torrent_content = res.content
                     torrent_info = torrent_utils.get_torrent_info_from_bytestring(res.content)
 
                 except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
-                    error_message = 'Could not parse torrent metadata: {}'.format(decode_utf8(ex.args[0]))
+                    error_message = 'Could not parse torrent metadata: {}\nContact the master server owner to fix this issue.'.format(decode_utf8(ex.args[0]))
                     Logger.error('TorrentSyncer: {}'.format(error_message))
                     raise PrepareParametersException(error_message)
 

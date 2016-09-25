@@ -273,7 +273,6 @@ class Controller(object):
             self.view.ids.action_button.bind_state(name, text, callback)
 
         self.set_and_resize_action_button(DynamicButtonStates.checking)
-        self.view.ids.action_button.enable_progress_animation()
 
     def set_and_resize_action_button(self, state):
         """Change the action and the text on a button. Then, resize that button
@@ -334,7 +333,6 @@ class Controller(object):
         # Enable clicking on "play" button if we're just seeding
         if not seed:
             self.disable_action_buttons()
-            self.view.ids.action_button.enable_progress_animation()
 
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
@@ -343,7 +341,6 @@ class Controller(object):
         self.disable_action_buttons()
         self.para = self.mod_manager.sync_launcher()
         self.para.then(self.on_self_upgrade_resolve, self.on_sync_reject, self.on_sync_progress)
-        self.view.ids.action_button.enable_progress_animation()
 
     def on_self_upgrade_resolve(self, data):
         # Terminate working paras here.
@@ -394,7 +391,7 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         ErrorPopup(details=details, message=message).chain_open()
 
@@ -431,7 +428,7 @@ class Controller(object):
 
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         # Boilerplate end
 
@@ -482,7 +479,7 @@ class Controller(object):
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
         self.set_and_resize_action_button(DynamicButtonStates.install)
 
         if devmode.get_create_torrents(False):
@@ -508,7 +505,7 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.syncing_failed = True
         self.try_enable_play_button()
@@ -582,7 +579,7 @@ class Controller(object):
         Logger.info('InstallScreen: syncing finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.try_enable_play_button()
 
@@ -597,7 +594,7 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.syncing_failed = True
         # self.try_enable_play_button()

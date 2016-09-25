@@ -67,6 +67,7 @@ class HoverButton(Button):
             self.text_animation_enabled = True
 
     def disable_progress_animation(self):
+        return
         Clock.unschedule(self.do_progress_animation)
         self.text_animation_enabled = False
         self.text = self.last_text
