@@ -13,3 +13,4 @@ torrents_path = '/torrents'
 troubleshooting_url = 'https://bitbucket.org/tacbf_launcher/tacbf_launcher/wiki/Troubleshooting'
 bugtracker_url = 'https://bitbucket.org/tacbf_launcher/tacbf_launcher/issues'
 settings_directory = 'TacBF Launcher'
+news_url = None
