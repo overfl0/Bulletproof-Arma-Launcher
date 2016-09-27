@@ -40,7 +40,8 @@ class FileChooser(Popup):
         super(FileChooser, self).__init__(title='Choose directory',
                                           content=self.browser,
                                           size_hint=(None, None),
-                                          size=(900, 600))
+                                          size=(900, 600),
+                                          auto_dismiss=False)
 
         Clock.schedule_once(self._on_next_frame, 0)
 

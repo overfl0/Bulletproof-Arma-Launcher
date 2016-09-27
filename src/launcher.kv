@@ -92,6 +92,13 @@
     pos_hint: {'center_y': 0.5}
     padding: [5, ( self.height - self.line_height ) / 2]
 
+<NewsLabel@RstDocument>
+    size_hint: (None, None)
+    colors: {'background': '000000c0', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}
+    underline_color: 'ffffccff'
+    base_font_size: 28
+
+
 # Section: Main View of the application
 #          this defines the structure of screens and the top
 #          navigation bar
@@ -145,6 +152,13 @@
 
     padding: 20
     name: 'install_screen'
+
+    NewsLabel:
+        id: news_label
+
+        size: 0, 400
+        right: root.right - 30
+        top: root.top - 50
 
     Image:
         source: app.resource_path('images/logo.png')

@@ -209,22 +209,22 @@ def _get_mod_descriptions(para):
 
 
     if res.status_code == 404:
-        message = textwrap.dedent('''
+        message = textwrap.dedent('''\
             Metadata could not be downloaded from the master server.
             Reason: file not found on the server (HTTP 404).
 
             This may be because the mods are updated on the server right now.
             Please try again in a few minutes.
-        ''')
+            ''')
         para.reject({'msg': message})
 
     elif res.status_code != 200:
-        message = textwrap.dedent('''
+        message = textwrap.dedent('''\
             Metadata could not be downloaded from the master server.
             HTTP error code: {}
 
-            Contact the server owner to fix this issue.
-        '''.format(unicode(res.status_code)))
+            Contact the master server owner to fix this issue.
+            '''.format(unicode(res.status_code)))
         para.reject({'msg': message})
 
     else:
@@ -236,7 +236,7 @@ def _get_mod_descriptions(para):
                 Failed to parse metadata received from the master server.
 
                 Contact the server owner to fix this issue.
-            '''.format(unicode(res.status_code)))
+                '''.format(unicode(res.status_code)))
             para.reject({'msg': message})
 
         # Protection in case autoupdate is messed up and we have to force a manual update

@@ -25,11 +25,12 @@ import utils.system_processes
 from autoupdater import autoupdater
 from config import config
 from config.version import version
+from functools import partial
 
+from kivy.animation import Animation
 from kivy.clock import Clock
-from kivy.uix.widget import Widget
+from kivy.network.urlrequest import UrlRequest
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.image import Image
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
@@ -273,7 +274,6 @@ class Controller(object):
             self.view.ids.action_button.bind_state(name, text, callback)
 
         self.set_and_resize_action_button(DynamicButtonStates.checking)
-        self.view.ids.action_button.enable_progress_animation()
 
     def set_and_resize_action_button(self, state):
         """Change the action and the text on a button. Then, resize that button
@@ -334,7 +334,6 @@ class Controller(object):
         # Enable clicking on "play" button if we're just seeding
         if not seed:
             self.disable_action_buttons()
-            self.view.ids.action_button.enable_progress_animation()
 
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
@@ -343,7 +342,6 @@ class Controller(object):
         self.disable_action_buttons()
         self.para = self.mod_manager.sync_launcher()
         self.para.then(self.on_self_upgrade_resolve, self.on_sync_reject, self.on_sync_progress)
-        self.view.ids.action_button.enable_progress_animation()
 
     def on_self_upgrade_resolve(self, data):
         # Terminate working paras here.
@@ -394,11 +392,28 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         ErrorPopup(details=details, message=message).chain_open()
 
     # Download_mod_description callbacks #######################################
+
+    def on_news_success(self, label, request, result):
+        # TODO: Move me to another file
+
+        # Animations: first show the empty background and then fade in the contents
+        anim = Animation(width=335, right=label.right, t='in_out_circ')
+        anim.start(label)
+
+        # Do a fade-in. `for` is just in case there would be more than 1 child
+        for child in label.children:
+            child.opacity = 0
+
+            # The empty first Animation acts as a simple delay
+            anim = Animation() + Animation(opacity=1)
+            anim.start(child)
+
+        label.text = result
 
     def on_download_mod_description_progress(self, progress, speed):
         self.view.ids.status_image.show()
@@ -420,6 +435,9 @@ class Controller(object):
 
         self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
 
+        if config.news_url:
+            UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+
     def on_download_mod_description_reject(self, data):
         self.para = None
         # TODO: Move boilerplate code to a function
@@ -431,7 +449,7 @@ class Controller(object):
 
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         # Boilerplate end
 
@@ -470,6 +488,8 @@ class Controller(object):
             self.default_teamspeak_url = mod_data.get('teamspeak', None)
 
             self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
+            if config.news_url:
+                UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     # Checkmods callbacks ######################################################
 
@@ -482,7 +502,7 @@ class Controller(object):
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
         self.set_and_resize_action_button(DynamicButtonStates.install)
 
         if devmode.get_create_torrents(False):
@@ -508,10 +528,10 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.syncing_failed = True
-        self.try_enable_play_button()
+        # self.try_enable_play_button()
 
         ErrorPopup(details=details, message=message).chain_open()
 
@@ -582,7 +602,7 @@ class Controller(object):
         Logger.info('InstallScreen: syncing finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.try_enable_play_button()
 
@@ -597,7 +617,7 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.syncing_failed = True
         # self.try_enable_play_button()
