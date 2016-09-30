@@ -85,8 +85,6 @@ class PBOFile(object):
 
         pbo_file = PBOFile(pbo_header, pbo_file_entries)
 
-        # print pbo_header
-
         return pbo_file
 
     def __str__(self):
@@ -109,6 +107,24 @@ class PBOFile(object):
 
             f.write('\0')
             f.write(hashing_file.get_hash())
+
+    def __iter__(self):
+        for header_entry, file_entry in zip(self.pbo_header.pbo_entries, self.pbo_files):
+            yield PBOFileEntryView(header_entry, file_entry)
+
+
+class PBOFileEntryView(object):
+    def __init__(self, header_entry, file_entry):
+        self.header_entry = header_entry
+        self.file_entry = file_entry
+
+    def __str__(self):
+        out = ''
+        out += 'Filename: {}\n'.format(self.header_entry.filename)
+        out += 'Size: {}\n'.format(self.header_entry.original_size)
+        out += 'First 100 bytes: {}\n'.format(repr(self.file_entry.data[:100]))
+
+        return out
 
 
 class PBOFileEntry(object):
@@ -294,6 +310,10 @@ def _same_hash(file_a, file_b):
 if __name__ == '__main__':
     file_tested = 'testpbo.pbo'
     f = PBOFile.read_file(file_tested)
+
+    for entry in f:
+        print entry
+
     f.save_file(file_tested + '.rework.pbo')
     print f
 
