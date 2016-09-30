@@ -90,7 +90,7 @@ class PBOFile(object):
         return pbo_file
 
     def __str__(self):
-        out = str(self.pbo_header)
+        out = str(self.pbo_header) + '\n'
 
         for f in self.pbo_files:
             out += str(f) + '\n'
@@ -141,7 +141,7 @@ class PBOHeader(object):
         self.eoh_boundary = eoh_boundary
 
     def __str__(self):
-        out = 'PBO Header:\n'
+        out = ''
 
         if self.header_extension:
             out += str(self.header_extension)
@@ -151,7 +151,7 @@ class PBOHeader(object):
 
         out += str(self.eoh_boundary) + '\n'
 
-        return out
+        return 'PBO Header:\n' + _indent(out) + '\n'
 
     def save_to_file(self, f):
         if not self.pbo_entries:
@@ -201,7 +201,7 @@ class PBOHeaderExtension(object):
 
     def __str__(self):
         out = 'PBOHeaderExtension:'
-        out += str(self.pbo_header_entry) + '\n'
+        out += _indent(str(self.pbo_header_entry)) + '\n'
         for s in self.strings:
             out += '    String: {}\n'.format(s)
 
@@ -275,6 +275,10 @@ class PBOHeaderEntry(object):
         entry = PBOHeaderEntry(filename, packing_method, original_size, reserved, timestamp, data_size)
 
         return entry
+
+
+def _indent(text, indent=4 * ' '):
+    return '\n'.join(indent + line for line in text.splitlines())
 
 
 def _same_hash(file_a, file_b):
