@@ -17,6 +17,7 @@ import functools
 import hashlib
 import itertools
 import struct
+import sys
 import textwrap
 
 ''' Notes:
@@ -84,7 +85,7 @@ class PBOFile(object):
 
         pbo_file = PBOFile(pbo_header, pbo_file_entries)
 
-        print pbo_header
+        # print pbo_header
 
         return pbo_file
 
@@ -134,9 +135,10 @@ class PBOFileEntry(object):
 
 
 class PBOHeader(object):
-    def __init__(self, pbo_entries, header_extension):
-        self.pbo_entries = pbo_entries
+    def __init__(self, header_extension, pbo_entries, eoh_boundary):
         self.header_extension = header_extension
+        self.pbo_entries = pbo_entries
+        self.eoh_boundary = eoh_boundary
 
     def __str__(self):
         out = 'PBO Header:\n'
@@ -147,65 +149,74 @@ class PBOHeader(object):
         for entry in self.pbo_entries:
             out += str(entry) + '\n'
 
+        out += str(self.eoh_boundary) + '\n'
+
         return out
 
     def save_to_file(self, f):
         if not self.pbo_entries:
             return
 
-        self.pbo_entries[0].save_to_file(f)
-
-        if self.pbo_entries[0].is_boundary() and self.header_extension:
+        if self.header_extension:
             self.header_extension.save_to_file(f)
 
-        for entry in self.pbo_entries[1:]:
+        for entry in self.pbo_entries:
             entry.save_to_file(f)
+
+        self.eoh_boundary.save_to_file(f)
 
     @staticmethod
     def parse_from_file(f):
         header_entries = []
         header_extension = None
+        eoh_boundary = None
         first_entry = True
 
         while True:
             pbo_header_entry = PBOHeaderEntry.parse_from_file(f)
 
-            header_entries.append(pbo_header_entry)
+            if not pbo_header_entry.is_boundary():
+                header_entries.append(pbo_header_entry)
 
-            if pbo_header_entry.is_boundary():
-                if not first_entry:
-                    break
+            else:  # If boundary
+                if first_entry:
+                    # Read header extension
+                    header_extension = PBOHeaderExtension.parse_from_file(f, pbo_header_entry)
 
                 else:
-                    # Read header extension
-                    header_extension = PBOHeaderExtension.parse_from_file(f)
+                    eoh_boundary = pbo_header_entry
+                    break
 
             first_entry = False
 
-        header = PBOHeader(header_entries, header_extension)
+        header = PBOHeader(header_extension, header_entries, eoh_boundary)
 
         return header
 
 
 class PBOHeaderExtension(object):
-    def __init__(self, strings):
+    def __init__(self, strings, pbo_header_entry):
+        self.pbo_header_entry = pbo_header_entry
         self.strings = strings
 
     def __str__(self):
-        out = 'PBOHeaderExtension:\n'
+        out = 'PBOHeaderExtension:'
+        out += str(self.pbo_header_entry) + '\n'
         for s in self.strings:
             out += '    String: {}\n'.format(s)
 
         return out
 
     def save_to_file(self, f):
+        self.pbo_header_entry.save_to_file(f)
+
         for s in self.strings:
             write_asciiz(f, s)
 
         write_asciiz(f, '')
 
     @staticmethod
-    def parse_from_file(f):
+    def parse_from_file(f, pbo_header_entry):
         strings = []
 
         s = read_asciiz(f)
@@ -213,7 +224,7 @@ class PBOHeaderExtension(object):
             strings.append(s)
             s = read_asciiz(f)
 
-        header_extension = PBOHeaderExtension(strings)
+        header_extension = PBOHeaderExtension(strings, pbo_header_entry)
 
         return header_extension
 
@@ -265,15 +276,21 @@ class PBOHeaderEntry(object):
 
         return entry
 
-if __name__ == '__main__':
-    f = PBOFile.read_file('cba_ai.pbo')
-    print f
-    f.save_file('cba_ai_rework.pbo')
 
-    with file('cba_ai.pbo', 'rb') as pbo_orig:
+def _same_hash(file_a, file_b):
+    with file(file_a, 'rb') as pbo_orig:
         orig_hash = hashlib.sha1(pbo_orig.read()).digest()
 
-    with file('cba_ai_rework.pbo', 'rb') as pbo_rework:
+    with file(file_b, 'rb') as pbo_rework:
         rework_hash = hashlib.sha1(pbo_rework.read()).digest()
 
-    print 'Files are identical: {}'.format(orig_hash == rework_hash)
+    return orig_hash == rework_hash
+
+
+if __name__ == '__main__':
+    file_tested = 'testpbo.pbo'
+    f = PBOFile.read_file(file_tested)
+    f.save_file(file_tested + '.rework.pbo')
+    print f
+
+    print 'Files are identical: {}'.format(_same_hash(file_tested, file_tested + '.rework.pbo'))
