@@ -20,6 +20,8 @@ import struct
 import sys
 import textwrap
 
+from attribute_proxy import ProxyBehavior
+
 ''' Notes:
 https://community.bistudio.com/wiki/PBO_File_Format
 PackingMethod; //=0x56657273 Product Entry (resistance/elite/arma)
@@ -108,21 +110,51 @@ class PBOFile(object):
             f.write('\0')
             f.write(hashing_file.get_hash())
 
+    def add_entry(self, filename, data, packing_method=0, original_size=-1, reserved=0, timestamp=0, data_size=-1):
+        if data_size == -1:
+            data_size = len(data)
+
+        if original_size == -1:
+            original_size = data_size
+
+        header_entry = PBOHeaderEntry(filename, packing_method, original_size, reserved, timestamp, data_size)
+        file_entry = PBOFileEntry(data, data_size)
+
+        self.pbo_header.pbo_entries.append(header_entry)
+        self.pbo_files.append(file_entry)
+
+
     def __iter__(self):
         for header_entry, file_entry in zip(self.pbo_header.pbo_entries, self.pbo_files):
             yield PBOFileEntryView(header_entry, file_entry)
 
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return PBOFileEntryView(self.pbo_header.pbo_entries[key], self.pbo_files[key])
 
-class PBOFileEntryView(object):
+        elif isinstance(key, slice):
+            return (PBOFileEntryView(h, f) for h, f in zip(self.pbo_header.pbo_entries[key], self.pbo_files[key]))
+
+        else:
+            raise TypeError('Invalid __getitem__ type')
+
+
+class PBOFileEntryView(ProxyBehavior):
     def __init__(self, header_entry, file_entry):
+        super(PBOFileEntryView, self).__init__()
+
         self.header_entry = header_entry
         self.file_entry = file_entry
 
+        self.filename = self.Proxy('header_entry', 'filename')
+        self.original_size = self.Proxy('header_entry', 'original_size')
+        self.data = self.Proxy('file_entry', 'data')
+
     def __str__(self):
         out = ''
-        out += 'Filename: {}\n'.format(self.header_entry.filename)
-        out += 'Size: {}\n'.format(self.header_entry.original_size)
-        out += 'First 100 bytes: {}\n'.format(repr(self.file_entry.data[:100]))
+        out += 'Filename: {}\n'.format(self.filename)
+        out += 'Size: {}\n'.format(self.original_size)
+        out += 'First 100 bytes: {}\n'.format(repr(self.data[:100]))
 
         return out
 
@@ -311,10 +343,11 @@ if __name__ == '__main__':
     file_tested = 'testpbo.pbo'
     f = PBOFile.read_file(file_tested)
 
+    # print f
     for entry in f:
+        # print entry.filename
         print entry
 
-    f.save_file(file_tested + '.rework.pbo')
-    print f
+    f.save_file(file_tested + '.repack.pbo')
 
-    print 'Files are identical: {}'.format(_same_hash(file_tested, file_tested + '.rework.pbo'))
+    print 'Files are identical: {}'.format(_same_hash(file_tested, file_tested + '.repack.pbo'))
