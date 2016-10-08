@@ -13,6 +13,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 
 class Mod(object):
     """encapsulate data needed for a mod"""
@@ -34,6 +36,9 @@ class Mod(object):
         self.full_name = full_name  # 'Community Base Addons v.123.4'
         self.version = version  # "0.1-alpha6" (optional)
         self.up_to_date = up_to_date
+
+    def get_full_path(self):
+        return os.path.join(self.parent_location, self.foldername)
 
     @classmethod
     def fromDict(cls, d):

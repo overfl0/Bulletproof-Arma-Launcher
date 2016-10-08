@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 import errno
 import libtorrent
 import os
+import subprocess
 import stat
 import textwrap
 
@@ -263,6 +264,13 @@ def prepare_mod_directory(parent_location, foldername):
     if os.path.exists(mod_full_path):
         # Read-write everything
         ensure_directory_structure_is_correct(mod_full_path)
+
+def create_symlink(symlink_name, orig_path):
+    """Create an NTFS Junction.
+    For now, just use subprocess. Maybe switch to native libs later.
+    """
+
+    return subprocess.check_call(['cmd', '/c', 'mklink', '/J', symlink_name, orig_path])
 
 def create_add_torrent_flags():
     """Create default flags for adding a new torrent to a syncer."""
