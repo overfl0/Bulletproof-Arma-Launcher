@@ -111,13 +111,26 @@ class Controller(object):
             # want but it is good enough ;)
             Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
 
+    def is_para_running(self, name=None):
+        """Check if a given para is now running or if any para is running in
+        case no name is given.
+        """
+
+        if not self.para or not self.para.is_open():
+            return False
+
+        if name:
+            return self.para.action_name == name
+        else:
+            return True
+
     def stop_mod_processing(self):
         """Forcefully stop any processing and ignore all the para promises.
         This is used to stop any running processes for restarting all the checks
         afterwards. (using wait_for_mod_checking_restart())
         """
 
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             # self.para.request_termination()
             self.para.request_termination_and_break_promises()
 
@@ -133,7 +146,7 @@ class Controller(object):
         be done again, from the beginning.
         """
 
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             return  # Keep waiting
 
         self.start_mod_checking()
@@ -158,7 +171,7 @@ class Controller(object):
         if seeding_type == 'never' or \
            (seeding_type == 'while_not_playing' and arma_is_running):
 
-            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            if self.is_para_running('sync'):
                 Logger.info('Timer check: stopping seeding.')
                 self.para.request_termination()
 
@@ -345,7 +358,7 @@ class Controller(object):
 
     def on_self_upgrade_resolve(self, data):
         # Terminate working paras here.
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
@@ -542,7 +555,7 @@ class Controller(object):
         on with a TS plugin installation.
         Feel free to refactor me :).
         """
-        if self.para and self.para.is_open() and self.para.action_name == 'sync':
+        if self.is_para_running('sync'):
             Logger.info('InstallScreen: User acknowledged TS pluing installation. Sending continue command.')
             self.para.send_message('tsplugin_install_as_admin')
 
@@ -553,7 +566,7 @@ class Controller(object):
         a mod found on disk.
         Feel free to refactor me :).
         """
-        if self.para and self.para.is_open() and self.para.action_name == 'sync':
+        if self.is_para_running('sync'):
             Logger.info('InstallScreen: User has made a decision about mod {}. Passing it to the subprocess.'.format(mod_name))
             Logger.debug('InstallScreen: Mod: {}, Location: {}, Action: {}'.format(mod_name, location, action))
 
@@ -638,7 +651,7 @@ class Controller(object):
 
         # Stop seeding if not set to always seed
         if seeding_type != 'always':
-            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            if self.is_para_running('sync'):
                 self.para.request_termination()
 
         third_party.helpers.run_the_game(self.mods, ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
@@ -665,7 +678,7 @@ class Controller(object):
 
             # If we are in the process of syncing things by torrent request an
             # update of its settings
-            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            if self.is_para_running('sync'):
                 Logger.debug('InstallScreen: Passing setting {}={} to syncing subprocess'.format(key, value))
                 self.para.send_message('torrent_settings', {key: value})
 
@@ -679,7 +692,7 @@ class Controller(object):
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')
 
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
         else:
