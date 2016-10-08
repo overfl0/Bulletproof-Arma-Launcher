@@ -255,13 +255,13 @@ def prepare_mod_directory(parent_location, foldername):
     set_node_read_write(parent_location)
 
     # If mod directory exists, check if it's valid
-    if os.path.exists(mod_full_path):
+    if os.path.lexists(mod_full_path):
         if os.path.isdir(mod_full_path):
             remove_broken_junction(mod_full_path)
         else:
             os.unlink(mod_full_path)
 
-    if os.path.exists(mod_full_path):
+    if os.path.lexists(mod_full_path):
         # Read-write everything
         ensure_directory_structure_is_correct(mod_full_path)
 
