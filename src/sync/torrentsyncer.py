@@ -322,9 +322,8 @@ class TorrentSyncer(object):
 
         mod.libtorrent_params = params
 
-        # Ensure all the files and directories are read-write
-        torrent_utils.ensure_directory_exists(mod.parent_location)
-        torrent_utils.ensure_directory_structure_is_correct(mod.parent_location, mod.foldername)
+        # Ensure the mod directory is correct (no bad links and read-write)
+        torrent_utils.prepare_mod_directory(mod.parent_location, mod.foldername)
 
     def get_torrents_status(self):
         """Get the status of all torrents with valid handles and cache them in

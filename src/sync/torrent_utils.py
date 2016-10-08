@@ -128,6 +128,7 @@ def set_node_read_write(node_path):
         if e.errno == errno.ENOENT:  # 2 - File not found
             Logger.info('Torrent_utils: file not found')
             return
+        raise
 
     # If the file is read-only to the owner, change it to read-write
     if not stat_struct.st_mode & stat.S_IWUSR:
@@ -191,6 +192,23 @@ def ensure_directory_exists(base_directory):
             raise AdminRequiredError(error_message)
 
 
+def remove_broken_junction(path):
+    try:
+        if paths.is_broken_junction(path):
+            os.rmdir(path)
+
+    except OSError:
+        error_message = textwrap.dedent('''
+            Error: file/directory cannot be created or is not valid:
+            {}
+
+            Creating it manually or running the launcher as Administrator may help.
+
+            If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
+            ''').format(path)
+        Logger.error(error_message)
+        raise AdminRequiredError(error_message)
+
 def _replace_broken_junction_with_directory(path):
     """Perform a test whether the given path is a broken junction and fix it
     if it is.
@@ -201,13 +219,12 @@ def _replace_broken_junction_with_directory(path):
         set_node_read_write(path)
 
 
-def ensure_directory_structure_is_correct(base_directory, mod_foldername):
+def ensure_directory_structure_is_correct(mod_directory):
     """Ensures all the files in the mod's directory have the write bit set and
     there are no broken Junctions nor Symlinks in the directory structure.
     Useful if some external tool has set them to read-only.
     """
 
-    mod_directory = os.path.join(base_directory, mod_foldername)
     Logger.info('Torrent_utils: Checking read-write file access in directory: {}.'.format(mod_directory))
 
     _replace_broken_junction_with_directory(mod_directory)
@@ -220,6 +237,32 @@ def ensure_directory_structure_is_correct(base_directory, mod_foldername):
             set_node_read_write(node_path)
             _replace_broken_junction_with_directory(node_path)
 
+
+def prepare_mod_directory(parent_location, foldername):
+    """Prepare the mod with the correct permissions, etc...
+    This should make sure the parent directories are present, the mod directory
+    is either not existing or it is present and has no broken symlinks.
+
+    Right now, there is  alot of duplicate code in here, that will hopefully be
+    refactored in the future, after the other features are implemented.
+    """
+    # TODO: Simplify all the calls and remove duplicate code
+    mod_full_path = os.path.join(parent_location, foldername)
+
+    # Ensure the base directory exists
+    ensure_directory_exists(parent_location)
+    set_node_read_write(parent_location)
+
+    # If mod directory exists, check if it's valid
+    if os.path.exists(mod_full_path):
+        if os.path.isdir(mod_full_path):
+            remove_broken_junction(mod_full_path)
+        else:
+            os.unlink(mod_full_path)
+
+    if os.path.exists(mod_full_path):
+        # Read-write everything
+        ensure_directory_structure_is_correct(mod_full_path)
 
 def create_add_torrent_flags():
     """Create default flags for adding a new torrent to a syncer."""
