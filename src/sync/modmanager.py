@@ -23,6 +23,8 @@ from manager_functions import (
     _sync_all,
 )
 
+from preparer import prepare_all
+
 from kivy.logger import Logger
 from utils.process import protected_para
 
@@ -96,6 +98,10 @@ class ModManager(object):
             then=(None, None, self.on_sync_all_progress)
         )
 
+        return para
+
+    def prepare_all(self):
+        para = protected_para(prepare_all, (list(self.mods),), 'prepare_all')
         return para
 
     def on_prepare_and_check_resolve(self, data):

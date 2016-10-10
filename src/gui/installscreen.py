@@ -305,10 +305,6 @@ class Controller(object):
         else:
             self.show_more_play_button()
 
-    def on_install_button_click(self, btn):
-        """Just start syncing the mods."""
-        self.start_syncing(seed=False)
-
     def _sanitize_server_list(self, servers, default_teamspeak):
         """Filter out only the servers that contain a 'name', 'ip' and 'port' fields."""
         # TODO: move me somewhere else
@@ -350,6 +346,33 @@ class Controller(object):
 
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
+
+    def on_prepare_resolve(self, progress):
+        self.start_syncing(seed=False)
+
+    def on_prepare_progress(self, progress, percentage):
+        self.view.ids.status_image.show()
+        print progress
+        if 'msg' in progress:
+            self.view.ids.status_label.text = progress['msg']
+        self.view.ids.progress_bar.value = percentage * 100
+
+        message = progress.get('special_message')
+        if message:
+            # Message handling mode:
+            command = message.get('command')
+            params = message.get('params')
+
+
+
+    def on_install_button_click(self, btn):
+        """Just start syncing the mods."""
+        # self.start_syncing(seed=False)
+        # return
+        self.disable_action_buttons()
+
+        self.para = self.mod_manager.prepare_all()
+        self.para.then(self.on_prepare_resolve, self.on_sync_reject, self.on_prepare_progress)
 
     def on_self_upgrade_button_release(self, btn):
         self.disable_action_buttons()
