@@ -42,6 +42,7 @@ from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.gameselectionbox import GameSelectionBox
 from view.modreusebox import ModReuseBox
+from view.modsearchbox import ModSearchBox
 from view.messagebox import MessageBox
 
 
@@ -363,7 +364,37 @@ class Controller(object):
             command = message.get('command')
             params = message.get('params')
 
+            if command == 'missing_mods':
+                message_box_instance = ModSearchBox(on_selection=self.on_prepare_search_decision,
+                                                   mod_names=params,
+                                                   )
+                message_box_instance.chain_open()
 
+            elif command == 'mod_found_action':
+                message_box_instance = ModReuseBox(on_selection=self.on_mod_found_decision,
+                                                   mod_name=params['mod_name'],
+                                                   locations=params['locations'],
+                                                   )
+                message_box_instance.chain_open()
+
+    def on_prepare_search_decision(self, action, location=None):
+        """A quickly done workaround for telling the launcher what to do with
+        missing mods.
+        Feel free to refactor me :).
+        """
+
+        if self.is_para_running('prepare_all'):
+            Logger.info('InstallScreen: User has made a decision about missing mods. Passing it to the subprocess.')
+            Logger.debug('InstallScreen: Action: {}, Location: {}'.format(action, location))
+
+            params = {
+                'location': location,
+                'action': action
+            }
+
+            self.para.send_message('mod_search', params)
+
+        return None
 
     def on_install_button_click(self, btn):
         """Just start syncing the mods."""
@@ -589,7 +620,7 @@ class Controller(object):
         a mod found on disk.
         Feel free to refactor me :).
         """
-        if self.is_para_running('sync'):
+        if self.is_para_running('prepare_all'):
             Logger.info('InstallScreen: User has made a decision about mod {}. Passing it to the subprocess.'.format(mod_name))
             Logger.debug('InstallScreen: Mod: {}, Location: {}, Action: {}'.format(mod_name, location, action))
 
@@ -621,16 +652,6 @@ class Controller(object):
                                               title=message_box['title'],
                                               markup=message_box['markup'],
                                               on_dismiss=on_dismiss)
-            message_box_instance.chain_open()
-
-        # Found possible mods on disk callback
-
-        mod_found_action = progress.get('mod_found_action')
-        if mod_found_action:
-            message_box_instance = ModReuseBox(on_selection=self.on_mod_found_decision,
-                                               mod_name=mod_found_action['mod_name'],
-                                               locations=mod_found_action['locations'],
-                                               )
             message_box_instance.chain_open()
 
     def on_sync_resolve(self, progress):

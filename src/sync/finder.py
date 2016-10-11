@@ -29,7 +29,7 @@ def get_mod_locations():
     return mod_locations
 
 
-def find_mods(names):
+def find_mods(names, locations=None):
     """Find all the places where mods could already be stored on disk.
     For now this only does simple name matching and returns directories that
     have a name that matches the requested name. The search is case-insensitive.
@@ -49,9 +49,12 @@ def find_mods(names):
     # inodes_visited = set()  # Store the inode of each directory to prevent infinite loops
 
     Logger.info('Finder: Searching for mods that have already been downloaded on disk: {}'.format(names))
+    if locations is None:
+        locations = get_mod_locations()
+
     response = {}
 
-    for location in get_mod_locations():
+    for location in locations:
         Logger.info('Finder: Trying {}'.format(location))
 
         for root, _, _ in os.walk(location, topdown=True, followlinks=True):

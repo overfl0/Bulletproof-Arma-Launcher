@@ -64,6 +64,7 @@ class MessageHandler(object):
     def bind_message(self, command, callback):
         self.callbacks[command] = callback
 
+
 class Preparer(object):
     def __init__(self, message_queue, mods):
         self.message_queue = message_queue
@@ -73,6 +74,7 @@ class Preparer(object):
         self.message_handler = MessageHandler(message_queue, self)
         self.message_handler.bind_message('terminate', self.on_terminate_message)
         self.message_handler.bind_message('mod_reuse', self.on_mod_reuse_message)
+        self.message_handler.bind_message('mod_search', self.on_mod_search_message)
 
     def _get_mod_by_foldername(self, foldername):
         for mod in self.mods:
@@ -92,53 +94,69 @@ class Preparer(object):
 
         if params['action'] == 'use':
             Logger.info('Message: Mod reuse: symlink, mod: {}'.format(mod_name))
-            self.result_queue.progress({'msg': 'Creating junction for mod {}...'.format(mod_name), 'log': []}, 0)
+            self.message_handler.message_queue.progress({'msg': 'Creating junction for mod {}...'.format(mod_name), 'log': []}, 0)
             torrent_utils.create_symlink(dest_location, params['location'])
-            self.result_queue.progress({'msg': 'Creating junction for mod {} finished!'.format(mod_name), 'log': []}, 0)
+            self.message_handler.message_queue.progress({'msg': 'Creating junction for mod {} finished!'.format(mod_name), 'log': []}, 0)
 
-            self.missing_mods.remove(mod_name)
+            self.missing_mods.remove(mod)
             self.missing_responses -= 1
 
         elif params['action'] == 'copy':
             Logger.info('Message: Mod reuse: copy, mod: {}'.format(mod_name))
-            self.result_queue.progress({'msg': 'Copying mod {}...'.format(mod_name), 'log': []}, 0)
+            self.message_handler.message_queue.progress({'msg': 'Copying mod {}...'.format(mod_name), 'log': []}, 0)
             shutil.copytree(params['location'], dest_location)
-            self.result_queue.progress({'msg': 'Copying mod {} finished!'.format(mod_name), 'log': []}, 0)
+            self.message_handler.message_queue.progress({'msg': 'Copying mod {} finished!'.format(mod_name), 'log': []}, 0)
 
-            self.missing_mods.remove(mod_name)
+            self.missing_mods.remove(mod)
             self.missing_responses -= 1
 
         elif params['action'] == 'ignore':
             Logger.info('Message: Mod reuse: ignore, mod: {}'.format(mod_name))
             self.missing_responses -= 1
 
-        # elif params['action'] == 'ignore_all':
-        #    self.missing_mods = set()
-
         else:
             raise Exception('Unknown mod_reuse action: {}'.format(params['action']))
+
+    def on_mod_search_message(self, params):
+        if params['action'] == 'download':
+            Logger.info('Message: Mod search: download all')
+            self.missing_mods = set()  # Clear the missing mods
+            self.missing_responses = 0  # I think it's optional, actually
+
+        elif params['action'] == 'search':
+            Logger.info('Message: Mod search: search in {}'.format(params['location']))
+            self.missing_responses -= 1
+            self.find_mods_and_ask(params['location'])
+
+        else:
+            raise Exception('Unknown mod_search action: {}'.format(params['action']))
 
     def reject(self, msg):
         self.message_queue.reject({'msg': msg})
 
     def find_mods_and_ask(self, location=None):
-        """UNUSED!!!"""
-        self.result_queue.progress({'msg': 'Searching for missing mods on disk...',
+        self.message_queue.progress({'msg': 'Searching for missing mods on disk...',
                                     'log': [],
                                     }, 0)
 
+        missing_mods_names = [mod.foldername for mod in self.missing_mods]
         # Find potential mods on disk.
-        found_mods = finder.find_mods(self.missing_mods, location)
+        found_mods = finder.find_mods(missing_mods_names, [location])
 
         # For missing mods that have been found
         for mod_name in found_mods:
-            self.result_queue.progress({'msg': 'Found possible places for {}'.format(mod_name),
+            self.message_handler.send_message('mod_found_action', {
+                                                'mod_name': mod_name,
+                                                'locations': found_mods[mod_name]
+                                                })
+            self.missing_responses += 1
+            '''self.message_queue.progress({'msg': 'Found possible places for {}'.format(mod_name),
                                         'log': [],
                                         'mod_found_action': {
                                             'mod_name': mod_name,
                                             'locations': found_mods[mod_name]
                                         }
-                                        }, 0)
+                                        }, 0)'''
 
     def request_directory_to_search(self):
         mods_names = [mod.foldername for mod in self.missing_mods]
