@@ -14,10 +14,10 @@ from __future__ import unicode_literals
 
 import kivy.app
 
-from kivy.uix.popup import Popup
+from vresizablepopup import VResizablePopup
 
 
-class ChainedPopup(Popup):
+class ChainedPopup(VResizablePopup):
     """Popup that is shown only when previous popups have disappeared.
     They can be chained by calling the chain_open() method instead of open().
 
