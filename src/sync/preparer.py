@@ -201,8 +201,8 @@ class Preparer(object):
 
             time.sleep(0.1)
 
-        self.reject('Dummy reject message')
-        # self.message_queue.resolve()
+        # self.reject('Dummy reject message')
+        self.message_queue.resolve()
 
 
 def prepare_all(message_queue, mods):

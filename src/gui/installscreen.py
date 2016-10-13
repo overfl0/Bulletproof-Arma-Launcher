@@ -398,8 +398,6 @@ class Controller(object):
 
     def on_install_button_click(self, btn):
         """Just start syncing the mods."""
-        # self.start_syncing(seed=False)
-        # return
         self.disable_action_buttons()
 
         self.para = self.mod_manager.prepare_all()
