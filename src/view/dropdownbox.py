@@ -54,7 +54,7 @@ class DropdownBox(HoverBox):
         button = LabelB(text='V', bcolor=(0, 0, 0, 0.8), size_hint=(None, None))  #  size_hint=(0.05, 1)
 
         # Set the V button to a square size equal to the size of the Dropdown Box
-        self.bind(size=lambda obj, news: button.setter('size')(button, (news[1], news[1])))
+        self.bind(size=lambda obj, size: button.setter('size')(button, (size[1], size[1])))
         self.bind(on_release=lambda x: dropdown.open(self))
         self.bind(mouse_hover=lambda instance, hover: partial(highlight_selection, button, hover)())
 

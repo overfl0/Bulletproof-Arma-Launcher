@@ -22,9 +22,10 @@ class BubbleBehavior(object):
         text = kwargs.get('bubble_text')
 
         if text:
+            text = text.strip()
             self.bubble = bubble = Bubble()
             self.bubble_button = bubble_button = BubbleButton(markup=True, text=text)
-            bubble_button.bind(texture_size=lambda obj, news: bubble.setter('size')(bubble, (news[0] + 30, news[1] + 30)))  # b.setter('text_size'))
+            bubble_button.bind(texture_size=lambda obj, size: bubble.setter('size')(bubble, (size[0] + 30, size[1] + 30)))
             bubble.add_widget(bubble_button)
 
             self.bind(mouse_hover=partial(self.show_bubble, self, bubble))
