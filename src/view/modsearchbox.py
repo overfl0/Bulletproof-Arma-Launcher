@@ -93,20 +93,18 @@ class ModSearchBox(ChainedPopup):
         horizontal_box = BoxLayout(orientation='horizontal', spacing=50, width=300, height=30, size_hint=(1, None))
 
         button1_bubble = textwrap.dedent('''\
-            Select a directory to be searched for mods
-            that are already installed on your computer.
-            If found, you can use them instead
-            of downloading everything from the internet.
+            Select a directory to search for existing
+            mods to use, to prevent redownloading.
             ''')
         button1 = DefaultHoverButton(text='Search on disk', size=(100, 30), size_hint=(1, None), bubble_text=button1_bubble)
         button1.bind(on_release=self.search_button_clicked)
         horizontal_box.add_widget(button1)
 
         button2_bubble = textwrap.dedent('''\
-            Download all the missing mods using
-            your internet connection
+            Download all the mods listed above
+            using your internet connection.
             ''')
-        button2 = HButton(text='Download all', size=(100, 30), size_hint=(1, None), bubble_text=button2_bubble)
+        button2 = HButton(text='Download missing', size=(100, 30), size_hint=(1, None), bubble_text=button2_bubble)
         button2.bind(on_release=self.ignore_button_clicked)
         horizontal_box.add_widget(button2)
 

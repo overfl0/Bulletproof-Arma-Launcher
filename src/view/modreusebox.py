@@ -58,8 +58,8 @@ class ModReuseBox(ChainedPopup):
         horizontal_box = BoxLayout(orientation='horizontal', spacing=50, width=300)
 
         button1_bubble = textwrap.dedent('''\
-            Use the mod directly on disk (fastest,
-            takes no additional space BUT [color=ff3333]may modify the
+            Use that mod directly (fastest, takes almost
+            no additional space [color=ff3333]but may modify the
             original mod on your disk while synchronizing[/color]).''')
         button1 = DefaultHoverButton(text='Use that mod', size=(100, 30), bubble_text=button1_bubble)
         button1.bind(on_release=self.dismiss)
@@ -67,7 +67,7 @@ class ModReuseBox(ChainedPopup):
         horizontal_box.add_widget(button1)
 
         button2_bubble = textwrap.dedent('''\
-            Create a local copy of the mod and download
+            Create a local copy of the mod and only download
             the missing files (faster, takes additional space).''')
         button2 = HButton(text='Copy it', size=(100, 30), bubble_text=button2_bubble)
         button2.bind(on_release=self.dismiss)
@@ -75,9 +75,11 @@ class ModReuseBox(ChainedPopup):
         horizontal_box.add_widget(button2)
 
         button3_bubble = textwrap.dedent('''\
-            Ignore it and download the whole mod from
-            the internet (slower, takes additional space).''')
-        button3 = HButton(text='Ignore', size=(100, 30), bubble_text=button3_bubble)
+            Do not use the location(s) above.
+            You can search for this mod in
+            another location later.
+            ''')
+        button3 = HButton(text='Skip', size=(100, 30), bubble_text=button3_bubble)
         button3.bind(on_release=self.dismiss)
         button3.bind(on_release=lambda x: on_selection(mod_name, dropdown_box.text, 'ignore'))
         horizontal_box.add_widget(button3)
