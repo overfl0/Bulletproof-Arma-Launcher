@@ -127,7 +127,7 @@ class Preparer(object):
         elif params['action'] == 'search':
             Logger.info('Message: Mod search: search in {}'.format(params['location']))
             self.missing_responses -= 1
-            self.find_mods_and_ask(params['location'])
+            self.find_mods_and_ask([params['location']])
 
         else:
             raise Exception('Unknown mod_search action: {}'.format(params['action']))
@@ -135,14 +135,14 @@ class Preparer(object):
     def reject(self, msg):
         self.message_queue.reject({'msg': msg})
 
-    def find_mods_and_ask(self, location=None):
+    def find_mods_and_ask(self, locations=None):
         self.message_queue.progress({'msg': 'Searching for missing mods on disk...',
                                     'log': [],
                                     }, 0)
 
         missing_mods_names = [mod.foldername for mod in self.missing_mods]
         # Find potential mods on disk.
-        found_mods = finder.find_mods(missing_mods_names, [location])
+        found_mods = finder.find_mods(missing_mods_names, locations)
 
         # For missing mods that have been found
         for mod_name in found_mods:
@@ -186,8 +186,11 @@ class Preparer(object):
             self.reject(ex.args[0])
             return
 
-
         self.missing_responses = 0
+
+        if self.missing_mods:
+            self.find_mods_and_ask()
+
         while self.missing_mods:
             if not self.missing_responses:  # All responses have been processed
                 # Print message about missing mods and ask for directory to search
