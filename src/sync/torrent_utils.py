@@ -239,7 +239,7 @@ def ensure_directory_structure_is_correct(mod_directory):
             _replace_broken_junction_with_directory(node_path)
 
 
-def prepare_mod_directory(parent_location, foldername):
+def prepare_mod_directory(mod_full_path):
     """Prepare the mod with the correct permissions, etc...
     This should make sure the parent directories are present, the mod directory
     is either not existing or it is present and has no broken symlinks.
@@ -248,7 +248,7 @@ def prepare_mod_directory(parent_location, foldername):
     refactored in the future, after the other features are implemented.
     """
     # TODO: Simplify all the calls and remove duplicate code
-    mod_full_path = os.path.join(parent_location, foldername)
+    parent_location = os.path.dirname(mod_full_path)
 
     # Ensure the base directory exists
     ensure_directory_exists(parent_location)

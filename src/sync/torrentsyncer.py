@@ -320,7 +320,9 @@ class TorrentSyncer(object):
         mod.libtorrent_params = params
 
         # Ensure the mod directory is correct (no bad links and read-write)
-        torrent_utils.prepare_mod_directory(mod.parent_location, mod.foldername)
+        # This should have been already done with preparer.py but it doesn't
+        # hurt to do that again in case something changed in the meantime.
+        torrent_utils.prepare_mod_directory(mod.get_full_path())
 
     def get_torrents_status(self):
         """Get the status of all torrents with valid handles and cache them in

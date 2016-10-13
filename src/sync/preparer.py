@@ -90,12 +90,12 @@ class Preparer(object):
     def on_mod_reuse_message(self, params):
         mod_name = params['mod_name']
         mod = self._get_mod_by_foldername(mod_name)
-        dest_location = os.path.join(mod.parent_location, mod_name)
 
         if params['action'] == 'use':
             Logger.info('Message: Mod reuse: symlink, mod: {}'.format(mod_name))
             self.message_handler.message_queue.progress({'msg': 'Creating junction for mod {}...'.format(mod_name), 'log': []}, 0)
-            torrent_utils.create_symlink(dest_location, params['location'])
+            torrent_utils.create_symlink(mod.get_full_path(), params['location'])
+            torrent_utils.prepare_mod_directory(mod.get_full_path())
             self.message_handler.message_queue.progress({'msg': 'Creating junction for mod {} finished!'.format(mod_name), 'log': []}, 0)
 
             self.missing_mods.remove(mod)
@@ -104,7 +104,8 @@ class Preparer(object):
         elif params['action'] == 'copy':
             Logger.info('Message: Mod reuse: copy, mod: {}'.format(mod_name))
             self.message_handler.message_queue.progress({'msg': 'Copying mod {}...'.format(mod_name), 'log': []}, 0)
-            shutil.copytree(params['location'], dest_location)
+            shutil.copytree(params['location'], mod.get_full_path())
+            torrent_utils.prepare_mod_directory(mod.get_full_path())
             self.message_handler.message_queue.progress({'msg': 'Copying mod {} finished!'.format(mod_name), 'log': []}, 0)
 
             self.missing_mods.remove(mod)
@@ -175,7 +176,7 @@ class Preparer(object):
 
         try:
             for mod in self.mods:
-                torrent_utils.prepare_mod_directory(mod.parent_location, mod.foldername)
+                torrent_utils.prepare_mod_directory(mod.get_full_path())
 
                 # If directory does not exist
                 if not os.path.lexists(mod.get_full_path()):
