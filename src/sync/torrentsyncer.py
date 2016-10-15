@@ -27,13 +27,13 @@ if __name__ == "__main__":
 
 
 import libtorrent
-import os
 import textwrap
 import torrent_utils
 
 from kivy.logger import Logger
 from sync.integrity import check_mod_directories
 from utils import requests_wrapper
+from utils.eta import Eta
 from utils.metadatafile import MetadataFile
 from utils.unicode_helpers import decode_utf8, encode_utf8
 from time import sleep
@@ -130,22 +130,6 @@ class TorrentSyncer(object):
             if mod.torrent_handle.is_valid():
                 yield mod
 
-    def calculate_eta(self, status, total_size, downloaded_size):
-        ETA = ''
-
-        missing_size = total_size - downloaded_size
-
-        if status.payload_download_rate > 5 * 1024:
-            secs = float(missing_size) / float(status.payload_download_rate)
-
-            secs = int(secs)
-            mins, secs = divmod(secs, 60)
-            hours, mins = divmod(mins, 60)
-
-            ETA = '{:d}:{:02d}:{:02d}'.format(hours, mins, secs)
-
-        return ETA
-
     def log_session_progress(self):
         """Log the progress of syncing the torrents.
         Progress for each individual torrent is written to the log file.
@@ -185,7 +169,7 @@ class TorrentSyncer(object):
         if total_size == 0:
             total_size = 1
         download_fraction = downloaded_size / total_size
-        ETA = self.calculate_eta(status, total_size, downloaded_size)
+        ETA = self.eta.calculate_eta(status.payload_download_rate, total_size, downloaded_size)
         session_actual_peers = 0
         action = 'Syncing:'
 
@@ -479,6 +463,8 @@ class TorrentSyncer(object):
             mod.torrent_handle = torrent_handle
 
         self.get_torrents_status()
+
+        self.eta = Eta()
 
         # Loop until state (5). All torrents finished and paused
         while not self.is_syncing_finished():
