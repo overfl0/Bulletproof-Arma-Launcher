@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,9 +19,11 @@ import teamspeak
 import textwrap
 import utils.system_processes
 
+from config import config
 from kivy.logger import Logger
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from utils import unicode_helpers
+from utils.devmode import devmode
 from view.messagebox import MessageBox
 
 
@@ -106,6 +108,70 @@ def check_requirements_troubleshooting(dummy_var):
     return False
 
 
+def arma_not_found_workaround(on_ok, on_error):
+    """After performing a file integrity check on Steam, Arma 3 registry entries
+    are removed and the launcher cannot use them to get paths.
+
+    Running the Arma 3 launcher fixes this, although the method they use is very
+    crude - they just scan their local directory for executables and recreate
+    the registry entries if found. The only problem is that only steam knows the
+    launcher's directory.
+
+    So what we do here is we run the launcher and then we wait for it to
+    recreate the entries and then try to kill its process after the fact.
+    """
+
+    from kivy.clock import Clock
+    from kivy.uix.popup import Popup
+    from kivy.uix.label import Label
+
+    arma_not_found_fix_popup = Popup(
+        title='Fixing registry entries',
+        content=Label(text='Running Arma 3 launcher after Steam integrity check.\nPlease wait...'),
+        size_hint=(None, None),
+        size=(400, 200),
+        auto_dismiss=False)
+
+    def start_workaround(dt):
+        arma_not_found_fix_popup.open()
+        try:
+            Arma.run_arma3_launcher()
+
+        except (SteamNotInstalled, OSError):
+            on_error()
+            return
+
+        Clock.schedule_interval(arma_not_found_tick, 1)
+
+    def arma_not_found_tick(dt):
+        Logger.info('Workaround: tick')
+
+        try:
+            Arma.get_installation_path()
+
+        except ArmaNotInstalled:
+            return  # Wait again for the launcher to start and fix things
+
+        # It's okay, everything has been fixed
+        Logger.info('Workaround: Registry entries fixed. Resuming normal workflow.')
+        arma_not_found_fix_popup.dismiss()
+        try:
+            utils.system_processes.kill_program('arma3launcher.exe')
+        except:
+            pass  # Don't care. Let the user bother about it
+
+        on_ok()
+        return False  # Unschedule this function
+
+    try:
+        Arma.get_installation_path()
+        on_ok()  # Everything is OK, go on!
+
+    except ArmaNotInstalled:
+        Logger.error('Helpers: Could not find Arma 3. Trying a workaround...')
+        Clock.schedule_once(start_workaround, 0)
+
+
 def check_requirements(verbose=True):
     """Check if all the required third party programs are installed in the system.
     Return True if the check passed.
@@ -115,23 +181,22 @@ def check_requirements(verbose=True):
     # TODO: move me to a better place
     try:
         teamspeak.check_installed()
-    except teamspeak.TeamspeakNotInstalled:
+    except teamspeak.TeamspeakNotInstalled as ex:
         if verbose:
+            try:
+                detailed_message = ex.args[0]
+                detailed_message += '\n\n'
+
+            except IndexError:
+                detailed_message = ''
+
             message = textwrap.dedent('''
-                Teamspeak does not seem to be installed.
-                Having Teamspeak is required in order to play Tactical Battlefield.
+                Your Teamspeak installation is too old or not installed correctly.
 
-                [ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
+                [color=FF0000]{}[/color][ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
 
-                Install Teamspeak and restart the launcher.
-
-
-
-                [i]Note[/i]:
-                Some antiviruses may block access to Windows registry
-                resulting in this message.
-                Make sure you grant access to the registry for the launcher.
-                ''')
+                (Re)Install Teamspeak and restart the launcher.
+                ''').format(detailed_message)
             box = MessageBox(message, title='Teamspeak required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)
             box.open()
@@ -144,18 +209,13 @@ def check_requirements(verbose=True):
         if verbose:
             message = textwrap.dedent('''
                 Steam does not seem to be installed.
-                Having Steam is required in order to play Tactical Battlefield.
+                Having Steam is required in order to play {}.
 
                 [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
 
                 Install Steam and restart the launcher.
+                '''.format(config.launcher_name))
 
-
-                [i]Note[/i]:
-                Some antiviruses may block access to Windows registry
-                resulting in this message.
-                Make sure you grant access to the registry for the launcher.
-                ''')
             box = MessageBox(message, title='Steam required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)
             box.open()
@@ -168,20 +228,12 @@ def check_requirements(verbose=True):
         if verbose:
             message = textwrap.dedent('''
                 Cannot find Arma 3 installation directory.
-
                 This happens after clicking "Verify integrity of game cache" on Steam.
 
-                To fix this problem you have to run the original Arma 3 launcher once.
-                Afterwards, restart this launcher.
+                [b]To fix this problem you have to run the original Arma 3 launcher once.
+                Afterwards, restart this launcher.[/b]
 
                 [ref=steam://run/107410][color=3572b0]Click here to run the Arma 3 launcher.[/color][/ref]
-
-
-                [i]Note[/i]:
-                Some antiviruses may block access to Windows registry
-                also resulting in this message.
-                If following the steps above did not fix the issue,
-                make sure you grant access to the registry for the launcher.
                 ''')
 
             box = MessageBox(message, title='Arma 3 required!', markup=True,
@@ -193,22 +245,24 @@ def check_requirements(verbose=True):
     return True
 
 
-def run_the_game(mods):
+def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
     """Run the game with the right parameters.
     Handle the exceptions by showing an appropriate message on error.
     """
 
-    # TODO: Pass this as a parameter
-    # teamspeak.run_and_connect('31.210.129.135:9989')
-    # teamspeak.run_and_connect('ts3.tacbf.com')
-    teamspeak.run_and_connect('tacbf.ts3dns.com')
+    ts_run_on_start = devmode.get_ts_run_on_start(default=True)
+    if ts_run_on_start:
+        if teamspeak_url:
+            teamspeak.run_and_connect(teamspeak_url)
+    else:
+        Logger.info('Third party: Not running teamspeak because of devmode settings.')
 
     headtracking.run_faceTrackNoIR()
 
     Logger.info('Third party: Running the game')
 
     settings = kivy.app.App.get_running_app().settings
-    mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.clientlocation but it isn't!
+    mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.parent_location but it isn't!
 
     mods_paths = []
     for mod in mods:
@@ -217,7 +271,7 @@ def run_the_game(mods):
 
     try:
         custom_args = []  # TODO: Make this user selectable
-        _ = Arma.run_game(mod_list=mods_paths, custom_args=custom_args)
+        _ = Arma.run_game(mod_list=mods_paths, custom_args=custom_args, ip=ip, port=port, password=password)
         # Note: although run_game returns an object, due to the way steam works,
         # it is unreliable. You never know whether it is the handle to Arma,
         # Steam or Arma's own launcher.

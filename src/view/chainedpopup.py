@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,15 @@ from __future__ import unicode_literals
 
 import kivy.app
 
-from kivy.uix.popup import Popup
+from vresizablepopup import VResizablePopup
 
 
-class ChainedPopup(Popup):
+class ChainedPopup(VResizablePopup):
     """Popup that is shown only when previous popups have disappeared.
     They can be chained by calling the chain_open() method instead of open().
 
     You should NOT mix chain_open() calls with open() calls.
-    Nothing will explode but the latest of these two windows will, end on top.
+    Nothing will explode but the latest of these two windows will end on top.
     """
 
     def __init__(self, *args, **kwargs):

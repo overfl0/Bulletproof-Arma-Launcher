@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,13 +17,14 @@ import errno
 import json
 import os
 
+from kivy import Logger
 from utils.paths import get_launcher_directory
 
 
 class MetadataFile(object):
     """File that contains metadata about mods and is located in the root directory of each mod"""
     """TODO: Maybe screw the whole json part and just bencode everything?"""
-    file_extension = '.tacbf_meta'
+    file_extension = '.launcher_meta'
     file_directory = 'mods_metadata'
     _encoding = 'utf-8'
 
@@ -48,7 +49,7 @@ class MetadataFile(object):
         try:
             with open(self.get_file_name(), 'rb') as file_handle:
                 self.data = json.load(file_handle, encoding=MetadataFile._encoding)
-        except IOError:
+        except (IOError, ValueError):
             if ignore_open_errors:
                 pass
             else:
@@ -108,6 +109,7 @@ class MetadataFile(object):
     def set_dirty(self, is_dirty):
         """Mark the torrent as dirty - in an inconsistent state (download started, we don't know what's exactly on disk)"""
         self.data['dirty'] = bool(is_dirty)
+        Logger.info('set_dirty: Mod {}: {}'.format(self.get_file_name(), is_dirty))
 
     def get_dirty(self):
         return self.data.setdefault('dirty', False)

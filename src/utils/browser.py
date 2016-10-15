@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -40,4 +40,5 @@ def open_hyperlink(url):
     # p.start()
     # Honestly, I don't know if using either threads or processes changes anything.
     # Both seem to freeze the UI at some point.
-    thread.start_new_thread(_open_hyperlink, (url,))
+    # thread.start_new_thread(_open_hyperlink, (url,))
+    _open_hyperlink(url)

@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -11,8 +12,6 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
-
-from copy import copy
 
 from kivy.core.window import Window
 from kivy.uix.button import Button
@@ -68,6 +67,7 @@ class HoverButton(Button):
             self.text_animation_enabled = True
 
     def disable_progress_animation(self):
+        return
         Clock.unschedule(self.do_progress_animation)
         self.text_animation_enabled = False
         self.text = self.last_text

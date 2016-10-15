@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,6 @@ from nose.plugins.attrib import attr
 
 from sync.modmanager import ModManager
 from sync.mod import Mod
-from sync.httpsyncer import HttpSyncer
 
 class AppMock(object):
     """docstring for AppMock"""

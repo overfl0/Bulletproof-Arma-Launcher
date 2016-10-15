@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -126,7 +126,19 @@ class Arma(object):
             raise SteamNotInstalled()
 
     @staticmethod
-    def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True):
+    def run_arma3_launcher():
+        """Run the original arma 3 launcher."""
+        steam_exe_path = Arma.get_steam_exe_path()  # May raise SteamNotInstalled!
+        game_args = [steam_exe_path, '-applaunch', '107410']
+
+        Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
+        popen_object = subprocess.Popen(unicode_helpers.u_to_fs_list(game_args))  # May raise OSError
+
+        return popen_object
+
+    @staticmethod
+    def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True,
+                 ip=None, port=None, password=None):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
@@ -155,6 +167,15 @@ class Arma(object):
 
         if profile_name:
             game_args.extend(['-name=' + profile_name])
+
+        if ip:
+            game_args.extend(['-connect=' + ip])
+
+        if port:
+            game_args.extend(['-port=' + port])
+
+        if password:
+            game_args.extend(['-password=' + password])
 
         if custom_args:
             game_args.extend(custom_args)

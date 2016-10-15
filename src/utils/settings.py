@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +19,7 @@ from __future__ import unicode_literals
 import argparse
 import os
 
+from config import config
 from kivy.logger import Logger
 from kivy.event import EventDispatcher
 from third_party.arma import Arma, SoftwareNotInstalled
@@ -113,18 +115,6 @@ class Settings(Model):
         Logger.info('Settings: loaded args: ' + unicode(self.data))
 
     @classmethod
-    def launcher_default_basedir_old(cls):
-        """Retrieve OLD document folder. Kept for backward compatibility and WILL BE DEPRECATED.
-        Do not use unless you know what you're doing!
-        """
-        from utils.registry import Registry
-
-        user_docs = Registry.ReadValueCurrentUser(cls._USER_DOCUMENT_PATH, 'Personal')
-        old_path = os.path.join(user_docs, 'TacBF Launcher')
-
-        return old_path
-
-    @classmethod
     def launcher_default_basedir(cls):
         """Retrieve users document folder from the registry"""
         path = get_launcher_directory()
@@ -161,12 +151,12 @@ class Settings(Model):
         """
         interceptor for launcher_moddir
         Try to get the mod directory from the settings.
-        If that fails, use "Arma 3/Tactical Battlefield" directory.
+        If that fails, use "Arma 3/<config.default_mods_dir>" directory.
         If that also fails (because there is no Arma, for example) use basedir/mods.
         """
         try:
             if not moddir:
-                moddir = os.path.join(Arma.get_installation_path(), 'Tactical Battlefield')
+                moddir = os.path.join(Arma.get_installation_path(), config.default_mods_dir)
         except SoftwareNotInstalled:
             pass
 

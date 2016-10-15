@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -12,45 +13,50 @@
 
 from __future__ import unicode_literals
 
+import os
+
 
 class Mod(object):
     """encapsulate data needed for a mod"""
     def __init__(
             self,
             foldername='@noname',
-            clientlocation=None,
-            downloadurl=None,
+            parent_location=None,
+            torrent_url=None,
             torrent_timestamp='',
-            name='',
+            full_name='',
             version='0',
             up_to_date=False):
         super(Mod, self).__init__()
 
-        self.clientlocation = clientlocation  # 'C:\Arma 3\Tactical Battlefield'
-        self.downloadurl = downloadurl  # 'https://my.domain/file.torrent'
+        self.parent_location = parent_location  # 'C:\Arma 3\<default_mod_dir>'
+        self.torrent_url = torrent_url  # 'https://my.domain/file.torrent'
         self.foldername = foldername  # '@CBA_A3'
         self.torrent_timestamp = torrent_timestamp  # datetime
-        self.name = name  # 'Community Base Addons v.123.4'
+        self.full_name = full_name  # 'Community Base Addons v.123.4'
         self.version = version  # "0.1-alpha6" (optional)
         self.up_to_date = up_to_date
+
+    def get_full_path(self):
+        return os.path.join(self.parent_location, self.foldername)
 
     @classmethod
     def fromDict(cls, d):
         """return a new mod instance constructed from dictionary"""
 
         torrent_timestamp = d.get('torrent-timestamp', "")
-        name = d.get('name', "Unknown Mod")
+        full_name = d.get('full_name', "Unknown Mod")
         foldername = d.get('foldername', "@Unknown")
-        downloadurl = d.get('downloadurl', "")
+        torrent_url = d.get('torrent_url', "")
         version = d.get('version', '0')
 
         m = Mod(foldername=foldername, torrent_timestamp=torrent_timestamp,
-                name=name, downloadurl=downloadurl, version=version)
+                full_name=full_name, torrent_url=torrent_url, version=version)
         return m
 
     def __repr__(self):
         s = '[Mod: {} -- utcts: {} -- {} -- durl: {} -- version: {}]'.format(
-            self.foldername, self.torrent_timestamp, self.name, self.downloadurl,
+            self.foldername, self.torrent_timestamp, self.full_name, self.torrent_url,
             self.version)
 
         return s

@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,16 +19,20 @@ if __name__ == "__main__":
     file_directory = os.path.dirname(os.path.realpath(__file__))
     site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
+import errno
 import itertools
 import os
 import shutil
 
 from kivy.logger import Logger
-from third_party.arma import Arma
 from utils.context import ignore_exceptions
 from utils.hashes import sha1
 from third_party import teamspeak
 
+
+# Whitelist special files
+WHITELIST_NAME = ('tfr.ts3_plugin', '.synqinfo', '.sync')
+WHITELIST_EXTENSION = ('.zsync',)
 
 def _unlink_safety_assert(base_path, file_path, action="remove"):
     """Asserts that the file_path string starts with base_path string.
@@ -50,18 +54,46 @@ def _safer_unlink(base_path, file_path):
 
 
 def _safer_rmtree(base_path, directory_path):
-    """Checks if the base_path contains the directory_path and removes directory_path if true"""
+    """Checks if the base_path contains the directory_path and removes directory_path if true.
+    Handles NTFS Junctions and Symlinks"""
 
     _unlink_safety_assert(base_path, directory_path)
-    shutil.rmtree(directory_path)
+    try:
+        # Attempt to delete directory. Will work on empty directories,
+        # NTFS junctions and NTFS symlinks (will delete the links instead of
+        # the content).
+        os.rmdir(directory_path)
+
+    except OSError as ex:
+        if ex.errno == errno.ENOTEMPTY:  # Not empty or not a Symlink/Junction
+            shutil.rmtree(directory_path)
+
+        else:
+            raise
 
 
 def _raiser(exception):  # I'm sure there must be some builtin to do this :-/
     raise exception
 
 
-def filter_out_whitelisted(elements, whitelist):
-    for whitelist_element in whitelist:
+def is_whitelisted(node_path):
+    """Check if the node full name or if its extension is whitelisted."""
+
+    for whitelist_element in WHITELIST_NAME:
+        if node_path.endswith(os.path.sep + whitelist_element):
+            Logger.debug('is_whitelisted: Returning true for {}'.format(node_path))
+            return True
+
+    for whitelist_element in WHITELIST_EXTENSION:
+        if node_path.endswith(whitelist_element):
+            Logger.debug('is_whitelisted: Returning true for {}'.format(node_path))
+            return True
+
+    return False
+
+
+def filter_out_whitelisted(elements):
+    for whitelist_element in WHITELIST_NAME:
         file_match = os.path.sep + whitelist_element
         dir_match = os.path.sep + whitelist_element + os.path.sep
         elements = set(itertools.ifilterfalse(lambda x: x.endswith(file_match) or dir_match in x, elements))
@@ -89,7 +121,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     that are at least one directory deep in the file structure!
     As all multi-file torrents *require* one root directory that holds those
     files, this should not be an issue.
-    This function will skip files or directories that match the 'whitelist' variable.
+    This function will skip files or directories that match the 'WHITELIST_NAME' variable.
 
     If the dictionary checksums is not None, the files' checksums will be checked.
 
@@ -100,14 +132,11 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     if on_superfluous not in ('warn', 'remove', 'ignore'):
         raise Exception('Unknown action: {}'.format(on_superfluous))
 
-    # Whitelist our and PWS metadata files
-    whitelist = ('tfr.ts3_plugin', '.synqinfo', '.sync')
-
     top_dirs, dirs, file_paths, checksums = parse_files_list(files_list, checksums, check_subdir)
 
     # Remove whitelisted items from the lists
-    dirs = filter_out_whitelisted(dirs, whitelist)
-    file_paths = filter_out_whitelisted(file_paths, whitelist)
+    dirs = filter_out_whitelisted(dirs)
+    file_paths = filter_out_whitelisted(file_paths)
 
     base_directory = os.path.realpath(base_directory)
     Logger.debug('Verifying base_directory: {}'.format(base_directory))
@@ -118,12 +147,14 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             with ignore_exceptions(KeyError):
                 dirs.remove(directory)
 
-            if directory in whitelist:
+            if directory in WHITELIST_NAME:
                 continue
 
             full_base_path = os.path.join(base_directory, directory)
             _unlink_safety_assert(base_directory, full_base_path, action='enter')
-            for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=False):
+            # FIXME: on OSError, this might indicate a broken junction or symlink on windows
+            # Must act accordingly then.
+            for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=True):
                 relative_path = os.path.relpath(dirpath, base_directory)
                 Logger.debug('In directory: {}'.format(relative_path))
 
@@ -131,8 +162,8 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 for file_name in filenames:
                     relative_file_name = os.path.join(relative_path, file_name)
 
-                    if file_name in whitelist:
-                        Logger.debug('File {} in whitelist, skipping...'.format(file_name))
+                    if file_name in WHITELIST_NAME:
+                        Logger.debug('File {} in WHITELIST_NAME, skipping...'.format(file_name))
 
                         with ignore_exceptions(KeyError):
                             file_paths.remove(relative_file_name)
@@ -168,7 +199,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 for dir_name in dirnames[:]:
                     relative_dir_path = os.path.join(relative_path, dir_name)
 
-                    if dir_name in whitelist:
+                    if dir_name in WHITELIST_NAME:
                         dirnames.remove(dir_name)
 
                         with ignore_exceptions(KeyError):
@@ -278,7 +309,7 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
     for file_path, size, mtime in files_data:
         try:
             full_file_path = os.path.join(base_directory, file_path)
-            file_stat = os.stat(full_file_path)
+            file_stat = os.lstat(full_file_path)
         except OSError:
             Logger.error('Could not perform stat on {}'.format(full_file_path))
             return False
@@ -298,37 +329,46 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
     return True
 
 
-def is_complete_tfr_hack(mod_name, file_paths, checksums):
-    """This is a hackish check if Task Force Arrowhead Radio mod has been
-    correctly installed.
-    To be fully installed, files contained in the userconfig subdirectory
-    must be present in in Arma 3/userconfig directory. Additionally, a check
-    if plugins have been copied to Teamspeak directory is made.
-    """
-
-    # If the checked mod is not TFR, happily return rainbows and unicorns
-    if not mod_name.startswith("Task Force Arrowhead Radio"):
-        return True
-
-    arma_path = Arma.get_installation_path()
-    userconfig = os.path.join(arma_path, 'userconfig')
-
-    retval = check_mod_directories(file_paths, base_directory=userconfig,
-                                   check_subdir='@task_force_radio\\userconfig',
-                                   on_superfluous='ignore')
-
-    if not retval:
-        Logger.debug('TFR userconfig not populated. Marking as not fully installed')
-        return retval
-    else:
-        Logger.debug('TFR userconfig files OK.')
+def is_ts3_plugin_installed(ts3_plugin_full_path):
+    """Check if the given .ts3_plugin file is installed."""
 
     teamspeak_path = teamspeak.get_install_location()
-    teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
-    retval = check_mod_directories(file_paths, base_directory=teamspeak_plugins,
-                                   check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
+    checksums = teamspeak.compute_checksums_for_ts3_plugin(ts3_plugin_full_path)
+    retval = check_mod_directories(checksums.keys(), base_directory=teamspeak_path,
                                    on_superfluous='ignore', checksums=checksums)
 
-    Logger.debug('Teamspeak plugins synchronized: {}'.format(retval))
-
     return retval
+
+def are_ts_plugins_installed(mod_parent_location, mod_name, file_paths):
+    """Check if all ts3_plugin files contained inside the mod files are
+    installed.
+    """
+
+    # teamspeak_path = teamspeak.get_install_location()
+
+    for file_path in file_paths:
+        if not file_path.endswith('.ts3_plugin'):
+            continue
+
+        file_location = os.path.join(mod_parent_location, file_path)
+        retval = is_ts3_plugin_installed(file_location)
+
+        if not retval:
+            return retval
+
+    return True
+
+
+    # If the checked mod is not TFR, happily return rainbows and unicorns
+#     if not mod_name.startswith("Task Force Arrowhead Radio"):
+#         if mod_name != "@task_force_radio":
+#             return True
+#
+#     teamspeak_plugins = os.path.join(teamspeak_path, 'plugins')
+#     retval = check_mod_directories(file_paths, base_directory=teamspeak_plugins,
+#                                    check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
+#                                    on_superfluous='ignore', checksums=checksums)
+#
+#     Logger.debug('Teamspeak plugins synchronized: {}'.format(retval))
+#
+#     return retval

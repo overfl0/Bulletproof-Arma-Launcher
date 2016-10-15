@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,21 +20,29 @@ import kivy.app  # To keep PyDev from complaining
 import os
 import textwrap
 import third_party.helpers
+import utils.system_processes
 
 from autoupdater import autoupdater
+from config import config
 from config.version import version
+from functools import partial
 
+from kivy.animation import Animation
 from kivy.clock import Clock
-from kivy.uix.widget import Widget
+from kivy.network.urlrequest import UrlRequest
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.image import Image
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
 from utils import browser
+from utils.devmode import devmode
+from utils.fake_enum import enum
 from utils.primitive_git import get_git_sha1_auto
 from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
+from view.gameselectionbox import GameSelectionBox
+from view.modreusebox import ModReuseBox
+from view.modsearchbox import ModSearchBox
 from view.messagebox import MessageBox
 
 
@@ -46,12 +55,10 @@ class InstallScreen(Screen):
         self.controller = Controller(self)
 
 
-class Controller(object):
-    play = 'PLAY'
-    checking = 'CHECKING'
-    install = 'INSTALL'
-    self_upgrade = 'UPGRADE'
+DynamicButtonStates = enum('play', 'checking', 'install', 'self_upgrade')
 
+
+class Controller(object):
     def __init__(self, widget):
         super(Controller, self).__init__()
 
@@ -61,8 +68,7 @@ class Controller(object):
         self.mod_manager = ModManager()
         self.settings = kivy.app.App.get_running_app().settings
         self.version = version
-
-        self.start_mod_checking()
+        self.para = None
 
         Clock.schedule_once(self.update_footer_label, 0)
 
@@ -72,6 +78,9 @@ class Controller(object):
         # bind to settings change
         self.settings.bind(on_change=self.on_settings_change)
 
+        third_party.helpers.arma_not_found_workaround(on_ok=self.start_mod_checking,
+                                                      on_error=self.start_mod_checking)
+
     def start_mod_checking(self):
         """Start the whole process of getting metadata and then checking if all
         the mods are correctly downloaded.
@@ -79,12 +88,12 @@ class Controller(object):
 
         self.para = None
         self.mods = []
+        self.servers = []
         self.syncing_failed = False
-        self.action_button_action = 'install'  # TODO: create an enum
         self.launcher = None
 
         # Uncomment the code below to enable troubleshooting mode
-        # Clock.schedule_interval(third_party.helpers.check_requirements_troubleshooting, 0)
+        # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
         # return
 
         # Don't run logic if required third party programs are not installed
@@ -101,7 +110,20 @@ class Controller(object):
         else:
             # This will check_requirements(dt) which is not really what we
             # want but it is good enough ;)
-            Clock.schedule_interval(third_party.helpers.check_requirements, 1)
+            Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
+
+    def is_para_running(self, name=None):
+        """Check if a given para is now running or if any para is running in
+        case no name is given.
+        """
+
+        if not self.para or not self.para.is_open():
+            return False
+
+        if name:
+            return self.para.action_name == name
+        else:
+            return True
 
     def stop_mod_processing(self):
         """Forcefully stop any processing and ignore all the para promises.
@@ -109,14 +131,14 @@ class Controller(object):
         afterwards. (using wait_for_mod_checking_restart())
         """
 
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             # self.para.request_termination()
             self.para.request_termination_and_break_promises()
 
         Clock.unschedule(self.seeding_and_action_button_upkeep)
         Clock.unschedule(self.wait_to_init_action_button)
 
-        self.view.ids.action_button.disable()
+        self.disable_action_buttons()
 
     def wait_for_mod_checking_restart(self, dt):
         """Scheduled method will wait until the para that is running is stopped
@@ -125,7 +147,7 @@ class Controller(object):
         be done again, from the beginning.
         """
 
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             return  # Keep waiting
 
         self.start_mod_checking()
@@ -138,11 +160,7 @@ class Controller(object):
         """
 
         # Check if we're ready to run the game - everything has been properly synced
-        # TODO: use a state machine or anything else than comparing strings :(
-
-        # Note to self: can't use action_button_action because this may be in "checking" state... or whatever.
-        # TODO: refactor all the action_button.text and action_button_action accesses.
-        if self.view.ids.action_button.text != Controller.play:
+        if self.view.ids.action_button.get_button_state() != DynamicButtonStates.play:
             return
 
         arma_is_running = third_party.helpers.arma_may_be_running(newly_launched=False)
@@ -154,7 +172,7 @@ class Controller(object):
         if seeding_type == 'never' or \
            (seeding_type == 'while_not_playing' and arma_is_running):
 
-            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            if self.is_para_running('sync'):
                 Logger.info('Timer check: stopping seeding.')
                 self.para.request_termination()
 
@@ -169,7 +187,7 @@ class Controller(object):
         if not arma_is_running:
             # Allow the game to be run once again by enabling the play button.
             # Logger.info('Timer check: Re-enabling the Play button')
-            self.view.ids.action_button.enable()
+            self.enable_action_buttons()
 
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
@@ -178,9 +196,27 @@ class Controller(object):
         self.view.ids.footer_label.text = footer_text
 
     def wait_to_init_action_button(self, dt):
-        if 'action_button' in self.view.ids:
+        # self.view.width is normally set to 100 by default, it seems...
+        if 'action_button' in self.view.ids and self.view.width != 100:
             self.action_button_init()
             return False  # Return False to remove the callback from the scheduler
+
+    def show_more_play_button(self):
+        """Show the "more play options" button."""
+        self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width
+        self.view.ids.more_play.y = self.view.ids.action_button.y
+
+    def hide_more_play_button(self):
+        """Hide the "more play options" button."""
+        self.view.ids.more_play.x = -5000
+
+    def enable_action_buttons(self):
+        self.view.ids.more_play.enable()
+        self.view.ids.action_button.enable()
+
+    def disable_action_buttons(self):
+        self.view.ids.more_play.disable()
+        self.view.ids.action_button.disable()
 
     def try_enable_play_button(self):
         """Enables or disables the action button (play, install, etc...).
@@ -188,12 +224,12 @@ class Controller(object):
         required.
         """
 
-        self.view.ids.action_button.disable()
+        self.disable_action_buttons()
 
         if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
                 u_from=self.version, u_to=self.launcher.version):
 
-            launcher_executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'TB_Launcher.exe')
+            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
@@ -203,12 +239,11 @@ class Controller(object):
 
             else:
                 # switch to play button and a different handler
-                self.view.ids.action_button.text = Controller.self_upgrade
-                self.action_button_action = 'self-upgrade'
-                self.view.ids.action_button.enable()
+                self.set_and_resize_action_button(DynamicButtonStates.self_upgrade)
+                self.enable_action_buttons()
 
                 if autoupdater.require_admin_privileges():
-                    self.view.ids.action_button.disable()
+                    self.disable_action_buttons()
                     message = textwrap.dedent('''
                     This launcher is out of date and needs to be updated but it does not have
                     the required permissions to create new files!
@@ -233,58 +268,217 @@ class Controller(object):
                 return
 
         # switch to play button and a different handler
-        self.view.ids.action_button.text = Controller.play
-        self.action_button_action = 'play'
+        self.set_and_resize_action_button(DynamicButtonStates.play)
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
-            self.view.ids.action_button.enable()
+            self.enable_action_buttons()
 
     def action_button_init(self):
-        self.view.ids.action_button.text = Controller.checking
-        self.view.ids.action_button.enable_progress_animation()
+        """Set all the callbacks for the dynamic action button."""
 
-    def on_action_button_release(self, btn):
-        # do nothing if sync was already resolved
-        # this is a workaround because event is not unbindable, see
-        # https://github.com/kivy/kivy/issues/903
-        if self.action_button_action == 'play':
-            return self.on_play_button_release(btn)
-        elif self.action_button_action == 'self-upgrade':
-            return self.on_self_upgrade_button_release(btn)
+        button_states = [
+            (DynamicButtonStates.play, 'PLAY', self.on_play_button_release),
+            (DynamicButtonStates.checking, 'CHECKING', None),
+            (DynamicButtonStates.install, 'INSTALL', self.on_install_button_click),
+            (DynamicButtonStates.self_upgrade, 'UPGRADE', self.on_self_upgrade_button_release)
+        ]
 
-        # Else install everything
-        self.start_syncing(seed=False)
+        # Bind text and callbacks for button states
+        for (name, text, callback) in button_states:
+            self.view.ids.action_button.bind_state(name, text, callback)
+
+        self.set_and_resize_action_button(DynamicButtonStates.checking)
+
+    def set_and_resize_action_button(self, state):
+        """Change the action and the text on a button. Then, resize that button
+        and optionally show the more_play_button.
+        """
+
+        self.view.ids.action_button.set_button_state(state)
+
+        # Position and resize
+        self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
+        self.view.ids.action_button.center_x = self.view.center_x
+
+        # Place the more_actions_button at the right place
+        if state != DynamicButtonStates.play:
+            self.hide_more_play_button()
+        else:
+            self.show_more_play_button()
+
+    def _sanitize_server_list(self, servers, default_teamspeak):
+        """Filter out only the servers that contain a 'name', 'ip' and 'port' fields."""
+        # TODO: move me somewhere else
+
+        checked_servers = servers[:]
+        extra_server_string = devmode.get_extra_server()
+
+        if extra_server_string:
+            extra_server = {k: v for (k, v) in zip(('name', 'ip', 'port'), extra_server_string.split(':'))}
+            checked_servers.insert(0, extra_server)
+
+        ret_servers = filter(lambda x: all((x.get('name'), x.get('ip'), x.get('port'))), checked_servers)
+
+        # Add the default values, if not provided
+        for ret_server in ret_servers:
+            ret_server.setdefault('teamspeak', default_teamspeak)
+            ret_server.setdefault('password', None)
+
+        return ret_servers
+
+    def on_more_play_button_release(self, btn):
+        """Allow the user to select optional ways to play the game."""
+
+        if self.view.ids.action_button.get_button_state() != DynamicButtonStates.play:
+            Logger.error('Button more_action pressed when it should not be accessible!')
+            return
+
+        Logger.info('Opening GameSelectionBox')
+        box = GameSelectionBox(self.run_the_game, self.servers, default_teamspeak=self.default_teamspeak_url)
+        box.open()
 
     def on_forum_button_release(self, btn):
-        browser.open_hyperlink('http://tacticalbattlefield.net/forum')
+        browser.open_hyperlink(config.forum_url)
 
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding
         if not seed:
-            self.view.ids.action_button.disable()
-            self.view.ids.action_button.enable_progress_animation()
+            self.disable_action_buttons()
 
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
 
+    def on_prepare_resolve(self, progress):
+        self.start_syncing(seed=False)
+
+    def on_prepare_progress(self, progress, percentage):
+        self.view.ids.status_image.show()
+        print progress
+        if 'msg' in progress:
+            self.view.ids.status_label.text = progress['msg']
+        self.view.ids.progress_bar.value = percentage * 100
+
+        message = progress.get('special_message')
+        if message:
+            # Message handling mode:
+            command = message.get('command')
+            params = message.get('params')
+
+            if command == 'missing_mods':
+                message_box_instance = ModSearchBox(on_selection=self.on_prepare_search_decision,
+                                                   mod_names=params,
+                                                   )
+                message_box_instance.chain_open()
+
+            elif command == 'mod_found_action':
+                message_box_instance = ModReuseBox(on_selection=self.on_mod_found_decision,
+                                                   mod_name=params['mod_name'],
+                                                   locations=params['locations'],
+                                                   )
+                message_box_instance.chain_open()
+
+    def on_prepare_search_decision(self, action, location=None):
+        """A quickly done workaround for telling the launcher what to do with
+        missing mods.
+        Feel free to refactor me :).
+        """
+
+        if self.is_para_running('prepare_all'):
+            Logger.info('InstallScreen: User has made a decision about missing mods. Passing it to the subprocess.')
+            Logger.debug('InstallScreen: Action: {}, Location: {}'.format(action, location))
+
+            params = {
+                'location': location,
+                'action': action
+            }
+
+            self.para.send_message('mod_search', params)
+
+        return None
+
+    def on_install_button_click(self, btn):
+        """Just start syncing the mods."""
+        self.disable_action_buttons()
+
+        self.para = self.mod_manager.prepare_all()
+        self.para.then(self.on_prepare_resolve, self.on_sync_reject, self.on_prepare_progress)
+
     def on_self_upgrade_button_release(self, btn):
-        self.view.ids.action_button.disable()
+        self.disable_action_buttons()
         self.para = self.mod_manager.sync_launcher()
         self.para.then(self.on_self_upgrade_resolve, self.on_sync_reject, self.on_sync_progress)
-        self.view.ids.action_button.enable_progress_animation()
 
     def on_self_upgrade_resolve(self, data):
         # Terminate working paras here.
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
-        # TODO: Parametrize name?
-        executable = os.path.join(self.launcher.clientlocation, self.launcher.foldername, 'TB_Launcher.exe')
+        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 
+    def on_make_torrent_button_release(self, btn):
+        if self.para:
+            ErrorPopup(message='Stop seeding first!').chain_open()
+            return
+
+        self.disable_action_buttons()
+        self.view.ids.make_torrent.disable()
+        self.view.ids.status_image.show()
+        self.view.ids.status_label.text = 'Creating torrents...'
+
+        mods_to_convert = self.mods
+        if self.launcher:
+            mods_to_convert.append(self.launcher)
+
+        self.para = self.mod_manager.make_torrent(mods=self.mods)
+        self.para.then(self.on_maketorrent_resolve,
+                       self.on_maketorrent_reject,
+                       self.on_maketorrent_progress)
+
+    def on_maketorrent_progress(self, progress, _):
+        self.view.ids.status_image.show()
+        self.view.ids.status_label.text = progress['msg']
+
+    def on_maketorrent_resolve(self, progress):
+        self.para = None
+        self.view.ids.status_label.text = progress['msg']
+        self.view.ids.make_torrent.enable()
+        self.view.ids.status_image.hide()
+
+    def on_maketorrent_reject(self, data):
+        self.para = None
+
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+        last_line = details if details else message
+        last_line = last_line.rstrip().split('\n')[-1]
+
+        self.view.ids.status_image.hide()
+        self.view.ids.status_label.text = last_line
+        self.disable_action_buttons()
+
+        ErrorPopup(details=details, message=message).chain_open()
+
     # Download_mod_description callbacks #######################################
+
+    def on_news_success(self, label, request, result):
+        # TODO: Move me to another file
+
+        # Animations: first show the empty background and then fade in the contents
+        anim = Animation(width=335, right=label.right, t='in_out_circ')
+        anim.start(label)
+
+        # Do a fade-in. `for` is just in case there would be more than 1 child
+        for child in label.children:
+            child.opacity = 0
+
+            # The empty first Animation acts as a simple delay
+            anim = Animation() + Animation(opacity=1)
+            anim.start(child)
+
+        label.text = result
 
     def on_download_mod_description_progress(self, progress, speed):
         self.view.ids.status_image.show()
@@ -302,6 +496,13 @@ class Controller(object):
                        self.on_checkmods_reject,
                        self.on_checkmods_progress)
 
+        self.default_teamspeak_url = mod_description_data.get('teamspeak', None)
+
+        self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
+
+        if config.news_url:
+            UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+
     def on_download_mod_description_reject(self, data):
         self.para = None
         # TODO: Move boilerplate code to a function
@@ -313,7 +514,7 @@ class Controller(object):
 
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         # Boilerplate end
 
@@ -325,20 +526,21 @@ class Controller(object):
 
                 Get it here:
 
-                [ref=https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/TB_Launcher.exe][color=3572b0]https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/TB_Launcher.exe[/color][/ref]
-                ''')
+                [ref={}][color=3572b0]{}[/color][/ref]
+                '''.format(config.original_url, config.original_url))
             MessageBox(message, title='Get the new version of the launcher!', markup=True).chain_open()
             return
+
+        ErrorPopup(details=details, message=message).chain_open()
+
+        self.servers = []
 
         # Carry on with the execution! :)
         # Read data from cache and continue if successful
         mod_data = self.settings.get('mod_data_cache')
-
-        ErrorPopup(details=details, message=message).chain_open()
-
         if mod_data:
             ErrorPopup(message=textwrap.dedent('''
-            The launcher could not download mod requirements from the server.
+            The launcher could not download mod requirements from the master server.
 
             Using cached data from the last time the launcher has been used.
             ''')).chain_open()
@@ -347,6 +549,12 @@ class Controller(object):
             self.para.then(self.on_checkmods_resolve,
                            self.on_checkmods_reject,
                            self.on_checkmods_progress)
+
+            self.default_teamspeak_url = mod_data.get('teamspeak', None)
+
+            self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
+            if config.news_url:
+                UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     # Checkmods callbacks ######################################################
 
@@ -359,8 +567,12 @@ class Controller(object):
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.action_button.disable_progress_animation()
-        self.view.ids.action_button.text = Controller.install
+        self.disable_action_buttons()
+        self.set_and_resize_action_button(DynamicButtonStates.install)
+
+        if devmode.get_create_torrents(False):
+            self.view.ids.make_torrent.enable()
+            self.view.ids.make_torrent.text = 'CREATE'
 
         self.launcher = progress['launcher']
 
@@ -370,7 +582,7 @@ class Controller(object):
 
         self.mods = progress['mods']
         if self.try_enable_play_button() is not False:
-            self.view.ids.action_button.enable()
+            self.enable_action_buttons()
 
     def on_checkmods_reject(self, data):
         self.para = None
@@ -381,25 +593,44 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.syncing_failed = True
-        self.try_enable_play_button()
+        # self.try_enable_play_button()
 
         ErrorPopup(details=details, message=message).chain_open()
 
     # Sync callbacks ###########################################################
 
-    def on_tfr_action(self, msgbox_ignore_me):
+    def on_tsplugin_action(self, msgbox_ignore_me):
         """A quickly done workaround for asking the user to click OK and carry
-        on with TFR plugin installation.
+        on with a TS plugin installation.
         Feel free to refactor me :).
         """
-        if self.para and self.para.is_open() and self.para.action_name == 'sync':
-            Logger.info('InstallScreen: User acknowledged TFR installation. Sending continue command.')
-            self.para.send_message('tfr_install_as_admin')
+        if self.is_para_running('sync'):
+            Logger.info('InstallScreen: User acknowledged TS pluing installation. Sending continue command.')
+            self.para.send_message('tsplugin_install_as_admin')
 
         return None  # Returning True would prevent the popup from being closed
+
+    def on_mod_found_decision(self, mod_name, location, action):
+        """A quickly done workaround for telling the launcher what to do with
+        a mod found on disk.
+        Feel free to refactor me :).
+        """
+        if self.is_para_running('prepare_all'):
+            Logger.info('InstallScreen: User has made a decision about mod {}. Passing it to the subprocess.'.format(mod_name))
+            Logger.debug('InstallScreen: Mod: {}, Location: {}, Action: {}'.format(mod_name, location, action))
+
+            params = {
+                'mod_name': mod_name,
+                'location': location,
+                'action': action
+            }
+
+            self.para.send_message('mod_reuse', params)
+
+        return None
 
     def on_sync_progress(self, progress, percentage):
         # Logger.debug('InstallScreen: syncing in progress')
@@ -408,12 +639,12 @@ class Controller(object):
         self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
 
-        tfr_request_action = progress.get('tfr_request_action')
+        tsplugin_request_action = progress.get('tsplugin_request_action')
         message_box = progress.get('message_box')
         if message_box:
             on_dismiss = None
-            if tfr_request_action:
-                on_dismiss = self.on_tfr_action
+            if tsplugin_request_action:
+                on_dismiss = self.on_tsplugin_action
 
             message_box_instance = MessageBox(text=message_box['text'],
                                               title=message_box['title'],
@@ -426,7 +657,7 @@ class Controller(object):
         Logger.info('InstallScreen: syncing finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.try_enable_play_button()
 
@@ -441,29 +672,44 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
-        self.view.ids.action_button.disable_progress_animation()
+        self.disable_action_buttons()
 
         self.syncing_failed = True
         # self.try_enable_play_button()
         Logger.info('InstallScreen: syncing failed. Enabling the install button to allow installing again.')
-        self.view.ids.action_button.enable()
+        self.enable_action_buttons()
 
         ErrorPopup(details=details, message=message).chain_open()
 
     ############################################################################
 
-    def on_play_button_release(self, btn):
-        Logger.info('InstallScreen: User hit play')
+    def run_the_game(self, ip=None, port=None, password=None, teamspeak_url=None):
+
+        if utils.system_processes.program_running('arma3launcher.exe'):
+            ErrorPopup(message='Close Bohemia Interactive Arma 3 Launcher first!').chain_open()
+            return
 
         seeding_type = self.settings.get('seeding_type')
 
         # Stop seeding if not set to always seed
         if seeding_type != 'always':
-            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            if self.is_para_running('sync'):
                 self.para.request_termination()
 
-        third_party.helpers.run_the_game(self.mods)
-        self.view.ids.action_button.disable()
+        third_party.helpers.run_the_game(self.mods, ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
+        self.disable_action_buttons()
+
+    def on_play_button_release(self, btn):
+        Logger.info('InstallScreen: User hit play')
+        ip = port = password = None
+
+        if self.servers:
+            ip = self.servers[0]['ip']
+            port = self.servers[0]['port']
+            password = self.servers[0]['password']
+            teamspeak_url = self.servers[0]['teamspeak']
+
+        self.run_the_game(ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
@@ -474,7 +720,7 @@ class Controller(object):
 
             # If we are in the process of syncing things by torrent request an
             # update of its settings
-            if self.para and self.para.is_open() and self.para.action_name == 'sync':
+            if self.is_para_running('sync'):
                 Logger.debug('InstallScreen: Passing setting {}={} to syncing subprocess'.format(key, value))
                 self.para.send_message('torrent_settings', {key: value})
 
@@ -488,7 +734,7 @@ class Controller(object):
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')
 
-        if self.para and self.para.is_open():
+        if self.is_para_running():
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
         else:

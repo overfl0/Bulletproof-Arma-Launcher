@@ -1,5 +1,5 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,11 +18,7 @@ import platform
 import sys
 import unicode_helpers
 
-
-# the folder name where everything gets stored. This will get the last
-# part of the launcher_basedir
-# TODO: move this to configuration
-_LAUNCHER_DIR = 'TacBF Launcher'
+from config import config
 
 
 def is_pyinstaller_bundle():
@@ -140,7 +136,7 @@ def get_launcher_directory(*relative):
     """Return the directory for storing launcher related data.
     Optionally append <relative> at the end.
     """
-    return get_local_user_directory(_LAUNCHER_DIR, *relative)
+    return get_local_user_directory(config.settings_directory, *relative)
 
 
 def is_file_in_virtual_store(path):
@@ -193,7 +189,7 @@ def is_dir_writable(path):
         # Using mktemp because the other "safe" functions take several seconds
         # to fail on directories you don't have write rights to.
         # Would love to do tempfile.TemporaryFile instead :(
-        temporary_file_path = tempfile.mktemp(dir=path, prefix="TacBF_temp_")
+        temporary_file_path = tempfile.mktemp(dir=path, prefix="Torrent_Launcher_temp_")
         f = open(temporary_file_path, 'wb+')
         f.close()
 
@@ -210,11 +206,34 @@ def is_dir_writable(path):
     return True
 
 
+def is_broken_junction(path):
+    """Check if the directory pointed by path is an NTFS Junction or Symlink
+    that is broken.
+
+    A simple way of checking that is to see if the file exists but cannot be
+    read and returns a "No such file or directory" error.
+    Other ways involve some windows trickery.
+    """
+
+    if os.path.isdir(path):
+        try:
+            os.listdir(path)
+
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                return True  # This is a most probably a broken junction
+
+            raise
+
+    return False
+
+
 def mkdir_p(path):
     """Create all directories described by path if they don't exist."""
     try:
         os.makedirs(path)
-    except OSError as exc:  # Python >2.5
+
+    except OSError as exc:
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:

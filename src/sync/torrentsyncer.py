@@ -1,5 +1,6 @@
-# Tactical Battlefield Installer/Updater/Launcher
-# Copyright (C) 2015 TacBF Installer Team.
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Sascha Ebert
+# Copyright (C) 2016 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -11,6 +12,7 @@
 # GNU General Public License for more details.
 
 from __future__ import unicode_literals
+
 # Note: every std::string coming from libtorrent should be decoded from utf-8
 # like that: alert.message().decode('utf-8')
 # Every string submitted to libtorrent should be encoded to utf-8 as well
@@ -26,6 +28,7 @@ if __name__ == "__main__":
 
 import libtorrent
 import os
+import textwrap
 import torrent_utils
 
 from kivy.logger import Logger
@@ -73,7 +76,7 @@ class TorrentSyncer(object):
             return
 
         settings = libtorrent.session_settings()
-        settings.user_agent = encode_utf8('TacBF (libtorrent/{})'.format(decode_utf8(libtorrent.version)))
+        settings.user_agent = encode_utf8('Torrent Launcher (libtorrent/{})'.format(decode_utf8(libtorrent.version)))
         """When running on a network where the bandwidth is in such an abundance
         that it's virtually infinite, this algorithm is no longer necessary, and
         might even be harmful to throughput. It is adviced to experiment with the
@@ -233,9 +236,9 @@ class TorrentSyncer(object):
         # If no cached torrent metadata content, download it now and cache it
         if not torrent_info:
 
-            if mod.downloadurl.startswith('file://'):  # Local torrent from file
+            if mod.torrent_url.startswith('file://'):  # Local torrent from file
                 try:
-                    torrent_info = self.get_torrent_info_from_file(mod.downloadurl[len('file://'):])
+                    torrent_info = self.get_torrent_info_from_file(mod.torrent_url[len('file://'):])
 
                 except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
                     error_message = 'Could not parse local torrent metadata: {}'.format(decode_utf8(ex.args[0]))
@@ -246,29 +249,42 @@ class TorrentSyncer(object):
 
             else:  # Torrent from url
                 try:
-                    res = requests_wrapper.download_url(None, mod.downloadurl, timeout=10)
+                    res = requests_wrapper.download_url(None, mod.torrent_url, timeout=10)
                 except requests_wrapper.DownloadException as ex:
                     error_message = 'Downloading metadata: {}'.format(ex.args[0])
                     raise PrepareParametersException(error_message)
 
-                if res.status_code != 200:
-                    self.result_queue.reject({'details': '{}\n{}\n\n{}'.format(
-                        'Torrent file could not be received from the server',
-                        'Status Code: ' + unicode(res.status_code), res.text)})
-                    raise PrepareParametersException('Torrent file could not be received from the server')
+                if res.status_code == 404:
+                    message = textwrap.dedent('''\
+                        Torrent file could not be downloaded from the master server.
+                        Reason: file not found on the server (HTTP 404).
+
+                        This may be because the mods are updated on the server right now.
+                        Please try again in a few minutes.
+                        ''')
+                    raise PrepareParametersException(message)
+
+                elif res.status_code != 200:
+                    message = textwrap.dedent('''\
+                        Torrent file could not be downloaded from the master server.
+                        HTTP error code: {}
+
+                        Contact the master server owner to fix this issue.
+                        '''.format(unicode(res.status_code)))
+                    raise PrepareParametersException(message)
 
                 try:
                     torrent_content = res.content
                     torrent_info = torrent_utils.get_torrent_info_from_bytestring(res.content)
 
                 except RuntimeError as ex:  # Raised by libtorrent.torrent_info()
-                    error_message = 'Could not parse torrent metadata: {}'.format(decode_utf8(ex.args[0]))
+                    error_message = 'Could not parse torrent metadata: {}\nContact the master server owner to fix this issue.'.format(decode_utf8(ex.args[0]))
                     Logger.error('TorrentSyncer: {}'.format(error_message))
                     raise PrepareParametersException(error_message)
 
         return torrent_info, torrent_content
 
-    def prepare_libtorrent_params(self, mod, force_sync=False):
+    def prepare_libtorrent_params(self, mod, force_sync=False, intend_to_seed=False):
         """Prepare mod for download over bittorrent.
         This effectively downloads the .torrent file if its contents are not
         already cached.
@@ -281,22 +297,26 @@ class TorrentSyncer(object):
         metadata_file = MetadataFile(mod.foldername)
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
-        metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
+        # A little bit of a workaround. If we intend to seed, we can assume the data is all right.
+        # This way, if the torrent is closed before checking_resume_data is finished, and the post-
+        # download hook is not fired, the torrent is not left in a state marked as dirty.
+        if not intend_to_seed and not force_sync:
+            metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
 
         # If the torrent url changed, invalidate the resume data
         old_torrent_url = metadata_file.get_torrent_url()
-        if old_torrent_url != mod.downloadurl or force_sync:
+        if old_torrent_url != mod.torrent_url or force_sync:
             metadata_file.set_torrent_resume_data('')
             metadata_file.set_torrent_content('')
-            # print "Setting torrent url to {}".format(mod.downloadurl)
-            metadata_file.set_torrent_url(mod.downloadurl)
+            # print "Setting torrent url to {}".format(mod.torrent_url)
+            metadata_file.set_torrent_url(mod.torrent_url)
 
         metadata_file.write_data()
         # End of metadata handling
 
         # === Torrent parameters ===
         params = {
-            'save_path': encode_utf8(mod.clientlocation),
+            'save_path': encode_utf8(mod.parent_location),
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
             'flags': torrent_utils.create_add_torrent_flags()
         }
@@ -315,8 +335,10 @@ class TorrentSyncer(object):
 
         mod.libtorrent_params = params
 
-        # Ensure all the files and directories are read-write
-        torrent_utils.ensure_directory_is_read_write(mod.clientlocation, mod.foldername)
+        # Ensure the mod directory is correct (no bad links and read-write)
+        # This should have been already done with preparer.py but it doesn't
+        # hurt to do that again in case something changed in the meantime.
+        torrent_utils.prepare_mod_directory(mod.get_full_path())
 
     def get_torrents_status(self):
         """Get the status of all torrents with valid handles and cache them in
@@ -414,7 +436,7 @@ class TorrentSyncer(object):
 
             self.session.set_settings(session_settings)
 
-    def sync(self, force_sync=False, seed_after_completion=False):
+    def sync(self, force_sync=False, intend_to_seed=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
         are described in the torrent file.
@@ -439,15 +461,20 @@ class TorrentSyncer(object):
 
         for mod in self.mods:
             try:
-                self.prepare_libtorrent_params(mod, force_sync)
+                self.prepare_libtorrent_params(mod, force_sync, intend_to_seed)
             except (PrepareParametersException, torrent_utils.AdminRequiredError) as ex:
                 self.result_queue.reject({'msg': ex.args[0]})
                 sync_success = False
                 return sync_success
 
+        if self.force_termination:
+            Logger.info('Sync: Downloading process was requested to stop before starting the download.')
+            self.result_queue.reject({'details': 'Downloading process was requested to stop before starting the download.'})
+            return
+
         for mod in self.mods:
             # Launch the download of the torrent
-            Logger.info('Sync: Downloading {} to {}'.format(mod.downloadurl, mod.clientlocation))
+            Logger.info('Sync: Downloading {} to {}'.format(mod.torrent_url, mod.parent_location))
             torrent_handle = self.session.add_torrent(mod.libtorrent_params)
             mod.torrent_handle = torrent_handle
 
@@ -508,14 +535,13 @@ class TorrentSyncer(object):
 
                     mod.finished_hook_ran = True
 
-                    # Do not go into state (4) if we are terminating or it's the
-                    # only torrent being synced
-                    if not self.force_termination and len(self.mods) != 1:
+                    # Do not go into state (4) if we are terminating
+                    if not self.force_termination:
                         Logger.info('Sync: Seeding {} again until all downloads are done.'.format(mod.foldername))
                         self.resume_torrent(mod)
 
             # If all are in state (4)
-            if self.all_torrents_ran_finished_hooks() and not seed_after_completion:
+            if self.all_torrents_ran_finished_hooks() and not intend_to_seed:
                 Logger.info('Sync: Pausing all torrents for syncing end.')
                 self.pause_all_torrents()
 
@@ -542,12 +568,15 @@ class TorrentSyncer(object):
     def save_resume_data(self, mod):
         """Save the resume data of the mod that will allow a faster restart in the future."""
         if not mod.torrent_handle.is_valid():
+            Logger.error('save_resume_data: mod is not valid')
             return
 
         if not mod.torrent_handle.has_metadata():
+            Logger.error('save_resume_data: mod has no metadata')
             return
 
         if not mod.can_save_resume_data:
+            Logger.error('save_resume_data: mod cannot save resume data')
             return
 
         Logger.info('Sync: saving fast-resume metadata for mod {}'.format(mod.foldername))
@@ -578,7 +607,10 @@ class TorrentSyncer(object):
         # Remove unused files
         torrent_info = mod.torrent_handle.get_torrent_info()
         files_list = [entry.path.decode('utf-8') for entry in torrent_info.files()]
-        cleanup_successful = check_mod_directories(files_list, mod.clientlocation, on_superfluous='remove')
+        cleanup_successful = check_mod_directories(files_list, mod.parent_location, on_superfluous='remove')
+
+        # Workaround. This should be moved to some kind of Mod class method or something...
+        mod.files_list = files_list
 
         '''
         # Removed for now because we already have the original torrent file downloaded
@@ -607,11 +639,11 @@ if __name__ == '__main__':
     Logger.setLevel(level='INFO')
 
     class DummyMod:
-        def __init__(self, downloadurl, clientlocation, foldername, name):
-            self.downloadurl = downloadurl
-            self.clientlocation = clientlocation
+        def __init__(self, torrent_url, parent_location, foldername, full_name):
+            self.torrent_url = torrent_url
+            self.parent_location = parent_location
             self.foldername = foldername
-            self.name = name
+            self.full_name = full_name
 
     class DummyQueue:
         def progress(self, d, frac):
@@ -627,10 +659,10 @@ if __name__ == '__main__':
         import re
         foldername = re.search('(@.*?)-', url).group(1)
 
-        return DummyMod(downloadurl=url,
-                        clientlocation='',
+        return DummyMod(torrent_url=url,
+                        parent_location='',
                         foldername=foldername,
-                        name=foldername.replace('@', ''))
+                        full_name=foldername.replace('@', ''))
 
     mod1 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@CBA_A3-2015-12-01_1449001363.torrent')
     mod2 = mod_helper('http://launcher.tacbf.com/tacbf/updater/torrents/@TacBF-2015-12-31_1451563576.torrent')

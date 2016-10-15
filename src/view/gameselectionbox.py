@@ -1,0 +1,59 @@
+# Bulletproof Arma Launcher
+# Copyright (C) 2016 Lukasz Taczuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+from __future__ import unicode_literals
+
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.popup import Popup
+from kivy.uix.widget import Widget
+
+default_title = '''Connect to server:'''
+
+
+class GameSelectionBox(Popup):
+    def close_and_run(self, func, *args):
+        """There is probably a simpler way of doing this but oh well..."""
+        self.dismiss()
+        func(*args)
+
+    def __init__(self, on_selection, servers=[], title=default_title,
+                 markup=False, on_dismiss=None, default_teamspeak=None):
+        bl = BoxLayout(orientation='vertical')
+
+        buttons_count = 2  # Run arma and cancel
+        button = Button(text='Run Arma 3')  # , size_hint_y=0.2)
+        button.bind(on_release=lambda x, on_selection=on_selection: self.close_and_run(on_selection, None, None, None, default_teamspeak))
+        bl.add_widget(button)
+
+        bl.add_widget(Widget())  # Spacer
+
+        for server in servers:
+            buttons_count += 1
+            button = Button(text=server.get('name', '<no name>'), size_hint_x=0.8, pos_hint={'center_x': 0.5})  # , size_hint_y=0.2)
+            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server['ip'], server['port'], server['password'], server['teamspeak']))
+            bl.add_widget(button)
+
+        bl.add_widget(Widget())  # Spacer
+
+        button = Button(text='Cancel')  # , size_hint_y=0.2)
+        button.bind(on_release=self.dismiss)
+        bl.add_widget(button)
+
+        popup_height = 120 + (26 * buttons_count)
+
+        super(GameSelectionBox, self).__init__(
+            title=default_title, content=bl, size_hint=(None, None), size=(300, popup_height))
+
+        # Bind an optional handler when the user closes the message
+        if on_dismiss:
+            self.bind(on_dismiss=on_dismiss)

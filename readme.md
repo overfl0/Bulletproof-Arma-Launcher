@@ -1,8 +1,8 @@
 # Install
 
-Manually installing the environment is now quite tricky as it involves, among other things, getting the right version of Kivy (1.9.1) and patching it with our own custom patches ([located in the Patches directory](https://bitbucket.org/tacbf_launcher/build_environment/src/master/Patches/) of the `build_environment` repository).
+Manually installing the environment is now quite tricky as it involves, among other things, getting the right version of Kivy (1.9.1) and patching it with our own custom patches ([located in the Patches directory](https://github.com/overfl0/Bulletproof-Build-Environment/tree/master/Patches) of the `Bulletproof-Build-Environment` repository).
 
-We're trying to make it as easy as possible to start working on the launcher and we have created [a Vagrant configuration file that will create a virtual machine](https://bitbucket.org/tacbf_launcher/build_environment) containing everything that is needed to code right away.
+We're trying to make it as easy as possible to start working on the launcher and we have created [a Vagrant configuration file that will create a virtual machine](https://github.com/overfl0/Bulletproof-Build-Environment) containing everything that is needed to code right away.
 
 Until issues with Kivy are fixed and the right patches are included in the Kivy source code, this is the preferred method of working on the launcher.
 # Running
@@ -33,9 +33,10 @@ quotes (") with single quotes (').
 
 # Build
 
-To create a TB_Launcher.exe executable do the following:
+To create a <launcher_name>.exe executable do the following:
 
 ##### Automatically
+Make sure the config\config.py file is populated. Copy config_sample.py and modify its values otherwise.
 Execute the file ```build.bat```.
 The script will first run tests and then create the executable if the tests pass.
 
@@ -43,18 +44,11 @@ The script will first run tests and then create the executable if the tests pass
 From the project root
 execute:
 
-`python <path/to/kivy/installation>\Python27\Scripts\pyinstaller-script.py launcher.spec`
+`python <path/to/python>\Python27\Scripts\pyinstaller-script.py launcher.spec`
 
 If necessary execute the following command to
 rebuild the spec file. A newly spec file will not work, see kivy packaging wiki:
 
-`pyinstaller --name TB_Launcher --onefile src\launcher.py`
+`pyinstaller --name <launcher name> --onefile src\launcher.py`
 
 However, this should normally not be required as the spec file should already be present.
-
-# Communication
-
-Feel free to reach the developers of the Tactical Battlefield mod and the Launcher on their respective discord channels:
-
-* [#general](https://discordapp.com/channels/106788078437281792/106788078437281792)
-* [#launcher](https://discordapp.com/channels/106788078437281792/106792735066894336)
