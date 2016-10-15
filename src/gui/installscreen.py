@@ -353,7 +353,7 @@ class Controller(object):
 
     def on_prepare_progress(self, progress, percentage):
         self.view.ids.status_image.show()
-        print progress
+
         if 'msg' in progress:
             self.view.ids.status_label.text = progress['msg']
         self.view.ids.progress_bar.value = percentage * 100
