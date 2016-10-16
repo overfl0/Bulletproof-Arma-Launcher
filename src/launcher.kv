@@ -76,7 +76,7 @@
 
 <SpeedLabel@Label>
     size_hint_x: None
-    width: 200
+    width: 160
     valign: 'middle'
     text_size: self.size
     halign: 'left'
@@ -98,6 +98,12 @@
     underline_color: 'ffffccff'
     base_font_size: 28
 
+<MenuLayout@BoxLayout>
+    padding: [20, 0]
+    y: 50
+    height: 80
+    size_hint: 1, None
+    orientation: 'horizontal'
 
 # Section: Main View of the application
 #          this defines the structure of screens and the top
@@ -264,11 +270,18 @@
             pos: 0, 143
             size: self.size[0], 600
 
-    BoxLayout:
-        padding: 20
-        orientation: 'vertical'
+    MenuLayout:
+        Widget
+        BackButton:
 
-        BoxLayout:
+    BoxLayout:  # Settings contents
+        padding: 21  # Workaround: if equal to 20 artifacts start to show up
+        orientation: 'vertical'
+        size_hint: 1, None
+        top: root.top
+        height: 524
+
+        BoxLayout:  # Mods location
             orientation: 'horizontal'
             size_hint_y: None
             height: 60
@@ -297,85 +310,84 @@
                 text: 'Choose Path'
                 on_release: root.controller.on_choose_path_button_release(self)
 
-        Label:
-            size_hint_y: None
-            text_size: self.size
-            halign: 'left'
-            valign: 'middle'
-            height: 60
-            text: 'Seed mods:'
+        BoxLayout:  # Divider
+            BoxLayout:  # First column
+                orientation: 'vertical'
 
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint: 1, None
-            BoxLayout:
-                orientation: 'horizontal'
-                SeedingCheckBox:
-                    id: sbox_always
-                    seeding_type: 'always'
-                SeedingLabel:
-                    text: 'Always'
+                Label:
+                    size_hint_y: None
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                    height: 60
+                    text: 'Seed mods:'
 
-            BoxLayout:
-                orientation: 'horizontal'
-                SeedingCheckBox:
-                    id: sbox_while_not_playing
-                    seeding_type: 'while_not_playing'
-                SeedingLabel:
-                    text: 'While not playing'
+                # Seeding mods radio buttons
+                BoxLayout:
+                    size_hint_y: None
+                    height: 30
+                    SeedingCheckBox:
+                        id: sbox_always
+                        seeding_type: 'always'
+                    SeedingLabel:
+                        text: 'Always'
 
-            BoxLayout:
-                orientation: 'horizontal'
-                SeedingCheckBox:
-                    id: sbox_never
-                    seeding_type: 'never'
-                SeedingLabel:
-                    text: 'Never'
+                BoxLayout:
+                    size_hint_y: None
+                    height: 30
+                    SeedingCheckBox:
+                        id: sbox_while_not_playing
+                        seeding_type: 'while_not_playing'
+                    SeedingLabel:
+                        text: 'While not playing'
 
-        Label:
-            size_hint_y: None
-            text_size: self.size
-            halign: 'left'
-            valign: 'middle'
-            height: 100
-            text: '[i]Note: Seeding (uploading mods to other players) helps us tremendously.\nWe don\'t have infinite bandwidth and by sharing yours you can help us speed up the downloads for everyone.\nSharing is caring :)[/i]'
-            markup: True
+                BoxLayout:
+                    size_hint_y: None
+                    height: 30
+                    SeedingCheckBox:
+                        id: sbox_never
+                        seeding_type: 'never'
+                    SeedingLabel:
+                        text: 'Never'
 
-        BoxLayout:
-            orientation: 'horizontal'
-            height: 50
-            size_hint: 1, None
-            SpeedLabel:
-                text: 'Max upload speed:'
-            SpeedInput:
-                id: max_upload_speed_input
-            Label:
-                width: 10
-                size_hint_x: None
-            SpeedLabel:
-                text: 'KB/s   (0 = unlimited)'
+                Label:  # Seeding message to users
+                    size_hint_y: None
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                    height: 100
+                    text: '[i]Note: Seeding (uploading mods to other players) helps us tremendously.\nWe don\'t have infinite bandwidth and by sharing yours you can help us speed up the downloads for everyone.\nSharing is caring :)[/i]'
+                    markup: True
 
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint: 1, None
-            height: 50
-            SpeedLabel:
-                text: 'Max download speed:'
-            SpeedInput:
-                id: max_download_speed_input
-            Label:
-                width: 10
-                size_hint_x: None
-            SpeedLabel:
-                text: 'KB/s   (0 = unlimited)'
+                BoxLayout:  # Upload speed
+                    orientation: 'horizontal'
+                    height: 50
+                    size_hint: 1, None
+                    SpeedLabel:
+                        text: 'Max upload speed:'
+                    SpeedInput:
+                        id: max_upload_speed_input
+                    Label:
+                        width: 10
+                        size_hint_x: None
+                    SpeedLabel:
+                        text: 'KB/s   (0 = unlimited)'
 
-        Widget
+                BoxLayout:  # Download speed
+                    orientation: 'horizontal'
+                    size_hint: 1, None
+                    height: 50
+                    SpeedLabel:
+                        text: 'Max download speed:'
+                    SpeedInput:
+                        id: max_download_speed_input
+                    Label:
+                        width: 10
+                        size_hint_x: None
+                    SpeedLabel:
+                        text: 'KB/s   (0 = unlimited)'
 
-        BoxLayout:
-            orientation: 'horizontal'
-            Widget
-            BackButton
+                Widget:  # To move everything to the top
 
-        Widget:
-            size_hint_y: None
-            height: 30
+            BoxLayout:  # Second column
+                orientation: 'vertical'
