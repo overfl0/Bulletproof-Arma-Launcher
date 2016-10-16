@@ -13,6 +13,7 @@
 from __future__ import unicode_literals
 
 from functools import partial
+from kivy.core.window import Window
 from kivy.uix.bubble import Bubble, BubbleButton
 
 class BubbleBehavior(object):
@@ -23,7 +24,7 @@ class BubbleBehavior(object):
 
         if text:
             text = text.strip()
-            self.bubble = bubble = Bubble()
+            self.bubble = bubble = Bubble(size_hint=(None, None))
             self.bubble_button = bubble_button = BubbleButton(markup=True, text=text)
             bubble_button.bind(texture_size=lambda obj, size: bubble.setter('size')(bubble, (size[0] + 30, size[1] + 30)))
             bubble.add_widget(bubble_button)
@@ -33,10 +34,10 @@ class BubbleBehavior(object):
     @staticmethod
     def show_bubble(button, bubble, instance, value):
         if value:
-            button.add_widget(bubble)
+            Window.add_widget(bubble)
             bubble.center_x = button.center_x
             bubble.top = button.y
             bubble.arrow_pos = 'top_mid'
 
         else:
-            button.remove_widget(bubble)
+            Window.remove_widget(bubble)
