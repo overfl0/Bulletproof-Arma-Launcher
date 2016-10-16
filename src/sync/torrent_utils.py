@@ -39,40 +39,42 @@ def is_complete_quick(mod):
     4. Check if files have the right size and modification time (very quick)
     5. Check if there are no superfluous files in the directory (very quick)"""
 
+    Logger.info('Is_complete: Checking mod {} for completeness...'.format(mod.foldername))
+
     metadata_file = MetadataFile(mod.foldername)
 
     # (1) Check if metadata can be opened
     try:
         metadata_file.read_data(ignore_open_errors=False)
     except (IOError, ValueError):
-        Logger.info('Metadata file could not be read successfully. Marking as not complete')
+        Logger.info('Is_complete: Metadata file could not be read successfully. Marking as not complete')
         return False
 
     # (2)
     if metadata_file.get_dirty():
-        Logger.info('Torrent marked as dirty (not completed successfully). Marking as not complete')
+        Logger.info('Is_complete: Torrent marked as dirty (not completed successfully). Marking as not complete')
         return False
 
     # (3)
     if metadata_file.get_torrent_url() != mod.torrent_url:
-        Logger.info('Torrent urls differ. Marking as not complete')
+        Logger.info('Is_complete: Torrent urls differ. Marking as not complete')
         return False
 
     # Get data required for (4) and (5)
     torrent_content = metadata_file.get_torrent_content()
     if not torrent_content:
-        Logger.info('Could not get torrent file content. Marking as not complete')
+        Logger.info('Is_complete: Could not get torrent file content. Marking as not complete')
         return False
 
     try:
         torrent_info = get_torrent_info_from_bytestring(torrent_content)
     except RuntimeError:
-        Logger.info('Could not parse torrent file content. Marking as not complete')
+        Logger.info('Is_complete: Could not parse torrent file content. Marking as not complete')
         return False
 
     resume_data_bencoded = metadata_file.get_torrent_resume_data()
     if not resume_data_bencoded:
-        Logger.info('Could not get resume data. Marking as not complete')
+        Logger.info('Is_complete: Could not get resume data. Marking as not complete')
         return False
     resume_data = libtorrent.bdecode(resume_data_bencoded)
 
@@ -83,7 +85,7 @@ def is_complete_quick(mod):
     files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
 
     if not check_files_mtime_correct(mod.parent_location, files_data):
-        Logger.info('Some files seem to have been modified in the meantime. Marking as not complete')
+        Logger.info('Is_complete: Some files seem to have been modified in the meantime. Marking as not complete')
         return False
 
     # (5) Check if there are no additional files in the directory
@@ -91,10 +93,14 @@ def is_complete_quick(mod):
     checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
     files_list = checksums.keys()
     if not check_mod_directories(files_list, mod.parent_location, on_superfluous='warn'):
-        Logger.info('Superfluous files in mod directory. Marking as not complete')
+        Logger.info('Is_complete: Superfluous files in mod directory. Marking as not complete')
         return False
 
-    return are_ts_plugins_installed(mod.parent_location, mod.full_name, files_list)
+    if not are_ts_plugins_installed(mod.parent_location, mod.full_name, files_list):
+        Logger.info('Is_complete: TS plugin out of date or not installed.')
+        return False
+
+    return True
 
 
 def get_torrent_info_from_bytestring(bencoded):

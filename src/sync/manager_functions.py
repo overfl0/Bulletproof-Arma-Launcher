@@ -22,12 +22,16 @@ from config import config
 from datetime import datetime
 from distutils.version import LooseVersion
 from kivy.logger import Logger
+from kivy.config import Config
 from sync import integrity
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
 from third_party import teamspeak
 from utils.devmode import devmode
 from utils.requests_wrapper import download_url, DownloadException
+
+default_log_level = devmode.get_log_level('info')
+Config.set('kivy', 'log_level', default_log_level)
 
 ################################################################################
 ################################## ATTENTION!!! ################################

@@ -18,8 +18,14 @@ import os
 import time
 import torrent_utils
 
+from kivy.config import Config
 from kivy.logger import Logger
 from sync import finder
+from utils.devmode import devmode
+
+
+default_log_level = devmode.get_log_level('info')
+Config.set('kivy', 'log_level', default_log_level)
 
 # Everything in this file is run IN A DIFFERENT PROCESS!
 # To communicate with the main program, you have to use the resolve(), reject()
