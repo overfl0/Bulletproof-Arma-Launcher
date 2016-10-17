@@ -21,6 +21,7 @@ class BubbleBehavior(object):
     def __init__(self, **kwargs):
         super(BubbleBehavior, self).__init__(**kwargs)
         text = kwargs.get('bubble_text')
+        arrow_pos = kwargs.get('arrow_pos', 'top_mid')
 
         if text:
             text = text.strip()
@@ -29,15 +30,19 @@ class BubbleBehavior(object):
             bubble_button.bind(texture_size=lambda obj, size: bubble.setter('size')(bubble, (size[0] + 30, size[1] + 30)))
             bubble.add_widget(bubble_button)
 
-            self.bind(mouse_hover=partial(self.show_bubble, self, bubble))
+            self.bind(mouse_hover=partial(self.show_bubble, self, bubble, arrow_pos))
 
     @staticmethod
-    def show_bubble(button, bubble, instance, value):
+    def show_bubble(button, bubble, arrow_pos, instance, value):
         if value:
             Window.add_widget(bubble)
+            bubble.arrow_pos = arrow_pos
             bubble.center_x = button.center_x
-            bubble.top = button.y
-            bubble.arrow_pos = 'top_mid'
+
+            if arrow_pos.startswith('top'):
+                bubble.top = button.y
+            else:
+                bubble.y = button.top
 
         else:
             Window.remove_widget(bubble)
