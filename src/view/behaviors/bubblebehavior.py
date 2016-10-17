@@ -37,12 +37,12 @@ class BubbleBehavior(object):
         if value:
             Window.add_widget(bubble)
             bubble.arrow_pos = arrow_pos
-            bubble.center_x = button.center_x
+            bubble.center_x = button.to_window(button.center_x, 0)[0]
 
             if arrow_pos.startswith('top'):
-                bubble.top = button.y
+                bubble.top = button.to_window(0, button.y)[1]
             else:
-                bubble.y = button.top
+                bubble.y = button.to_window(0, button.top)[1]
 
         else:
             Window.remove_widget(bubble)
