@@ -25,3 +25,4 @@ from bubblebehavior import BubbleBehavior
 from defaultbuttonbehavior import DefaultButtonBehavior
 from highlightbehavior import HighlightBehavior
 from hoverbehavior import HoverBehavior
+from bgcolorbehavior import BgcolorBehavior
