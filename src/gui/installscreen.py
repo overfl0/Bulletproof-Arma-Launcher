@@ -365,8 +365,12 @@ class Controller(object):
             params = message.get('params')
 
             if command == 'missing_mods':
+                mod_names = params
+                mods = [mod for mod in self.mods if mod.foldername in mod_names]
+
                 message_box_instance = ModSearchBox(on_selection=self.on_prepare_search_decision,
-                                                   mod_names=params,
+                                                    on_manual_path=self.on_mod_set_path,
+                                                    mods=mods,
                                                    )
                 message_box_instance.chain_open()
 
@@ -376,6 +380,17 @@ class Controller(object):
                                                    locations=params['locations'],
                                                    )
                 message_box_instance.chain_open()
+
+    def on_mod_set_path(self, mod, new_path):
+        if self.is_para_running('prepare_all'):
+            Logger.info('InstallScreen: Custom mod location has been selected for mod {}'.format(mod.foldername))
+
+            params = {
+                'mod_name': mod.foldername,
+                'action': 'discard',
+            }
+
+            self.para.send_message('mod_reuse', params)
 
     def on_prepare_search_decision(self, action, location=None):
         """A quickly done workaround for telling the launcher what to do with
@@ -739,3 +754,7 @@ class Controller(object):
             Logger.info("sending termination to para action {}".format(self.para.action_name))
         else:
             Logger.info("No open para. App can just close")
+
+    def _get_pref_screen(self):
+        """Helper to get the preference screen view."""
+        return self.view.manager.get_screen('pref_screen').ids
