@@ -13,8 +13,8 @@
 from __future__ import unicode_literals
 
 from functools import partial
-from kivy.core.window import Window
 from kivy.uix.bubble import Bubble, BubbleButton
+
 
 class BubbleBehavior(object):
 
@@ -34,15 +34,21 @@ class BubbleBehavior(object):
 
     @staticmethod
     def show_bubble(button, bubble, arrow_pos, instance, value):
+        # Do not use Window as a parent for bubbles because if the widget's real
+        # parent is removed, the widget is still visible.
+        # Same for bubbles for objects inside ScrollViews.
+        # TODO: Should find a way for bubbles to select arrow_pos automatically
+        # depending on space available, instead.
+
         if value:
-            Window.add_widget(bubble)
+            button.add_widget(bubble)
             bubble.arrow_pos = arrow_pos
-            bubble.center_x = button.to_window(button.center_x, 0)[0]
+            bubble.center_x = button.center_x
 
             if arrow_pos.startswith('top'):
-                bubble.top = button.to_window(0, button.y)[1]
+                bubble.top = button.y
             else:
-                bubble.y = button.to_window(0, button.top)[1]
+                bubble.y = button.top
 
         else:
-            Window.remove_widget(bubble)
+            button.remove_widget(bubble)

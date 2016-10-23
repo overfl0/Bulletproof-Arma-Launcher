@@ -101,7 +101,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
         self.on_manual_path = on_manual_path
         self.paras = []  # TODO: Move this to some para_manager
         kwargs['size_hint_y'] = None
-        kwargs['height'] = 25
+        kwargs['height'] = 26
         super(ModListEntry, self).__init__(**kwargs)
 
         entry = BoxLayout(spacing=10, padding=(20, 0))
@@ -113,7 +113,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
         # up_to_date_text = 'Up to date' if mod.up_to_date else 'Requires update'
         folder_path = paths.get_resources_path('images/folder_white.png')
-        folder = HoverImage(color=self.icon_color, bubble_text='Select location', arrow_pos='bottom_mid', source=folder_path, size_hint=(None, None), size=(25, 25))
+        folder = HoverImage(color=self.icon_color, bubble_text='Select\nlocation', arrow_pos='bottom_mid', source=folder_path, size_hint=(None, None), size=(25, 25))
         folder.bind(mouse_hover=self.highlight_button)
         folder.bind(on_release=self.select_dir)
 
@@ -168,6 +168,7 @@ class ModList(BoxLayout):
             entries = []
 
         # import itertools
+        # from sync.mod import Mod
         # def multiply(elements, number):
         #     return itertools.islice(itertools.cycle(elements), number)
         # entries = list(multiply([Mod('@First'), Mod('@Second'), Mod('@Third')], 30))
