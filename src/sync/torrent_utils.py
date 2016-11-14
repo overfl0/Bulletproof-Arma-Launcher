@@ -278,6 +278,18 @@ def create_symlink(symlink_name, orig_path):
 
     return subprocess.check_call(['cmd', '/c', 'mklink', '/J', symlink_name, orig_path])
 
+def symlink_mod(mod_full_path, real_location):
+    """Set a new location for a mod.
+    This includes making sure the mod is ready for being user afterwards.
+    """
+
+    # TODO: What if the directory is not a symlink but a real directory with contents
+    if os.path.exists(mod_full_path):  # sometimes the junction may already exist
+        os.rmdir(mod_full_path)
+
+    create_symlink(mod_full_path, real_location)
+    prepare_mod_directory(mod_full_path)
+
 def create_add_torrent_flags():
     """Create default flags for adding a new torrent to a syncer."""
     f = libtorrent.add_torrent_params_flags_t

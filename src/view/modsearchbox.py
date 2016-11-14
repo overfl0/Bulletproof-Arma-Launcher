@@ -16,15 +16,16 @@ import os
 import textwrap
 
 from functools import partial
-
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from view.chainedpopup import ChainedPopup
 from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior, HighlightBehavior
 from view.filechooser import FileChooser
 from view.messagebox import MessageBox
+from view.modlist import ModList
 
 default_title = ''
 
@@ -38,7 +39,7 @@ class DefaultHoverButton(HighlightBehavior, HoverBehavior, BubbleBehavior, Defau
 
 
 class ModSearchBox(ChainedPopup):
-    def on_label_texture_update(self, container, la, size):
+    def resize_box(self, container, la, size):
         container.height = sum(child.height for child in container.children)
 
     def is_directory_ok(self, path):
@@ -69,23 +70,38 @@ class ModSearchBox(ChainedPopup):
         self.dismiss()
         self.on_selection('download')
 
-    def __init__(self, on_selection, mod_names, title=default_title):
+    def mod_location_selected(self, mod, new_path):
+        if self.on_manual_path:
+            self.on_manual_path(mod, new_path)
 
+        if all (os.path.exists(mod.get_full_path()) for mod in self.mods):
+            self.continue_button.text = 'OK'
+
+    def __init__(self, on_selection, on_manual_path, mods, title=default_title):
+        self.mods = mods
         self.on_selection = on_selection
+        self.on_manual_path = on_manual_path
 
         bl = BoxLayout(orientation='vertical', size_hint=(1, None))
         bl.bind(size=self.update_vertical_size)
 
         text = textwrap.dedent('''\
-            The following mods are missing and will need to be downloaded:
-
-            {}''') \
-            .format("\n".join('    ' + mod_name for mod_name in mod_names))
-
+            The following mods are missing and will need to be downloaded.
+            Click on the directory icon to select a location manually.
+            ''')
         la = Label(text=text, text_size=(570, None), size_hint=(1, None))  # , size_hint=(1, 2))
         la.bind(texture_size=la.setter('size'))
-        la.bind(size=partial(self.on_label_texture_update, bl))
+        la.bind(size=partial(self.resize_box, bl))
         bl.add_widget(la)
+
+        self.scrollview = scrollview = ScrollView(size_hint=(1, None), height=300, bar_width=12, scroll_timeout=100, bar_inactive_color=[0.7, 0.7, 0.7, 0.5])  # , scroll_type=['bars'])
+        scrollview.bind(size=partial(self.resize_box, bl))
+
+        mods_list = ModList(mods, on_manual_path=self.mod_location_selected)
+        mods_list.bind(size=partial(self.resize_box, bl))
+        scrollview.add_widget(mods_list)
+
+        bl.add_widget(scrollview)
 
         bl.add_widget(Widget(size_hint=(None, None), height=20))  # Spacer
 
@@ -104,7 +120,7 @@ class ModSearchBox(ChainedPopup):
             Download all the mods listed above
             using your internet connection.
             ''')
-        button2 = HButton(text='Download missing', size=(100, 30), size_hint=(1, None), bubble_text=button2_bubble)
+        self.continue_button = button2 = HButton(text='Download missing', size=(100, 30), size_hint=(1, None), bubble_text=button2_bubble)
         button2.bind(on_release=self.ignore_button_clicked)
         horizontal_box.add_widget(button2)
 

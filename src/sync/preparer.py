@@ -118,8 +118,7 @@ class Preparer(object):
         if params['action'] == 'use':
             Logger.info('Message: Mod reuse: symlink, mod: {}'.format(mod_name))
             self.message_handler.message_queue.progress({'msg': 'Creating junction for mod {}...'.format(mod_name), 'log': []}, 0)
-            torrent_utils.create_symlink(mod.get_full_path(), params['location'])
-            torrent_utils.prepare_mod_directory(mod.get_full_path())
+            torrent_utils.symlink_mod(mod.get_full_path(), params['location'])
             self.message_handler.message_queue.progress({'msg': 'Creating junction for mod {} finished!'.format(mod_name), 'log': []}, 0)
 
             self.missing_mods.remove(mod)
@@ -133,7 +132,18 @@ class Preparer(object):
 
             self.missing_mods.remove(mod)
 
+        elif params['action'] == 'discard':
+            Logger.info('Message: Mod reuse: discard, mod: {}'.format(mod_name))
+            self.missing_responses += 1  # Gratuitous message. Not waiting for it.
+
+            try:
+                self.missing_mods.remove(mod)
+            except KeyError:
+                pass  # May happen with discard when called twice
+
         elif params['action'] == 'ignore':
+            # Kept here because we need to decrease the missing_responses count
+            # and have a valid action that does just that.
             Logger.info('Message: Mod reuse: ignore, mod: {}'.format(mod_name))
 
         else:
@@ -217,7 +227,7 @@ class Preparer(object):
         if self.missing_mods:
             self.find_mods_and_ask()
 
-        while self.missing_mods:
+        while self.missing_mods or self.missing_responses > 0:
             if not self.missing_responses:  # All responses have been processed
                 # Print message about missing mods and ask for directory to search
                 self.request_directory_to_search()

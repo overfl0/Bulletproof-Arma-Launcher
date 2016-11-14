@@ -23,7 +23,7 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from kivy.logger import Logger
 from kivy.config import Config
-from sync import integrity
+from sync import integrity, torrent_utils
 from sync.mod import Mod
 from sync.torrentsyncer import TorrentSyncer
 from third_party import teamspeak
@@ -66,6 +66,12 @@ def create_timestamp(epoch):
     YYYY-MM-DD_Epoch
     """
     return datetime.fromtimestamp(int(epoch)).strftime('%Y-%m-%d_') + str(int(epoch))
+
+
+def symlink_mod(message_queue, mod_location, real_location):
+    """Just create a symlink for a mod and resolve."""
+    torrent_utils.symlink_mod(mod_location, real_location)
+    message_queue.resolve(real_location)
 
 
 def _make_torrent(messagequeue, launcher_basedir, mods):

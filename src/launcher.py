@@ -100,6 +100,7 @@ try:
         from view.statusimage import StatusImage
         from view.errorpopup import error_popup_decorator
         from view.errorpopup import PopupHandler
+        from view.modlist import ModList
 
         from gui.mainwidget import MainWidget
         from gui.updatermainwidget import UpdaterMainWidget
