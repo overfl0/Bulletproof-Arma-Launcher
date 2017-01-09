@@ -15,6 +15,8 @@ from __future__ import unicode_literals
 # TODO: Ensure correct handling of directory loops!
 
 import os
+import re
+import string
 
 from kivy.logger import Logger
 from third_party.arma import Arma
@@ -27,6 +29,20 @@ def get_mod_locations():
     mod_locations.append(Arma.get_installation_path())
 
     return mod_locations
+
+
+def keep_meaningful_data(name):
+    """Return the name after it has been changed to lowercase and stripped of
+    all letters that are not latin characters or digits or '@'.
+    This is done for a pseudo-fuzzy comparison where "@Kunduz, Afghanistan" and
+    "@Kunduz Afghanistan" will match.
+    """
+
+    no_case = casefold(name)
+    allowed_chars = string.letters + string.digits + '@'
+    filtered_name = re.sub('[^{}]'.format(re.escape(allowed_chars)), '', no_case)
+
+    return filtered_name
 
 
 def find_mods(names, locations=None):
@@ -44,7 +60,7 @@ def find_mods(names, locations=None):
     Note2: followlinks=False is IGNORED with windows Junctions and Symlinks!
     """
 
-    casefold_names = set(casefold(name) for name in names)
+    filtered_names = set(keep_meaningful_data(name) for name in names)
 
     # inodes_visited = set()  # Store the inode of each directory to prevent infinite loops
 
@@ -70,11 +86,11 @@ def find_mods(names, locations=None):
 
             inodes_visited.add(inode)"""
 
-            casefold_base_root = casefold(os.path.basename(root))
-            if casefold_base_root in casefold_names:
+            filtered_base_root = keep_meaningful_data(os.path.basename(root))
+            if filtered_base_root in filtered_names:
                 # Find the right name in the right case
                 for name in names:
-                    if casefold(name) == casefold_base_root:
+                    if keep_meaningful_data(name) == filtered_base_root:
                         # response[name].append(root)
                         response.setdefault(name, []).append(root)
                         break
