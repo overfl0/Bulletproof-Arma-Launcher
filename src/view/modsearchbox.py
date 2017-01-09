@@ -61,7 +61,7 @@ class ModSearchBox(ChainedPopup):
 
     def search_button_clicked(self, ignore):
         p = FileChooser(select_string='Search here', dirselect=True,
-                        path=os.getcwd())
+                        show_hidden=True, path=os.getcwd())
 
         p.browser.bind(on_success=partial(self._fbrowser_success, p))
         p.open()

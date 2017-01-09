@@ -88,7 +88,7 @@ class Controller(object):
         Logger.info('opening filechooser with path: ' + path)
 
         p = FileChooser(select_string='Select', dirselect=True,
-                        path=path)
+                        show_hidden=True, path=path)
 
         p.browser.bind(on_success=self._fbrowser_success,
                        on_canceled=self._fbrowser_canceled)

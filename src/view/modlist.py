@@ -91,7 +91,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
     def select_dir(self, instance):
         p = FileChooser(select_string='Select', dirselect=True,
-                        path=self.mod.get_full_path())
+                        show_hidden=True, path=self.mod.get_full_path())
 
         p.browser.bind(on_success=partial(self.select_success, p))
         p.open()
