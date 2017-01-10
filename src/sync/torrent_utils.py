@@ -275,8 +275,10 @@ def create_symlink(symlink_name, orig_path):
     """Create an NTFS Junction.
     For now, just use subprocess. Maybe switch to native libs later.
     """
+    symlink_name_fs = unicode_helpers.u_to_fs(symlink_name)
+    orig_path_fs = unicode_helpers.u_to_fs(orig_path)
 
-    return subprocess.check_call(['cmd', '/c', 'mklink', '/J', symlink_name, orig_path])
+    return subprocess.check_call([b'cmd', b'/c', b'mklink', b'/J', symlink_name_fs, orig_path_fs])
 
 def symlink_mod(mod_full_path, real_location):
     """Set a new location for a mod.
