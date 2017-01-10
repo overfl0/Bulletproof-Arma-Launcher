@@ -240,7 +240,7 @@ def ensure_directory_structure_is_correct(mod_directory):
         for node_name in [''] + filenames + dirnames:
 
             node_path = os.path.join(dirpath, node_name)
-            Logger.info('Torrent_utils: Checking node: {}.'.format(node_path))
+            Logger.info('Torrent_utils: Checking node: {}'.format(node_path))
             set_node_read_write(node_path)
             _replace_broken_junction_with_directory(node_path)
 
