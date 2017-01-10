@@ -45,26 +45,16 @@ class ModSearchBox(ChainedPopup):
     def is_directory_ok(self, path):
         return os.path.isdir(path)
 
-    def _fbrowser_success(self, popup, instance):
-        if instance.selection:
-            selected = instance.selection[0]
-        else:
-            selected = instance.path
+    def _fbrowser_success(self, path):
+        if not self.is_directory_ok(path):
+            return 'Not a directory or unreadable:\n{}'.format(path)
 
-        if not self.is_directory_ok(selected):
-            MessageBox('Not a directory or unreadable:\n{}'.format(selected)).open()
-            return
-        else:
-            popup.dismiss()
-            self.dismiss()
-            self.on_selection('search', selected)
+        self.dismiss()
+        self.on_selection('search', path)
 
     def search_button_clicked(self, ignore):
-        p = FileChooser(select_string='Search here', dirselect=True,
-                        show_hidden=True, path=os.getcwd())
-
-        p.browser.bind(on_success=partial(self._fbrowser_success, p))
-        p.open()
+        self.p = FileChooser(os.getcwd(),
+                             on_success=self._fbrowser_success)
 
     def ignore_button_clicked(self, ignore):
         self.dismiss()

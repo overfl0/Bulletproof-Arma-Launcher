@@ -14,48 +14,64 @@
 from __future__ import unicode_literals
 
 import os
+import tkFileDialog
+import tkMessageBox
+import Tkinter
 
-from kivy.uix.filechooser import FileChooserListView
-from kivy.uix.popup import Popup
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.textinput import TextInput
-from kivy.uix.button import Button
 from kivy.logger import Logger
-from kivy.clock import Clock
-from view.filebrowser import FileBrowser
+from kivy.uix.modalview import ModalView
 
-# Until Kivy 1.9.2, you NEED to have the following patches applied;
-# https://github.com/kivy/kivy/commit/b1b5da3f0dd38848302703d7c2347e22682c0649
-# https://github.com/kivy/kivy/commit/e75575c2a58a71e9481628045111ddad94ed19e8
 
-class FileChooser(Popup):
-    """docstring for FileChooser"""
-    def __init__(self, **kwargs):
+class FileChooser():
+    def __init__(self, path, on_success=None, on_canceled=None):
+        self.path = path
+        self.on_success = on_success
+        self.on_canceled = on_canceled
 
-        self.browser = FileBrowser(**kwargs)
+        self.open()
 
-        self.browser.bind(on_success=self._fbrowser_success,
-                          on_canceled=self._fbrowser_canceled)
+    def _tk_open(self, _):
+        root = Tkinter.Tk()
+        root.withdraw()  # use to hide tkinter window
 
-        super(FileChooser, self).__init__(title='Choose directory',
-                                          content=self.browser,
-                                          size_hint=(None, None),
-                                          size=(900, 600),
-                                          auto_dismiss=False)
+        while True:
 
-        Clock.schedule_once(self._on_next_frame, 0)
+            tempdir = tkFileDialog.askdirectory(
+                parent=root,
+                initialdir=self.path,
+                title='')
 
-    def _on_next_frame(self, dt):
-        file_list = self.browser.ids.list_view
-        file_list.filters = [self.file_filter]
+            if not tempdir:
+                Logger.info('FileChooser: User canceled the prompt')
+                if self.on_canceled:
+                    self.on_canceled()
 
-        return False
+                self.p.dismiss()
+                return
 
-    def _fbrowser_canceled(self, instance):
-        self.dismiss()
+            if os.sep != '/':  # askdirectory uses '/' as separator
+                tempdir = tempdir.replace('/', os.sep)
 
-    def _fbrowser_success(self, instance):
-        pass
+            Logger.info('FileChooser: User selected {}'.format(tempdir))
 
-    def file_filter(self, folder, path):
-        return os.path.isdir(path)
+            if not self.on_success:
+                break
+
+            # Call callback. If the callback returns something other than False
+            # Show the message and get show the dir selection prompt again.
+            message = self.on_success(tempdir)
+            if message:
+                Logger.error('FileChooser: {}'.format(message))
+                tkMessageBox.showinfo('Error', message)
+
+            else:
+                break
+
+
+        self.p.dismiss()
+
+    def open(self):
+        self.p = ModalView(size=(0, 0), size_hint=(None, None),
+                           auto_dismiss=False, border=[0, 0, 0, 0])
+        self.p.bind(on_open=self._tk_open)
+        self.p.open()

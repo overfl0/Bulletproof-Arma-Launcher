@@ -73,28 +73,17 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
         # TODO: Disable the buttons for the time of the para working
 
-    def select_success(self, popup, instance):
-        if not instance.selection:
-            Logger.info('Modlist: User selected the initial directory, keeping {}'.format(self.mod.get_full_path()))
-            popup.dismiss()
-            return
+    def select_success(self, path):
+        Logger.info('Modlist: User selected the directory: {}'.format(path))
 
-        selected = instance.selection[0]
-        Logger.info('Modlist: User selected the directory: {}'.format(selected))
+        if not os.path.isdir(path):
+            return 'Not a directory or unreadable:\n{}'.format(path)
 
-        if not os.path.isdir(selected):
-            MessageBox('Not a directory or unreadable:\n{}'.format(selected)).open()
-            return
-        else:
-            popup.dismiss()
-            self.set_new_path(selected)
+        self.set_new_path(path)
 
     def select_dir(self, instance):
-        p = FileChooser(select_string='Select', dirselect=True,
-                        show_hidden=True, path=self.mod.get_full_path())
-
-        p.browser.bind(on_success=partial(self.select_success, p))
-        p.open()
+        self.p = FileChooser(self.mod.get_full_path(),
+                             on_success=self.select_success)
 
     def __init__(self, mod, on_manual_path, **kwargs):
         self.mod = mod

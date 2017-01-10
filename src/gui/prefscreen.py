@@ -87,52 +87,30 @@ class Controller(object):
 
         Logger.info('opening filechooser with path: ' + path)
 
-        p = FileChooser(select_string='Select', dirselect=True,
-                        show_hidden=True, path=path)
+        self.p = FileChooser(path,
+                             on_success=self._fbrowser_success,
+                             on_canceled=self._fbrowser_canceled)
 
-        p.browser.bind(on_success=self._fbrowser_success,
-                       on_canceled=self._fbrowser_canceled)
-        p.open()
-        self.file_browser_popup = p
-
-    def _fbrowser_canceled(self, instance):
+    def _fbrowser_canceled(self):
         Logger.info('cancelled, Close self.')
 
-    def _fbrowser_success(self, instance):
-        if len(instance.selection) > 0:
-            path = instance.selection[0]
-
-        else:
-            # No selection made. Assume the user selected the directory he was
-            # already in, so this should work the same as if he hit cancel
-            Logger.error('PrefScreen: no selection made. Doing nothing')
-
-            if self.file_browser_popup:
-                self.file_browser_popup.dismiss()
-
-            return
-
+    def _fbrowser_success(self, path):
         if not os.path.isdir(path):
             Logger.error('PrefScreen: path is not a dir: ' + path)
-            MessageBox('The selected path does not point to a directory'.format(path)).open()
-            return False
+            return 'The selected path does not point to a directory'.format(path)
 
         if not is_dir_writable(path):
             Logger.error('PrefScreen: directory {} is not writable'.format(path))
-            MessageBox('Directory {} is not writable'.format(path)).chain_open()
-            return False
+            return 'Directory {} is not writable'.format(path)
 
         # normalize path
         path = os.path.abspath(path)
         Logger.info('PrefScreen: Got filechooser ok event: ' + path)
 
-        # this will save automaticly
+        # this will save automatically
         self.settings.set('launcher_moddir', path)
 
         self.view.ids.path_text_input.text = self.settings.get('launcher_moddir')
-
-        if self.file_browser_popup:
-            self.file_browser_popup.dismiss()
 
     def on_max_download_speed_input_focus(self, numberinput, focus):
         if not focus:
