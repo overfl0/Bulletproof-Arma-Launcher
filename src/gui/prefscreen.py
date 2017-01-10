@@ -100,7 +100,7 @@ class Controller(object):
             return 'The selected path does not point to a directory'.format(path)
 
         if not is_dir_writable(path):
-            Logger.error('PrefScreen: directory {} is not writable'.format(path))
+            Logger.error('PrefScreen: Directory {} is not writable'.format(path))
             return 'Directory {} is not writable'.format(path)
 
         # normalize path

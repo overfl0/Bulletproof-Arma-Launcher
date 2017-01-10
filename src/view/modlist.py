@@ -23,6 +23,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from sync import manager_functions
+from utils.paths import is_dir_writable
 from utils.process import protected_para
 from view.behaviors import HoverBehavior
 from view.behaviors import BgcolorBehavior, BubbleBehavior
@@ -78,6 +79,9 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
         if not os.path.isdir(path):
             return 'Not a directory or unreadable:\n{}'.format(path)
+
+        if not is_dir_writable(path):
+            return 'Directory {} is not writable'.format(path)
 
         self.set_new_path(path)
 

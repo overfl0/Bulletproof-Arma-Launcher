@@ -21,6 +21,7 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
+from utils.paths import is_dir_writable
 from view.chainedpopup import ChainedPopup
 from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior, HighlightBehavior
 from view.filechooser import FileChooser
@@ -48,6 +49,9 @@ class ModSearchBox(ChainedPopup):
     def _fbrowser_success(self, path):
         if not self.is_directory_ok(path):
             return 'Not a directory or unreadable:\n{}'.format(path)
+
+        if not is_dir_writable(path):
+            return 'Directory {} is not writable'.format(path)
 
         self.dismiss()
         self.on_selection('search', path)
