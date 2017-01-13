@@ -139,7 +139,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     file_paths = filter_out_whitelisted(file_paths)
 
     base_directory = os.path.realpath(base_directory)
-    Logger.debug('Verifying base_directory: {}'.format(base_directory))
+    Logger.debug('check_mod_directories: Verifying base_directory: {}'.format(base_directory))
     success = True
 
     try:
@@ -156,14 +156,14 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             # Must act accordingly then.
             for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=True):
                 relative_path = os.path.relpath(dirpath, base_directory)
-                Logger.debug('In directory: {}'.format(relative_path))
+                Logger.debug('check_mod_directories: In directory: {}'.format(relative_path))
 
                 # First check files in this directory
                 for file_name in filenames:
                     relative_file_name = os.path.join(relative_path, file_name)
 
                     if file_name in WHITELIST_NAME:
-                        Logger.debug('File {} in WHITELIST_NAME, skipping...'.format(file_name))
+                        Logger.debug('check_mod_directories: File {} in WHITELIST_NAME, skipping...'.format(file_name))
 
                         with ignore_exceptions(KeyError):
                             file_paths.remove(relative_file_name)
@@ -171,24 +171,24 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
 
                     full_file_path = os.path.join(dirpath, file_name)
 
-                    Logger.debug('Checking file: {}'.format(relative_file_name))
+                    Logger.debug('check_mod_directories: Checking file: {}'.format(relative_file_name))
                     if relative_file_name in file_paths:
                         file_paths.remove(relative_file_name)
-                        Logger.debug('{} present in torrent metadata'.format(relative_file_name))
+                        Logger.debug('check_mod_directories: {} present in torrent metadata'.format(relative_file_name))
 
                         if checksums and sha1(full_file_path) != checksums[relative_file_name]:
-                            Logger.debug('File {} exists but its hash differs from expected.'.format(relative_file_name))
-                            Logger.debug('Expected: {}, computed: {}'.format(checksums[relative_file_name].encode('hex'), sha1(full_file_path).encode('hex')))
+                            Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(relative_file_name))
+                            Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[relative_file_name].encode('hex'), sha1(full_file_path).encode('hex')))
                             return False
 
                         continue  # File present in the torrent, nothing to see here
 
                     if on_superfluous == 'remove':
-                        Logger.debug('Removing file: {}'.format(full_file_path))
+                        Logger.debug('check_mod_directories: Removing file: {}'.format(full_file_path))
                         _safer_unlink(full_base_path, full_file_path)
 
                     elif on_superfluous == 'warn':
-                        Logger.debug('Superfluous file: {}'.format(full_file_path))
+                        Logger.debug('check_mod_directories: Superfluous file: {}'.format(full_file_path))
                         return False
 
                     elif on_superfluous == 'ignore':
@@ -207,7 +207,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
 
                         continue
 
-                    Logger.debug('Checking dir: {}'.format(relative_dir_path))
+                    Logger.debug('check_mod_directories: Checking dir: {}'.format(relative_dir_path))
                     if relative_dir_path in dirs:
                         dirs.remove(relative_dir_path)
                         continue  # Directory present in the torrent, nothing to see here
@@ -215,13 +215,13 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                     full_directory_path = os.path.join(dirpath, dir_name)
 
                     if on_superfluous == 'remove':
-                        Logger.debug('Removing directory: {}'.format(full_directory_path))
+                        Logger.debug('check_mod_directories: Removing directory: {}'.format(full_directory_path))
                         dirnames.remove(dir_name)
 
                         _safer_rmtree(full_base_path, full_directory_path)
 
                     elif on_superfluous == 'warn':
-                        Logger.debug('Superfluous directory: {}'.format(full_directory_path))
+                        Logger.debug('check_mod_directories: Superfluous directory: {}'.format(full_directory_path))
                         return False
 
                     elif on_superfluous == 'ignore':
@@ -236,20 +236,20 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
             full_path = os.path.join(base_directory, file_entry)
 
             if not os.path.isfile(full_path):
-                Logger.debug('File paths missing on disk, setting retval to False')
-                Logger.debug(full_path)
+                Logger.debug('check_mod_directories: File paths missing on disk, setting retval to False')
+                Logger.debug('check_mod_directories: ' + full_path)
                 success = False
                 break
 
             if checksums and sha1(full_path) != checksums[file_entry]:
-                Logger.debug('File {} exists but its hash differs from expected.'.format(file_entry))
-                Logger.debug('Expected: {}, computed: {}'.format(checksums[file_entry].encode('hex'), sha1(full_path).encode('hex')))
+                Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(file_entry))
+                Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[file_entry].encode('hex'), sha1(full_path).encode('hex')))
                 success = False
                 break
 
         if dirs:
-            Logger.debug('Dirs missing on disk, setting retval to False')
-            Logger.debug(', '.join(dirs))
+            Logger.debug('check_mod_directories: Dirs missing on disk, setting retval to False')
+            Logger.debug('check_mod_directories: ' + ', '.join(dirs))
             success = False
 
     except OSError:
@@ -311,19 +311,19 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
             full_file_path = os.path.join(base_directory, file_path)
             file_stat = os.lstat(full_file_path)
         except OSError:
-            Logger.error('Could not perform stat on {}'.format(full_file_path))
+            Logger.error('check_files_mtime_correct: Could not perform stat on {}'.format(full_file_path))
             return False
 
-        # Logger.debug('{} {} {}'.format(file_path, file_stat.st_mtime, mtime))
+        # Logger.debug('check_files_mtime_correct: {} {} {}'.format(file_path, file_stat.st_mtime, mtime))
         # Values for st_size and st_mtime based on libtorrent/src/storage.cpp: 135-190 // match_filesizes()
         if file_stat.st_size < size:  # Actually, not sure why < instead of != but kept this to be compatible with libtorrent
-            Logger.debug('Incorrect file size for {}'.format(full_file_path))
+            Logger.debug('check_files_mtime_correct: Incorrect file size for {}'.format(full_file_path))
             return False
 
         # Allow for 1 sec discrepancy due to FAT32
         # Also allow files to be up to 5 minutes more recent than stated
         if int(file_stat.st_mtime) > mtime + 5 * 60 or int(file_stat.st_mtime) < mtime - 1:
-            Logger.debug('Incorrect modification time for {}'.format(full_file_path))
+            Logger.debug('check_files_mtime_correct: Incorrect modification time for {}'.format(full_file_path))
             return False
 
     return True
@@ -369,6 +369,6 @@ def are_ts_plugins_installed(mod_parent_location, mod_name, file_paths):
 #                                    check_subdir='@task_force_radio\\TeamSpeak 3 Client\\plugins',
 #                                    on_superfluous='ignore', checksums=checksums)
 #
-#     Logger.debug('Teamspeak plugins synchronized: {}'.format(retval))
+#     Logger.debug('are_ts_plugins_installed: Teamspeak plugins synchronized: {}'.format(retval))
 #
 #     return retval
