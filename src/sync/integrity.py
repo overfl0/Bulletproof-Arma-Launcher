@@ -27,6 +27,7 @@ import shutil
 from kivy.logger import Logger
 from utils.context import ignore_exceptions
 from utils.hashes import sha1
+from utils.unicode_helpers import casefold
 from third_party import teamspeak
 
 
@@ -101,7 +102,9 @@ def filter_out_whitelisted(elements):
     return elements
 
 
-def check_mod_directories(files_list, base_directory, check_subdir='', on_superfluous='warn', checksums=None):
+def check_mod_directories(files_list, base_directory, check_subdir='',
+                          on_superfluous='warn', checksums=None,
+                          case_sensitive=False):
     """Check if all files and directories present in the mod directories belong
     to the torrent file. If not, remove those if on_superfluous=='remove' or return False
     if on_superfluous=='warn'.
@@ -138,19 +141,34 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
     dirs = filter_out_whitelisted(dirs)
     file_paths = filter_out_whitelisted(file_paths)
 
+    # If not case sensitive, rewrite data so it may be used in a case insensitive
+    # comparisons
+    if not case_sensitive:
+        file_paths = set(casefold(filename) for filename in file_paths)
+        dirs = set(casefold(directory) for directory in dirs)
+        top_dirs = set(casefold(top_dir) for top_dir in top_dirs)
+
+        if checksums:
+            checksums = {casefold(key): value for (key, value) in checksums.iteritems()}
+
+        # Set conditional casefold function
+        ccf = lambda x: casefold(x)
+    else:
+        ccf = lambda x: x
+
     base_directory = os.path.realpath(base_directory)
     Logger.debug('check_mod_directories: Verifying base_directory: {}'.format(base_directory))
     success = True
 
     try:
-        for directory in top_dirs:
+        for directory_nocase in top_dirs:
             with ignore_exceptions(KeyError):
-                dirs.remove(directory)
+                dirs.remove(directory_nocase)
 
-            if directory in WHITELIST_NAME:
+            if directory_nocase in WHITELIST_NAME:
                 continue
 
-            full_base_path = os.path.join(base_directory, directory)
+            full_base_path = os.path.join(base_directory, directory_nocase)
             _unlink_safety_assert(base_directory, full_base_path, action='enter')
             # FIXME: on OSError, this might indicate a broken junction or symlink on windows
             # Must act accordingly then.
@@ -160,25 +178,25 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
 
                 # First check files in this directory
                 for file_name in filenames:
-                    relative_file_name = os.path.join(relative_path, file_name)
+                    relative_file_name_nocase = ccf(os.path.join(relative_path, file_name))
 
                     if file_name in WHITELIST_NAME:
                         Logger.debug('check_mod_directories: File {} in WHITELIST_NAME, skipping...'.format(file_name))
 
                         with ignore_exceptions(KeyError):
-                            file_paths.remove(relative_file_name)
+                            file_paths.remove(relative_file_name_nocase)
                         continue
 
                     full_file_path = os.path.join(dirpath, file_name)
 
-                    Logger.debug('check_mod_directories: Checking file: {}'.format(relative_file_name))
-                    if relative_file_name in file_paths:
-                        file_paths.remove(relative_file_name)
-                        Logger.debug('check_mod_directories: {} present in torrent metadata'.format(relative_file_name))
+                    Logger.debug('check_mod_directories: Checking file: {}'.format(relative_file_name_nocase))
+                    if relative_file_name_nocase in file_paths:
+                        file_paths.remove(relative_file_name_nocase)
+                        Logger.debug('check_mod_directories: {} present in torrent metadata'.format(relative_file_name_nocase))
 
-                        if checksums and sha1(full_file_path) != checksums[relative_file_name]:
-                            Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(relative_file_name))
-                            Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[relative_file_name].encode('hex'), sha1(full_file_path).encode('hex')))
+                        if checksums and sha1(full_file_path) != checksums[relative_file_name_nocase]:
+                            Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(relative_file_name_nocase))
+                            Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[relative_file_name_nocase].encode('hex'), sha1(full_file_path).encode('hex')))
                             return False
 
                         continue  # File present in the torrent, nothing to see here
@@ -197,7 +215,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 # Now check directories
                 # Iterate over a copy because we'll be deleting items from the original
                 for dir_name in dirnames[:]:
-                    relative_dir_path = os.path.join(relative_path, dir_name)
+                    relative_dir_path = ccf(os.path.join(relative_path, dir_name))
 
                     if dir_name in WHITELIST_NAME:
                         dirnames.remove(dir_name)
@@ -232,8 +250,8 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
         # Such files will not exist with regular torrents but may happen if using
         # check_subdir != ''.
         # We just check if they exist. No deleting!
-        for file_entry in file_paths:
-            full_path = os.path.join(base_directory, file_entry)
+        for file_entry_nocase in file_paths:
+            full_path = os.path.join(base_directory, file_entry_nocase)
 
             if not os.path.isfile(full_path):
                 Logger.debug('check_mod_directories: File paths missing on disk, setting retval to False')
@@ -241,9 +259,9 @@ def check_mod_directories(files_list, base_directory, check_subdir='', on_superf
                 success = False
                 break
 
-            if checksums and sha1(full_path) != checksums[file_entry]:
-                Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(file_entry))
-                Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[file_entry].encode('hex'), sha1(full_path).encode('hex')))
+            if checksums and sha1(full_path) != checksums[file_entry_nocase]:
+                Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(file_entry_nocase))
+                Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[file_entry_nocase].encode('hex'), sha1(full_path).encode('hex')))
                 success = False
                 break
 

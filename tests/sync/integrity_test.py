@@ -13,6 +13,7 @@
 
 from __future__ import unicode_literals
 
+import hashlib
 import mockfs
 import os
 import unittest
@@ -94,6 +95,13 @@ class IntegrityTest(unittest.TestCase):
         self._add_file('dir1\\file12')
         self._add_file('dir2\\file21')
         self._add_file('dir2\\file22')
+
+        self.basic_checksums = {
+            TOP_DIR + '\\dir1\\file11': hashlib.sha1('').digest(),
+            TOP_DIR + '\\dir1\\file12': hashlib.sha1('').digest(),
+            TOP_DIR + '\\dir2\\file21': hashlib.sha1('').digest(),
+            TOP_DIR + '\\dir2\\file22': hashlib.sha1('').digest(),
+        }
 
     def _check_if_dir_contains_only(self, dirpath, dirs, files):
         '''Make sure all required files are physically present on disk (no
@@ -301,6 +309,87 @@ class IntegrityTest(unittest.TestCase):
                                                  base_directory='c:\\teamspeak\\plugins',
                                                  check_subdir='top_dir\\ts\\plugins',
                                                  on_superfluous='warn')
+
+        self.assertEqual(retval, False, "check_mod_directories should return false")
+
+    @attr('integration')
+    def test_sync_nocase(self):
+        self._set_basic_subdir_files()
+
+        self._add_torrent_file_only('dir1\\case1')
+        self._add_real_file_only('dir1\\Case1', force_keep_it=True)
+        self._add_torrent_file_only('dir1\\Case2')
+        self._add_real_file_only('dir1\\case2', force_keep_it=True)
+
+        self._add_torrent_file_only('dir3\\case3')
+        self._add_real_file_only('Dir3\\Case3', force_keep_it=True)
+        self._add_torrent_file_only('Dir4\\case4')
+        self._add_real_file_only('dir4\\Case4', force_keep_it=True)
+
+        self._add_torrent_file_only('dir5\\subdir1\\case5')
+        self._add_real_file_only('Dir5\\Subdir1\\Case5', force_keep_it=True)
+        self._add_torrent_file_only('Dir6\\Subdir2\\case6')
+        self._add_real_file_only('dir6\\subdir2\\Case6', force_keep_it=True)
+
+        retval = integrity.check_mod_directories(self.file_paths,
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove')
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_nocase_with_checksums_ok(self):
+        # self._set_basic_subdir_files()
+        checksums = self.basic_checksums.copy()
+
+        self._add_torrent_file_only('dir1\\case1')
+        self._add_real_file_only('dir1\\Case1', force_keep_it=True, content='tralala')
+        checksums[TOP_DIR + '\\dir1\\case1'] = hashlib.sha1('tralala').digest()
+
+        self._add_torrent_file_only('dir1\\Case2')
+        self._add_real_file_only('dir1\\case2', force_keep_it=True, content='tralala2')
+        checksums[TOP_DIR + '\\dir1\\Case2'] = hashlib.sha1('tralala2').digest()
+
+        self._add_torrent_file_only('dir5\\subdir1\\case5')
+        self._add_real_file_only('Dir5\\Subdir1\\Case5', force_keep_it=True, content='tralala3')
+        checksums[TOP_DIR + '\\dir5\\subdir1\\case5'] = hashlib.sha1('tralala3').digest()
+
+        self._add_torrent_file_only('Dir6\\Subdir2\\case6')
+        self._add_real_file_only('dir6\\subdir2\\Case6', force_keep_it=True, content='tralala4')
+        checksums[TOP_DIR + '\\Dir6\\Subdir2\\case6'] = hashlib.sha1('tralala4').digest()
+
+        retval = integrity.check_mod_directories(self.file_paths,
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove',
+                                                 checksums=checksums)
+
+        self.assertEqual(retval, True, "check_mod_directories should return true")
+
+    @attr('integration')
+    def test_sync_nocase_with_checksums_not_ok1(self):
+        # self._set_basic_subdir_files()
+        checksums = self.basic_checksums.copy()
+
+        self._add_torrent_file_only('dir1\\case1')
+        self._add_real_file_only('dir1\\Case1', force_keep_it=True, content='tralala')
+        checksums[TOP_DIR + '\\dir1\\case1'] = hashlib.sha1('NOT tralala').digest()
+
+        retval = integrity.check_mod_directories(self.file_paths,
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove',
+                                                 checksums=checksums)
+
+        self.assertEqual(retval, False, "check_mod_directories should return false")
+
+    @attr('integration')
+    def test_sync_nocase_with_checksums_not_ok2(self):
+        # self._set_basic_subdir_files()
+        checksums = self.basic_checksums.copy()
+
+        self._add_torrent_file_only('dir1\\Case2')
+        self._add_real_file_only('dir1\\case2', force_keep_it=True, content='tralala2')
+        checksums[TOP_DIR + '\\dir1\\Case2'] = hashlib.sha1('NOT tralala2').digest()
+
+        retval = integrity.check_mod_directories(self.file_paths,
+                                                 BASE_DIR, check_subdir='', on_superfluous='remove',
+                                                 checksums=checksums)
 
         self.assertEqual(retval, False, "check_mod_directories should return false")
 
