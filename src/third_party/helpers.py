@@ -13,6 +13,7 @@
 from __future__ import unicode_literals
 
 import headtracking
+import errno
 import kivy.app
 import os
 import teamspeak
@@ -289,7 +290,19 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
 
     except OSError as ex:
         error_message = unicode_helpers.fs_to_u(ex.strerror)
-        text = "Error while launching Arma 3: {}.".format(error_message)
+        text = "Error while launching Arma 3:\n{}.".format(error_message)
+
+        # Give a more specific error message in case of elevation required
+        if ex.errno == errno.EINVAL and hasattr(ex, 'winerror') and ex.winerror == 740:
+            # ex.winerror == winerror.ERROR_ELEVATION_REQUIRED
+            text += textwrap.dedent('''
+
+            Your Steam installation requires Administrator privileges to be run.
+            Either run the launcher as Administrator or change required privileges of Steam.exe.
+
+            (right click->properties->Compatibility->Run this program as an administrator)
+            ''')
+
         error_info = MessageBox(text, title='Error while launching Arma 3!')
         error_info.chain_open()
 
