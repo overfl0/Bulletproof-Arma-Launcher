@@ -321,6 +321,21 @@ def _try_installing_teamspeak_plugins(message_queue, mod):
     for ts3_plugin_file in ts3_plugins_files:
         ts3_plugin_full_path = os.path.join(mod.parent_location, ts3_plugin_file)
 
+        valid_or_message = teamspeak.ts3_plugin_is_valid(ts3_plugin_full_path)
+        if valid_or_message is not True:
+            error_message = textwrap.dedent('''
+                A Teamspeak plugin file is not valid!
+
+                Mod: {}
+                File name: {}
+                Reason: {}
+
+                Contact the server administrators!
+                ''').format(mod.foldername, ts3_plugin_file, valid_or_message)
+
+            message_queue.reject({'msg': error_message})
+            return False
+
         if not integrity.is_ts3_plugin_installed(ts3_plugin_full_path):
             ts3_plugin_files_to_process.append(ts3_plugin_file)
 

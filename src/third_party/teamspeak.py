@@ -320,3 +320,22 @@ def compute_checksums_for_ts3_plugin(zip_filename):
             checksums[filename_os] = checksum
 
     return checksums
+
+
+def ts3_plugin_is_valid(zip_filename):
+    """Return True if the given ts3_plugin is valid or return an error message."""
+
+    with zipfile.ZipFile(zip_filename) as zip_handle:
+
+        filenames = zip_handle.namelist()
+        if 'package.ini' not in filenames:
+            error = 'File "package.ini" is missing'
+            Logger.error('ts3_plugin_is_valid: {} from {}'.format(error, zip_filename))
+            return error
+
+        if 'plugins/' not in filenames:
+            error = 'Directory "plugins" is missing'
+            Logger.error('ts3_plugin_is_valid: {} from {}'.format(error, zip_filename))
+            return error
+
+    return True
