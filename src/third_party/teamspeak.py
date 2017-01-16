@@ -250,11 +250,28 @@ def create_ts3_plugin_package(path, name, author, version, platforms, descriptio
 
 
 def install_ts3_plugin(path):
-    """Install a ts3_plugin file by calling the Teamspeak plugin installer."""
+    """Install a ts3_plugin file by calling the Teamspeak plugin installer.
+    Return exit_code or None if UAC promt was rejected by the user.
+    """
 
     args = [get_addon_installer_path(), '-silent', path]
-    return run_admin(args[0], args[1:])
-    # return subprocess.Popen(unicode_helpers.u_to_fs_list(args))
+
+    '''
+    # This was dropped because it was too unreliable
+    if not only_as_root:
+        handle = subprocess.Popen(unicode_helpers.u_to_fs_list(args))
+        retval = handle.wait()
+
+        if retval == 0:  # TODO: AND CHECK FOR FILES FAILS!
+            return retval
+    '''
+
+    handle = run_admin(args[0], args[1:])
+    if handle is None:
+        return handle
+
+    return handle.wait()
+
 
 def install_unpackaged_plugin(path):
     """Package a plugin located at <path> to a ts3_plugin file and then install it.

@@ -360,23 +360,20 @@ def _try_installing_teamspeak_plugins(message_queue, mod):
             Manually install the plugin: [ref={}][color=3572b0]>> Click here! <<[/color][/ref]
             """.format(os.path.dirname(ts3_plugin_full_path)))
 
-        # install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
-        install_instance = teamspeak.install_ts3_plugin(path=ts3_plugin_full_path)
+        exit_code = teamspeak.install_ts3_plugin(path=ts3_plugin_full_path)
 
-        if not install_instance:
+        if exit_code is None:
             _show_message_box(message_queue, title='Run TeamSpeak plugin installer!', message=run_admin_message)
             # install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
-            install_instance = teamspeak.install_ts3_plugin(path=ts3_plugin_full_path)
+            exit_code = teamspeak.install_ts3_plugin(path=ts3_plugin_full_path)
 
-        if install_instance:
-            exit_code = install_instance.wait()
-            if exit_code != 0:
-                _show_message_box(message_queue, title='TeamSpeak plugin installation failed!', message=installation_failed_message)
-                message_queue.reject({'msg': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
-                return False
-
-        else:
+        if exit_code is None:
             message_queue.reject({'msg': 'The user cancelled the TeamSpeak plugin installation.'})
+            return False
+
+        elif exit_code != 0:
+            _show_message_box(message_queue, title='TeamSpeak plugin installation failed!', message=installation_failed_message)
+            message_queue.reject({'msg': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
             return False
 
     return True
