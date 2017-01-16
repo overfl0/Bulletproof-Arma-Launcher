@@ -93,8 +93,8 @@ def get_install_location():
         return devmode.get_ts_install_location()
 
     try:
-        key = 'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\TeamSpeak 3 Client'
-        reg_val = Registry.ReadValueUserAndMachine(key, 'InstallLocation', True)
+        key = 'SOFTWARE\\TeamSpeak 3 Client'
+        reg_val = Registry.ReadValueUserAndMachine(key, '', True)
         return reg_val
 
     except Registry.Error:
