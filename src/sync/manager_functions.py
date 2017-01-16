@@ -342,13 +342,13 @@ def _try_installing_teamspeak_plugins(message_queue, mod):
         installation_failed_message = textwrap.dedent("""
             A mod containing a Teamspeak plugin has been downloaded or updated.
 
-            Automatic installation of a Teamspeak plugin failed.
-
+            [color=ff0000]Automatic installation of a Teamspeak plugin failed.[/color]
+            Remember that you have to run Teamspeak at least once before installing
+            any plugins!
 
             To finish the installation of the Teamspeak plugin, you need to:
-
             Manually install the plugin: [ref={}][color=3572b0]>> Click here! <<[/color][/ref]
-            """.format(ts3_plugin_full_path))
+            """.format(os.path.dirname(ts3_plugin_full_path)))
 
         run_admin_message = textwrap.dedent("""
             A mod containing a Teamspeak plugin has been downloaded or updated.
@@ -356,11 +356,9 @@ def _try_installing_teamspeak_plugins(message_queue, mod):
             In order to install the TeamSpeak plugin you need to run the
             plugin installer as Administrator.
 
-
             If you do not want to do that, you need to:
-
             Manually install the plugin: [ref={}][color=3572b0]>> Click here! <<[/color][/ref]
-            """.format(ts3_plugin_full_path))
+            """.format(os.path.dirname(ts3_plugin_full_path)))
 
         # install_instance = teamspeak.install_unpackaged_plugin(path=path_ts3_addon)
         install_instance = teamspeak.install_ts3_plugin(path=ts3_plugin_full_path)
@@ -374,7 +372,7 @@ def _try_installing_teamspeak_plugins(message_queue, mod):
             exit_code = install_instance.wait()
             if exit_code != 0:
                 _show_message_box(message_queue, title='TeamSpeak plugin installation failed!', message=installation_failed_message)
-                message_queue.reject({'details': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
+                message_queue.reject({'msg': 'TeamSpeak plugin installation terminated with code: {}'.format(exit_code)})
                 return False
 
         else:
