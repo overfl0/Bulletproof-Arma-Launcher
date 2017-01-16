@@ -101,7 +101,7 @@ def get_install_location():
         raise TeamspeakNotInstalled('Could not get the TS install location')
 
 
-def get_config_location():
+def _get_config_location():
     """Return the value meaning where the user configuration is stored.
       0 - C:/Users/<username>/AppData/Roaming/TS3Client
       1 - Installation folder (get_install_location()/config).
@@ -118,6 +118,31 @@ def get_config_location():
 
     except Registry.Error:
         raise TeamspeakNotInstalled('Could not get the TS config location information')
+
+
+def get_config_location():
+    """Return the directory where the configuration should be stored.
+    The actual directory may not exist until the user actually launches Teamspeak!
+    """
+
+    regedit_value = _get_config_location()
+
+    if regedit_value == '1':
+        return os.path.join(get_install_location(), 'config')
+    elif regedit_value == '0':
+        return os.path.expandvars('%APPDATA%\\TS3Client')
+    else:
+        raise TeamspeakNotInstalled('Bad registry value: {}'.format(regedit_value))
+
+
+def get_plugins_locations():
+    """Return the paths where plugins may be located.
+    Because there is no way of easily telling TS 3.0 and 3.1 apart, and that
+    they have changed the way of storing plugins, we have to return both
+    probable locations to check.
+    """
+
+    return [get_install_location(), get_config_location()]
 
 
 def check_installed():

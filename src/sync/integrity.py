@@ -350,12 +350,21 @@ def check_files_mtime_correct(base_directory, files_data):  # file_path, size, m
 def is_ts3_plugin_installed(ts3_plugin_full_path):
     """Check if the given .ts3_plugin file is installed."""
 
-    teamspeak_path = teamspeak.get_install_location()
-    checksums = teamspeak.compute_checksums_for_ts3_plugin(ts3_plugin_full_path)
-    retval = check_mod_directories(checksums.keys(), base_directory=teamspeak_path,
-                                   on_superfluous='ignore', checksums=checksums)
+    teamspeak_paths = teamspeak.get_plugins_locations()
 
-    return retval
+    for teamspeak_path in teamspeak_paths:
+        Logger.debug('is_ts3_plugin_installed: Checking if TS3 plugin is installed in {}'.format(teamspeak_path))
+        checksums = teamspeak.compute_checksums_for_ts3_plugin(ts3_plugin_full_path)
+        retval = check_mod_directories(checksums.keys(), base_directory=teamspeak_path,
+                                       on_superfluous='ignore', checksums=checksums)
+
+        if retval:
+            Logger.info('is_ts3_plugin_installed: TS3 plugin found in {}'.format(teamspeak_path))
+            return True
+
+    Logger.info('is_ts3_plugin_installed: TS3 plugin not found in searched directories')
+    return False
+
 
 def are_ts_plugins_installed(mod_parent_location, mod_name, file_paths):
     """Check if all ts3_plugin files contained inside the mod files are
