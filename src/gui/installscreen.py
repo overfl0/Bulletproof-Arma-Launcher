@@ -529,6 +529,7 @@ class Controller(object):
 
         self.view.ids.status_image.set_image('attention')
         self.view.ids.status_label.text = last_line
+        self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
 
         # Boilerplate end
@@ -582,6 +583,7 @@ class Controller(object):
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = progress['msg']
+        self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
         self.set_and_resize_action_button(DynamicButtonStates.install)
 
@@ -608,6 +610,7 @@ class Controller(object):
 
         self.view.ids.status_image.hide()
         self.view.ids.status_label.text = last_line
+        self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
 
         self.syncing_failed = True
