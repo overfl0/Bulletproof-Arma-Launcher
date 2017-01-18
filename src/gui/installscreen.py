@@ -193,7 +193,7 @@ class Controller(object):
         git_sha1 = get_git_sha1_auto()
         footer_text = 'Version: {}\nBuild: {}'.format(self.version,
                                                       git_sha1[:7] if git_sha1 else 'N/A')
-        self.view.ids.footer_label.text = footer_text
+        self.view.ids.footer_label.text = footer_text.upper()
 
     def wait_to_init_action_button(self, dt):
         # self.view.width is normally set to 100 by default, it seems...
@@ -203,12 +203,12 @@ class Controller(object):
 
     def show_more_play_button(self):
         """Show the "more play options" button."""
-        self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width
-        self.view.ids.more_play.y = self.view.ids.action_button.y
+#         self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width
+#         self.view.ids.more_play.y = self.view.ids.action_button.y
 
     def hide_more_play_button(self):
         """Hide the "more play options" button."""
-        self.view.ids.more_play.x = -5000
+        # self.view.ids.more_play.x = -5000
 
     def enable_action_buttons(self):
         self.view.ids.more_play.enable()
@@ -298,7 +298,10 @@ class Controller(object):
 
         # Position and resize
         self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
-        self.view.ids.action_button.center_x = self.view.center_x
+        # self.view.ids.action_button.center_x = self.view.center_x
+
+        # self.view.ids.action_button.x = self.view.ids.status_box.width
+        # self.view.ids.action_button.y = 0
 
         # Place the more_actions_button at the right place
         if state != DynamicButtonStates.play:
