@@ -188,7 +188,9 @@
 
     Image:
         source: app.resource_path('images/logo.png')
-        pos: -330, 220
+        pos: 40, root.top - self.height
+        size_hint: None, None
+        size: self.texture_size
 
     # Horizontal gray bar
     LabelB:
