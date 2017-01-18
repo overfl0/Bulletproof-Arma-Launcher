@@ -10,35 +10,6 @@
 <MakeTorrentButton@HoverButton>
     disabled: True
 
-<SeedingCheckBox@CheckBox>
-    width: 30
-    size_hint_x: None
-    group: 'seedingtype'
-    seeding_type: ''
-
-<SeedingLabel@Label>
-    valign: 'middle'
-    text_size: self.size
-    halign: 'left'
-
-<SpeedLabel@Label>
-    size_hint_x: None
-    width: 160
-    valign: 'middle'
-    text_size: self.size
-    halign: 'left'
-
-<SpeedInput@BaseNumberInput>
-    size_hint: None, None
-    width: 80
-    height: 40
-    multiline: False
-    text_size: self.width, self.height
-    font_size: 18
-    valign: 'middle'
-    pos_hint: {'center_y': 0.5}
-    padding: [5, ( self.height - self.line_height ) / 2]
-
 <NewsLabel@RstDocument>
     size_hint: (None, None)
     colors: {'background': '000000c0', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}

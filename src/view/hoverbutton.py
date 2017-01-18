@@ -33,7 +33,10 @@ class HoverButton(HoverBehavior, Button):
 
     def on_hover(self, instance, hover):
 
-        if hover and not self.disabled:
+        if self.disabled:
+            return
+
+        if hover:
             if self.color_hover:
                 self.color = self.color_hover
 

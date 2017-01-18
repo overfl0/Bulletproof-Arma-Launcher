@@ -19,22 +19,47 @@
     background_color: 0.3, 0.3, 0.3, 0.7
     foreground_color: 0.9, 0.9, 0.9, 1
 
+<SeedingCheckBox@CheckBox>
+    width: 30
+    size_hint_x: None
+    group: 'seedingtype'
+    seeding_type: ''
+
+<SeedingLabel@Label>
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
+
+<SpeedLabel@Label>
+    size_hint_x: None
+    width: 160
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
+
+<SpeedInput@BaseNumberInput>
+    size_hint: None, None
+    width: 80
+    height: 40
+    multiline: False
+    text_size: self.width, self.height
+    font_size: 18
+    valign: 'middle'
+    pos_hint: {'center_y': 0.5}
+    padding: [5, ( self.height - self.line_height ) / 2]
+
 <PrefScreen>:
     name: 'pref_screen'
-    #background_color: 0.3, 0.3, 0.3, 1
-    canvas.before:
-        Color:
-            rgba: 0, 0, 0, 0.7
-        Rectangle:
-            pos: 0, 143
-            size: self.size[0], 600
+
+    LabelB:
+        bcolor: 0, 0, 0, 0.7
 
     MenuLayout:
         Widget
         BackButton:
 
     BoxLayout:  # Settings contents
-        padding: 21  # Workaround: if equal to 20 artifacts start to show up
+        padding: 20
         orientation: 'vertical'
         size_hint: 1, None
         top: root.top
