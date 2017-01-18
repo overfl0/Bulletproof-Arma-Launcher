@@ -1,0 +1,249 @@
+# Section: Screen where install related stuff is
+
+<OptionsButton@HoverButton>
+    on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
+    text: 'OPTIONS'
+
+<ForumButton@HoverButton>
+    text: 'FORUM'
+
+<MakeTorrentButton@HoverButton>
+    disabled: True
+
+<SeedingCheckBox@CheckBox>
+    width: 30
+    size_hint_x: None
+    group: 'seedingtype'
+    seeding_type: ''
+
+<SeedingLabel@Label>
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
+
+<SpeedLabel@Label>
+    size_hint_x: None
+    width: 160
+    valign: 'middle'
+    text_size: self.size
+    halign: 'left'
+
+<SpeedInput@BaseNumberInput>
+    size_hint: None, None
+    width: 80
+    height: 40
+    multiline: False
+    text_size: self.width, self.height
+    font_size: 18
+    valign: 'middle'
+    pos_hint: {'center_y': 0.5}
+    padding: [5, ( self.height - self.line_height ) / 2]
+
+<NewsLabel@RstDocument>
+    size_hint: (None, None)
+    colors: {'background': '000000c0', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}
+    underline_color: 'ffffccff'
+    base_font_size: 28
+
+<InstallScreen>:
+
+    padding: 20
+    name: 'install_screen'
+
+    NewsLabel:
+        id: news_label
+
+        size: 0, 400
+        right: root.right - 30
+        top: root.top - 50
+
+    Image:
+        source: app.resource_path('images/logo.png')
+        pos: 40, root.top - self.height
+        size_hint: None, None
+        size: self.texture_size
+
+    # Horizontal gray bar
+    LabelB:
+        y: status_box.y
+        height: status_box.height
+        bcolor: 0.12, 0.12, 0.12, 1
+        size_hint_y: None
+
+    # Horizontal orange bar
+    LabelB:
+        pos: status_box.right, status_box.y
+        size: root.width - status_box.right, status_box.height
+        bcolor: 1, 0.7, 0.2, 1
+        size_hint: None, None
+
+    # Status box with the progress bar and the messages
+    BoxLayout:
+        id: status_box
+        y: 0
+        height: 65
+        width: 720
+        size_hint: None, None
+
+
+
+    # Vertical buttons
+    StackLayout:
+        y: status_box.top
+        x: status_box.right
+        width: 246
+        size_hint_x: None
+        #size_hint_y: 0
+        orientation: 'bt-lr'
+        spacing: 8
+        padding: 0, 8
+
+#         canvas.after:
+#             Color:
+#                 rgb: 1,0,0
+#             Line:
+#                 rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+#                 dash_offset: 5
+#                 dash_length: 3
+
+
+        OptionsButton:
+            id: options_button
+            size_hint_x: 1
+            disabled: True
+
+        ForumButton:
+            size_hint_x: 1
+            on_release: root.controller.on_forum_button_release(self)
+
+        MakeTorrentButton:
+            background_color: 0, 0, 0, 0
+            size_hint_x: 1
+            id: make_torrent
+            on_release: root.controller.on_make_torrent_button_release(self)
+
+    # Install/Play/More button
+    BoxLayout:
+        pos: status_box.right, 0
+        width: root.width - status_box.width
+        height: status_box.height
+        size_hint_y: None
+
+
+        DynamicButton:
+            id: action_button
+            disabled: True
+            # on_release callbacks are bound in installscreen.py
+            text: 'INSTALL'
+            font_size: 40
+            size_hint_y: 1
+
+            color_normal: [0, 0, 0, 1]
+            bgcolor_normal: [1, 0.7, 0.2, 1]
+            bgcolor_hover: [1, 0.8, 0.3, 1]
+
+            padding: 30, 0
+
+        # This button must be created after the PLAY button so that it is on top of it
+        MorePlayButton:
+            alpha: 0
+            id: more_play
+            font_size: 40
+            font_name: app.resource_path("fonts/Equality.ttf")
+            size_hint_y: 1
+            on_release: root.controller.on_more_play_button_release(self)
+            disabled: True,
+            pos_hint: {'right': 1}
+
+            color_normal: [0, 0, 0, 1]
+            bgcolor_normal: [1, 0.7, 0.2, 1]
+            bgcolor_hover: [1, 0.8, 0.3, 1]
+
+
+    # Version number
+    Label:
+        id: footer_label
+        text: 'Build: N/A'
+        font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
+        font_size: 12
+
+        size: self.texture_size
+        color: 0.5, 0.5, 0.5, 0.5
+        padding: [20, 20]
+        size_hint: None, None
+        pos_hint: {'right': 1, 'top': 1}
+
+    BoxLayout:
+        top: 10000
+        padding: 20
+        orientation: 'vertical'
+
+        Label:
+            id: filler
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 60
+
+            StatusImage:
+                id: status_image
+                source_map: { 'default': app.resource_path('images/ajax-loader2_20x20.gif'), 'attention': app.resource_path('images/achtung40x38.png') }
+                width: 20
+                size_hint_x: None
+                hidden: True
+
+            Label:
+                id: status_label
+                text: ''
+                text_size: self.width - 20, self.height
+                size_hint: (1, 1)
+
+        Widget:
+            height: 15
+            size_hint_y: None
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 20
+
+            ProgressBar:
+                id: progress_bar
+                value: 0
+                height: 20
+
+        BoxLayout:
+            orientation: 'horizontal'
+            height: 100
+            size_hint_y: None
+
+            ForumButton:
+                size_hint_x: 1
+                on_release: root.controller.on_forum_button_release(self)
+            Widget:
+                size_hint_x: 1
+
+            Widget:
+                size_hint_x: 1
+
+            MakeTorrentButton:
+                size_hint_x: 1
+                id: make_torrent
+                on_release: root.controller.on_make_torrent_button_release(self)
+
+            OptionsButton:
+                size_hint_x: 1
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+#             Label:
+#                 id: footer_label
+#                 orientation: 'horizontal'
+#                 font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
+#                 font_size: 12
+#                 text_size: self.width, self.height
+#                 halign: 'right'
+#                 valign: 'bottom'
+#                 text: 'Build: N/A'
