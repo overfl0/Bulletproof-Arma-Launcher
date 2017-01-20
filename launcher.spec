@@ -20,7 +20,7 @@ primitive_git.save_git_sha1_to_file('.', primitive_git.build_sha1_file)
 
 a = Analysis(['src/launcher.py'],
              pathex=[''],
-             hiddenimports=['concurrent', 'concurrent.futures'],
+             hiddenimports=['concurrent', 'concurrent.futures', 'importlib'],
              **get_hooks())
 
 # Add the build number
