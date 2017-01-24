@@ -102,6 +102,14 @@
         italic: True
         color: 0.7, 0.7, 0.7, 1
 
+    StatusImage:
+        id: status_image
+        source_map: { 'default': app.resource_path('images/loader.zip'), 'attention': app.resource_path('images/achtung40x38.png') }
+        pos: progress_bar.pos
+        size: progress_bar.height, progress_bar.height
+        size_hint: None, None
+        hidden: True
+
 #= Buttons =====================================================================
 
     # Vertical buttons
@@ -182,78 +190,3 @@
         padding: [20, 20]
         size_hint: None, None
         pos_hint: {'right': 1, 'top': 1}
-
-    BoxLayout:
-        top: 10000
-        padding: 20
-        orientation: 'vertical'
-
-        Label:
-            id: filler
-
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: 60
-
-            StatusImage:
-                id: status_image
-                source_map: { 'default': app.resource_path('images/ajax-loader2_20x20.gif'), 'attention': app.resource_path('images/achtung40x38.png') }
-                width: 20
-                size_hint_x: None
-                hidden: True
-
-            Label:
-                id: status_label_
-                text: ''
-                text_size: self.width - 20, self.height
-                size_hint: (1, 1)
-
-        Widget:
-            height: 15
-            size_hint_y: None
-
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: 20
-
-            ProgressBar:
-                id: progress_bar_
-                value: 0
-                height: 20
-
-        BoxLayout:
-            orientation: 'horizontal'
-            height: 100
-            size_hint_y: None
-
-            ForumButton:
-                size_hint_x: 1
-                on_release: root.controller.on_forum_button_release(self)
-            Widget:
-                size_hint_x: 1
-
-            Widget:
-                size_hint_x: 1
-
-            MakeTorrentButton:
-                size_hint_x: 1
-                id: make_torrent
-                on_release: root.controller.on_make_torrent_button_release(self)
-
-            OptionsButton:
-                size_hint_x: 1
-
-        BoxLayout:
-            size_hint_y: None
-            height: 30
-#             Label:
-#                 id: footer_label
-#                 orientation: 'horizontal'
-#                 font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
-#                 font_size: 12
-#                 text_size: self.width, self.height
-#                 halign: 'right'
-#                 valign: 'bottom'
-#                 text: 'Build: N/A'
