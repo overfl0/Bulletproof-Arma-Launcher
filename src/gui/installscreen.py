@@ -330,7 +330,7 @@ class Controller(object):
         return ret_servers
 
     def _set_status_label(self, main, secondary=None):
-        self.view.ids.status_label.text = main if main else ''
+        self.view.ids.status_label.text = main.upper() if main else ''
 
         if not secondary:
             self.view.ids.status_box.text = ''
@@ -667,7 +667,6 @@ class Controller(object):
 
         self.view.ids.status_image.show()
         self._set_status_label(progress.get('msg'), progress.get('mods'))
-        print progress
         self.view.ids.progress_bar.value = percentage * 100
 
         tsplugin_request_action = progress.get('tsplugin_request_action')

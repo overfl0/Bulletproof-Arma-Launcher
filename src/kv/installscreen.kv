@@ -63,16 +63,15 @@
 
     Label:
         id: status_label
-        text: ''
         x: progress_bar.x + 40
         y: progress_bar.y
-
         size: self.texture_size
         size_hint: None, None
         text_size: progress_bar.size
         outline_width: 2
         valign: 'middle'
-
+        font_size: 14
+        font_name: app.resource_path("fonts/Nexa_Bold.ttf")
 
     # Horizontal gray bar
     LabelB:
@@ -95,12 +94,13 @@
         height: 65
         width: 720
         size_hint: None, None
-        padding: 40, 5
+        padding: 40, 10
         halign: 'left'
         valign: 'top'
         text_size: self.size
-        italic: True
-        color: 0.7, 0.7, 0.7, 1
+        color: 0.8, 0.8, 0.8, 1
+        font_name: app.resource_path("fonts/Nexa_Light.ttf")
+        font_size: 13
 
     StatusImage:
         id: status_image
