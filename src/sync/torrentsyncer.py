@@ -180,7 +180,7 @@ class TorrentSyncer(object):
                 action = 'Checking missing pieces:'
 
         if download_fraction != 1:
-            progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s) {}'.format(
+            progress_message = '{} {:0.2f}% complete ({:0.2f} KB/s) {}'.format(
                                action,
                                download_fraction * 100.0,
                                float(status.payload_download_rate) / 1024.0,
