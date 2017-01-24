@@ -16,6 +16,24 @@
     underline_color: 'ffffccff'
     base_font_size: 28
 
+# From Kivy's style.kv
+<ProgressBar>:
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        BorderImage:
+            border: (12, 12, 12, 12)
+            pos: self.x, self.center_y - 9  # 12
+            size: self.width, 18  # 24
+            #source: 'atlas://data/images/defaulttheme/progressbar_background'
+            source: app.resource_path('images/progressbar_background.png')
+        BorderImage:
+            border: [int(min(self.width * (self.value / float(self.max)) if self.max else 0, 12))] * 4
+            pos: self.x, self.center_y - 9  # 12
+            size: self.width * (self.value / float(self.max)) if self.max else 0, 18  # 24
+            #source: 'atlas://data/images/defaulttheme/progressbar'
+            source: app.resource_path('images/progressbar.png')
+
 <InstallScreen>:
 
     padding: 20
@@ -34,6 +52,28 @@
         size_hint: None, None
         size: self.texture_size
 
+#= Menu ========================================================================
+
+    ProgressBar:
+        id: progress_bar
+        value: 0
+        height: 18
+        y: status_box.height
+        size_hint_y: None
+
+    Label:
+        id: status_label
+        text: ''
+        x: progress_bar.x + 40
+        y: progress_bar.y
+
+        size: self.texture_size
+        size_hint: None, None
+        text_size: progress_bar.size
+        outline_width: 2
+        valign: 'middle'
+
+
     # Horizontal gray bar
     LabelB:
         y: status_box.y
@@ -48,15 +88,21 @@
         bcolor: 1, 0.7, 0.2, 1
         size_hint: None, None
 
-    # Status box with the progress bar and the messages
-    BoxLayout:
+    # Status box with the messages
+    Label:
         id: status_box
         y: 0
         height: 65
         width: 720
         size_hint: None, None
+        padding: 40, 5
+        halign: 'left'
+        valign: 'top'
+        text_size: self.size
+        italic: True
+        color: 0.7, 0.7, 0.7, 1
 
-
+#= Buttons =====================================================================
 
     # Vertical buttons
     StackLayout:
@@ -67,16 +113,7 @@
         #size_hint_y: 0
         orientation: 'bt-lr'
         spacing: 8
-        padding: 0, 8
-
-#         canvas.after:
-#             Color:
-#                 rgb: 1,0,0
-#             Line:
-#                 rectangle: self.x+1,self.y+1,self.width-1,self.height-1
-#                 dash_offset: 5
-#                 dash_length: 3
-
+        padding: 0, 8 + progress_bar.height
 
         OptionsButton:
             id: options_button
@@ -130,6 +167,7 @@
             bgcolor_normal: [1, 0.7, 0.2, 1]
             bgcolor_hover: [1, 0.8, 0.3, 1]
 
+#= Other =======================================================================
 
     # Version number
     Label:
@@ -137,6 +175,7 @@
         text: 'Build: N/A'
         font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
         font_size: 12
+        outline_width: 1
 
         size: self.texture_size
         color: 0.5, 0.5, 0.5, 0.5
@@ -165,7 +204,7 @@
                 hidden: True
 
             Label:
-                id: status_label
+                id: status_label_
                 text: ''
                 text_size: self.width - 20, self.height
                 size_hint: (1, 1)
@@ -180,7 +219,7 @@
             height: 20
 
             ProgressBar:
-                id: progress_bar
+                id: progress_bar_
                 value: 0
                 height: 20
 

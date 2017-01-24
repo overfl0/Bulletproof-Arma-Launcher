@@ -329,6 +329,17 @@ class Controller(object):
 
         return ret_servers
 
+    def _set_status_label(self, main, secondary=None):
+        self.view.ids.status_label.text = main if main else ''
+
+        if not secondary:
+            self.view.ids.status_box.text = ''
+        else:
+            if isinstance(secondary, basestring):
+                self.view.ids.status_box.text = secondary
+            else:
+                self.view.ids.status_box.text = ' / '.join(secondary)
+
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
@@ -356,9 +367,7 @@ class Controller(object):
 
     def on_prepare_progress(self, progress, percentage):
         self.view.ids.status_image.show()
-
-        if 'msg' in progress:
-            self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.view.ids.progress_bar.value = percentage * 100
 
         message = progress.get('special_message')
@@ -444,7 +453,7 @@ class Controller(object):
         self.disable_action_buttons()
         self.view.ids.make_torrent.disable()
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = 'Creating torrents...'
+        self._set_status_label('Creating torrents...')
 
         mods_to_convert = self.mods
         if self.launcher:
@@ -457,11 +466,11 @@ class Controller(object):
 
     def on_maketorrent_progress(self, progress, _):
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
 
     def on_maketorrent_resolve(self, progress):
         self.para = None
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.view.ids.make_torrent.enable()
         self.view.ids.status_image.hide()
 
@@ -474,7 +483,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.disable_action_buttons()
 
         ErrorPopup(details=details, message=message).chain_open()
@@ -500,7 +509,7 @@ class Controller(object):
 
     def on_download_mod_description_progress(self, progress, speed):
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
 
     def on_download_mod_description_resolve(self, progress):
         self.para = None
@@ -531,7 +540,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.set_image('attention')
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
 
@@ -579,13 +588,13 @@ class Controller(object):
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
 
     def on_checkmods_resolve(self, progress):
         self.para = None
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
         self.set_and_resize_action_button(DynamicButtonStates.install)
@@ -612,7 +621,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
 
@@ -657,7 +666,8 @@ class Controller(object):
         # Logger.debug('InstallScreen: syncing in progress')
 
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'), progress.get('mods'))
+        print progress
         self.view.ids.progress_bar.value = percentage * 100
 
         tsplugin_request_action = progress.get('tsplugin_request_action')
@@ -677,7 +687,7 @@ class Controller(object):
         self.para = None
         Logger.info('InstallScreen: syncing finished')
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.disable_action_buttons()
 
         self.try_enable_play_button()
@@ -692,7 +702,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.disable_action_buttons()
 
         self.syncing_failed = True

@@ -180,19 +180,21 @@ class TorrentSyncer(object):
                 action = 'Checking missing pieces:'
 
         if download_fraction != 1:
-            progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s) {}\n{}'.format(
+            progress_message = '{} {:0.2f}% complete. ({:0.2f} KB/s) {}'.format(
                                action,
                                download_fraction * 100.0,
                                float(status.payload_download_rate) / 1024.0,
-                               'ETA: {}'.format(ETA) if ETA else '',
-                               ' | '.join(unfinished_mods))
+                               'ETA: {}'.format(ETA) if ETA else '')
+            progress_mods = unfinished_mods
         else:
             progress_message = 'Seeding: {} connections ({:0.2f} KB/s). Total: {} MB'.format(
                                session_actual_peers,
                                status.payload_upload_rate / 1024,
                                status.total_payload_upload / 1024 / 1024)
+            progress_mods = []
 
         self.result_queue.progress({'msg': progress_message,
+                                    'mods': progress_mods,
                                     'log': self.get_session_logs(),
                                     }, download_fraction)
 
