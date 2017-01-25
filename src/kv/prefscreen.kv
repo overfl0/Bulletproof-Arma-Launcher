@@ -10,10 +10,11 @@
 <BackButton@HoverButton>
     on_release: app.root.ids.main_screen_manager.current = 'install_screen'
     text: 'BACK'
+    halign: 'right'
 
-<BaseTextInput@TextInput>
-    background_color: 0.3, 0.3, 0.3, 0.7
-    foreground_color: 0.9, 0.9, 0.9, 1
+<BaseTextInput@LabelB>
+    bcolor: 0.3, 0.3, 0.3, 0.7
+    color: 0.9, 0.9, 0.9, 1
 
 <BaseNumberInput@NumberInput>
     background_color: 0.3, 0.3, 0.3, 0.7
@@ -40,7 +41,7 @@
 <SpeedInput@BaseNumberInput>
     size_hint: None, None
     width: 80
-    height: 40
+    height: 30
     multiline: False
     text_size: self.width, self.height
     font_size: 18
@@ -68,7 +69,7 @@
         BoxLayout:  # Mods location
             orientation: 'horizontal'
             size_hint_y: None
-            height: 60
+            height: 30
             Label:
                 text: 'Mods Directory:'
                 text_size: self.width, self.height
@@ -80,17 +81,16 @@
             BaseTextInput:
                 id: path_text_input
                 text: 'some/path/to/the/mods/dir'
-                multiline: False
                 text_size: self.width, self.height
                 font_size: 20
-                height: 40
+                height: 30
                 width: 660
                 size_hint: None, None
-                readonly: True
+                valign: 'middle'
 
             Button:
                 size_hint: None, None
-                height: 40
+                height: 30
                 text: 'Choose Path'
                 on_release: root.controller.on_choose_path_button_release(self)
 
