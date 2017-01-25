@@ -12,6 +12,9 @@
 
 from __future__ import unicode_literals
 
+import kivy
+
+from config import config
 from kivy.clock import Clock
 from kivy.logger import Logger
 from kivy.uix.popup import Popup
@@ -23,11 +26,16 @@ class VResizablePopup(Popup):
     This is a workaround for Kivy. Maybe there is another simpler way?
     """
 
+    config_separator_color = kivy.utils.get_color_from_hex(config.dominant_color)
+
     def __init__(self, *args, **kwargs):
         # Force size_hint_y to None
         kwargs['size_hint_y'] = None
         if 'size_hint' in kwargs:
             kwargs['size_hint'] = kwargs['size_hint'][0], None
+
+        if not 'separator_color' in kwargs:
+            kwargs['separator_color'] = self.config_separator_color
 
         super(VResizablePopup, self).__init__(*args, **kwargs)
         self.bind(content=self._on_update_content)
