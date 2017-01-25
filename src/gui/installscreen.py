@@ -505,7 +505,7 @@ class Controller(object):
                 anim.start(child)
 
         # Animations: first show the empty background and then fade in the contents
-        anim = Animation(width=335, right=label.right, t='in_out_circ')
+        anim = Animation(width=label.width_final, right=label.right, t='in_out_circ')
         anim.bind(on_complete=partial(do_fade_in, result))
         anim.start(label)
 

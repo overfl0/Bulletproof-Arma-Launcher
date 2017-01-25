@@ -12,7 +12,7 @@
 
 <NewsLabel@RstDocument>
     size_hint: (None, None)
-    colors: {'background': '000000c0', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}
+    colors: {'background': '00000080', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}
     underline_color: 'ffffccff'
     base_font_size: 28
 
@@ -41,10 +41,12 @@
 
     NewsLabel:
         id: news_label
-
-        size: 0, 400
         right: root.right
-        top: root.top - 64
+        top: root.top - 80
+        height: 400
+        width: 0
+        #width_final: 335
+        width_final: 256
 
     Image:
         source: app.resource_path('images/logo.png')
