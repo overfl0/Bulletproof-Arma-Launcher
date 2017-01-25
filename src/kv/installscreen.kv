@@ -35,7 +35,7 @@
 
     Image:
         source: app.resource_path('images/logo.png')
-        pos: 40, root.top - self.height
+        pos: 40, root.top - self.height - 7
         size_hint: None, None
         size: self.texture_size
 
@@ -125,6 +125,7 @@
         font_size: 32
 
         color_normal: [0, 0, 0, 1]
+        color_hover: [0, 0, 0, 1]
         bgcolor_normal: get_color_from_hex('#eca92d')
         bgcolor_hover: get_color_from_hex('#ffc94d')
         size: 256, 64
@@ -139,6 +140,7 @@
         y: -5000
 
         color_normal: [0, 0, 0, 1]
+        color_hover: [0, 0, 0, 1]
         bgcolor_normal: get_color_from_hex('#eca92d')
         bgcolor_hover: get_color_from_hex('#ffc94d')
 

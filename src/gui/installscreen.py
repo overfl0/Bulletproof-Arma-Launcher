@@ -290,7 +290,7 @@ class Controller(object):
 
         button_states = [
             (DynamicButtonStates.play, 'PLAY', self.on_play_button_release),
-            (DynamicButtonStates.checking, 'CHECKING', None),
+            (DynamicButtonStates.checking, 'CHECKING...', None),
             (DynamicButtonStates.install, 'INSTALL', self.on_install_button_click),
             (DynamicButtonStates.self_upgrade, 'UPGRADE', self.on_self_upgrade_button_release)
         ]

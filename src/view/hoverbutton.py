@@ -49,11 +49,17 @@ class HoverButton(HoverBehavior, Button):
 
     def disable(self):
         """Helper function allowing for setting breakpoints on this action."""
+        if self.disabled:
+            return
+
         self.disabled = True
         self.background_color = self.bgcolor_normal
 
     def enable(self):
         """Helper function allowing for setting breakpoints on this action."""
+        if not self.disabled:
+            return
+
         self.disabled = False
 
         # If mouse is already hovering on it
