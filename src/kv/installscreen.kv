@@ -43,8 +43,8 @@
         id: news_label
 
         size: 0, 400
-        right: root.right - 30
-        top: root.top - 50
+        right: root.right
+        top: root.top - 64
 
     Image:
         source: app.resource_path('images/logo.png')
@@ -61,44 +61,40 @@
         y: status_box.height
         size_hint_y: None
 
+    # Main status label ("Downloading... x KB/S")
     Label:
         id: status_label
         x: progress_bar.x + 40
-        y: progress_bar.y
+        y: progress_bar.y - 2
         size: self.texture_size
         size_hint: None, None
         text_size: progress_bar.size
-        outline_width: 2
+        #outline_width: 2
+        color: 1, 1, 1, 1
         valign: 'middle'
         font_size: 14
         font_name: app.resource_path("fonts/Nexa_Bold.ttf")
-
-    # Horizontal gray bar
-    LabelB:
-        y: status_box.y
-        height: status_box.height
-        bcolor: 0.12, 0.12, 0.12, 1
-        size_hint_y: None
 
     # Horizontal orange bar
     LabelB:
         pos: status_box.right, status_box.y
         size: root.width - status_box.right, status_box.height
-        bcolor: 1, 0.7, 0.2, 1
+        bcolor: get_color_from_hex('#ffc94d')
         size_hint: None, None
 
     # Status box with the messages
-    Label:
+    LabelB:
         id: status_box
         y: 0
-        height: 65
-        width: 720
+        height: 64
+        width: 744
         size_hint: None, None
         padding: 40, 10
         halign: 'left'
         valign: 'top'
         text_size: self.size
-        color: 0.8, 0.8, 0.8, 1
+        color: get_color_from_hex('#bfbfbf')
+        bcolor: get_color_from_hex('#212126')
         font_name: app.resource_path("fonts/Nexa_Light.ttf")
         font_size: 13
 
@@ -116,12 +112,12 @@
     StackLayout:
         y: status_box.top
         x: status_box.right
-        width: 246
+        width: 256
         size_hint_x: None
         #size_hint_y: 0
         orientation: 'bt-lr'
-        spacing: 8
-        padding: 0, 8 + progress_bar.height
+        spacing: 4
+        padding: 0, 4 + progress_bar.height
 
         OptionsButton:
             id: options_button
@@ -151,13 +147,13 @@
             disabled: True
             # on_release callbacks are bound in installscreen.py
             text: 'INSTALL'
-            font_size: 40
+            font_name: app.resource_path("fonts/Nexa_Bold.ttf")
+            font_size: 32
             size_hint_y: 1
 
             color_normal: [0, 0, 0, 1]
-            bgcolor_normal: [1, 0.7, 0.2, 1]
-            bgcolor_hover: [1, 0.8, 0.3, 1]
-
+            bgcolor_normal: get_color_from_hex('#eca92d')
+            bgcolor_hover: get_color_from_hex('#ffc94d')
             padding: 30, 0
 
         # This button must be created after the PLAY button so that it is on top of it
@@ -172,8 +168,8 @@
             pos_hint: {'right': 1}
 
             color_normal: [0, 0, 0, 1]
-            bgcolor_normal: [1, 0.7, 0.2, 1]
-            bgcolor_hover: [1, 0.8, 0.3, 1]
+            bgcolor_normal: get_color_from_hex('#eca92d')
+            bgcolor_hover: get_color_from_hex('#ffc94d')
 
 #= Other =======================================================================
 
@@ -181,12 +177,12 @@
     Label:
         id: footer_label
         text: 'Build: N/A'
-        font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
+        font_name: app.resource_path("fonts/Nexa_Light.ttf")
         font_size: 12
-        outline_width: 1
+        #outline_width: 1
 
         size: self.texture_size
-        color: 0.5, 0.5, 0.5, 0.5
+        color: get_color_from_hex('#404040')
         padding: [20, 20]
         size_hint: None, None
         pos_hint: {'right': 1, 'top': 1}

@@ -14,10 +14,12 @@
 # Section: defaults for widgets
 #
 
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+
 <HoverButton>
     border: 1,1,1,1
     size_hint: None, None
-    size: 100, 50
+    size: 100, 32
     padding_y: 20
 
     color: self.color_normal
@@ -29,13 +31,13 @@
     background_disabled_down: ''
 
     #color_hover: [1, 0, 0.66, 1]
-    #color_normal: [1, 1, 1, 1]
+    color_normal: get_color_from_hex('#bfbfbf')
 
-    bgcolor_normal: [0.15, 0.15, 0.15, 0.5]
+    bgcolor_normal: 0, 0, 0, 0.5
     bgcolor_hover: [0.20, 0.20, 0.20, 0.5]
 
-    font_name: app.resource_path("fonts/Nexa_Bold.ttf")
-    font_size: 28
+    font_name: app.resource_path("fonts/Nexa_Light.ttf")
+    font_size: 26
 
 # This has to be here because fonts in included DynamicClasses don't work
 # for some reason
