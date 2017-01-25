@@ -199,6 +199,7 @@ class Controller(object):
         # self.view.width is normally set to 100 by default, it seems...
         if 'action_button' in self.view.ids and self.view.width != 100:
             self.action_button_init()
+            self.disable_action_buttons()
             return False  # Return False to remove the callback from the scheduler
 
     def show_more_play_button(self):
