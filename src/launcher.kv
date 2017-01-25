@@ -19,8 +19,14 @@
 <HoverButton>
     border: 1,1,1,1
     size_hint: None, None
-    size: 100, 32
-    padding_y: 20
+    size: 256, 32
+    text_size: self.size
+    padding_x: 20
+
+    # valign: 'middle'
+    # Don't ask my why! "valign: 'middle'" aligns too high!
+    # Workaround:
+    padding_y: (self.height - self.font_size) / 2 - self.height / 12
 
     color: self.color_normal
     background_color: self.bgcolor_normal
@@ -44,7 +50,6 @@
 <MorePlayButton@HoverButton>
     text: '=' # \u2261 or 2630 For android character
     font_name: app.resource_path("fonts/Equality.ttf")
-    width: 75
 
 #:include kv/mainwidget.kv
 #:include kv/installscreen.kv

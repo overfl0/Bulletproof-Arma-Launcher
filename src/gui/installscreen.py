@@ -204,12 +204,22 @@ class Controller(object):
 
     def show_more_play_button(self):
         """Show the "more play options" button."""
-#         self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width
-#         self.view.ids.more_play.y = self.view.ids.action_button.y
+        if not self.view.ids.more_play.custom_hidden:
+            return
+        self.view.ids.more_play.custom_hidden = False
+
+        self.view.ids.action_button.width = self.view.ids.action_button.width - self.view.ids.more_play.width
+        self.view.ids.more_play.y = self.view.ids.action_button.y
+        self.view.ids.more_play.x = self.view.ids.action_button.right
 
     def hide_more_play_button(self):
         """Hide the "more play options" button."""
-        # self.view.ids.more_play.x = -5000
+        if self.view.ids.more_play.custom_hidden:
+            return
+
+        self.view.ids.more_play.custom_hidden = True
+        self.view.ids.action_button.width = self.view.ids.action_button.width + self.view.ids.more_play.width
+        self.view.ids.more_play.y = -5000
 
     def enable_action_buttons(self):
         self.view.ids.more_play.enable()
@@ -298,7 +308,7 @@ class Controller(object):
         self.view.ids.action_button.set_button_state(state)
 
         # Position and resize
-        self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
+        # self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
         # self.view.ids.action_button.center_x = self.view.center_x
 
         # self.view.ids.action_button.x = self.view.ids.status_box.width
