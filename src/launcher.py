@@ -58,6 +58,7 @@ try:
         default_log_level = devmode.get_log_level('info')
 
         resources.resource_add_path(get_source_path())
+        resources.resource_add_path(get_resources_path())
 
         Config.set('kivy', 'window_icon', get_resources_path(config.icon))
         Config.set('kivy', 'log_level', default_log_level)
