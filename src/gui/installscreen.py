@@ -493,19 +493,21 @@ class Controller(object):
     def on_news_success(self, label, request, result):
         # TODO: Move me to another file
 
+        def do_fade_in(text, anim, wid):
+            wid.text = text
+
+            # Do a fade-in. `for` is just in case there would be more than 1 child
+            for child in wid.children:
+                child.opacity = 0
+
+                # The empty first Animation acts as a simple delay
+                anim = Animation(opacity=1)
+                anim.start(child)
+
         # Animations: first show the empty background and then fade in the contents
         anim = Animation(width=335, right=label.right, t='in_out_circ')
+        anim.bind(on_complete=partial(do_fade_in, result))
         anim.start(label)
-
-        # Do a fade-in. `for` is just in case there would be more than 1 child
-        for child in label.children:
-            child.opacity = 0
-
-            # The empty first Animation acts as a simple delay
-            anim = Animation() + Animation(opacity=1)
-            anim.start(child)
-
-        label.text = result
 
     def on_download_mod_description_progress(self, progress, speed):
         self.view.ids.status_image.show()
