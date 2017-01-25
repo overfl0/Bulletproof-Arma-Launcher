@@ -338,7 +338,7 @@ class Controller(object):
             if isinstance(secondary, basestring):
                 self.view.ids.status_box.text = secondary
             else:
-                self.view.ids.status_box.text = ' / '.join(secondary)
+                self.view.ids.status_box.text = ' / '.join(secondary).replace('@', '')
 
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
