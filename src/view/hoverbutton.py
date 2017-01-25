@@ -20,7 +20,6 @@ from view.behaviors import HoverBehavior
 
 class HoverButton(HoverBehavior, Button):
     # Background color of the selected entry
-    # selection_color = (47 / 255., 167 / 255., 212 / 255., 0.8)
     color_normal = ListProperty([1, 1, 1, 1])
     color_hover = ListProperty([])
     # bgcolor_normal = ListProperty([1, 1, 1, 1])

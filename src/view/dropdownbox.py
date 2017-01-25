@@ -12,7 +12,9 @@
 
 from __future__ import unicode_literals
 
+import kivy.utils
 
+from config import config
 from functools import partial
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
@@ -31,7 +33,7 @@ class HoverBox(HoverBehavior, ButtonBehavior, BoxLayout):
 
 class DropdownBox(HoverBox):
     # Background color of the selected entry
-    selection_color = (47 / 255., 167 / 255., 212 / 255., 0.8)
+    selection_color = kivy.utils.get_color_from_hex(config.dominant_color)[:3] + [0.8]
 
     def __init__(self, entries, **kwargs):
         super(DropdownBox, self).__init__(orientation='horizontal', spacing=0, **kwargs)

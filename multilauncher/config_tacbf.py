@@ -14,3 +14,4 @@ troubleshooting_url = 'https://github.com/overfl0/Bulletproof-Arma-Launcher/wiki
 bugtracker_url = 'https://github.com/overfl0/Bulletproof-Arma-Launcher/issues'
 settings_directory = 'TacBF Launcher'
 news_url = None
+dominant_color = '#2FA7D4CC'

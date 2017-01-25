@@ -12,10 +12,12 @@
 
 from __future__ import unicode_literals
 
+import kivy.utils
 import os
 
 from utils import paths
 
+from config import config
 from functools import partial
 from kivy.logger import Logger
 from kivy.uix.boxlayout import BoxLayout
@@ -39,7 +41,7 @@ class HoverImage(HoverBehavior, BubbleBehavior, ButtonBehavior, Image):
 
 class ModListEntry(BgcolorBehavior, BoxLayout):
 
-    icon_color = (47 / 255., 167 / 255., 212 / 255., 0.8)
+    icon_color = kivy.utils.get_color_from_hex(config.dominant_color)[:3] + [0.8]
     icon_highlight_color = list([4 * i for i in icon_color[:3]] + [0.8])
 
     def highlight_button(self, instance, over):
