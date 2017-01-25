@@ -123,10 +123,10 @@ def arma_not_found_workaround(on_ok, on_error):
     """
 
     from kivy.clock import Clock
-    from kivy.uix.popup import Popup
     from kivy.uix.label import Label
+    from view.themedpopup import ThemedPopup
 
-    arma_not_found_fix_popup = Popup(
+    arma_not_found_fix_popup = ThemedPopup(
         title='Fixing registry entries',
         content=Label(text='Running Arma 3 launcher after Steam integrity check.\nPlease wait...'),
         size_hint=(None, None),
