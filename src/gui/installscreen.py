@@ -200,6 +200,7 @@ class Controller(object):
         if 'action_button' in self.view.ids and self.view.width != 100:
             self.action_button_init()
             self.disable_action_buttons()
+
             return False  # Return False to remove the callback from the scheduler
 
     def show_more_play_button(self):
@@ -519,6 +520,9 @@ class Controller(object):
         anim = Animation(width=label.width_final, right=label.right, t='in_out_circ')
         anim.bind(on_complete=partial(do_fade_in, result))
         anim.start(label)
+
+        # Fix something that cannot be fixed in kv files
+        label.ids.content.padding = 10, 0
 
     def on_download_mod_description_progress(self, progress, speed):
         self.view.ids.status_image.show()
