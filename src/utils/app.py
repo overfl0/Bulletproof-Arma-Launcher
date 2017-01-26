@@ -13,7 +13,11 @@
 
 from __future__ import unicode_literals
 
+import importlib  # Needed for pyinstaller
+import pygame
+
 from kivy.app import App
+from kivy.logger import Logger
 from utils.paths import get_resources_path
 from utils.popupchain import PopupChain
 
@@ -24,6 +28,11 @@ class BaseApp(App):
         super(BaseApp, self).__init__()
         self.popup_chain = PopupChain()
 
+        pygame.mixer.init(44100, -16, 1, 512)
+        self.sounds = {}
+        self.load_sound('hover', self.resource_path('sounds/hover.wav'), 0.5)
+        self.load_sound('click', self.resource_path('sounds/click.wav'))
+
     @staticmethod
     def resource_path(relative):
         """
@@ -32,3 +41,24 @@ class BaseApp(App):
         """
         # Just use utils.paths.get_resources_path for less code replication
         return get_resources_path(relative)
+
+    def load_sound(self, name, path, volume=None):
+        """Load a sound associated with a name."""
+        try:
+            self.sounds[name] = pygame.mixer.Sound(path)
+
+            if volume:
+                self.sounds[name].set_volume(volume)
+
+        except pygame.error:
+            Logger.error('load_sound: Could not load sound: {}'.format(path))
+
+    def play_sound(self, sound_name):
+        """Play a sound associated with a name. Can be used in kv files."""
+        try:
+            sound = self.sounds[sound_name]
+            if sound:
+                sound.play()
+
+        except KeyError:
+            Logger.error('play_sound: Could not find sound: {}'.format(sound_name))

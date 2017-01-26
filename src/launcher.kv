@@ -45,6 +45,10 @@
 
     font_name: app.resource_path("fonts/Nexa_Light.ttf")
     font_size: 26
+    on_release: app.play_sound('click')
+
+<Button>
+    on_release: app.play_sound('click')
 
 # This has to be here because fonts in included DynamicClasses don't work
 # for some reason

@@ -13,6 +13,8 @@
 
 from __future__ import unicode_literals
 
+import kivy.app
+
 from kivy.properties import ListProperty
 from kivy.uix.button import Button
 from view.behaviors import HoverBehavior
@@ -38,6 +40,8 @@ class HoverButton(HoverBehavior, Button):
             return
 
         if hover:
+            kivy.app.App.get_running_app().play_sound('hover')
+
             if self.color_hover:
                 self.color = self.color_hover
 
