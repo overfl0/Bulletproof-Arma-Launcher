@@ -18,6 +18,7 @@ import pygame
 
 from kivy.app import App
 from kivy.logger import Logger
+from utils import browser
 from utils.paths import get_resources_path
 from utils.popupchain import PopupChain
 
@@ -62,3 +63,13 @@ class BaseApp(App):
 
         except KeyError:
             Logger.error('play_sound: Could not find sound: {}'.format(sound_name))
+
+    def open_hyperlink(self, path):
+        """Just open the given url in a browser.
+        To open paths on the local filesystem special handling is needed.
+        """
+
+        if path is None:
+            return
+
+        browser.open_hyperlink(path)

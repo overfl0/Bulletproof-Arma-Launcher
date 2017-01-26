@@ -34,7 +34,6 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
-from utils import browser
 from utils.devmode import devmode
 from utils.fake_enum import enum
 from utils.primitive_git import get_git_sha1_auto
@@ -362,9 +361,6 @@ class Controller(object):
         Logger.info('Opening GameSelectionBox')
         box = GameSelectionBox(self.run_the_game, self.servers, default_teamspeak=self.default_teamspeak_url)
         box.open()
-
-    def on_forum_button_release(self, btn):
-        browser.open_hyperlink(config.forum_url)
 
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding

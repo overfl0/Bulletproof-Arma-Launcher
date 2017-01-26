@@ -1,14 +1,6 @@
 # Section: Screen where install related stuff is
 
-<OptionsButton@HoverButton>
-    on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
-    text: 'OPTIONS'
-
-<ForumButton@HoverButton>
-    text: 'FORUM'
-
-<MakeTorrentButton@HoverButton>
-    disabled: True
+#:import config config.config
 
 <NewsLabel@RstDocument>
     size_hint: (None, None)
@@ -100,16 +92,23 @@
         spacing: 4
         padding: 0, 4 + progress_bar.height
 
-        OptionsButton:
+        # OptionsButton
+        HoverButton:
             id: options_button
             size_hint_x: 1
+            on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
+            text: 'OPTIONS'
             disabled: True
 
-        ForumButton:
+        # ForumButton
+        HoverButton:
+            text: 'FORUM'
             size_hint_x: 1
-            on_release: root.controller.on_forum_button_release(self)
+            on_release: app.open_hyperlink(config.forum_url)
 
-        MakeTorrentButton:
+        # MakeTorrentButton
+        HoverButton:
+            disabled: True
             background_color: 0, 0, 0, 0
             size_hint_x: 1
             id: make_torrent
