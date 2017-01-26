@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 
 from multiprocessing import Queue
 
+import launcher_config
 import kivy
 import kivy.app  # To keep PyDev from complaining
 import os
@@ -23,8 +24,7 @@ import third_party.helpers
 import utils.system_processes
 
 from autoupdater import autoupdater
-from config import config
-from config.version import version
+from launcher_config.version import version
 from functools import partial
 
 from kivy.animation import Animation
@@ -240,7 +240,7 @@ class Controller(object):
         if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
                 u_from=self.version, u_to=self.launcher.version):
 
-            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
+            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
@@ -449,7 +449,7 @@ class Controller(object):
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
-        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
+        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 
@@ -540,8 +540,8 @@ class Controller(object):
 
         self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
 
-        if config.news_url:
-            UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+        if launcher_config.news_url:
+            UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     def on_download_mod_description_reject(self, data):
         self.para = None
@@ -568,7 +568,7 @@ class Controller(object):
                 Get it here:
 
                 [ref={}][color=3572b0]{}[/color][/ref]
-                '''.format(config.original_url, config.original_url))
+                '''.format(launcher_config.original_url, launcher_config.original_url))
             MessageBox(message, title='Get the new version of the launcher!', markup=True).chain_open()
             return
 
@@ -594,8 +594,8 @@ class Controller(object):
             self.default_teamspeak_url = mod_data.get('teamspeak', None)
 
             self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
-            if config.news_url:
-                UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+            if launcher_config.news_url:
+                UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     # Checkmods callbacks ######################################################
 

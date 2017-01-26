@@ -12,16 +12,16 @@
 
 from __future__ import unicode_literals
 
+import launcher_config
 import kivy.utils
 
-from config import config
 from kivy.uix.popup import Popup
 
 
 class ThemedPopup(Popup):
     """Popup that has default values in config files."""
 
-    config_separator_color = kivy.utils.get_color_from_hex(config.dominant_color)
+    config_separator_color = kivy.utils.get_color_from_hex(launcher_config.dominant_color)
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('separator_color', self.config_separator_color)

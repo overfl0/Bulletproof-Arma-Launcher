@@ -14,48 +14,6 @@
 # Section: defaults for widgets
 #
 
-#:import get_color_from_hex kivy.utils.get_color_from_hex
-
-<HoverButton>
-    border: 1,1,1,1
-    size_hint: None, None
-    size: 256, 32
-    text_size: self.size
-    padding_x: 20
-
-    # valign: 'middle'
-    # Don't ask my why! "valign: 'middle'" aligns too high!
-    # Workaround:
-    padding_y: (self.height - self.font_size) / 2 - self.height / 12
-
-    color: self.color_normal
-    background_color: self.bgcolor_normal
-
-    background_normal: ''
-    background_down: ''
-    background_disabled_normal: ''
-    background_disabled_down: ''
-
-    color_hover: [1, 1, 1, 1]
-    color_normal: get_color_from_hex('#bfbfbf')
-    disabled_color: 0.5, 0.5, 0.5, 0.333
-
-    bgcolor_normal: 0, 0, 0, 0.5
-    bgcolor_hover: get_color_from_hex('#212126')
-
-    font_name: app.resource_path("fonts/Nexa_Light.ttf")
-    font_size: 26
-    on_release: app.play_sound('click')
-
-<Button>
-    on_release: app.play_sound('click')
-
-# This has to be here because fonts in included DynamicClasses don't work
-# for some reason
-<MorePlayButton@HoverButton>
-    text: '=' # \u2261 or 2630 For android character
-    font_name: app.resource_path("fonts/Equality.ttf")
-
 #:include kv/customstyle.kv
 #:include kv/mainwidget.kv
 #:include kv/installscreen.kv

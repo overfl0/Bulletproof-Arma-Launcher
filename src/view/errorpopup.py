@@ -13,9 +13,9 @@
 
 from __future__ import unicode_literals
 
+import launcher_config
 import sys
 
-from config import config
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
 from kivy.uix.label import Label
@@ -32,7 +32,7 @@ If you can't find an answer to your problem [color=3572b0][ref={}]on the trouble
 copy the text below and post it on the bugtracker:
 
 [color=3572b0][ref={}]{}[/ref][/color]
-""".format(config.troubleshooting_url, config.bugtracker_url, config.bugtracker_url)
+""".format(launcher_config.troubleshooting_url, launcher_config.bugtracker_url, launcher_config.bugtracker_url)
 
 POPUP_TITLE = """An error occurred"""
 CRITICAL_POPUP_TITLE = """An error occurred. Copy it with Ctrl+C and submit a bug"""

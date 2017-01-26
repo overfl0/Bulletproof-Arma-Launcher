@@ -14,9 +14,9 @@ try:
 except:
     pass
 
-from config import config
+import launcher_config
 
-full_executable = config.executable_name + '.exe'
+full_executable = launcher_config.executable_name + '.exe'
 
 def cleanup(clean_dirs):
     print_text('Performing cleanup...')

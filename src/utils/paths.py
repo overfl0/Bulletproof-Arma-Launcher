@@ -13,12 +13,11 @@
 from __future__ import unicode_literals
 
 import errno
+import launcher_config
 import os
 import platform
 import sys
 import unicode_helpers
-
-from config import config
 
 
 def is_pyinstaller_bundle():
@@ -107,7 +106,7 @@ def get_resources_path(*relative):
     if is_pyinstaller_bundle():
         return get_base_path(*relative)
     else:
-        return get_base_path('resources', *relative)
+        return get_base_path('resources', launcher_config.config_select.config_dir, *relative)
 
 
 def get_local_user_directory(*relative):
@@ -136,7 +135,7 @@ def get_launcher_directory(*relative):
     """Return the directory for storing launcher related data.
     Optionally append <relative> at the end.
     """
-    return get_local_user_directory(config.settings_directory, *relative)
+    return get_local_user_directory(launcher_config.settings_directory, *relative)
 
 
 def is_file_in_virtual_store(path):

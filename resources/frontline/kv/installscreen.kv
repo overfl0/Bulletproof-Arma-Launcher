@@ -1,6 +1,42 @@
 # Section: Screen where install related stuff is
 
-#:import config config.config
+#:import launcher_config launcher_config
+
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+
+<HoverButton>
+    border: 1,1,1,1
+    size_hint: None, None
+    size: 256, 32
+    text_size: self.size
+    padding_x: 20
+
+    # valign: 'middle'
+    # Don't ask my why! "valign: 'middle'" aligns too high!
+    # Workaround:
+    padding_y: (self.height - self.font_size) / 2 - self.height / 12
+
+    color: self.color_normal
+    background_color: self.bgcolor_normal
+
+    background_normal: ''
+    background_down: ''
+    background_disabled_normal: ''
+    background_disabled_down: ''
+
+    color_hover: [1, 1, 1, 1]
+    color_normal: get_color_from_hex('#bfbfbf')
+    disabled_color: 0.5, 0.5, 0.5, 0.333
+
+    bgcolor_normal: 0, 0, 0, 0.5
+    bgcolor_hover: get_color_from_hex('#212126')
+
+    font_name: app.resource_path("fonts/Nexa_Light.ttf")
+    font_size: 26
+    on_release: app.play_sound('click')
+
+<Button>
+    on_release: app.play_sound('click')
 
 <NewsLabel@RstDocument>
     size_hint: (None, None)
@@ -104,7 +140,12 @@
         HoverButton:
             text: 'FORUM'
             size_hint_x: 1
-            on_release: app.open_hyperlink(config.forum_url)
+            on_release: app.open_hyperlink(launcher_config.forum_url)
+
+        HoverButton:
+            size_hint_x: 1
+            text: 'DONATE'
+            on_release: app.open_hyperlink(launcher_config.donate_url)
 
         # MakeTorrentButton
         HoverButton:
@@ -130,8 +171,10 @@
         size: 256, 64
 
     # This button must be created after the PLAY button so that it is on top of it
-    MorePlayButton:
+    # More play options button (|||)
+    HoverButton:
         id: more_play
+        text: '=' # \u2261 or 2630 For android character
         font_size: 40
         font_name: app.resource_path("fonts/Equality.ttf")
         on_release: root.controller.on_more_play_button_release(self)

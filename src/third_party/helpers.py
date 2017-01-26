@@ -15,12 +15,12 @@ from __future__ import unicode_literals
 import headtracking
 import errno
 import kivy.app
+import launcher_config
 import os
 import teamspeak
 import textwrap
 import utils.system_processes
 
-from config import config
 from kivy.logger import Logger
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from utils import unicode_helpers
@@ -215,7 +215,7 @@ def check_requirements(verbose=True):
                 [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
 
                 Install Steam and restart the launcher.
-                '''.format(config.launcher_name))
+                '''.format(launcher_config.launcher_name))
 
             box = MessageBox(message, title='Steam required!', markup=True,
                              on_dismiss=cancel_dismiss, hide_button=True)

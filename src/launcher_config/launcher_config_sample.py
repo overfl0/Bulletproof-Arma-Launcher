@@ -1,3 +1,5 @@
+# Put this file into your resources/<name>/launcher_config.py
+
 from __future__ import unicode_literals
 
 launcher_name = 'Tactical Battlefield'
