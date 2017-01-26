@@ -92,10 +92,7 @@ def get_source_path(*relative):
 
     relative - optional path to append to the returned path
     """
-    if is_pyinstaller_bundle():
-        return get_base_path(*relative)
-    else:
-        return get_base_path('src', *relative)
+    return get_base_path('src', *relative)
 
 
 def get_resources_path(*relative):
@@ -104,7 +101,7 @@ def get_resources_path(*relative):
     relative - optional path to append to the returned path
     """
     if is_pyinstaller_bundle():
-        return get_base_path(*relative)
+        return get_base_path('resources', *relative)
     else:
         return get_base_path('resources', launcher_config.config_select.config_dir, *relative)
 
