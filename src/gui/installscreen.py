@@ -208,7 +208,9 @@ class Controller(object):
             return
         self.view.ids.more_play.custom_hidden = False
 
-        self.view.ids.action_button.width = self.view.ids.action_button.width - self.view.ids.more_play.width
+        if self.view.ids.more_play.claim_space:
+            self.view.ids.action_button.width = self.view.ids.action_button.width - self.view.ids.more_play.width
+
         self.view.ids.more_play.y = self.view.ids.action_button.y
         self.view.ids.more_play.x = self.view.ids.action_button.right
 
@@ -218,8 +220,10 @@ class Controller(object):
             return
 
         self.view.ids.more_play.custom_hidden = True
-        self.view.ids.action_button.width = self.view.ids.action_button.width + self.view.ids.more_play.width
         self.view.ids.more_play.y = -5000
+
+        if self.view.ids.more_play.claim_space:
+            self.view.ids.action_button.width = self.view.ids.action_button.width + self.view.ids.more_play.width
 
     def enable_action_buttons(self):
         self.view.ids.more_play.enable()

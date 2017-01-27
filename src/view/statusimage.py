@@ -59,7 +59,7 @@ class StatusImage(BoxLayout):
             return
 
         if not self.image:
-            self.image = Image(source=source, id='loading_image', anim_delay=0.5)
+            self.image = Image(source=source, id='loading_image', anim_delay=self.anim_delay)
             self.add_widget(self.image)
         else:
             self.image.source = source

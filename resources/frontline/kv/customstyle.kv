@@ -1,3 +1,4 @@
+# Custom styles go there
 
 # From Kivy's style.kv
 <ProgressBar>:
@@ -25,3 +26,6 @@
 
 <RstListItem>:
     height: self.minimum_height - 8
+
+<Button>:
+    on_release: app.play_sound('click')

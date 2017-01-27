@@ -1,7 +1,6 @@
 # Section: Main View of the application
 #          this defines the structure of screens and the top
 #          navigation bar
-
 <MainWidget>
     id: main_widget
     size: 1000, 1000
@@ -10,16 +9,15 @@
         size: root.width, root.height
         pos: root.x, root.y
 
-    # Semi-transparent bars at the top and the bottom
-    LabelB:
-        bottom: 0
-        size: root.width, 64
-        bcolor: get_color_from_hex('#212126')
+    Image:
+        source: app.resource_path('images/bevel_and_emboss.png')
+        size: 1000, 37
+        pos: 0, 142
 
-    LabelB:
-        top: root.top
-        size: root.width, 64
-        bcolor: get_color_from_hex('#212126')
+    Image:
+        source: app.resource_path('images/bottom_strip.png')
+        size: 1000, 83
+        pos: 0, 50
 
     MainScreenManager:
         id: main_screen_manager
