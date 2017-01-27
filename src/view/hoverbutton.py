@@ -66,6 +66,6 @@ class HoverButton(HoverBehavior, Button):
 
         self.disabled = False
 
-        # If mouse is already hovering on it
-        if self.is_hovered:
-            self.on_hover(self, self.is_hovered)
+        # Force on_hover to set the right background in case the button was
+        # invisible and optionally to play a sound if the button is hovered now.
+        self.on_hover(self, self.is_hovered)
