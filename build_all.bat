@@ -1,13 +1,11 @@
-@rem TacBF #####################################################################
 
-robocopy "multilauncher\tacbf" "resources" /mir /ndl /njs /njh
-copy "multilauncher\config_tacbf.py" "src\config\config.py"
+@echo Building all the available launchers in "resources" directory 
 
-python build.py new
+@for /D %%A IN ("resources\*") DO (
+    @echo ********************************************************************************
+    @echo Building %%~nxA...
+    @echo ********************************************************************************
 
-@rem Frontline #################################################################
-
-robocopy "multilauncher\frontline" "resources" /mir /ndl /njs /njh
-copy "multilauncher\config_frontline.py" "src\config\config.py"
-
-python build.py new
+    echo config_dir = u'%%~nxA' > src\launcher_config\config_select.py
+    python build.py new
+)
