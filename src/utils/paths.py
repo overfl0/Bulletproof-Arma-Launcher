@@ -206,6 +206,28 @@ def is_dir_writable(path):
     return True
 
 
+def is_file_writable(path):
+    """Check if the file passed as the argument is writable.
+
+    The file is opened for writing and then closed. May give false positives
+    in case of the file being open on Windows."""
+
+    if not os.path.isfile(path):
+        return False
+
+    try:
+        with open(path, 'a+'):
+            pass
+
+        return True
+
+    except IOError as ex:
+        if ex.errno != errno.EACCES:
+            raise
+
+        return False
+
+
 def is_broken_junction(path):
     """Check if the directory pointed by path is an NTFS Junction or Symlink
     that is broken.
@@ -222,6 +244,9 @@ def is_broken_junction(path):
         except OSError as ex:
             if ex.errno == errno.ENOENT:
                 return True  # This is a most probably a broken junction
+
+            if ex.errno == errno.EACCES:
+                return False  # Can't know because we can't read it
 
             raise
 

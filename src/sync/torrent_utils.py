@@ -122,6 +122,20 @@ def get_torrent_info_from_file(filename):
         return get_torrent_info_from_bytestring(file_contents)
 
 
+def get_admin_error(text, path):
+    error_message = textwrap.dedent('''
+        Error: {}:
+        {}
+
+        Please fix the file permissions before continuing.
+        If not, running the launcher as Administrator may help (not recommended).
+
+        If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
+        ''').format(text, path)
+
+    return error_message
+
+
 def set_node_read_write(node_path):
     """Set file or directory to read-write by removing the read-only bit."""
 
@@ -145,14 +159,7 @@ def set_node_read_write(node_path):
 
         except OSError as ex:
             if ex.errno == errno.EACCES:  # 13
-                error_message = textwrap.dedent('''
-                    Error: file/directory is read-only and cannot be changed:
-                    {}
-
-                    Running the launcher as Administrator may help.
-
-                    If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
-                    ''').format(node_path)
+                error_message = get_admin_error('file/directory is read-only and cannot be changed', node_path)
                 Logger.error(error_message)
                 raise AdminRequiredError(error_message)
             else:
@@ -187,14 +194,7 @@ def ensure_directory_exists(base_directory):
             paths.mkdir_p(base_directory)
 
         except OSError:
-            error_message = textwrap.dedent('''
-                Error: directory cannot be created or is not valid:
-                {}
-
-                Creating it manually or running the launcher as Administrator may help.
-
-                If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
-                ''').format(base_directory)
+            error_message = get_admin_error('directory cannot be created or is not valid', base_directory)
             Logger.error(error_message)
             raise AdminRequiredError(error_message)
 
@@ -205,14 +205,7 @@ def remove_broken_junction(path):
             os.rmdir(path)
 
     except OSError:
-        error_message = textwrap.dedent('''
-            Error: file/directory cannot be created or is not valid:
-            {}
-
-            Creating it manually or running the launcher as Administrator may help.
-
-            If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
-            ''').format(path)
+        error_message = get_admin_error('file/directory cannot be created or is not valid', path)
         Logger.error(error_message)
         raise AdminRequiredError(error_message)
 
@@ -234,23 +227,43 @@ def ensure_directory_structure_is_correct(mod_directory):
 
     Logger.info('Torrent_utils: Checking read-write file access in directory: {}.'.format(mod_directory))
 
+    set_node_read_write(mod_directory)
     _replace_broken_junction_with_directory(mod_directory)
 
-    for (dirpath, dirnames, filenames) in os.walk(mod_directory):
-        for node_name in [''] + filenames + dirnames:
+    if not paths.is_dir_writable(mod_directory):
+        error_message = get_admin_error('directory is not writable', mod_directory)
+        raise AdminRequiredError(error_message)
 
+    for (dirpath, dirnames, filenames) in os.walk(mod_directory):
+        # Needs to check the dirnames like this because if a child directory is
+        # a broken junction, it's never going to be used as dirpath
+        for node_name in dirnames:
             node_path = os.path.join(dirpath, node_name)
             Logger.info('Torrent_utils: Checking node: {}'.format(node_path))
+
             set_node_read_write(node_path)
             _replace_broken_junction_with_directory(node_path)
 
+            if not paths.is_dir_writable(node_path):
+                error_message = get_admin_error('directory is not writable', node_path)
+                raise AdminRequiredError(error_message)
+
+        for node_name in filenames:
+            node_path = os.path.join(dirpath, node_name)
+            Logger.info('Torrent_utils: Checking node: {}'.format(node_path))
+
+            set_node_read_write(node_path)
+
+            if not paths.is_file_writable(node_path):
+                error_message = get_admin_error('file is not writable', node_path)
+                raise AdminRequiredError(error_message)
 
 def prepare_mod_directory(mod_full_path):
     """Prepare the mod with the correct permissions, etc...
     This should make sure the parent directories are present, the mod directory
     is either not existing or it is present and has no broken symlinks.
 
-    Right now, there is  alot of duplicate code in here, that will hopefully be
+    Right now, there is a lot of duplicate code in here, that will hopefully be
     refactored in the future, after the other features are implemented.
     """
     # TODO: Simplify all the calls and remove duplicate code
@@ -265,11 +278,17 @@ def prepare_mod_directory(mod_full_path):
         if os.path.isdir(mod_full_path):
             remove_broken_junction(mod_full_path)
         else:
+            # If it's not a directory, remove it because we need a dir here
             os.unlink(mod_full_path)
 
     if os.path.lexists(mod_full_path):
         # Read-write everything
         ensure_directory_structure_is_correct(mod_full_path)
+
+    else:
+        if not paths.is_dir_writable(parent_location):
+            error_message = get_admin_error('directory is not writable', parent_location)
+            raise AdminRequiredError(error_message)
 
 def create_symlink(symlink_name, orig_path):
     """Create an NTFS Junction.
