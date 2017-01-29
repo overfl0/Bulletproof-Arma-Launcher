@@ -51,6 +51,9 @@ class HoverButton(Button):
             self.mouse_hover = False
 
     def _on_mouse_hover(self, instance, value):
+        if self.disabled:
+            return
+
         if (value is True):
             # self.background_normal_orig = self.background_normal
             # self.background_normal = self.background_hover
