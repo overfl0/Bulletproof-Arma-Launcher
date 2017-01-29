@@ -38,6 +38,7 @@ try:
     # it loads this file again. So there is the need of the __main__ guard.
     #
     if __name__ == "__main__":
+        import importlib  # Does not seem to work well with hiddenimports
         import sys
 
         # initialize settings class
