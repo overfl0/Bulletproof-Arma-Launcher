@@ -43,7 +43,6 @@ class SteamNotInstalled(SoftwareNotInstalled):
 
 class Arma(object):
     __metaclass__ = Singleton
-    __custom_path = None
 
     # Registry paths
     _arma_registry_path = r"software\bohemia interactive\arma 3"
@@ -51,18 +50,6 @@ class Arma(object):
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
     _steam_registry_path = r"Software\Valve\Steam"
-
-    @staticmethod
-    def get_custom_path():
-        """Return a custom mod installation path set by the user.
-        If no path has been set beforehand, returns None"""
-        return Arma().__custom_path
-
-    @staticmethod
-    def set_custom_path(new_path):
-        """Set a custom mod installation path.
-        Note: The function does NOT convert the path to an absolute path."""
-        Arma().__custom_path = new_path
 
     @staticmethod
     def get_installation_path():
