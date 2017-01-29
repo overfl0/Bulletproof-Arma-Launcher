@@ -37,7 +37,7 @@ def termination_func(con):
 
     termination_requested = False
     while termination_requested is False:
-        time.sleep(1)
+        time.sleep(0.1)
         # check if your parent wants your termination
         message = con.receive_message()
         if message and message.get('command') == 'terminate':
@@ -50,7 +50,7 @@ def blocking_after_resolving(con):
     """this function is run in another process"""
     con.progress({'msg': 'blocking_after_resolving started'})
     con.resolve('something')
-    time.sleep(5)
+    # time.sleep(5)
 
 
 class ParaTest(unittest.TestCase):
@@ -73,8 +73,8 @@ class ParaTest(unittest.TestCase):
         para.then(res_handler, None, None)
         para.run()
 
-        # para should be ckeckable after a second
-        time.sleep(1)
+        # para should be checkable after a second
+        # time.sleep(1)
 
         s = datetime.now()
         Clock.tick()
@@ -82,7 +82,7 @@ class ParaTest(unittest.TestCase):
         diff = e - s
         self.assertTrue(diff < timedelta(0, 1), 'clock tick shorter than one second')
         while not para.state == 'resolved':
-            time.sleep(0.5)
+            time.sleep(0.1)
             Clock.tick()
 
         res_handler.assert_called_once_with('something')
@@ -98,6 +98,8 @@ class ParaTest(unittest.TestCase):
 
         for _ in range(1, 120):
             Clock.tick()
+            if p.state == 'resolved':  # Speed up the loop
+                break
 
         res_handler.assert_called_once_with('something')
 
@@ -111,6 +113,8 @@ class ParaTest(unittest.TestCase):
 
         for _ in range(1, 120):
             Clock.tick()
+            if p.state == 'resolved':  # Speed up the loop
+                break
 
         # self.assertEqual(p.state, 'resolved')
 
@@ -135,11 +139,11 @@ class ParaTest(unittest.TestCase):
         # to resolve or reject
         count = 0
         while not para.state == 'resolved':
-            time.sleep(0.5)
+            time.sleep(0.1)
             Clock.tick()
             count += 1
-            # send termination after 2 seconds
-            if count == 4:
+            # send termination after 1 second
+            if count == 2:
                 para.request_termination()
 
         res_handler.assert_called_once_with('terminating')

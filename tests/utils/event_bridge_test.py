@@ -49,7 +49,7 @@ class EventBridgeTest(unittest.TestCase):
         parent_conn, child_conn = Pipe()
         p = Process(target=worker_func, args=(child_conn,))
         p.start()
-        time.sleep(2)
+        # time.sleep(2)
         self.assertEqual(parent_conn.recv(), 'test1')
         self.assertEqual(parent_conn.recv(), 'test2')
         p.join()
