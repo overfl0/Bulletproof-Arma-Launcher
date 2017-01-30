@@ -216,7 +216,7 @@ def is_file_writable(path):
         return False
 
     try:
-        with open(path, 'a+'):
+        with open(path, 'ab+'):
             pass
 
         return True
