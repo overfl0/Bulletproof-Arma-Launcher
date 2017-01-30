@@ -58,6 +58,7 @@ class ModSearchBox(ChainedPopup):
 
     def search_button_clicked(self, ignore):
         self.p = FileChooser(os.getcwd(),
+                             'Select a location to search for all the missing mods at once.',
                              on_success=self._fbrowser_success)
 
     def ignore_button_clicked(self, ignore):
@@ -81,7 +82,10 @@ class ModSearchBox(ChainedPopup):
 
         text = textwrap.dedent('''\
             The following mods are missing and will need to be downloaded.
-            Click on the directory icon to select a location manually.
+
+            Click "Search on disk" to have the launcher search for all the mods.
+            Click on the directory icon to select a mod location manually if
+            the mod was not found but is already installed on your computer.
             ''')
         la = Label(text=text, text_size=(570, None), size_hint=(1, None))  # , size_hint=(1, 2))
         la.bind(texture_size=la.setter('size'))

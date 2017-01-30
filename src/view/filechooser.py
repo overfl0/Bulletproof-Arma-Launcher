@@ -23,10 +23,11 @@ from kivy.uix.modalview import ModalView
 
 
 class FileChooser():
-    def __init__(self, path, on_success=None, on_canceled=None):
+    def __init__(self, path, title='', on_success=None, on_canceled=None):
         self.path = path
         self.on_success = on_success
         self.on_canceled = on_canceled
+        self.title = title
 
         self.open()
 
@@ -39,7 +40,7 @@ class FileChooser():
             tempdir = tkFileDialog.askdirectory(
                 parent=root,
                 initialdir=self.path,
-                title='')
+                title=self.title)
 
             if not tempdir:
                 Logger.info('FileChooser: User canceled the prompt')

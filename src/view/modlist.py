@@ -13,10 +13,11 @@
 from __future__ import unicode_literals
 
 import os
+import kivy.app
+import textwrap
 
 from utils import paths
 
-from functools import partial
 from kivy.logger import Logger
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
@@ -83,10 +84,28 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
         if not is_dir_writable(path):
             return 'Directory {} is not writable'.format(path)
 
+        # Prevent idiot-loops (seriously, people doing this are idiots!)
+        settings = kivy.app.App.get_running_app().settings
+        launcher_moddir = os.path.realpath(settings.get('launcher_moddir'))
+        if launcher_moddir.startswith(os.path.realpath(path)):
+            message = textwrap.dedent('''
+                Really???
+
+                You're now selecting the location where {} is ALREADY installed and you've chosen:
+                {}
+
+                You realize that selecting that directory will cause EVERYTHING
+                in there to be DELETED (save for that mod contents)?
+
+                Think twice next time!
+            ''').format(self.mod.foldername, path)
+            return message
+
         self.set_new_path(path)
 
     def select_dir(self, instance):
         self.p = FileChooser(self.mod.get_full_path(),
+                             'Manually select {} location on your disk'.format(self.mod.foldername),
                              on_success=self.select_success)
 
     def __init__(self, mod, on_manual_path, **kwargs):
@@ -106,7 +125,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
         # up_to_date_text = 'Up to date' if mod.up_to_date else 'Requires update'
         folder_path = paths.get_resources_path('images/folder_white.png')
-        folder = HoverImage(color=self.icon_color, bubble_text='Select\nlocation', arrow_pos='bottom_mid', source=folder_path, size_hint=(None, None), size=(25, 25))
+        folder = HoverImage(color=self.icon_color, bubble_text='Manually\nselect\nlocation', arrow_pos='bottom_mid', source=folder_path, size_hint=(None, None), size=(25, 25))
         folder.bind(mouse_hover=self.highlight_button)
         folder.bind(on_release=self.select_dir)
 
