@@ -92,6 +92,8 @@ def _make_torrent(messagequeue, launcher_basedir, mods):
         output_path = os.path.join(launcher_basedir, output_file)
         comment = '{} dependency on mod {}'.format(config.launcher_name, mod.foldername)
         directory = os.path.join(mod.parent_location, mod.foldername)
+        if not os.path.exists(directory):
+            continue
 
         messagequeue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
         file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)

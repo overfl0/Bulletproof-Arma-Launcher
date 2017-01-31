@@ -443,7 +443,7 @@ class Controller(object):
         self.view.ids.status_image.show()
         self.view.ids.status_label.text = 'Creating torrents...'
 
-        mods_to_convert = self.mods
+        mods_to_convert = self.mods[:]  # Work on the copy
         if self.launcher:
             mods_to_convert.append(self.launcher)
 

@@ -67,7 +67,7 @@ class ModManager(object):
         return para
 
     def sync_all(self, seed):
-        synced_elements = list(self.mods)
+        synced_elements = self.mods[:]  # Work on the copy
         if self.launcher:
             synced_elements.append(self.launcher)
 
