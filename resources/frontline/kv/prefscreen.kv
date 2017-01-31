@@ -85,8 +85,7 @@
                 text_size: self.width, self.height
                 font_size: 20
                 height: 30
-                width: 660
-                size_hint: None, None
+                size_hint: 1, None
                 valign: 'middle'
                 padding: 10, 0
 
@@ -95,6 +94,12 @@
                 height: 30
                 text: 'Choose Path'
                 on_release: root.controller.on_choose_path_button_release(self)
+
+            Button:
+                size_hint: None, None
+                height: 30
+                text: 'Open Folder'
+                on_release: app.open_hyperlink(path_text_input.text)
 
         BoxLayout:  # Divider
             BoxLayout:  # First column
