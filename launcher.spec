@@ -18,9 +18,13 @@ from kivy.deps import sdl2, glew
 # Create the build number
 primitive_git.save_git_sha1_to_file('.', primitive_git.build_sha1_file)
 
+hiddenimports=['concurrent', 'concurrent.futures']
+hiddenimports.append('importlib')  # Kivy 1.9.2
+hiddenimports.append('_cffi_backend')  # Paramiko (cryptography)
+
 a = Analysis(['src/launcher.py'],
              pathex=[''],
-             hiddenimports=['concurrent', 'concurrent.futures', 'importlib'],
+             hiddenimports=hiddenimports,
              **get_hooks())
 
 # Add the build number
