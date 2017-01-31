@@ -18,6 +18,7 @@ import zipfile
 
 from kivy.logger import Logger
 from third_party import SoftwareNotInstalled
+from third_party.clientquery import get_TS_servers_connected
 from utils import browser
 from utils import system_processes
 from utils.admin import run_admin
@@ -191,8 +192,14 @@ def run_and_connect(url):
     full_url = 'ts3server://{}'.format(url)
 
     if is_teamspeak_running():
-        Logger.info('TS: Teamspeak process found running. Assuming it is already connected to the correct server.')
-        return
+        ts_servers = get_TS_servers_connected()
+        host = url.split(':')[0]
+
+        if host in ts_servers:
+            Logger.info('TS: Teamspeak process found running and already connected to the right TS server.')
+            return
+
+        Logger.info('TS: Teamspeak process found running but NOT connected to the right TS server.')
 
     Logger.info('TS: Connecting to teamspeak server: {}'.format(url))
     browser.open_hyperlink(full_url)
