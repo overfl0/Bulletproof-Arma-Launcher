@@ -49,7 +49,7 @@ class DevMode(object):
 
     def __getattribute__(self, name):
         if name.startswith("get_"):
-            return lambda default = None: self.devdata.get(name[4:], default)
+            return lambda default = None, mandatory = False: self.devdata[name[4:]] if mandatory else self.devdata.get(name[4:], default)
 
         return object.__getattribute__(self, name)
 
