@@ -48,16 +48,19 @@ if devmode.get_create_torrents():
     port = devmode.get_server_port(22)
     metadata_path = devmode.get_server_metadata_path(mandatory=True)
     torrents_path = devmode.get_server_torrents_path(mandatory=True)
+    server_delay = devmode.get_server_torrent_delay(0)
 
 
 def make_torrent(message_queue, launcher_basedir, mods):
     """Create torrents from mods on the disk."""
 
+    Logger.info('make_torrent: Starting the torrents creations process...')
     # announces = ['http://{}/announce.php'.format(config.domain)]
     announces = devmode.get_torrent_tracker_urls()
     web_seeds = devmode.get_torrent_web_seeds()
 
     if not announces:
+        Logger.error('make_torrent: torrent_tracker_urls cannot be empty!')
         message_queue.reject({'msg': 'torrent_tracker_urls cannot be empty!'})
         return
 
@@ -68,7 +71,10 @@ def make_torrent(message_queue, launcher_basedir, mods):
         counter += 1
 
         if mod.up_to_date:
+            Logger.info('make_torrent: Mod {} is up to date, skipping...'.format(mod.foldername))
             continue
+
+        Logger.info('make_torrent: Generating new torrent for mod {}...'.format(mod.foldername))
 
         output_file = '{}-{}.torrent'.format(mod.foldername, manager_functions.create_timestamp(time.time()))
         output_path = os.path.join(launcher_basedir, output_file)
@@ -76,25 +82,24 @@ def make_torrent(message_queue, launcher_basedir, mods):
 
         directory = os.path.join(mod.parent_location, mod.foldername)
         if not os.path.exists(directory):
+            Logger.error('make_torrent: Directory does not exist! Skipping. Directory: {}'.format(directory))
             continue
 
         message_queue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
         file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
-        file_created_dir = os.path.dirname(file_created)
-
         mods_created.append((mod, file_created, output_file))
-
-#     if files_created:
-#         from utils import browser
-#         browser.open_hyperlink(file_created_dir)
+        Logger.info('make_torrent: New torrent for mod {} created!'.format(mod.foldername))
 
     if mods_created:
-        perform_update(mods_created)
+        perform_update(message_queue, mods_created)
 
     message_queue.resolve({'msg': 'Torrents created: {}'.format(len(mods_created))})
 
 
-def perform_update(mods_created):  # , new_mod_torrent_path):
+def perform_update(message_queue, mods_created):
+    Logger.info('perform_update: Starting the torrents remote update process...')
+
+    message_queue.progress({'msg': 'Connecting to the server...'}, 1)
     connection = remote.RemoteConection(host, username, password, port)
     connection.connect()
 
@@ -107,6 +112,8 @@ def perform_update(mods_created):  # , new_mod_torrent_path):
         # print metadata_json
 
         # Delete old torrents
+        message_queue.progress({'msg': 'Deleting old torrents...'}, 1)
+        Logger.info('perform_update: Deleting old torrents...')
         for mod, local_file_path, file_name in mods_created:
             for remote_file_name in connection.list_files(torrents_path):
                 if not remote_file_name.endswith('.torrent'):
@@ -120,17 +127,23 @@ def perform_update(mods_created):  # , new_mod_torrent_path):
                 connection.remove_file(file_path)
 
         # Sleep custom amount of time
-        if devmode.get_server_torrent_timeout(0):
-            print "Sleeping"
-            time.sleep(devmode.get_server_torrent_timeout(0))
+        if server_delay:
+            message_queue.progress({'msg': 'Waiting {} seconds...'.format(server_delay)}, 1)
+            Logger.info('perform_update: Sleeping {} seconds...'.format(server_delay))
+            time.sleep(devmode.get_server_torrent_timeout(server_delay))
 
         # Push new torrents
+        message_queue.progress({'msg': 'Pushing new torrents...'}, 1)
+        Logger.info('perform_update: Pushing new torrents...')
         for mod, local_file_path, file_name in mods_created:
             remote_torrent_path = remote.join(torrents_path, file_name)
-            file_attributes = connection.put_file(local_file_path, remote_torrent_path)
+            connection.put_file(local_file_path, remote_torrent_path)
 
         # Push modified metadata.json
+        message_queue.progress({'msg': 'Updating modified metadata.json...'}, 1)
         connection.save_file(metadata_json_path, metadata_json)
+
+        message_queue.progress({'msg': 'Updating the mods is done!'}, 1)
 
     finally:
         connection.close()
