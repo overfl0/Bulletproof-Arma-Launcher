@@ -59,6 +59,13 @@ class RemoteConection(object):
     """
 
     def __init__(self, host=None, username=None, password=None, port=22, *args, **kwargs):
+        """Connect to the server using the given credentials.
+        Can be used in a python with statement.
+
+        with RemoteConection(...) as connection:
+            connection.do_stuff()
+        """
+
         super(RemoteConection, self).__init__(*args, **kwargs)
 
         self.host = host
@@ -68,6 +75,14 @@ class RemoteConection(object):
 
         self.client = None
         self.sftp = None
+
+        self.connect()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type_, value, traceback):
+        self.close()
 
     def _random_str(self, length=10):
         """Return a string of a given length. Useful for temporary files.
@@ -80,6 +95,8 @@ class RemoteConection(object):
         """Close the connection. YOU ALWAYS HAVE TO CALL IT!
         Failure to do so may lead to process hanging on exit, according to
         Paramiko documentation.
+        The only case when you don't have to call close() is when you're using
+        a python with statement.
         """
 
         if self.client is not None:

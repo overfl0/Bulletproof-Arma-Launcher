@@ -98,12 +98,10 @@ def make_torrent(message_queue, launcher_basedir, mods):
 
 def perform_update(message_queue, mods_created):
     Logger.info('perform_update: Starting the torrents remote update process...')
-
     message_queue.progress({'msg': 'Connecting to the server...'}, 1)
-    connection = remote.RemoteConection(host, username, password, port)
-    connection.connect()
 
-    try:
+    with remote.RemoteConection(host, username, password, port) as connection:
+
         metadata_json_path = remote.join(metadata_path, 'metadata.json')
         print metadata_json_path
 
@@ -144,6 +142,3 @@ def perform_update(message_queue, mods_created):
         connection.save_file(metadata_json_path, metadata_json)
 
         message_queue.progress({'msg': 'Updating the mods is done!'}, 1)
-
-    finally:
-        connection.close()
