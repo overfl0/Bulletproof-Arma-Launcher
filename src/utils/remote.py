@@ -19,21 +19,19 @@ if __name__ == '__main__':
     site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
 
+import os
 import paramiko
 import posixpath
+import random
 import socket
-import time
 
+from kivy.logger import Logger
 from paramiko.sftp import CMD_EXTENDED
-from utils.devmode import devmode
 from utils.context import ignore_nosuchfile_ioerror
 
-host = devmode.get_server_host(mandatory=True)
-username = devmode.get_server_username(mandatory=True)
-password = devmode.get_server_password(mandatory=True)
-port = devmode.get_server_port(22)
-metadata_path = devmode.get_server_metadata_path(mandatory=True)
-torrents_path = devmode.get_server_torrents_path(mandatory=True)
+
+# The remote is using a posix style paths ('/')
+join = posixpath.join
 
 
 class RemoteMissingKeyPolicy(paramiko.client.MissingHostKeyPolicy):
@@ -41,31 +39,63 @@ class RemoteMissingKeyPolicy(paramiko.client.MissingHostKeyPolicy):
         super(RemoteMissingKeyPolicy, self).__init__(*args, **kwargs)
 
     def missing_host_key(self, client, hostname, key):
-        print "Missing key: ", client, hostname, type(key.get_fingerprint())
-        print type(key)
-        print dir(key)
+        """This method is called each time a connection is made to a server that
+        does not have a known key to the launcher.
+        To reject the key, raise an exception.
+        To accept the key, return.
+        """
 
-        print "Accepting it."
+        Logger.info('RemoteConection: Missing key: {} {}'.format(
+            hostname, key.get_fingerprint().encode('hex')))
+        Logger.info('RemoteConection: Accepting it.')
+
         return
 
 
 class RemoteConection(object):
-    def __init__(self, *args, **kwargs):
+    """The class that allows talking to an SFTP server and execute commands
+    remotely. Maybe it can be replaced by a more generic class with more
+    backends supported in the future.
+    """
+
+    def __init__(self, host=None, username=None, password=None, port=22, *args, **kwargs):
         super(RemoteConection, self).__init__(*args, **kwargs)
+
+        self.host = host
+        self.username = username
+        self.password = password
+        self.port = port
 
         self.client = None
         self.sftp = None
 
+    def _random_str(self, length=10):
+        """Return a string of a given length. Useful for temporary files.
+        Those files of course DO NOT give a guarantee of uniqueness.
+        """
+
+        return ''.join(str(int(random.random() * 10)) for _ in range(length))
+
     def close(self):
+        """Close the connection. YOU ALWAYS HAVE TO CALL IT!
+        Failure to do so may lead to process hanging on exit, according to
+        Paramiko documentation.
+        """
+
         if self.client is not None:
+            Logger.info('RemoteConection.close: Closing the connection.')
+
             self.client.close()
             self.client = None
             self.sftp = None
 
     def connect(self):
+        """Perform the connection.
+        Uses values passed in the constructor.
+        """
+
         self.close()
 
-        client = None
         try:
             client = paramiko.client.SSHClient()
             client.load_system_host_keys()
@@ -75,8 +105,13 @@ class RemoteConection(object):
             # and don't use AutoAddPolicy
 
             try:
-                print 'Connecting...'
-                client.connect(host, username=username, password=password, port=port, timeout=5)
+                Logger.info('RemoteConection.connect: Connecting to {}@{}...'.format(
+                    self.username, self.host))
+                client.connect(self.host,
+                               username=self.username,
+                               password=self.password,
+                               port=self.port,
+                               timeout=5)
 
             except paramiko.BadHostKeyException:
                 raise
@@ -89,30 +124,53 @@ class RemoteConection(object):
 
             except socket.error as ex:
                 if ex.errno == 10060:
-                    print 'Connection timeout!'
+                    Logger.error('RemoteConection.connect: Connection timeout!')
                     raise
 
                 raise
 
             self.client = client
+
+            Logger.info('RemoteConection.connect: Opening SFTP connection.')
             self.sftp = client.open_sftp()
             client = None
+
+            Logger.info('RemoteConection.connect: All done!')
 
         finally:
             if client is not None:
                 client.close()
 
     def rename_overwrite(self, old_path, new_path):
+        """Move a file atomically, just like with the mv command."""
+
+        Logger.info('RemoteConection.rename_overwrite: Moving file {} to {}'.format(
+            old_path, new_path))
+
         old_path = self.sftp._adjust_cwd(old_path)
         new_path = self.sftp._adjust_cwd(new_path)
         self.sftp._request(CMD_EXTENDED, 'posix-rename@openssh.com', old_path, new_path)
 
-    def fetch_file(self, path):
+        Logger.info('RemoteConection.rename_overwrite: Done')
+
+    def read_file(self, path):
+        """Read and return the file contents."""
+
+        Logger.info('RemoteConection.read_file: Reading file {}'.format(path))
+
         with self.sftp.file(path, 'rb') as f:
             return f.read()
 
     def save_file(self, path, contents, keep_backups=10):
-        tmp_path = path + '_tmp'
+        """Save a file contents to a file atomically. Keep backups, optionally.
+        The file will be saved to a temporary name and when it is fully
+        transferred, it will be renamed to the requested name.
+        Old instances of the file may be kept as backup if keep_backups is > 0.
+        """
+
+        tmp_path = '{}.tmp{}'.format(path, self._random_str())
+        Logger.info('RemoteConection.save_file: Saving data to {} using temporary name {}'.format(
+            path, tmp_path))
 
         with self.sftp.file(tmp_path, 'wb') as f:
             f.write(contents)
@@ -129,57 +187,44 @@ class RemoteConection(object):
                 self.rename_overwrite(path, format_backup(0))
 
         self.rename_overwrite(tmp_path, path)
+        Logger.info('RemoteConection.save_file: Saved.')
+
+    def put_file(self, local_file_path, remote_file_path):
+        """Save a local file to the remote path, atomically.
+        The file will be saved to a temporary name and when it is fully
+        transferred, it will be renamed to the requested name.
+        """
+
+        remote_file_path_tmp = '{}.tmp{}'.format(remote_file_path, self._random_str())
+        Logger.info('RemoteConection.put_file: Saving local file {} to {} using temporary name {}'.format(
+            local_file_path, remote_file_path, remote_file_path_tmp))
+        local_stat = os.stat(local_file_path)
+
+        # Put the file to a temporary name so it doesn't trigger any scripts
+        # while it is uploading and in case the transfer fails mid-upload
+        remote_stat = self.sftp.put(local_file_path, remote_file_path_tmp, confirm=True)
+
+        if local_stat.st_size != remote_stat.st_size:
+            raise Exception("Uploaded file size differs from local file size. Upload failed.")
+
+        # Rename the file to the requested name
+        self.rename_overwrite(remote_file_path_tmp, remote_file_path)
+        Logger.info('RemoteConection.put_file: Saved.')
+
 
     def list_files(self, path):
+        """Return the list of files in the path, just like os.listdir()."""
+
         return self.sftp.listdir(path)
 
     def remove_file(self, path):
+        """Unlink a remote file. Does not work with directories."""
+
+        Logger.info('RemoteConection.remove_file: Removing {}'.format(path))
         self.sftp.unlink(path)
-        print 'Removed {}'.format(path)
-
-
-def perform_update(mod_name):  # , new_mod_torrent_path):
-    connection = RemoteConection()
-    connection.connect()
-
-    try:
-        metadata_json_path = posixpath.join(metadata_path, 'metadata.json')
-        print metadata_json_path
-
-        # Fetch metadata.json
-        metadata_json = connection.fetch_file(metadata_json_path)
-        print metadata_json
-
-        # Delete old torrents
-        for file_name in connection.list_files(torrents_path):
-            if not file_name.endswith('.torrent'):
-                continue
-
-            if not file_name.startswith(mod_name):
-                continue
-
-            # Got the file[s] to remove
-            file_path = posixpath.join(torrents_path, file_name)
-            connection.remove_file(file_path)
-
-        # Sleep custom amount of time
-        time.sleep(devmode.get_server_torrent_timeout(0))
-
-        # Push new torrents
-        # remote_torrent_path = posixpath.join(torrents_path, torrent_name)
-        # file_attributes = connection.sftp.put(new_mod_torrent_path, remote_torrent_path, confirm=True)
-
-        # Push modified metadata.json
-        connection.save_file(metadata_json_path, metadata_json)
-
-    finally:
-        connection.close()
+        Logger.info('RemoteConection.remove_file: Removed.')
 
 
 if __name__ == '__main__':
-    perform_update('somemod')
-
-
-
-
-
+    pass
+    # perform_update('somemod')
