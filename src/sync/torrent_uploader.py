@@ -198,6 +198,13 @@ def update_metadata_json(metadata_json_orig, mods_created):
                 mod_leaf['torrent-timestamp'] = timestamp
                 break
 
+        # Perform the launcher update
+        if 'launcher' in tree:
+            if tree['launcher']['foldername'] == mod.foldername:
+                tree['launcher']['torrent-timestamp'] = timestamp
+
+                # TODO: fix version
+
     metadata_json_modified = json.dumps(tree, indent=4)
     return metadata_json_modified
 
@@ -217,10 +224,12 @@ def perform_update(message_queue, mods_created):
         metadata_json = connection.read_file(metadata_json_path)
         Logger.info('perform_update: Got metadata.json:\n{}'.format(metadata_json))
 
+        metadata_json_updated = update_metadata_json(metadata_json, mods_created)
+
         # Delete old torrents
         message_queue.progress({'msg': 'Deleting old torrents...'}, 1)
         Logger.info('perform_update: Deleting old torrents...')
-        for mod, local_file_path, file_name, timestamp in mods_created:
+        for mod, local_file_path, file_name, _ in mods_created:
             for remote_file_name in connection.list_files(torrents_path):
                 if not remote_file_name.endswith('.torrent'):
                     continue
@@ -241,13 +250,11 @@ def perform_update(message_queue, mods_created):
         # Push new torrents
         message_queue.progress({'msg': 'Pushing new torrents...'}, 1)
         Logger.info('perform_update: Pushing new torrents...')
-        for mod, local_file_path, file_name, timestamp in mods_created:
+        for mod, local_file_path, file_name, _ in mods_created:
             remote_torrent_path = remote.join(torrents_path, file_name)
             connection.put_file(local_file_path, remote_torrent_path)
 
         message_queue.progress({'msg': 'Updating modified metadata.json...'}, 1)
-
-        metadata_json_updated = update_metadata_json(metadata_json, mods_created)
         Logger.info('perform_update: Updated metadata.json:\n{}'.format(metadata_json_updated))
 
         # Push modified metadata.json

@@ -471,7 +471,7 @@ class Controller(object):
         if self.launcher:
             mods_to_convert.append(self.launcher)
 
-        self.para = self.mod_manager.make_torrent(mods=self.mods)
+        self.para = self.mod_manager.make_torrent(mods=mods_to_convert)
         self.para.then(self.on_maketorrent_resolve,
                        self.on_maketorrent_reject,
                        self.on_maketorrent_progress)
