@@ -480,6 +480,16 @@ class Controller(object):
         self.view.ids.status_image.show()
         self._set_status_label(progress.get('msg'))
 
+        def send_message_to_para(para_name, message_name, params, popup):
+            if self.is_para_running(para_name):
+                Logger.info('InstallScreen: Sending reply to the para')
+                self.para.send_message(message_name, params)
+
+        if progress.get('action') == 'msgbox':
+            MessageBox(text=progress.get('msg'), auto_dismiss=False,
+                       on_dismiss=partial(send_message_to_para, 'make_torrent', progress.get('name'), True)
+                       ).chain_open()
+
     def on_maketorrent_resolve(self, progress):
         self.para = None
         self._set_status_label(progress.get('msg'))

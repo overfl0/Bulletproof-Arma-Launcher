@@ -12,9 +12,11 @@
 
 from __future__ import unicode_literals
 
+import inspect
 import json
 import launcher_config
 import os
+import textwrap
 import time
 
 from collections import OrderedDict
@@ -53,7 +55,78 @@ if devmode.get_create_torrents():
     server_delay = devmode.get_server_torrent_delay(0)
 
 
+# Note: this is using an experimental message passing method and should be moved
+# to other places in the future
+
+
+class Message(object):
+
+    def __init__(self, message_type, name, msg, *args, **kwargs):
+        super(Message, self).__init__(*args, **kwargs)
+
+        self.type = message_type
+        self.name = name
+        self.msg = msg
+
+        self.data = kwargs
+        self.data['msg'] = msg
+        self.data['name'] = name
+        self.data['action'] = message_type
+
+    @staticmethod
+    def msgbox(msg, name):
+        return Message(message_type='msgbox', msg=msg, name=name)
+
+
 def make_torrent(message_queue, launcher_basedir, mods):
+    """This is actually a message loop wrapper working on python coroutines."""
+
+    value_generator = _make_torrent(message_queue, launcher_basedir, mods)
+    if not inspect.isgenerator(value_generator):
+        Logger.info('make_torrent: Not a generator, returning the value')
+        return value_generator
+
+    Logger.info('make_torrent: Received a generator, starting message loop')
+
+    try:
+        value_to_send = None
+
+        # Loop while the generator generates requests
+        while True:
+            yielded = value_generator.send(value_to_send)
+            value_to_send = None
+
+            if yielded.type == 'msgbox':
+                message_queue.progress(yielded.data, 0)
+
+            # Loop until you receive the right reply message
+            while True:
+                message = message_queue.receive_message()
+                if not message:
+                    time.sleep(0.1)
+                    continue
+
+                command = message.get('command')
+                params = message.get('params')
+
+                Logger.debug('Got command: {}'.format(command))
+
+                if command == 'terminate':
+                    Logger.info('make_torrent: Received terminate command. Closing generator...')
+                    value_generator.close()
+                    return
+
+                # Check if it's the message we're waiting for
+                if command == yielded.name:
+                    break
+
+            value_to_send = params
+
+    except StopIteration:
+        Logger.info('make_torrent: generator terminated')
+
+
+def _make_torrent(message_queue, launcher_basedir, mods):
     """Create torrents from mods on the disk."""
 
     Logger.info('make_torrent: Starting the torrents creations process...')
@@ -95,12 +168,27 @@ def make_torrent(message_queue, launcher_basedir, mods):
         Logger.info('make_torrent: New torrent for mod {} created!'.format(mod.foldername))
 
     if mods_created:
+        message = textwrap.dedent('''
+            The following mods have been prepared to be updated:
+
+            {}
+
+            Click OK to upload all those mods to the server.
+            If you do not want to upload ALL those mods, close the launcher now.
+            ''').format('\n'.join(mod.foldername for mod, _, _, _ in mods_created))
+
+        yield Message.msgbox(message, name='confirm_upload_mods')
+
         perform_update(message_queue, mods_created)
 
     message_queue.resolve({'msg': 'Torrents created: {}'.format(len(mods_created))})
 
 
 def update_metadata_json(metadata_json_orig, mods_created):
+    """Modify the metadata_json given as input to use the updated mods.
+    Return the modified metadata_json contents.
+    """
+
     tree = json.loads(metadata_json_orig, object_pairs_hook=lambda x : OrderedDict(x))
 
     for mod, _, _, timestamp in mods_created:
@@ -115,6 +203,10 @@ def update_metadata_json(metadata_json_orig, mods_created):
 
 
 def perform_update(message_queue, mods_created):
+    """Connect to the remote server, remove old, unused torrents, push newly
+    created torrents and update metadata.json to use them.
+    """
+
     Logger.info('perform_update: Starting the torrents remote update process...')
     message_queue.progress({'msg': 'Connecting to the server...'}, 1)
 
