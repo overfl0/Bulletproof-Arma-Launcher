@@ -33,7 +33,7 @@ def tests():
 
 def build():
     print_text('Building...')
-    subprocess.check_call(['python', 'c:\Python27\Scripts\pyinstaller.exe', 'launcher.spec'])
+    subprocess.check_call(['c:\Python27\Scripts\pyinstaller.exe', 'launcher.spec'])
 
 def post_build():
     print_text('Copying files...')
