@@ -13,12 +13,11 @@
 
 from __future__ import unicode_literals
 
+import launcher_config
 import os
 import textwrap
 import time
-import torrent_utils
 
-from config import config
 from datetime import datetime
 from distutils.version import LooseVersion
 from kivy.logger import Logger
@@ -78,9 +77,9 @@ def _make_torrent(messagequeue, launcher_basedir, mods):
     """Create torrents from mods on the disk."""
 
     files_created = []
-    # announces = ['http://{}/announce.php'.format(config.domain)]
+    # announces = ['http://{}/announce.php'.format(launcher_config.domain)]
     announces = ['http://5.79.83.193:2710/announce']
-    web_seeds = ['http://{}{}/'.format(config.domain, config.web_seeds_path)]
+    web_seeds = ['http://{}{}/'.format(launcher_config.domain, launcher_config.web_seeds_path)]
 
     counter = 0
     for mod in mods:
@@ -90,7 +89,7 @@ def _make_torrent(messagequeue, launcher_basedir, mods):
 
         output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
         output_path = os.path.join(launcher_basedir, output_file)
-        comment = '{} dependency on mod {}'.format(config.launcher_name, mod.foldername)
+        comment = '{} dependency on mod {}'.format(launcher_config.launcher_name, mod.foldername)
         directory = os.path.join(mod.parent_location, mod.foldername)
         if not os.path.exists(directory):
             continue
@@ -116,8 +115,8 @@ def _get_mod_descriptions(para):
     """
     para.progress({'msg': 'Downloading mod descriptions'})
 
-    domain = devmode.get_launcher_domain(default=config.domain)
-    metadata_path = devmode.get_metadata_path(default=config.metadata_path)
+    domain = devmode.get_launcher_domain(default=launcher_config.domain)
+    metadata_path = devmode.get_metadata_path(default=launcher_config.metadata_path)
     url = 'http://{}{}'.format(domain, metadata_path)
 
     try:
@@ -187,8 +186,8 @@ def convert_metadata_to_mod(md, torrent_url_prefix):
 
 
 def get_launcher_description(para, launcher_basedir, metadata):
-    domain = devmode.get_launcher_domain(default=config.domain)
-    torrents_path = devmode.get_torrents_path(default=config.torrents_path)
+    domain = devmode.get_launcher_domain(default=launcher_config.domain)
+    torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
     torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
 
     if 'launcher' not in metadata:
@@ -202,8 +201,8 @@ def get_launcher_description(para, launcher_basedir, metadata):
 
 
 def process_description_data(para, data, launcher_moddir):
-    domain = devmode.get_launcher_domain(default=config.domain)
-    torrents_path = devmode.get_torrents_path(default=config.torrents_path)
+    domain = devmode.get_launcher_domain(default=launcher_config.domain)
+    torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
     torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
     mods = []
 

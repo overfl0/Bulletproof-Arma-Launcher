@@ -9,14 +9,9 @@ import sys
 file_directory = os.path.dirname(os.path.realpath(__file__))
 site.addsitedir(os.path.abspath(os.path.join(file_directory, 'src')))
 
-try:
-    os.unlink(os.path.join('src', 'config', 'config.pyc'))
-except:
-    pass
+import launcher_config
 
-from config import config
-
-full_executable = config.executable_name + '.exe'
+full_executable = launcher_config.executable_name + '.exe'
 
 def cleanup(clean_dirs):
     print_text('Performing cleanup...')
@@ -63,7 +58,7 @@ def main():
 # Helpers ######################################################################
 
 def print_text(text):
-    print '{}\n{}\n{}'.format(80 * '#', text, 80 * '#')
+    print '{}\n{}\n{}'.format(80 * '-', text, 80 * '-')
 
 def quiet_unlink(file_name):
     from utils import context

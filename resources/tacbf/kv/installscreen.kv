@@ -1,0 +1,177 @@
+# Section: Screen where install related stuff is
+
+#:import launcher_config launcher_config
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+
+<HoverButton>
+    border: 1,1,1,1
+    size_hint: None, None
+    width: 100
+    height: 75
+
+    color: self.color_normal
+    background_color: self.bgcolor_normal
+
+    background_normal: ''
+    background_down: ''
+    background_hover: ''
+    background_disabled_down: ''
+
+    color_hover: 1, 1, 0.66, 1
+    color_normal: 1, 1, 1, 1
+
+    #disabled_color: 0.5, 0.5, 0.5, 0.333
+
+    bgcolor_normal: 0, 0, 0, 0
+    bgcolor_hover: 0, 0, 0, 0
+
+    font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
+    font_size: 32
+    on_release: app.play_sound('click')
+
+<NewsLabel@RstDocument>
+    size_hint: (None, None)
+    colors: {'background': '000000c0', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}
+    underline_color: 'ffffccff'
+    base_font_size: 28
+
+# Section: Screen where install related stuff is
+<InstallScreen>:
+
+    padding: 20
+    name: 'install_screen'
+
+    NewsLabel:
+        id: news_label
+
+        size: 0, 400
+        right: root.right - 30
+        top: root.top - 50
+
+    Image:
+        source: app.resource_path('images/logo.png')
+        center_x: root.center_x
+        top: root.top - 20
+        size_hint: None, None
+        size: self.texture_size
+
+    BoxLayout:
+        padding: 20
+        orientation: 'vertical'
+
+        Label:
+            id: filler
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 60
+
+            StatusImage:
+                id: status_image
+                source_map: { 'default': app.resource_path('images/ajax-loader2_20x20.gif'), 'attention': app.resource_path('images/achtung40x38.png') }
+                anim_delay: 0.05
+                size: 20, 20
+                size_hint: None, None
+                hidden: True
+
+            BoxLayout:
+                orientation: 'vertical'
+                padding: 10, 0
+
+                Label:
+                    id: status_label
+                    size_hint: None, None
+                    text_size: self.parent.width - self.parent.padding[0] - self.parent.padding[2], None
+                    size: self.texture_size
+
+                Label:
+                    id: status_box
+                    size_hint: None, None
+                    text_size: self.parent.width - self.parent.padding[0] - self.parent.padding[2], None
+                    size: self.texture_size
+
+        Widget:
+            height: 15
+            size_hint_y: None
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 20
+
+            ProgressBar:
+                id: progress_bar
+                value: 0
+                height: 20
+        Widget:
+            height: 25
+            size_hint_y: None
+
+        BoxLayout:
+            id: boxes_menu
+            orientation: 'horizontal'
+            height: 75
+            size_hint_y: None
+
+            # ForumButton
+            HoverButton:
+                text: 'FORUM'
+                size_hint_x: 1
+                on_release: app.open_hyperlink(launcher_config.forum_url)
+
+            Widget:
+                size_hint_x: 1
+
+            Widget:
+                size_hint_x: 1
+
+            # MakeTorrentButton
+            HoverButton:
+                disabled: True
+                size_hint_x: 1
+                id: make_torrent
+                on_release: root.controller.on_make_torrent_button_release(self)
+
+            # OptionsButton
+            HoverButton:
+                id: options_button
+                size_hint_x: 1
+                on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
+                text: 'OPTIONS'
+                disabled: True
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Label:
+                id: footer_label
+                orientation: 'horizontal'
+                font_name: app.resource_path("fonts/Myriad_Pro_Regular.ttf")
+                font_size: 12
+                text_size: self.width, self.height
+                halign: 'right'
+                valign: 'bottom'
+                text: 'Build: N/A'
+
+    # Install/Play button
+    DynamicButton:
+        id: action_button
+        # on_release callbacks are bound in installscreen.py
+        font_size: 60
+        y: 50
+        center_x: root.width / 2 + self.width * 0
+        size: self.texture_size[0], boxes_menu.height
+
+    # This button must be created after the PLAY button so that it is on top of it
+    # More play options button (|||)
+    HoverButton:
+        id: more_play
+        text: '=' # \u2261 or 2630 For android character
+        font_size: 60
+        font_name: app.resource_path("fonts/Equality.ttf")
+        on_release: root.controller.on_more_play_button_release(self)
+        custom_hidden: True
+        width: 75
+        claim_space: False
+        y: -5000  # Stay out of the way for now

@@ -17,9 +17,9 @@ Module to hold launcher specific model stuff
 from __future__ import unicode_literals
 
 import argparse
+import launcher_config
 import os
 
-from config import config
 from kivy.logger import Logger
 from kivy.event import EventDispatcher
 from third_party.arma import Arma, SoftwareNotInstalled
@@ -151,12 +151,12 @@ class Settings(Model):
         """
         interceptor for launcher_moddir
         Try to get the mod directory from the settings.
-        If that fails, use "Arma 3/<config.default_mods_dir>" directory.
+        If that fails, use "Arma 3/<launcher_config.default_mods_dir>" directory.
         If that also fails (because there is no Arma, for example) use basedir/mods.
         """
         try:
             if not moddir:
-                moddir = os.path.join(Arma.get_installation_path(), config.default_mods_dir)
+                moddir = os.path.join(Arma.get_installation_path(), launcher_config.default_mods_dir)
         except SoftwareNotInstalled:
             pass
 

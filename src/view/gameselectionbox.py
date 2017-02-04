@@ -14,13 +14,13 @@ from __future__ import unicode_literals
 
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.popup import Popup
 from kivy.uix.widget import Widget
+from view.themedpopup import ThemedPopup
 
 default_title = '''Connect to server:'''
 
 
-class GameSelectionBox(Popup):
+class GameSelectionBox(ThemedPopup):
     def close_and_run(self, func, *args):
         """There is probably a simpler way of doing this but oh well..."""
         self.dismiss()

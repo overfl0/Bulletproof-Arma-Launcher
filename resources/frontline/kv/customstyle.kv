@@ -1,0 +1,31 @@
+# Custom styles go there
+
+# From Kivy's style.kv
+<ProgressBar>:
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        BorderImage:
+            border: (12, 12, 12, 12)
+            pos: self.x, self.center_y - 9  # 12
+            size: self.width, 18  # 24
+            #source: 'atlas://data/images/defaulttheme/progressbar_background'
+            source: app.resource_path('images/progressbar_background.png')
+        BorderImage:
+            border: [int(min(self.width * (self.value / float(self.max)) if self.max else 0, 12))] * 4
+            pos: self.x, self.center_y - 9  # 12
+            size: self.width * (self.value / float(self.max)) if self.max else 0, 18  # 24
+            #source: 'atlas://data/images/defaulttheme/progressbar'
+            source: app.resource_path('images/progressbar.png')
+
+<RstTitle>:
+    font_size:
+        sp(self.document.base_font_size * 0.75 - self.section * (
+        self.document.base_font_size / 31.0 * 2))
+    font_name: app.resource_path("fonts/Nexa_Bold.ttf")
+
+<RstListItem>:
+    height: self.minimum_height - 8
+
+<Button>:
+    on_release: app.play_sound('click')

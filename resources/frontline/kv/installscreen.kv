@@ -1,0 +1,207 @@
+# Section: Screen where install related stuff is
+
+#:import launcher_config launcher_config
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+
+<HoverButton>
+    border: 1,1,1,1
+    size_hint: None, None
+    size: 256, 32
+    text_size: self.size
+    padding_x: 20
+
+    # valign: 'middle'
+    # Don't ask my why! "valign: 'middle'" aligns too high!
+    # Workaround:
+    padding_y: (self.height - self.font_size) / 2 - self.height / 12
+
+    color: self.color_normal
+    background_color: self.bgcolor_normal
+
+    background_normal: ''
+    background_down: ''
+    background_disabled_normal: ''
+    background_disabled_down: ''
+
+    color_hover: [1, 1, 1, 1]
+    color_normal: get_color_from_hex('#bfbfbf')
+    disabled_color: 0.5, 0.5, 0.5, 0.333
+
+    bgcolor_normal: 0, 0, 0, 0.5
+    bgcolor_hover: get_color_from_hex('#212126')
+
+    font_name: app.resource_path("fonts/Nexa_Light.ttf")
+    font_size: 26
+    on_release: app.play_sound('click')
+
+<NewsLabel@RstDocument>
+    size_hint: (None, None)
+    colors: {'background': '00000080', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}
+    underline_color: 'ffffccff'
+    base_font_size: 24
+
+<InstallScreen>:
+
+    padding: 20
+    name: 'install_screen'
+
+    NewsLabel:
+        id: news_label
+        right: root.right
+        top: root.top - 80
+        height: 380
+        width: 0
+        width_final: 256
+
+        bar_width: 10
+        scroll_type: ['bars', 'content']
+        bar_inactive_color: 0.7, 0.7, 0.7, 0.4
+
+    Image:
+        source: app.resource_path('images/logo.png')
+        pos: 40, root.top - self.height - 7
+        size_hint: None, None
+        size: self.texture_size
+
+#= Menu ========================================================================
+
+    ProgressBar:
+        id: progress_bar
+        value: 0
+        height: 18
+        y: status_box.height
+        size_hint_y: None
+
+    # Main status label ("Downloading... x KB/S")
+    Label:
+        id: status_label
+        x: progress_bar.x + 40
+        y: progress_bar.y - 2
+        size: self.texture_size
+        size_hint: None, None
+        text_size: progress_bar.size
+        #outline_width: 2
+        color: 1, 1, 1, 1
+        valign: 'middle'
+        font_size: 14
+        font_name: app.resource_path("fonts/Nexa_Bold.ttf")
+
+    # Status box with the messages
+    LabelB:
+        #text: 'Frontline / CUP Core / CUP Terrains / RHS AFRF / RHS USAF / RHS GREF'
+        id: status_box
+        y: 0
+        height: 64
+        width: 744
+        size_hint: None, None
+        padding: 40, 10
+        halign: 'left'
+        valign: 'top'
+        text_size: self.size
+        color: get_color_from_hex('#bfbfbf')
+        bcolor: get_color_from_hex('#212126')
+        font_name: app.resource_path("fonts/Nexa_Light.ttf")
+        font_size: 13
+
+    StatusImage:
+        id: status_image
+        source_map: { 'default': app.resource_path('images/loader.zip'), 'attention': app.resource_path('images/achtung40x38.png') }
+        anim_delay: 0.5
+        pos: progress_bar.pos
+        size: progress_bar.height, progress_bar.height
+        size_hint: None, None
+        hidden: True
+
+#= Buttons =====================================================================
+
+    # Vertical buttons
+    StackLayout:
+        y: status_box.top
+        x: status_box.right
+        width: 256
+        size_hint_x: None
+        #size_hint_y: 0
+        orientation: 'bt-lr'
+        spacing: 4
+        padding: 0, 4 + progress_bar.height
+
+        # OptionsButton
+        HoverButton:
+            id: options_button
+            size_hint_x: 1
+            on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
+            text: 'OPTIONS'
+            disabled: True
+
+        # ForumButton
+        HoverButton:
+            text: 'FORUM'
+            size_hint_x: 1
+            on_release: app.open_hyperlink(launcher_config.forum_url)
+
+        # DonateButton
+        HoverButton:
+            size_hint_x: 1
+            text: 'DONATE'
+            on_release: app.open_hyperlink(launcher_config.donate_url)
+
+        # MakeTorrentButton
+        HoverButton:
+            disabled: True
+            background_color: 0, 0, 0, 0
+            size_hint_x: 1
+            id: make_torrent
+            on_release: root.controller.on_make_torrent_button_release(self)
+
+    # Install/Play button
+    DynamicButton:
+        id: action_button
+        pos: status_box.right, 0
+        # on_release callbacks are bound in installscreen.py
+        #text: 'INSTALL'
+        font_name: app.resource_path("fonts/Nexa_Bold.ttf")
+        font_size: 32
+
+        color_normal: [0, 0, 0, 1]
+        color_hover: [0, 0, 0, 1]
+        bgcolor_normal: get_color_from_hex('#eca92d')
+        bgcolor_hover: get_color_from_hex('#ffc94d')
+        size: 256, 64
+
+    # This button must be created after the PLAY button so that it is on top of it
+    # More play options button (|||)
+    HoverButton:
+        id: more_play
+        text: '=' # \u2261 or 2630 For android character
+        font_size: 40
+        font_name: app.resource_path("fonts/Equality.ttf")
+        on_release: root.controller.on_more_play_button_release(self)
+        custom_hidden: True,
+        y: -5000
+
+        color_normal: [0, 0, 0, 1]
+        color_hover: [0, 0, 0, 1]
+        bgcolor_normal: get_color_from_hex('#eca92d')
+        bgcolor_hover: get_color_from_hex('#ffc94d')
+
+        size: 70, 64
+        padding_y: 12
+        padding_x: 10
+
+        claim_space: True
+
+#= Other =======================================================================
+
+    # Version number
+    Label:
+        id: footer_label
+        text: 'Build: N/A'
+        font_name: app.resource_path("fonts/Nexa_Light.ttf")
+        font_size: 12
+        #outline_width: 1
+
+        size: self.texture_size
+        color: get_color_from_hex('#404040')
+        padding: [20, 20]
+        size_hint: None, None
+        pos_hint: {'right': 1, 'top': 1}
