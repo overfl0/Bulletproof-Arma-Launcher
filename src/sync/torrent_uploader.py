@@ -12,9 +12,11 @@
 
 from __future__ import unicode_literals
 
+import json
 import os
 import time
 
+from collections import OrderedDict
 from config import config
 from kivy.logger import Logger
 from kivy.config import Config
@@ -76,7 +78,9 @@ def make_torrent(message_queue, launcher_basedir, mods):
 
         Logger.info('make_torrent: Generating new torrent for mod {}...'.format(mod.foldername))
 
-        output_file = '{}-{}.torrent'.format(mod.foldername, manager_functions.create_timestamp(time.time()))
+        timestamp = manager_functions.create_timestamp(time.time())
+        time.sleep(1)
+        output_file = '{}-{}.torrent'.format(mod.foldername, timestamp)
         output_path = os.path.join(launcher_basedir, output_file)
         comment = '{} dependency on mod {}'.format(config.launcher_name, mod.foldername)
 
@@ -87,7 +91,7 @@ def make_torrent(message_queue, launcher_basedir, mods):
 
         message_queue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
         file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
-        mods_created.append((mod, file_created, output_file))
+        mods_created.append((mod, file_created, output_file, timestamp))
         Logger.info('make_torrent: New torrent for mod {} created!'.format(mod.foldername))
 
     if mods_created:
@@ -96,23 +100,35 @@ def make_torrent(message_queue, launcher_basedir, mods):
     message_queue.resolve({'msg': 'Torrents created: {}'.format(len(mods_created))})
 
 
+def update_metadata_json(metadata_json_orig, mods_created):
+    tree = json.loads(metadata_json_orig, object_pairs_hook=lambda x : OrderedDict(x))
+
+    for mod, _, _, timestamp in mods_created:
+        for mod_leaf in tree['mods']:
+
+            if mod_leaf['foldername'] == mod.foldername:
+                mod_leaf['torrent-timestamp'] = timestamp
+                break
+
+    metadata_json_modified = json.dumps(tree, indent=4)
+    return metadata_json_modified
+
+
 def perform_update(message_queue, mods_created):
     Logger.info('perform_update: Starting the torrents remote update process...')
     message_queue.progress({'msg': 'Connecting to the server...'}, 1)
 
     with remote.RemoteConection(host, username, password, port) as connection:
 
-        metadata_json_path = remote.join(metadata_path, 'metadata.json')
-        print metadata_json_path
-
         # Fetch metadata.json
+        metadata_json_path = remote.join(metadata_path, 'metadata.json')
         metadata_json = connection.read_file(metadata_json_path)
-        # print metadata_json
+        Logger.info('perform_update: Got metadata.json:\n{}'.format(metadata_json))
 
         # Delete old torrents
         message_queue.progress({'msg': 'Deleting old torrents...'}, 1)
         Logger.info('perform_update: Deleting old torrents...')
-        for mod, local_file_path, file_name in mods_created:
+        for mod, local_file_path, file_name, timestamp in mods_created:
             for remote_file_name in connection.list_files(torrents_path):
                 if not remote_file_name.endswith('.torrent'):
                     continue
@@ -133,12 +149,16 @@ def perform_update(message_queue, mods_created):
         # Push new torrents
         message_queue.progress({'msg': 'Pushing new torrents...'}, 1)
         Logger.info('perform_update: Pushing new torrents...')
-        for mod, local_file_path, file_name in mods_created:
+        for mod, local_file_path, file_name, timestamp in mods_created:
             remote_torrent_path = remote.join(torrents_path, file_name)
             connection.put_file(local_file_path, remote_torrent_path)
 
-        # Push modified metadata.json
         message_queue.progress({'msg': 'Updating modified metadata.json...'}, 1)
-        connection.save_file(metadata_json_path, metadata_json)
+
+        metadata_json_updated = update_metadata_json(metadata_json, mods_created)
+        Logger.info('perform_update: Updated metadata.json:\n{}'.format(metadata_json_updated))
+
+        # Push modified metadata.json
+        connection.save_file(metadata_json_path, metadata_json_updated)
 
         message_queue.progress({'msg': 'Updating the mods is done!'}, 1)
