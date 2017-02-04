@@ -12,9 +12,12 @@
 
 from __future__ import unicode_literals
 
+import os.path
 import thread
 import sys
 import webbrowser
+
+from utils.critical_messagebox import MessageBox
 
 # from utils.process import Process
 
@@ -25,6 +28,11 @@ def _open_hyperlink(url):
     """
 
     if url[1:].startswith(':\\'):  # C:\, D:\, etc...
+        if not os.path.exists(url):
+            MessageBox('The file or directory does not exist',
+                       'Can\'t open file or directory')
+            return
+
         url = url.encode(sys.getfilesystemencoding())
 
     return webbrowser.open(url)

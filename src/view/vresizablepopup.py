@@ -12,13 +12,15 @@
 
 from __future__ import unicode_literals
 
+import kivy
+
 from kivy.clock import Clock
 from kivy.logger import Logger
-from kivy.uix.popup import Popup
 from kivy.uix.widget import Widget
+from view.themedpopup import ThemedPopup
 
 
-class VResizablePopup(Popup):
+class VResizablePopup(ThemedPopup):
     """Popup that allows to resize itself vertically.
     This is a workaround for Kivy. Maybe there is another simpler way?
     """

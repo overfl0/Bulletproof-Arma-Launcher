@@ -1,6 +1,6 @@
 # Bulletproof Arma Launcher
 # Copyright (C) 2016 Sascha Ebert
-# Copyright (C) 2016 Lukasz Taczuk
+# Copyright (C) 2017 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,77 +13,60 @@
 
 from __future__ import unicode_literals
 
-from kivy.core.window import Window
+import kivy.app
+
+from kivy.properties import ListProperty
 from kivy.uix.button import Button
-from kivy.properties import NumericProperty, ObjectProperty, BooleanProperty, StringProperty
-from kivy.clock import Clock
+from view.behaviors import HoverBehavior
 
 
-class HoverButton(Button):
-    """
-    lightly extended button implementation
+class HoverButton(HoverBehavior, Button):
+    # Background color of the selected entry
+    color_normal = ListProperty([1, 1, 1, 1])
+    color_hover = ListProperty([])
+    # bgcolor_normal = ListProperty([1, 1, 1, 1])
+    bgcolor_normal = ListProperty([])
+    bgcolor_hover = ListProperty([])
 
-    It supports hover state for now
-    """
-    mouse_hover = BooleanProperty(False)
-    background_hover = StringProperty('')
+    def __init__(self, *args, **kwargs):
+        super(HoverButton, self).__init__(*args, **kwargs)
+        self.bind(mouse_hover=self.on_hover)
+        self.is_hovered = False
 
-    def __init__(self, **kwargs):
-        super(HoverButton, self).__init__(**kwargs)
-        Window.bind(mouse_pos=self.check_hover)
+    def on_hover(self, instance, hover):
 
-        self.bind(mouse_hover=self._on_mouse_hover)
-
-        self.background_normal_orig = ''
-        self.last_text = ''
-        self.animation_states = ['...', '..', '.', '']
-        self.text_animation_enabled = False
-
-    def check_hover(self, instance, value):
-
-        if self.x <= value[0] <= self.x + self.width and \
-           self.y <= value[1] <= self.y + self.height:
-
-            if self.mouse_hover is False:
-                self.mouse_hover = True
-
-        elif self.mouse_hover is True:
-            self.mouse_hover = False
-
-    def _on_mouse_hover(self, instance, value):
+        self.is_hovered = hover
         if self.disabled:
             return
 
-        if (value is True):
-            # self.background_normal_orig = self.background_normal
-            # self.background_normal = self.background_hover
-            self.color = [1, 1, 0.66, 1]
+        if hover:
+            kivy.app.App.get_running_app().play_sound('hover')
+
+            if self.color_hover:
+                self.color = self.color_hover
+
+            if self.bgcolor_hover:
+                self.background_color = self.bgcolor_hover
+
         else:
-            # self.background_normal = self.background_normal_orig
-            self.color = [1, 1, 1, 1]
-
-    def enable_progress_animation(self):
-        return
-        if not self.text_animation_enabled:
-            self.last_text = self.text
-            Clock.schedule_interval(self.do_progress_animation, 0.5)
-            self.text_animation_enabled = True
-
-    def disable_progress_animation(self):
-        return
-        Clock.unschedule(self.do_progress_animation)
-        self.text_animation_enabled = False
-        self.text = self.last_text
-
-    def do_progress_animation(self, dt):
-        st = self.animation_states.pop()
-        self.text = self.last_text + st
-        self.animation_states.insert(0, st)
+            self.color = self.color_normal
+            self.background_color = self.bgcolor_normal
 
     def disable(self):
         """Helper function allowing for setting breakpoints on this action."""
+        if self.disabled:
+            return
+
         self.disabled = True
+        self.background_color = self.bgcolor_normal
 
     def enable(self):
         """Helper function allowing for setting breakpoints on this action."""
+        if not self.disabled:
+            return
+
         self.disabled = False
+
+        # Force on_hover to set the right background in case the button was
+        # invisible and optionally to play a sound if the button is hovered now.
+        self.on_hover(self, self.is_hovered)

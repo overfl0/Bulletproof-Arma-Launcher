@@ -1,0 +1,28 @@
+# Section: Main View of the application
+#          this defines the structure of screens and the top
+#          navigation bar
+
+<MainWidget>
+    id: main_widget
+    size: 1000, 1000
+    Image:
+        source: app.resource_path('images/back.png')
+        size: root.width, root.height
+        pos: root.x, root.y
+
+    # Semi-transparent bars at the top and the bottom
+    LabelB:
+        bottom: 0
+        size: root.width, 64
+        bcolor: get_color_from_hex('#212126')
+
+    LabelB:
+        top: root.top
+        size: root.width, 64
+        bcolor: get_color_from_hex('#212126')
+
+    MainScreenManager:
+        id: main_screen_manager
+        size: root.width, root.height
+        InstallScreen:
+        PrefScreen:

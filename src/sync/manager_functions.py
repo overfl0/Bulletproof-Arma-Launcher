@@ -13,12 +13,11 @@
 
 from __future__ import unicode_literals
 
+import launcher_config
 import os
 import textwrap
 import time
-import torrent_utils
 
-from config import config
 from datetime import datetime
 from distutils.version import LooseVersion
 from kivy.logger import Logger
@@ -83,8 +82,8 @@ def _get_mod_descriptions(para):
     """
     para.progress({'msg': 'Downloading mod descriptions'})
 
-    domain = devmode.get_launcher_domain(default=config.domain)
-    metadata_path = devmode.get_metadata_path(default=config.metadata_path)
+    domain = devmode.get_launcher_domain(default=launcher_config.domain)
+    metadata_path = devmode.get_metadata_path(default=launcher_config.metadata_path)
     url = 'http://{}{}'.format(domain, metadata_path)
 
     try:
@@ -154,8 +153,8 @@ def convert_metadata_to_mod(md, torrent_url_prefix):
 
 
 def get_launcher_description(para, launcher_basedir, metadata):
-    domain = devmode.get_launcher_domain(default=config.domain)
-    torrents_path = devmode.get_torrents_path(default=config.torrents_path)
+    domain = devmode.get_launcher_domain(default=launcher_config.domain)
+    torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
     torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
 
     if 'launcher' not in metadata:
@@ -169,8 +168,8 @@ def get_launcher_description(para, launcher_basedir, metadata):
 
 
 def process_description_data(para, data, launcher_moddir):
-    domain = devmode.get_launcher_domain(default=config.domain)
-    torrents_path = devmode.get_torrents_path(default=config.torrents_path)
+    domain = devmode.get_launcher_domain(default=launcher_config.domain)
+    torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
     torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
     mods = []
 

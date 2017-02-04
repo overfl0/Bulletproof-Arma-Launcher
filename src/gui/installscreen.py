@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 
 from multiprocessing import Queue
 
+import launcher_config
 import kivy
 import kivy.app  # To keep PyDev from complaining
 import os
@@ -23,8 +24,7 @@ import third_party.helpers
 import utils.system_processes
 
 from autoupdater import autoupdater
-from config import config
-from config.version import version
+from launcher_config.version import version
 from functools import partial
 
 from kivy.animation import Animation
@@ -34,7 +34,6 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
-from utils import browser
 from utils.devmode import devmode
 from utils.fake_enum import enum
 from utils.primitive_git import get_git_sha1_auto
@@ -193,22 +192,38 @@ class Controller(object):
         git_sha1 = get_git_sha1_auto()
         footer_text = 'Version: {}\nBuild: {}'.format(self.version,
                                                       git_sha1[:7] if git_sha1 else 'N/A')
-        self.view.ids.footer_label.text = footer_text
+        self.view.ids.footer_label.text = footer_text.upper()
 
     def wait_to_init_action_button(self, dt):
         # self.view.width is normally set to 100 by default, it seems...
         if 'action_button' in self.view.ids and self.view.width != 100:
             self.action_button_init()
+            self.disable_action_buttons()
+
             return False  # Return False to remove the callback from the scheduler
 
     def show_more_play_button(self):
         """Show the "more play options" button."""
-        self.view.ids.more_play.x = self.view.ids.action_button.x + self.view.ids.action_button.width
+        if not self.view.ids.more_play.custom_hidden:
+            return
+        self.view.ids.more_play.custom_hidden = False
+
+        if self.view.ids.more_play.claim_space:
+            self.view.ids.action_button.width = self.view.ids.action_button.width - self.view.ids.more_play.width
+
         self.view.ids.more_play.y = self.view.ids.action_button.y
+        self.view.ids.more_play.x = self.view.ids.action_button.right
 
     def hide_more_play_button(self):
         """Hide the "more play options" button."""
-        self.view.ids.more_play.x = -5000
+        if self.view.ids.more_play.custom_hidden:
+            return
+
+        self.view.ids.more_play.custom_hidden = True
+        self.view.ids.more_play.y = -5000
+
+        if self.view.ids.more_play.claim_space:
+            self.view.ids.action_button.width = self.view.ids.action_button.width + self.view.ids.more_play.width
 
     def enable_action_buttons(self):
         self.view.ids.more_play.enable()
@@ -229,7 +244,7 @@ class Controller(object):
         if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
                 u_from=self.version, u_to=self.launcher.version):
 
-            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
+            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
@@ -278,7 +293,7 @@ class Controller(object):
 
         button_states = [
             (DynamicButtonStates.play, 'PLAY', self.on_play_button_release),
-            (DynamicButtonStates.checking, 'CHECKING', None),
+            (DynamicButtonStates.checking, 'CHECKING...', None),
             (DynamicButtonStates.install, 'INSTALL', self.on_install_button_click),
             (DynamicButtonStates.self_upgrade, 'UPGRADE', self.on_self_upgrade_button_release)
         ]
@@ -297,8 +312,11 @@ class Controller(object):
         self.view.ids.action_button.set_button_state(state)
 
         # Position and resize
-        self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
-        self.view.ids.action_button.center_x = self.view.center_x
+        # self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
+        # self.view.ids.action_button.center_x = self.view.center_x
+
+        # self.view.ids.action_button.x = self.view.ids.status_box.width
+        # self.view.ids.action_button.y = 0
 
         # Place the more_actions_button at the right place
         if state != DynamicButtonStates.play:
@@ -326,6 +344,17 @@ class Controller(object):
 
         return ret_servers
 
+    def _set_status_label(self, main, secondary=None):
+        self.view.ids.status_label.text = main.upper() if main else ''
+
+        if not secondary:
+            self.view.ids.status_box.text = ''
+        else:
+            if isinstance(secondary, basestring):
+                self.view.ids.status_box.text = secondary
+            else:
+                self.view.ids.status_box.text = ' / '.join(secondary).replace('@', '')
+
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
@@ -336,9 +365,6 @@ class Controller(object):
         Logger.info('Opening GameSelectionBox')
         box = GameSelectionBox(self.run_the_game, self.servers, default_teamspeak=self.default_teamspeak_url)
         box.open()
-
-    def on_forum_button_release(self, btn):
-        browser.open_hyperlink(config.forum_url)
 
     def start_syncing(self, seed=False):
         # Enable clicking on "play" button if we're just seeding
@@ -353,9 +379,7 @@ class Controller(object):
 
     def on_prepare_progress(self, progress, percentage):
         self.view.ids.status_image.show()
-
-        if 'msg' in progress:
-            self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.view.ids.progress_bar.value = percentage * 100
 
         message = progress.get('special_message')
@@ -429,7 +453,7 @@ class Controller(object):
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
-        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(config.executable_name))
+        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 
@@ -441,7 +465,7 @@ class Controller(object):
         self.disable_action_buttons()
         self.view.ids.make_torrent.disable()
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = 'Creating torrents...'
+        self._set_status_label('Creating torrents...')
 
         mods_to_convert = self.mods[:]  # Work on the copy
         if self.launcher:
@@ -454,11 +478,11 @@ class Controller(object):
 
     def on_maketorrent_progress(self, progress, _):
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
 
     def on_maketorrent_resolve(self, progress):
         self.para = None
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.view.ids.make_torrent.enable()
         self.view.ids.status_image.hide()
 
@@ -471,7 +495,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.disable_action_buttons()
 
         ErrorPopup(details=details, message=message).chain_open()
@@ -481,23 +505,28 @@ class Controller(object):
     def on_news_success(self, label, request, result):
         # TODO: Move me to another file
 
+        def do_fade_in(text, anim, wid):
+            wid.text = text
+
+            # Do a fade-in. `for` is just in case there would be more than 1 child
+            for child in wid.children:
+                child.opacity = 0
+
+                # The empty first Animation acts as a simple delay
+                anim = Animation(opacity=1)
+                anim.start(child)
+
         # Animations: first show the empty background and then fade in the contents
-        anim = Animation(width=335, right=label.right, t='in_out_circ')
+        anim = Animation(width=label.width_final, right=label.right, t='in_out_circ')
+        anim.bind(on_complete=partial(do_fade_in, result))
         anim.start(label)
 
-        # Do a fade-in. `for` is just in case there would be more than 1 child
-        for child in label.children:
-            child.opacity = 0
-
-            # The empty first Animation acts as a simple delay
-            anim = Animation() + Animation(opacity=1)
-            anim.start(child)
-
-        label.text = result
+        # Fix something that cannot be fixed in kv files
+        label.ids.content.padding = 10, 0
 
     def on_download_mod_description_progress(self, progress, speed):
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
 
     def on_download_mod_description_resolve(self, progress):
         self.para = None
@@ -515,8 +544,8 @@ class Controller(object):
 
         self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
 
-        if config.news_url:
-            UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+        if launcher_config.news_url:
+            UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     def on_download_mod_description_reject(self, data):
         self.para = None
@@ -528,7 +557,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.set_image('attention')
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
 
@@ -543,7 +572,7 @@ class Controller(object):
                 Get it here:
 
                 [ref={}][color=3572b0]{}[/color][/ref]
-                '''.format(config.original_url, config.original_url))
+                '''.format(launcher_config.original_url, launcher_config.original_url))
             MessageBox(message, title='Get the new version of the launcher!', markup=True).chain_open()
             return
 
@@ -569,20 +598,20 @@ class Controller(object):
             self.default_teamspeak_url = mod_data.get('teamspeak', None)
 
             self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
-            if config.news_url:
-                UrlRequest(config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+            if launcher_config.news_url:
+                UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     # Checkmods callbacks ######################################################
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
 
     def on_checkmods_resolve(self, progress):
         self.para = None
         Logger.debug('InstallScreen: checking mods finished')
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
         self.set_and_resize_action_button(DynamicButtonStates.install)
@@ -609,7 +638,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
 
@@ -654,7 +683,7 @@ class Controller(object):
         # Logger.debug('InstallScreen: syncing in progress')
 
         self.view.ids.status_image.show()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'), progress.get('mods'))
         self.view.ids.progress_bar.value = percentage * 100
 
         tsplugin_request_action = progress.get('tsplugin_request_action')
@@ -674,7 +703,7 @@ class Controller(object):
         self.para = None
         Logger.info('InstallScreen: syncing finished')
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = progress['msg']
+        self._set_status_label(progress.get('msg'))
         self.disable_action_buttons()
 
         self.try_enable_play_button()
@@ -689,7 +718,7 @@ class Controller(object):
         last_line = last_line.rstrip().split('\n')[-1]
 
         self.view.ids.status_image.hide()
-        self.view.ids.status_label.text = last_line
+        self._set_status_label(last_line)
         self.disable_action_buttons()
 
         self.syncing_failed = True

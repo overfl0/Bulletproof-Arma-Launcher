@@ -38,14 +38,13 @@ try:
     # it loads this file again. So there is the need of the __main__ guard.
     #
     if __name__ == "__main__":
-        import importlib  # Does not seem to work well with hiddenimports
         import sys
 
         # initialize settings class
         from utils.settings import Settings
         settings = Settings(sys.argv[1:])
 
-        from config import config
+        import launcher_config
 
         # HACK: clear sys.argv for kivy. Keep only the first element
         # sys.argv = sys.argv[0:1]
@@ -53,14 +52,15 @@ try:
         # configure kivy
         from kivy import resources
         from kivy.config import Config
-        from utils.paths import get_resources_path, get_source_path
+        from utils.paths import get_resources_path, get_source_path, get_base_path
         from utils.devmode import devmode
 
         default_log_level = devmode.get_log_level('info')
 
         resources.resource_add_path(get_source_path())
+        resources.resource_add_path(get_resources_path())
 
-        Config.set('kivy', 'window_icon', get_resources_path(config.icon))
+        Config.set('kivy', 'window_icon', get_resources_path(launcher_config.icon))
         Config.set('kivy', 'log_level', default_log_level)
         Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
@@ -119,7 +119,7 @@ try:
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
 
-            title = config.launcher_name.encode('utf-8')
+            title = launcher_config.launcher_name.encode('utf-8')
 
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
@@ -133,7 +133,7 @@ try:
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
 
-            title = '{} updater'.format(config.launcher_name).encode('utf-8')
+            title = '{} updater'.format(launcher_config.launcher_name).encode('utf-8')
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()

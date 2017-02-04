@@ -1,0 +1,12 @@
+# Custom styles go there
+
+<RstTitle>:
+    font_size:
+        sp(self.document.base_font_size * 0.75 - self.section * (
+        self.document.base_font_size / 31.0 * 2))
+
+<RstListItem>:
+    height: self.minimum_height - 8
+
+<Button>:
+    on_release: app.play_sound('click')

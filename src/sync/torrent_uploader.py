@@ -13,11 +13,11 @@
 from __future__ import unicode_literals
 
 import json
+import launcher_config
 import os
 import time
 
 from collections import OrderedDict
-from config import config
 from kivy.logger import Logger
 from kivy.config import Config
 from sync import torrent_utils
@@ -57,7 +57,7 @@ def make_torrent(message_queue, launcher_basedir, mods):
     """Create torrents from mods on the disk."""
 
     Logger.info('make_torrent: Starting the torrents creations process...')
-    # announces = ['http://{}/announce.php'.format(config.domain)]
+    # announces = ['http://{}/announce.php'.format(launcher_config.domain)]
     announces = devmode.get_torrent_tracker_urls()
     web_seeds = devmode.get_torrent_web_seeds()
 
@@ -82,7 +82,7 @@ def make_torrent(message_queue, launcher_basedir, mods):
         time.sleep(1)
         output_file = '{}-{}.torrent'.format(mod.foldername, timestamp)
         output_path = os.path.join(launcher_basedir, output_file)
-        comment = '{} dependency on mod {}'.format(config.launcher_name, mod.foldername)
+        comment = '{} dependency on mod {}'.format(launcher_config.launcher_name, mod.foldername)
 
         directory = os.path.join(mod.parent_location, mod.foldername)
         if not os.path.exists(directory):
