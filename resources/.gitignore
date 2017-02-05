@@ -1,3 +1,7 @@
 */
-!frontline
-!tacbf
+!frontline/
+!frontline/*
+!tacbf/
+!tacbf/*
+
+*.pyc
