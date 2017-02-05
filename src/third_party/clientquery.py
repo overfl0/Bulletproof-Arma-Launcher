@@ -66,7 +66,7 @@ class ClientQuery(object):
             return None
 
         Logger.debug('ClientQuery: Connected successfully!')
-        self.socket.settimeout(0.5)
+        self.socket.settimeout(2)
         return self
 
     def _send(self, command):
