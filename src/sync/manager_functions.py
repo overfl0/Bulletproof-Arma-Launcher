@@ -163,6 +163,7 @@ def get_launcher_description(para, launcher_basedir, metadata):
     launcher = metadata['launcher']
     launcher_mod = convert_metadata_to_mod(launcher, torrent_url_prefix)
     launcher_mod.parent_location = launcher_basedir
+    launcher_mod.is_launcher = True
 
     return launcher_mod
 

@@ -25,6 +25,7 @@ from kivy.config import Config
 from sync import torrent_utils
 from sync import manager_functions
 from utils.devmode import devmode
+from utils import pypeeker
 from utils import remote
 
 default_log_level = devmode.get_log_level('info')
@@ -152,7 +153,6 @@ def _make_torrent(message_queue, launcher_basedir, mods):
         Logger.info('make_torrent: Generating new torrent for mod {}...'.format(mod.foldername))
 
         timestamp = manager_functions.create_timestamp(time.time())
-        time.sleep(1)
         output_file = '{}-{}.torrent'.format(mod.foldername, timestamp)
         output_path = os.path.join(launcher_basedir, output_file)
         comment = '{} dependency on mod {}'.format(launcher_config.launcher_name, mod.foldername)
@@ -168,6 +168,14 @@ def _make_torrent(message_queue, launcher_basedir, mods):
         Logger.info('make_torrent: New torrent for mod {} created!'.format(mod.foldername))
 
     if mods_created:
+        mods_user_friendly_list = []
+        for mod, _, _, _ in mods_created:
+            if hasattr(mod, 'is_launcher'):
+                mods_user_friendly_list.append('{} ({})'.format(
+                    mod.foldername, get_new_launcher_version(mod)))
+            else:
+                mods_user_friendly_list.append(mod.foldername)
+
         message = textwrap.dedent('''
             The following mods have been prepared to be updated:
 
@@ -175,13 +183,27 @@ def _make_torrent(message_queue, launcher_basedir, mods):
 
             Click OK to upload all those mods to the server.
             If you do not want to upload ALL those mods, close the launcher now.
-            ''').format('\n'.join(mod.foldername for mod, _, _, _ in mods_created))
+            ''').format('\n'.join(mods_user_friendly_list))
 
         yield Message.msgbox(message, name='confirm_upload_mods')
 
         perform_update(message_queue, mods_created)
 
     message_queue.resolve({'msg': 'Torrents created: {}'.format(len(mods_created))})
+
+
+def get_new_launcher_version(mod):
+    """Return the real version of the launcher, stored on disk and pointed to by
+    mod.
+    mod must be a launcher autoupdate mod.
+    mod must be in a consistent state (fully working executable).
+    """
+
+    mod_base_path = mod.get_full_path()
+    launcher_executable_path = os.path.join(mod_base_path, launcher_config.executable_name + '.exe')
+
+    version = pypeeker.get_version(launcher_executable_path)
+    return version
 
 
 def update_metadata_json(metadata_json_orig, mods_created):
@@ -203,7 +225,8 @@ def update_metadata_json(metadata_json_orig, mods_created):
             if tree['launcher']['foldername'] == mod.foldername:
                 tree['launcher']['torrent-timestamp'] = timestamp
 
-                # TODO: fix version
+                # Get the new mod version
+                tree['launcher']['version'] = get_new_launcher_version(mod)
 
     metadata_json_modified = json.dumps(tree, indent=4)
     return metadata_json_modified
