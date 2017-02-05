@@ -471,7 +471,7 @@ class Controller(object):
         if self.launcher:
             mods_to_convert.append(self.launcher)
 
-        self.para = self.mod_manager.make_torrent(mods=self.mods)
+        self.para = self.mod_manager.make_torrent(mods=mods_to_convert)
         self.para.then(self.on_maketorrent_resolve,
                        self.on_maketorrent_reject,
                        self.on_maketorrent_progress)
@@ -479,6 +479,16 @@ class Controller(object):
     def on_maketorrent_progress(self, progress, _):
         self.view.ids.status_image.show()
         self._set_status_label(progress.get('msg'))
+
+        def send_message_to_para(para_name, message_name, params, popup):
+            if self.is_para_running(para_name):
+                Logger.info('InstallScreen: Sending reply to the para')
+                self.para.send_message(message_name, params)
+
+        if progress.get('action') == 'msgbox':
+            MessageBox(text=progress.get('msg'), auto_dismiss=False,
+                       on_dismiss=partial(send_message_to_para, 'make_torrent', progress.get('name'), True)
+                       ).chain_open()
 
     def on_maketorrent_resolve(self, progress):
         self.para = None

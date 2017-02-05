@@ -13,7 +13,6 @@
 
 from __future__ import unicode_literals
 
-import importlib  # Needed for pyinstaller
 import pygame
 
 from kivy.app import App

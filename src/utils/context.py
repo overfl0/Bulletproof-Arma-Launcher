@@ -44,3 +44,18 @@ def ignore_nosuchfile_exception():
     except OSError as ex:
         if ex.errno != errno.ENOENT:  # No such file or directory
             raise
+
+
+@contextmanager
+def ignore_nosuchfile_ioerror():
+    """Ignore IOError.errno == errno.ENOENT exception raised inside the with block.
+
+    Usage:
+    with ignore_nosuchfile_exception():
+        os.unlink(zip_path)
+    """
+    try:
+        yield
+    except IOError as ex:
+        if ex.errno != errno.ENOENT:  # No such file or directory
+            raise

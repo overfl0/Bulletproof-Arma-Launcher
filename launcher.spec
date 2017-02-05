@@ -15,7 +15,12 @@ from kivy.deps import sdl2, glew
 primitive_git.save_git_sha1_to_file('.', primitive_git.build_sha1_file)
 config_dir = 'resources/{}'.format(launcher_config.config_select.config_dir)
 
-a = Analysis(['src/launcher.py'])
+hiddenimports=[]
+hiddenimports.append('importlib')  # Kivy 1.9.2
+hiddenimports.append('_cffi_backend')  # Paramiko (cryptography)
+
+a = Analysis(['src/launcher.py'],
+             hiddenimports=hiddenimports)
 
 # Add the build number
 a.datas += [(primitive_git.build_sha1_file, primitive_git.build_sha1_file, 'DATA')]

@@ -73,39 +73,6 @@ def symlink_mod(message_queue, mod_location, real_location):
     message_queue.resolve(real_location)
 
 
-def _make_torrent(messagequeue, launcher_basedir, mods):
-    """Create torrents from mods on the disk."""
-
-    files_created = []
-    # announces = ['http://{}/announce.php'.format(launcher_config.domain)]
-    announces = ['http://5.79.83.193:2710/announce']
-    web_seeds = ['http://{}{}/'.format(launcher_config.domain, launcher_config.web_seeds_path)]
-
-    counter = 0
-    for mod in mods:
-        counter += 1
-        if mod.up_to_date:
-            continue
-
-        output_file = '{}-{}.torrent'.format(mod.foldername, create_timestamp(time.time()))
-        output_path = os.path.join(launcher_basedir, output_file)
-        comment = '{} dependency on mod {}'.format(launcher_config.launcher_name, mod.foldername)
-        directory = os.path.join(mod.parent_location, mod.foldername)
-        if not os.path.exists(directory):
-            continue
-
-        messagequeue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
-        file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
-        files_created.append(file_created)
-        file_created_dir = os.path.dirname(file_created)
-
-    if files_created:
-        from utils import browser
-        browser.open_hyperlink(file_created_dir)
-
-    messagequeue.resolve({'msg': 'Torrents created: {}'.format(len(files_created))})
-
-
 def _get_mod_descriptions(para):
     """
     helper function to get the moddescriptions from the server
@@ -196,6 +163,7 @@ def get_launcher_description(para, launcher_basedir, metadata):
     launcher = metadata['launcher']
     launcher_mod = convert_metadata_to_mod(launcher, torrent_url_prefix)
     launcher_mod.parent_location = launcher_basedir
+    launcher_mod.is_launcher = True
 
     return launcher_mod
 

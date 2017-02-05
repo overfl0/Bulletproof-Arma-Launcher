@@ -29,7 +29,7 @@ def open_hyperlink(obj, ref):
 
 class MessageBox(ChainedPopup):
     def __init__(self, text, title=default_title, markup=False, on_dismiss=None,
-                 hide_button=False):
+                 hide_button=False, auto_dismiss=True):
         bl = BoxLayout(orientation='vertical')
         la = Label(text=text, size_hint_y=0.8, markup=markup)
         la.bind(on_ref_press=open_hyperlink)
@@ -41,7 +41,8 @@ class MessageBox(ChainedPopup):
             bl.add_widget(button)
 
         super(MessageBox, self).__init__(
-            title=title, content=bl, size_hint=(None, None), size=(600, 500))
+            title=title, content=bl, size_hint=(None, None), size=(600, 500),
+            auto_dismiss=auto_dismiss)
 
         # Bind an optional handler when the user closes the message
         if on_dismiss:

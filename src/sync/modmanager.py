@@ -18,7 +18,6 @@ import kivy.app  # To keep PyDev from complaining
 
 from manager_functions import (
     _get_mod_descriptions,
-    _make_torrent,
     _prepare_and_check,
     _sync_all,
 )
@@ -27,6 +26,7 @@ from preparer import prepare_all
 
 from kivy.logger import Logger
 from utils.process import protected_para
+from sync import torrent_uploader
 
 
 class ModManager(object):
@@ -43,7 +43,7 @@ class ModManager(object):
 
     def make_torrent(self, mods):
         para = protected_para(
-            _make_torrent,
+            torrent_uploader.make_torrent,
             (
                 self.settings.get('launcher_basedir'),
                 mods
