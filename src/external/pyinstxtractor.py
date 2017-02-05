@@ -166,21 +166,25 @@ class PyInstArchive:
 
 
 
-    def extractFiles(self):
+    def extractFiles(self, file_name=None):
         print('[*] Begining extraction...please standby')
+        '''
         extractionDir = os.path.join(os.getcwd(), os.path.basename(self.filePath) + '_extracted')
 
         if not os.path.exists(extractionDir):
             os.mkdir(extractionDir)
 
         os.chdir(extractionDir)
+        '''
 
         for entry in self.tocList:
+            '''
             basePath = os.path.dirname(entry.name)
             if basePath != '':
                 # Check if path exists, create if not
                 if not os.path.exists(basePath):
                     os.makedirs(basePath)
+            '''
 
             self.fPtr.seek(entry.position, os.SEEK_SET)
             data = self.fPtr.read(entry.cmprsdDataSize)
@@ -191,11 +195,16 @@ class PyInstArchive:
                 # Comment out the assertion in such a case
                 assert len(data) == entry.uncmprsdDataSize # Sanity Check
 
+            if file_name and entry.name == file_name:
+                return data
+
+            '''
             with open(entry.name, 'wb') as f:
                 f.write(data)
 
             if entry.typeCmprsData == b'z':
                 self._extractPyz(entry.name)
+            '''
 
 
     def _extractPyz(self, name):
@@ -254,6 +263,19 @@ class PyInstArchive:
                     if self.pyver >= 33:
                         pycFile.write(b'\0' * 4)  # Size parameter added in Python 3.3
                     pycFile.write(data)
+
+
+def extract_file(archive_path, file_name):
+    arch = PyInstArchive(archive_path)
+    if arch.open():
+        if arch.checkFile():
+            if arch.getCArchiveInfo():
+                arch.parseTOC()
+                retval = arch.extractFiles(file_name)
+                arch.close()
+                return retval
+
+        arch.close()
 
 
 def main():

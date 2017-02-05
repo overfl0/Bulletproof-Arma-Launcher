@@ -17,7 +17,8 @@ from __future__ import unicode_literals
 import ast
 import sys
 
-from PyInstaller.archive.readers import CArchiveReader
+# from PyInstaller.archive.readers import CArchiveReader
+from external.pyinstxtractor import extract_file
 
 
 VERSION_LOCATION = 'src\\launcher_config\\version.py'
@@ -26,7 +27,7 @@ VERSION_LOCATION = 'src\\launcher_config\\version.py'
 class PypeekerException(Exception):
     pass
 
-
+'''
 def get_file_from_pyinstaller_exe(name, file_name):
     """Retrieves a file packed into an exe built by PyInstaller.
     Returns the file contents or None if the file was not found.
@@ -50,14 +51,15 @@ def get_file_from_pyinstaller_exe(name, file_name):
 
     _, contents = extract_value  # ispkg, contents
     return contents
-
+'''
 
 def get_version(name, location=VERSION_LOCATION):
     """Get the version.py of the launcher stored in location.
     If used with a custom location right now, the location
     """
 
-    contents = get_file_from_pyinstaller_exe(name, location)
+    # contents = get_file_from_pyinstaller_exe(name, location)
+    contents = extract_file(name, location)
     if contents is None:
         raise PypeekerException('Could not retrieve version file from the executable!')
 
