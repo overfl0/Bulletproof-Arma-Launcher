@@ -58,6 +58,7 @@ def run_faceTrackNoIR():
         faceTrackNoIR_path = get_faceTrackNoIR_path()
 
     except FaceTrackNoIRNotInstalled:
+        Logger.info('FaceTrackNoIR: No FaceTrackNoIR installation found.')
         return
 
     if is_facetrackNoIR_running():
@@ -66,3 +67,50 @@ def run_faceTrackNoIR():
 
     Logger.info('FaceTrackNoIR: Running file: {}'.format(faceTrackNoIR_path))
     subprocess.Popen(unicode_helpers.u_to_fs_list([faceTrackNoIR_path]))
+
+
+class TrackIRNotInstalled(SoftwareNotInstalled):
+    pass
+
+
+def get_TrackIR_path():
+    """Get the path to FaceTrackNoIR installation."""
+
+    try:
+        key = 'Software\\NaturalPoint\\NaturalPoint\\NPClient Location'
+        reg_val = Registry.ReadValueUserAndMachine(key, 'Path', True)
+
+        Logger.info('TrackIR: Install location: {}'.format(reg_val))
+
+        path = os.path.join(reg_val, 'TrackIR5.exe')
+        if not os.path.isfile(path):
+            Logger.info('TrackIR: Found install location but no expected exe file found: {}'.format(path))
+            raise TrackIRNotInstalled()
+
+        return path
+
+    except Registry.Error:
+        raise TrackIRNotInstalled()
+
+
+def is_TrackIR_running():
+    """Check if there is a FaceTrackNoIR process already running."""
+    return utils.system_processes.program_running('TrackIR5.exe')
+
+
+def run_TrackIR():
+    """Run faceTrackNoIR if installed and not already running."""
+
+    try:
+        TrackIR_path = get_TrackIR_path()
+
+    except TrackIRNotInstalled:
+        Logger.info('TrackIR: No TrackIR installation found.')
+        return
+
+    if is_TrackIR_running():
+        Logger.info('TrackIR: TrackIR found already running.')
+        return
+
+    Logger.info('TrackIR: Running file: {}'.format(TrackIR_path))
+    subprocess.Popen(unicode_helpers.u_to_fs_list([TrackIR_path]))

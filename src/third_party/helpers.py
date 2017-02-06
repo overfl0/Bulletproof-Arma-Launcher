@@ -258,7 +258,11 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
     else:
         Logger.info('Third party: Not running teamspeak because of devmode settings.')
 
+    Logger.info('Third party: Trying to run FaceTrackNoIR...')
     headtracking.run_faceTrackNoIR()
+
+    Logger.info('Third party: Trying to run TrackIR...')
+    headtracking.run_TrackIR()
 
     Logger.info('Third party: Running the game')
 
