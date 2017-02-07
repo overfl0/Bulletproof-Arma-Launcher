@@ -62,7 +62,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
     def set_new_path(self, new_path):
         # Set the loader icon for the time being
-        self.status_image.source = paths.get_resources_path('images/ajax-loader2_20x20.gif')
+        self.status_image.source = paths.get_resources_path('images/loader.zip')
         self.status_image.opacity = 1
         self.status_image.color = self.icon_color
 

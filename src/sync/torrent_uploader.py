@@ -252,6 +252,8 @@ def perform_update(message_queue, mods_created):
     with remote.RemoteConection(host, username, password, port) as connection:
 
         # Fetch metadata.json
+        message_queue.progress({'msg': 'Fetching metadata.json...'}, 1)
+        # TODO: handle IOError: [Errno 2]
         metadata_json_path = remote.join(metadata_path, 'metadata.json')
         metadata_json = connection.read_file(metadata_json_path)
         Logger.info('perform_update: Got metadata.json:\n{}'.format(metadata_json))

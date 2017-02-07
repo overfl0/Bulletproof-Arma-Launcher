@@ -366,7 +366,7 @@ def is_ts3_plugin_installed(ts3_plugin_full_path):
     return False
 
 
-def are_ts_plugins_installed(mod_parent_location, mod_name, file_paths):
+def are_ts_plugins_installed(mod_parent_location, file_paths):
     """Check if all ts3_plugin files contained inside the mod files are
     installed.
     """

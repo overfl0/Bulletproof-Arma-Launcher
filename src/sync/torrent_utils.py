@@ -96,7 +96,7 @@ def is_complete_quick(mod):
         Logger.info('Is_complete: Superfluous files in mod directory. Marking as not complete')
         return False
 
-    if not are_ts_plugins_installed(mod.parent_location, mod.full_name, files_list):
+    if not are_ts_plugins_installed(mod.parent_location, files_list):
         Logger.info('Is_complete: TS plugin out of date or not installed.')
         return False
 
