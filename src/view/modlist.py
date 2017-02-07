@@ -26,6 +26,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from sync import manager_functions
+from sync.torrent_utils import path_can_be_a_mod
 from utils.paths import is_dir_writable
 from utils.process import protected_para
 from view.behaviors import HoverBehavior
@@ -88,8 +89,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
         # Prevent idiot-loops (seriously, people doing this are idiots!)
         settings = kivy.app.App.get_running_app().settings
-        launcher_moddir = os.path.realpath(settings.get('launcher_moddir'))
-        if launcher_moddir.startswith(os.path.realpath(path)):
+        if not path_can_be_a_mod(path, settings.get('launcher_moddir')):
             message = textwrap.dedent('''
                 Really???
 

@@ -101,7 +101,8 @@ class ModManager(object):
         return para
 
     def prepare_all(self):
-        para = protected_para(prepare_all, (list(self.mods),), 'prepare_all')
+        settings = kivy.app.App.get_running_app().settings
+        para = protected_para(prepare_all, (list(self.mods), settings.get('launcher_moddir')), 'prepare_all')
         return para
 
     def on_prepare_and_check_resolve(self, data):

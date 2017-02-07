@@ -13,6 +13,7 @@
 from __future__ import unicode_literals
 
 import errno
+import kivy.app
 import libtorrent
 import os
 import subprocess
@@ -134,6 +135,23 @@ def get_admin_error(text, path):
         ''').format(text, path)
 
     return error_message
+
+
+def path_can_be_a_mod(path, mods_directory):
+    """Check if a given path could be used by a mod.
+    path - patch to be checked.
+    mods_directory - the directory where mods are stored by the launcher.
+    """
+
+    launcher_moddir = os.path.realpath(mods_directory)
+    launcher_moddir_casefold = unicode_helpers.casefold(launcher_moddir)
+    path_casefold = unicode_helpers.casefold(os.path.realpath(path))
+
+    if launcher_moddir_casefold.startswith(path_casefold):
+        print "Skipping {}".format(path_casefold)
+        return False
+
+    return True
 
 
 def set_node_read_write(node_path):

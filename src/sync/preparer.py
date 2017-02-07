@@ -78,9 +78,10 @@ class MessageHandler(object):
 
 
 class Preparer(object):
-    def __init__(self, message_queue, mods):
+    def __init__(self, message_queue, mods, mods_directory):
         self.message_queue = message_queue
         self.mods = mods
+        self.mods_directory = mods_directory
         self.force_termination = False
 
         self.message_handler = MessageHandler(message_queue, self)
@@ -183,7 +184,7 @@ class Preparer(object):
 
         missing_mods_names = [mod.foldername for mod in self.missing_mods]
         # Find potential mods on disk.
-        found_mods = finder.find_mods(missing_mods_names, locations)
+        found_mods = finder.find_mods(self.mods_directory, missing_mods_names, locations)
 
         # For missing mods that have been found
         for mod_name in found_mods:
@@ -244,10 +245,10 @@ class Preparer(object):
         self.message_queue.resolve()
 
 
-def prepare_all(message_queue, mods):
+def prepare_all(message_queue, mods, mods_directory):
     """Prepare all the mods' directories before downloading content.
     See preparer.run doc for more info.
     """
 
-    preparer = Preparer(message_queue, mods)
+    preparer = Preparer(message_queue, mods, mods_directory)
     preparer.run()

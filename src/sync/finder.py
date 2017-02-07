@@ -21,6 +21,7 @@ import string
 from kivy.logger import Logger
 from third_party.arma import Arma
 from utils.unicode_helpers import casefold
+from sync.torrent_utils import path_can_be_a_mod
 
 
 def get_mod_locations():
@@ -45,7 +46,7 @@ def keep_meaningful_data(name):
     return filtered_name
 
 
-def find_mods(names, locations=None):
+def find_mods(mods_directory, names, locations=None):
     """Find all the places where mods could already be stored on disk.
     For now this only does simple name matching and returns directories that
     have a name that matches the requested name. The search is case-insensitive.
@@ -59,6 +60,8 @@ def find_mods(names, locations=None):
     Otherwise, os.walk will enter that directory.
     Note2: followlinks=False is IGNORED with windows Junctions and Symlinks!
     """
+
+
 
     filtered_names = set(keep_meaningful_data(name) for name in names)
 
@@ -90,7 +93,8 @@ def find_mods(names, locations=None):
             if filtered_base_root in filtered_names:
                 # Find the right name in the right case
                 for name in names:
-                    if keep_meaningful_data(name) == filtered_base_root:
+                    if keep_meaningful_data(name) == filtered_base_root and \
+                       path_can_be_a_mod(root, mods_directory):
                         # response[name].append(root)
                         response.setdefault(name, []).append(root)
                         break
