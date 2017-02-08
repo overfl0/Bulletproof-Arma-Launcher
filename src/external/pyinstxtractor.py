@@ -60,6 +60,7 @@ class PyInstArchive:
         try:
             self.fPtr = open(self.filePath, 'rb')
             self.fileSize = os.stat(self.filePath).st_size
+            self.packageEnd = self.fileSize
         except:
             print('[*] Error: Could not open {}'.format(self.filePath))
             return False
@@ -72,42 +73,91 @@ class PyInstArchive:
         except:
             pass
 
+    def getDigitalSignature(self):
+        self.fPtr.seek(0, os.SEEK_SET)
+        peMagic = self.fPtr.read(2)
+
+        # Dos header
+        if peMagic != 'MZ':
+            print('[*] Error : Wrong PE magic value or not a pyinstaller archive')
+            return 0
+
+        # PE header
+        self.fPtr.seek(60, os.SEEK_SET)
+        [peOffset] = struct.unpack('<i', self.fPtr.read(4))
+        self.fPtr.seek(peOffset + 24, os.SEEK_SET)
+
+        coffMagic = self.fPtr.read(2)
+        # 32bit exe
+        if coffMagic == '\x0b\x01':
+            signaturePeOffset = 152
+
+        # 64bit exe
+        elif coffMagic == '\x0b\x02':
+            signaturePeOffset = 168
+
+        else:
+            print('[*] Error : Wrong COFF magic value or not a pyinstaller archive')
+            return 0
+
+        self.fPtr.seek(peOffset + signaturePeOffset, os.SEEK_SET)
+        [certificateTableRVA] = struct.unpack('<i', self.fPtr.read(4))
+
+        if certificateTableRVA:
+            print('[*] Found digital certificate at {}'.format(hex(certificateTableRVA)))
+
+        # Will be 0 in case there is no certificate at all
+        return certificateTableRVA
 
     def checkFile(self):
         print('[*] Processing {}'.format(self.filePath))
+
+        signatureOffset = self.getDigitalSignature()
+        offset = signatureOffset if signatureOffset else self.fileSize
+
+        # PyInstalled performs the check with 8 bytes of tolerance with WIN32
+        # and 4096 with other formats
+        for i in range(8):
+            if self._checkFileAt(offset - i):
+                self.packageEnd = offset - i
+                return True
+
+        print('[*] Error : Unsupported pyinstaller version or not a pyinstaller archive')
+        return False
+
+    def _checkFileAt(self, offset):
         # Check if it is a 2.0 archive
-        self.fPtr.seek(self.fileSize - self.PYINST20_COOKIE_SIZE, os.SEEK_SET)
+        self.fPtr.seek(offset - self.PYINST20_COOKIE_SIZE, os.SEEK_SET)
         magicFromFile = self.fPtr.read(len(self.MAGIC))
 
         if magicFromFile == self.MAGIC:
-            self.pyinstVer = 20     # pyinstaller 2.0
+            self.pyinstVer = 20  # pyinstaller 2.0
             print('[*] Pyinstaller version: 2.0')
             return True
 
         # Check for pyinstaller 2.1+ before bailing out
-        self.fPtr.seek(self.fileSize - self.PYINST21_COOKIE_SIZE, os.SEEK_SET)
+        self.fPtr.seek(offset - self.PYINST21_COOKIE_SIZE, os.SEEK_SET)
         magicFromFile = self.fPtr.read(len(self.MAGIC))
 
         if magicFromFile == self.MAGIC:
             print('[*] Pyinstaller version: 2.1+')
-            self.pyinstVer = 21     # pyinstaller 2.1+
+            self.pyinstVer = 21  # pyinstaller 2.1+
             return True
 
-        print('[*] Error : Unsupported pyinstaller version or not a pyinstaller archive')
         return False
 
 
     def getCArchiveInfo(self):
         try:
             if self.pyinstVer == 20:
-                self.fPtr.seek(self.fileSize - self.PYINST20_COOKIE_SIZE, os.SEEK_SET)
+                self.fPtr.seek(self.packageEnd - self.PYINST20_COOKIE_SIZE, os.SEEK_SET)
 
                 # Read CArchive cookie
                 (magic, lengthofPackage, toc, tocLen, self.pyver) = \
                 struct.unpack('!8siiii', self.fPtr.read(self.PYINST20_COOKIE_SIZE))
 
             elif self.pyinstVer == 21:
-                self.fPtr.seek(self.fileSize - self.PYINST21_COOKIE_SIZE, os.SEEK_SET)
+                self.fPtr.seek(self.packageEnd - self.PYINST21_COOKIE_SIZE, os.SEEK_SET)
 
                 # Read CArchive cookie
                 (magic, lengthofPackage, toc, tocLen, self.pyver, pylibname) = \
@@ -121,7 +171,7 @@ class PyInstArchive:
 
         # Overlay is the data appended at the end of the PE
         self.overlaySize = lengthofPackage
-        self.overlayPos = self.fileSize - self.overlaySize
+        self.overlayPos = self.packageEnd - self.overlaySize
         self.tableOfContentsPos = self.overlayPos + toc
         self.tableOfContentsSize = tocLen
 
