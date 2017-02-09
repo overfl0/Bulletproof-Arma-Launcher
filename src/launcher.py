@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Bulletproof Arma Launcher
 # Copyright (C) 2016 Sascha Ebert
 # Copyright (C) 2016 Lukasz Taczuk
