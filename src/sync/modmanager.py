@@ -13,9 +13,6 @@
 
 from __future__ import unicode_literals
 
-import kivy
-import kivy.app  # To keep PyDev from complaining
-
 from manager_functions import (
     _get_mod_descriptions,
     _prepare_and_check,
@@ -31,11 +28,12 @@ from sync import torrent_uploader
 
 class ModManager(object):
     """docstring for ModManager"""
-    def __init__(self):
+    def __init__(self, settings):
         super(ModManager, self).__init__()
         self.clear_mods()
         self.clear_launcher()
-        self.settings = kivy.app.App.get_running_app().settings
+        self.clear_servers()
+        self.settings = settings
 
     def get_mods(self):
         return self.mods
@@ -49,21 +47,16 @@ class ModManager(object):
     def clear_launcher(self):
         self.launcher = None
 
+    def get_servers(self):
+        return self.servers
+
+    def clear_servers(self):
+        self.servers = []
+
     # Para functions below #####################################################
 
     def download_mod_description(self):
         para = protected_para(_get_mod_descriptions, (), 'download_description')
-        return para
-
-    def make_torrent(self, mods):
-        para = protected_para(
-            torrent_uploader.make_torrent,
-            (
-                self.settings.get('launcher_basedir'),
-                mods
-            ),
-            'make_torrent'
-        )
         return para
 
     def prepare_and_check(self, data):
@@ -79,6 +72,11 @@ class ModManager(object):
         )
 
         return para
+
+    def on_prepare_and_check_resolve(self, data):
+        Logger.info('ModManager: Got mods ' + repr(data['mods']))
+        self.mods = data['mods']
+        self.launcher = data['launcher']
 
     def sync_all(self, seed):
         synced_elements = self.mods[:]  # Work on the copy
@@ -99,6 +97,16 @@ class ModManager(object):
 
         return para
 
+    def on_sync_all_progress(self, data, progress):
+        Logger.debug('ModManager: Sync progress ' + repr(data))
+        # Todo: modlist could be a class of its own
+
+        mod_synchronised = data.get('workaround_finished')
+        if mod_synchronised:
+            for mod in self.mods:
+                if mod.foldername == mod_synchronised:
+                    mod.up_to_date = True
+
     def sync_launcher(self, seed=False):
         para = protected_para(
             _sync_all,
@@ -115,24 +123,22 @@ class ModManager(object):
         return para
 
     def prepare_all(self):
-        settings = kivy.app.App.get_running_app().settings
-        para = protected_para(prepare_all, (list(self.mods), settings.get('launcher_moddir')), 'prepare_all')
+        para = protected_para(
+            prepare_all,
+            (list(self.mods), self.settings.get('launcher_moddir')),
+            'prepare_all')
         return para
 
-    def on_prepare_and_check_resolve(self, data):
-        Logger.info('ModManager: Got mods ' + repr(data['mods']))
-        self.mods = data['mods']
-        self.launcher = data['launcher']
-
-    def on_sync_all_progress(self, data, progress):
-        Logger.debug('ModManager: Sync progress ' + repr(data))
-        # Todo: modlist could be a class of its own
-
-        mod_synchronised = data.get('workaround_finished')
-        if mod_synchronised:
-            for mod in self.mods:
-                if mod.foldername == mod_synchronised:
-                    mod.up_to_date = True
+    def make_torrent(self, mods):
+        para = protected_para(
+            torrent_uploader.make_torrent,
+            (
+                self.settings.get('launcher_basedir'),
+                mods
+            ),
+            'make_torrent'
+        )
+        return para
 
 
 if __name__ == '__main__':

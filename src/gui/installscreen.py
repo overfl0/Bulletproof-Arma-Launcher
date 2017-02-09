@@ -64,8 +64,8 @@ class Controller(object):
         application = kivy.app.App.get_running_app()
 
         self.view = widget
-        self.mod_manager = ModManager()
         self.settings = kivy.app.App.get_running_app().settings
+        self.mod_manager = ModManager(self.settings)
         self.version = version
         self.para = None
 
