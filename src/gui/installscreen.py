@@ -320,7 +320,7 @@ class Controller(object):
         # self.view.ids.action_button.y = 0
 
         # Place the more_actions_button at the right place
-        if state != DynamicButtonStates.play:
+        if state != DynamicButtonStates.play and state != DynamicButtonStates.install:
             self.hide_more_play_button()
         else:
             self.show_more_play_button()
@@ -342,6 +342,7 @@ class Controller(object):
         for ret_server in ret_servers:
             ret_server.setdefault('teamspeak', default_teamspeak)
             ret_server.setdefault('password', None)
+            ret_server.setdefault('mods', [])
 
         return ret_servers
 
@@ -359,7 +360,8 @@ class Controller(object):
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
-        if self.view.ids.action_button.get_button_state() != DynamicButtonStates.play:
+        button_state = self.view.ids.action_button.get_button_state()
+        if button_state != DynamicButtonStates.play and button_state != DynamicButtonStates.install:
             Logger.error('Button more_action pressed when it should not be accessible!')
             return
 
