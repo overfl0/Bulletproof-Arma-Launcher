@@ -223,11 +223,10 @@ def update_metadata_json(metadata_json_orig, mods_created):
     tree = json.loads(metadata_json_orig, object_pairs_hook=lambda x : OrderedDict(x))
 
     for mod, _, _, timestamp in mods_created:
+        # Perform the global mods update
         for mod_leaf in tree['mods']:
-
             if mod_leaf['foldername'] == mod.foldername:
                 mod_leaf['torrent-timestamp'] = timestamp
-                break
 
         # Perform the launcher update
         if 'launcher' in tree:
@@ -237,7 +236,19 @@ def update_metadata_json(metadata_json_orig, mods_created):
                 # Get the new mod version
                 tree['launcher']['version'] = get_new_launcher_version(mod)
 
-    metadata_json_modified = json.dumps(tree, indent=4)
+        # Perform the per-server mods update
+        for server in tree['servers']:
+            server_mods = server.get('mods')
+            if server_mods is None:
+                continue
+
+            for mod_leaf in server_mods:
+                if mod_leaf['foldername'] == mod.foldername:
+                    mod_leaf['torrent-timestamp'] = timestamp
+
+
+
+    metadata_json_modified = json.dumps(tree, indent=4, separators=(',', ': '))
     return metadata_json_modified
 
 
