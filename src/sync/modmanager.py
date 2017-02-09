@@ -33,9 +33,23 @@ class ModManager(object):
     """docstring for ModManager"""
     def __init__(self):
         super(ModManager, self).__init__()
-        self.mods = []
-        self.launcher = None
+        self.clear_mods()
+        self.clear_launcher()
         self.settings = kivy.app.App.get_running_app().settings
+
+    def get_mods(self):
+        return self.mods
+
+    def clear_mods(self):
+        self.mods = []
+
+    def get_launcher(self):
+        return self.launcher
+
+    def clear_launcher(self):
+        self.launcher = None
+
+    # Para functions below #####################################################
 
     def download_mod_description(self):
         para = protected_para(_get_mod_descriptions, (), 'download_description')

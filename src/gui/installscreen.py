@@ -86,10 +86,10 @@ class Controller(object):
         """
 
         self.para = None
-        self.mods = []
         self.servers = []
         self.syncing_failed = False
-        self.launcher = None
+        self.mod_manager.clear_launcher()
+        self.mod_manager.clear_mods()
 
         # Uncomment the code below to enable troubleshooting mode
         # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
@@ -179,7 +179,7 @@ class Controller(object):
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
                     # Don't start if no mods, syncing failed or if it's already running
-                    if self.mods and not self.para and not self.syncing_failed:
+                    if self.mod_manager.get_mods() and not self.para and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
 
@@ -241,16 +241,17 @@ class Controller(object):
 
         self.disable_action_buttons()
 
-        if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
-                u_from=self.version, u_to=self.launcher.version):
+        launcher = self.mod_manager.get_launcher()
+        if is_pyinstaller_bundle() and launcher and autoupdater.should_update(
+                u_from=self.version, u_to=launcher.version):
 
-            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
+            launcher_executable = os.path.join(launcher.parent_location, launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
-            if self.launcher.up_to_date and same_files:
+            if launcher.up_to_date and same_files:
                 Logger.error('Metadata says there is a newer version {} than our version {} but the files are the same. Aborting upgrade request.'
-                             .format(self.launcher.version, self.version))
+                             .format(launcher.version, self.version))
 
             else:
                 # switch to play button and a different handler
@@ -278,7 +279,7 @@ class Controller(object):
         if not third_party.helpers.check_requirements(verbose=False):
             return
 
-        for mod in self.mods:
+        for mod in self.mod_manager.get_mods():
             if not mod.up_to_date:
                 return
 
@@ -390,7 +391,7 @@ class Controller(object):
 
             if command == 'missing_mods':
                 mod_names = params
-                mods = [mod for mod in self.mods if mod.foldername in mod_names]
+                mods = [mod for mod in self.mod_manager.get_mods() if mod.foldername in mod_names]
 
                 message_box_instance = ModSearchBox(on_selection=self.on_prepare_search_decision,
                                                     on_manual_path=self.on_mod_set_path,
@@ -453,7 +454,8 @@ class Controller(object):
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
-        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
+        launcher = self.mod_manager.get_launcher()
+        executable = os.path.join(launcher.parent_location, launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 
@@ -467,9 +469,9 @@ class Controller(object):
         self.view.ids.status_image.show()
         self._set_status_label('Creating torrents...')
 
-        mods_to_convert = self.mods[:]  # Work on the copy
-        if self.launcher:
-            mods_to_convert.append(self.launcher)
+        mods_to_convert = self.mod_manager.get_mods()[:]  # Work on the copy
+        if self.mod_manager.get_launcher():
+            mods_to_convert.append(self.mod_manager.get_launcher())
 
         self.para = self.mod_manager.make_torrent(mods=mods_to_convert)
         self.para.then(self.on_maketorrent_resolve,
@@ -630,13 +632,6 @@ class Controller(object):
             self.view.ids.make_torrent.enable()
             self.view.ids.make_torrent.text = 'CREATE'
 
-        self.launcher = progress['launcher']
-
-        Logger.debug('InstallScreen: got mods:')
-        for mod in progress['mods']:
-            Logger.info('InstallScreen: {}'.format(mod))
-
-        self.mods = progress['mods']
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
 
@@ -753,7 +748,7 @@ class Controller(object):
             if self.is_para_running('sync'):
                 self.para.request_termination()
 
-        third_party.helpers.run_the_game(self.mods, ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
+        third_party.helpers.run_the_game(self.mod_manager.get_mods(), ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
         self.disable_action_buttons()
 
     def on_play_button_release(self, btn):
