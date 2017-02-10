@@ -13,13 +13,12 @@
 from __future__ import unicode_literals
 
 import json
+import sys
 
 from utils.paths import get_external_executable_dir
+from utils.critical_messagebox import MessageBox
 
 DEVMODE_FILE_NAME = 'devmode.conf'
-
-# class DevModeException(Exception):
-#    pass
 
 
 class DevMode(object):
@@ -39,10 +38,14 @@ class DevMode(object):
                 s = f.read()
                 self.devdata = json.loads(s)
 
-        except ValueError:  # Bad JSON data
-            raise
-        #    raise DevModeException(ex)  # Note to self:
-        # Do NOT throw exceptions like this! You'll lose stacktrace information!
+        except ValueError as ex:  # Bad JSON data
+            try:
+                message = unicode(ex)
+            except:
+                message = unicode(repr(str(ex)))
+
+            MessageBox('devmode.conf:\n' + message, 'devmode.conf contains an error!')
+            sys.exit(1)
 
         except Exception:
             self.devdata = {}
