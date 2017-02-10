@@ -86,10 +86,8 @@ class Controller(object):
         """
 
         self.para = None
-        self.servers = []
         self.syncing_failed = False
-        self.mod_manager.clear_launcher()
-        self.mod_manager.clear_mods()
+        self.mod_manager.reset()
 
         # Uncomment the code below to enable troubleshooting mode
         # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
@@ -325,27 +323,6 @@ class Controller(object):
         else:
             self.show_more_play_button()
 
-    def _sanitize_server_list(self, servers, default_teamspeak):
-        """Filter out only the servers that contain a 'name', 'ip' and 'port' fields."""
-        # TODO: move me somewhere else
-
-        checked_servers = servers[:]
-        extra_server_string = devmode.get_extra_server()
-
-        if extra_server_string:
-            extra_server = {k: v for (k, v) in zip(('name', 'ip', 'port'), extra_server_string.split(':'))}
-            checked_servers.insert(0, extra_server)
-
-        ret_servers = filter(lambda x: all((x.get('name'), x.get('ip'), x.get('port'))), checked_servers)
-
-        # Add the default values, if not provided
-        for ret_server in ret_servers:
-            ret_server.setdefault('teamspeak', default_teamspeak)
-            ret_server.setdefault('password', None)
-            ret_server.setdefault('mods', [])
-
-        return ret_servers
-
     def _set_status_label(self, main, secondary=None):
         self.view.ids.status_label.text = main.upper() if main else ''
 
@@ -357,6 +334,9 @@ class Controller(object):
             else:
                 self.view.ids.status_box.text = ' / '.join(secondary).replace('@', '')
 
+    def set_selected_server(self, server_name):
+        self.mod_manager.select_server(server_name)
+
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
@@ -366,7 +346,7 @@ class Controller(object):
             return
 
         Logger.info('Opening GameSelectionBox')
-        box = GameSelectionBox(self.run_the_game, self.servers, default_teamspeak=self.default_teamspeak_url)
+        box = GameSelectionBox(self.set_selected_server, self.mod_manager.get_servers())
         box.open()
 
     def start_syncing(self, seed=False):
@@ -542,24 +522,16 @@ class Controller(object):
         self.view.ids.status_image.show()
         self._set_status_label(progress.get('msg'))
 
-    def on_download_mod_description_resolve(self, progress):
-        self.para = None
-        mod_description_data = progress['data']
-
-        self.settings.set('mod_data_cache', mod_description_data)
-
+    def on_download_mod_description_resolve(self, data):
         # Continue with processing mod_description data
-        self.para = self.mod_manager.prepare_and_check(mod_description_data)
+        self.para = self.mod_manager.prepare_and_check(data['data'])
         self.para.then(self.on_checkmods_resolve,
                        self.on_checkmods_reject,
                        self.on_checkmods_progress)
 
-        self.default_teamspeak_url = mod_description_data.get('teamspeak', None)
-
-        self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
-
         if launcher_config.news_url:
-            UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+            UrlRequest(launcher_config.news_url, on_success=partial(
+                self.on_news_success, self.view.ids.news_label))
 
     def on_download_mod_description_reject(self, data):
         self.para = None
@@ -592,8 +564,6 @@ class Controller(object):
 
         ErrorPopup(details=details, message=message).chain_open()
 
-        self.servers = []
-
         # Carry on with the execution! :)
         # Read data from cache and continue if successful
         mod_data = self.settings.get('mod_data_cache')
@@ -609,9 +579,6 @@ class Controller(object):
                            self.on_checkmods_reject,
                            self.on_checkmods_progress)
 
-            self.default_teamspeak_url = mod_data.get('teamspeak', None)
-
-            self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
             if launcher_config.news_url:
                 UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
@@ -737,7 +704,8 @@ class Controller(object):
 
     ############################################################################
 
-    def run_the_game(self, ip=None, port=None, password=None, teamspeak_url=None):
+    def on_play_button_release(self, btn):
+        Logger.info('InstallScreen: User hit play')
 
         if utils.system_processes.program_running('arma3launcher.exe'):
             ErrorPopup(message='Close Bohemia Interactive Arma 3 Launcher first!').chain_open()
@@ -750,20 +718,8 @@ class Controller(object):
             if self.is_para_running('sync'):
                 self.para.request_termination()
 
-        third_party.helpers.run_the_game(self.mod_manager.get_mods(), ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
+        self.mod_manager.run_the_game()
         self.disable_action_buttons()
-
-    def on_play_button_release(self, btn):
-        Logger.info('InstallScreen: User hit play')
-        ip = port = password = None
-
-        if self.servers:
-            ip = self.servers[0]['ip']
-            port = self.servers[0]['port']
-            password = self.servers[0]['password']
-            teamspeak_url = self.servers[0]['teamspeak']
-
-        self.run_the_game(ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
