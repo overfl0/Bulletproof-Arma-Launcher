@@ -24,14 +24,6 @@ from utils.unicode_helpers import casefold
 from sync.torrent_utils import path_can_be_a_mod
 
 
-def get_mod_locations():
-    """Return all the directories to search for existing mods."""
-    mod_locations = []
-    mod_locations.append(Arma.get_installation_path())
-
-    return mod_locations
-
-
 def keep_meaningful_data(name):
     """Return the name after it has been changed to lowercase and stripped of
     all letters that are not latin characters or digits or '@'.
@@ -44,6 +36,56 @@ def keep_meaningful_data(name):
     filtered_name = re.sub('[^{}]'.format(re.escape(allowed_chars)), '', no_case)
 
     return filtered_name
+
+
+class CaseInsensitiveDict(dict):
+    """http://stackoverflow.com/questions/2082152/case-insensitive-dictionary"""
+    @classmethod
+    def _k(cls, key):
+        return keep_meaningful_data(key) if isinstance(key, basestring) else key
+
+    def __init__(self, *args, **kwargs):
+        super(CaseInsensitiveDict, self).__init__(*args, **kwargs)
+        self._convert_keys()
+    def __getitem__(self, key):
+        return super(CaseInsensitiveDict, self).__getitem__(self.__class__._k(key))
+    def __setitem__(self, key, value):
+        super(CaseInsensitiveDict, self).__setitem__(self.__class__._k(key), value)
+    def __delitem__(self, key):
+        return super(CaseInsensitiveDict, self).__delitem__(self.__class__._k(key))
+    def __contains__(self, key):
+        return super(CaseInsensitiveDict, self).__contains__(self.__class__._k(key))
+    def has_key(self, key):
+        return super(CaseInsensitiveDict, self).has_key(self.__class__._k(key))
+    def pop(self, key, *args, **kwargs):
+        return super(CaseInsensitiveDict, self).pop(self.__class__._k(key), *args, **kwargs)
+    def get(self, key, *args, **kwargs):
+        return super(CaseInsensitiveDict, self).get(self.__class__._k(key), *args, **kwargs)
+    def setdefault(self, key, *args, **kwargs):
+        return super(CaseInsensitiveDict, self).setdefault(self.__class__._k(key), *args, **kwargs)
+    def update(self, E={}, **F):
+        super(CaseInsensitiveDict, self).update(self.__class__(E))
+        super(CaseInsensitiveDict, self).update(self.__class__(**F))
+    def _convert_keys(self):
+        for k in list(self.keys()):
+            v = super(CaseInsensitiveDict, self).pop(k)
+            self.__setitem__(k, keep_meaningful_data(v))
+
+# Hardcode this list for now. If it grows out of proportion, we'll see at making
+# it configurable or downloadable by the launcher (maybe in metadata.json)
+MOD_MAPPING = CaseInsensitiveDict({
+    '@rhs_afrf3': '@RHSAFRF',
+    '@rhs_usf3': '@RHSUSAF',
+    '@EricJ_Taliban': '@TalibanFighters',  # Really?!?
+})
+
+
+def get_mod_locations():
+    """Return all the directories to search for existing mods."""
+    mod_locations = []
+    mod_locations.append(Arma.get_installation_path())
+
+    return mod_locations
 
 
 def find_mods(mods_directory, names, locations=None):
@@ -90,10 +132,12 @@ def find_mods(mods_directory, names, locations=None):
             inodes_visited.add(inode)"""
 
             filtered_base_root = keep_meaningful_data(os.path.basename(root))
-            if filtered_base_root in filtered_names:
+            if filtered_base_root in filtered_names or filtered_base_root in MOD_MAPPING:
                 # Find the right name in the right case
                 for name in names:
-                    if keep_meaningful_data(name) == filtered_base_root and \
+                    meaningful_name = keep_meaningful_data(name)
+                    if (meaningful_name == filtered_base_root or
+                        MOD_MAPPING.get(filtered_base_root) == meaningful_name) and \
                        path_can_be_a_mod(root, mods_directory):
                         # response[name].append(root)
                         response.setdefault(name, []).append(root)
