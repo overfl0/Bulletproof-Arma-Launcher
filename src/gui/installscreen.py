@@ -77,37 +77,44 @@ class Controller(object):
         # bind to settings change
         self.settings.bind(on_change=self.on_settings_change)
 
-        third_party.helpers.arma_not_found_workaround(on_ok=self.start_mod_checking,
-                                                      on_error=self.start_mod_checking)
+        def check_requirements_and_start():
+            """This function is present because we have to somehow run code
+            after the "arma_not_found_workaround" is run.
+            """
+
+            # Uncomment the code below to enable troubleshooting mode
+            # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
+            # return
+
+            # Don't run logic if required third party programs are not installed
+            if third_party.helpers.check_requirements(verbose=False):
+                # download mod description
+                self.start_mod_checking()
+
+            else:
+                # This will check_requirements(dt) which is not really what we
+                # want but it is good enough ;)
+                Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
+
+        third_party.helpers.arma_not_found_workaround(on_ok=check_requirements_and_start,
+                                                      on_error=check_requirements_and_start)
 
     def start_mod_checking(self):
         """Start the whole process of getting metadata and then checking if all
         the mods are correctly downloaded.
         """
 
-        self.para = None
         self.syncing_failed = False
         self.mod_manager.reset()
 
-        # Uncomment the code below to enable troubleshooting mode
-        # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
-        # return
+        # download mod description
+        self.para = self.mod_manager.download_mod_description()
+        self.para.then(self.on_download_mod_description_resolve,
+                       self.on_download_mod_description_reject,
+                       self.on_download_mod_description_progress)
 
-        # Don't run logic if required third party programs are not installed
-        if third_party.helpers.check_requirements(verbose=False):
-            # download mod description
-            self.para = self.mod_manager.download_mod_description()
-            self.para.then(self.on_download_mod_description_resolve,
-                           self.on_download_mod_description_reject,
-                           self.on_download_mod_description_progress)
-
-            Clock.schedule_interval(self.wait_to_init_action_button, 0)
-            Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
-
-        else:
-            # This will check_requirements(dt) which is not really what we
-            # want but it is good enough ;)
-            Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
+        Clock.schedule_interval(self.wait_to_init_action_button, 0)
+        Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
     def is_para_running(self, name=None):
         """Check if a given para is now running or if any para is running in
@@ -524,10 +531,7 @@ class Controller(object):
 
     def on_download_mod_description_resolve(self, data):
         # Continue with processing mod_description data
-        self.para = self.mod_manager.prepare_and_check(data['data'])
-        self.para.then(self.on_checkmods_resolve,
-                       self.on_checkmods_reject,
-                       self.on_checkmods_progress)
+        self.checkmods(data['data'])
 
         if launcher_config.news_url:
             UrlRequest(launcher_config.news_url, on_success=partial(
@@ -574,15 +578,18 @@ class Controller(object):
             Using cached data from the last time the launcher has been used.
             ''')).chain_open()
 
-            self.para = self.mod_manager.prepare_and_check(mod_data)
-            self.para.then(self.on_checkmods_resolve,
-                           self.on_checkmods_reject,
-                           self.on_checkmods_progress)
+            self.checkmods(mod_data)
 
             if launcher_config.news_url:
                 UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     # Checkmods callbacks ######################################################
+
+    def checkmods(self, mod_data):
+        self.para = self.mod_manager.prepare_and_check(mod_data)
+        self.para.then(self.on_checkmods_resolve,
+                       self.on_checkmods_reject,
+                       self.on_checkmods_progress)
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.show()
