@@ -168,16 +168,22 @@ class TorrentSyncer(object):
 
         if total_size == 0:
             total_size = 1
+
         download_fraction = downloaded_size / total_size
-        ETA = self.eta.calculate_eta(status.payload_download_rate, total_size, downloaded_size)
         session_actual_peers = 0
-        action = 'Syncing:'
+        syncing_message = 'Syncing:'
+        action = syncing_message
 
         # If at least one torrent is checking its pieces, show a message
         for mod in self.mods_with_valid_handle():
             session_actual_peers += mod.status.num_peers
             if mod.status.state == libtorrent.torrent_status.checking_files:
                 action = 'Checking missing pieces:'
+
+        if action == syncing_message:
+            ETA = self.eta.calculate_eta(status.payload_download_rate, total_size, downloaded_size)
+        else:
+            ETA = ''
 
         if download_fraction != 1:
             progress_message = '{} {:0.2f}% complete ({:0.2f} KB/s) {}'.format(
