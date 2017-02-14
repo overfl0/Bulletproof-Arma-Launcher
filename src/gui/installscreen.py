@@ -158,6 +158,15 @@ class Controller(object):
 
         return False  # Unschedule the method
 
+    def restart_checking_mods(self):
+        """Request that any paras be stopped, and as soon as they are stopped,
+        recheck all the mods again.
+        """
+
+        self.disable_action_buttons()
+        self.stop_mod_processing()
+        Clock.schedule_interval(self.wait_for_mod_checking_restart, 0.2)
+
     def seeding_and_action_button_upkeep(self, dt):
         """Check if seeding should be performed and if the play button should be available again.
         Start or stop seeding as needed.
@@ -317,13 +326,6 @@ class Controller(object):
 
         self.view.ids.action_button.set_button_state(state)
 
-        # Position and resize
-        # self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
-        # self.view.ids.action_button.center_x = self.view.center_x
-
-        # self.view.ids.action_button.x = self.view.ids.status_box.width
-        # self.view.ids.action_button.y = 0
-
         # Place the more_actions_button at the right place
         if state != DynamicButtonStates.play and state != DynamicButtonStates.install:
             self.hide_more_play_button()
@@ -342,7 +344,12 @@ class Controller(object):
                 self.view.ids.status_box.text = ' / '.join(secondary).replace('@', '')
 
     def set_selected_server(self, server_name):
+        """Select a new server and check if all the newly required mods are up
+        to date.
+        """
+
         self.mod_manager.select_server(server_name)
+        self.restart_checking_mods()
 
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
@@ -745,8 +752,7 @@ class Controller(object):
 
         # Mod directory has changed. Restart all the checks from the beginning.
         if key == 'launcher_moddir':
-            self.stop_mod_processing()
-            Clock.schedule_interval(self.wait_for_mod_checking_restart, 0.2)
+            self.restart_checking_mods()
 
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')
