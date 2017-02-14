@@ -146,7 +146,7 @@ def _make_torrent(message_queue, launcher_basedir, mods):
     for mod in mods:
         counter += 1
 
-        if mod.up_to_date:
+        if mod.is_complete():
             Logger.info('make_torrent: Mod {} is up to date, skipping...'.format(mod.foldername))
             continue
 

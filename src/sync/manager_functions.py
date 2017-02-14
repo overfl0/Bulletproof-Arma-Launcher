@@ -186,24 +186,27 @@ def process_description_data(para, data, launcher_moddir):
 
 def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_descriptions_data):
     launcher = get_launcher_description(messagequeue, launcher_basedir, mod_descriptions_data)
-    mod_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
+    mods_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
 
     # Debug mode: decrease the number of mods to download
     mods_filter = devmode.get_mods_filter()
     if mods_filter:
         # Keep only the mods with names starting with any of the giver filters
-        mod_list = [mod for mod in mod_list if any(mod.full_name.startswith(prefix) for prefix in mods_filter)]
+        mods_list = [mod for mod in mods_list if any(mod.full_name.startswith(prefix) for prefix in mods_filter)]
+    messagequeue.progress({'msg': 'Checking mods'})
 
     if launcher:
         # TODO: Perform a better check here. Should compare md5sum with actual launcher, etc...
-        launcher.up_to_date = torrent_utils.is_complete_quick(launcher)
+        launcher.is_complete()
 
-    # check if any of the the mods is installed with withSix
-    messagequeue.progress({'msg': 'Checking mods'})
-    for m in mod_list:
-        m.up_to_date = torrent_utils.is_complete_quick(m)
 
-    messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list, 'launcher': launcher})
+    for mod in mods_list:
+        mod.is_complete()
+
+    messagequeue.resolve({'msg': 'Checking mods finished',
+                          'mods': mods_list,
+                          'launcher': launcher,
+                          })
 
 
 def _tsplugin_wait_for_requirements(message_queue):
@@ -380,7 +383,7 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     # Perform post-download hooks for updated mods
     for m in mods:
         # If the mod had to be updated and the download was performed successfully
-        if not m.up_to_date and m.finished_hook_ran:
+        if not m.is_complete() and m.finished_hook_ran:
             # Will only fire up if mod == TFR
             if _try_installing_teamspeak_plugins(message_queue, m) == False:
                 return  # Alpha undocumented feature: stop processing on a reject()

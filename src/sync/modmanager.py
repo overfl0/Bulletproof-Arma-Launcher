@@ -182,7 +182,7 @@ class ModManager(object):
         if mod_synchronised:
             for mod in self.mods:
                 if mod.foldername == mod_synchronised:
-                    mod.up_to_date = True
+                    mod.force_completion()
 
     def sync_launcher(self, seed=False):
         para = protected_para(

@@ -16,7 +16,6 @@ from __future__ import unicode_literals
 from multiprocessing import Queue
 
 import launcher_config
-import kivy
 import kivy.app  # To keep PyDev from complaining
 import os
 import textwrap
@@ -30,7 +29,7 @@ from functools import partial
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
@@ -263,7 +262,7 @@ class Controller(object):
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
-            if launcher.up_to_date and same_files:
+            if launcher.is_complete() and same_files:
                 Logger.error('Metadata says there is a newer version {} than our version {} but the files are the same. Aborting upgrade request.'
                              .format(launcher.version, self.version))
 
@@ -294,7 +293,7 @@ class Controller(object):
             return
 
         for mod in self.mod_manager.get_mods():
-            if not mod.up_to_date:
+            if not mod.is_complete():
                 return
 
         # switch to play button and a different handler

@@ -13,7 +13,6 @@
 from __future__ import unicode_literals
 
 import errno
-import kivy.app
 import libtorrent
 import os
 import subprocess
