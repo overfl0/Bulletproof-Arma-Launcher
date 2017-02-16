@@ -33,12 +33,9 @@ class GameSelectionBox(ThemedPopup):
         buttons_count = 2  # Run arma and cancel
 
         for server in servers:
-            if not server.get('name'):
-                continue
-
             buttons_count += 1
-            button = Button(text=server['name'], size_hint_x=0.8, pos_hint={'center_x': 0.5})
-            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server['name']))
+            button = Button(text=server.name, size_hint_x=0.8, pos_hint={'center_x': 0.5})
+            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server.name))
             bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer

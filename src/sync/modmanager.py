@@ -42,7 +42,12 @@ class ModManager(object):
         self.default_teamspeak_url = None
 
     def get_mods(self):
-        return self.mods
+        mods = self.mods[:]
+        server = self.get_selected_server()
+        if server:
+            mods.extend(server.mods)
+
+        return mods
 
     def clear_mods(self):
         self.mods = []
@@ -59,54 +64,59 @@ class ModManager(object):
     def clear_servers(self):
         self.servers = []
 
+    def get_selected_server(self):
+        server_name = self.settings.get('selected_server')
+        if server_name is None:
+            return None
+
+        for server in self.servers:
+            if server.name == server_name:
+                return server
+
+        raise KeyError('Selected server not present in servers list: {}'.format(server_name))
+
     def select_server(self, selection):
         if selection is None:
             self.settings.set('selected_server', selection)
             print 'Selected {}'.format(selection)
+            return
 
         for server in self.servers:
-            if server['name'] == selection:
+            if server.name == selection:
                 self.settings.set('selected_server', selection)
                 print 'Selected {}'.format(selection)
+                return
 
-        return KeyError('Unknown server: {}'.format(selection))
+        raise KeyError('Unknown server: {}'.format(selection))
 
-    def _sanitize_server_list(self, servers, default_teamspeak):
-        """Filter out only the servers that contain a 'name', 'ip' and 'port' fields."""
-
-        checked_servers = servers[:]
-        '''extra_server_string = devmode.get_extra_server()
-
-        if extra_server_string:
-            extra_server = {k: v for (k, v) in zip(('name', 'ip', 'port'), extra_server_string.split(':'))}
-            checked_servers.insert(0, extra_server)
-        '''
-
-        ret_servers = filter(lambda x: all((x.get('name'), x.get('ip'), x.get('port'))), checked_servers)
-
-        # Add the default values, if not provided
-        for ret_server in ret_servers:
-            ret_server.setdefault('teamspeak', default_teamspeak)
-            ret_server.setdefault('password', None)
-            ret_server.setdefault('mods', [])
-
-        return ret_servers
+    def select_first_server_available(self):
+        """Select the first server from the server list.
+        This function assumes the server list is not empty!
+        """
+        self.select_server(self.servers[0].name)
 
     def run_the_game(self):
-        selected_server = self.settings.get('selected_server')
-        print 'Running connection to server: {}'.format(selected_server)
-        # third_party.helpers.run_the_game(self.mod_manager.get_mods(), ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
-        '''
-        ip = port = password = None
+        server = self.get_selected_server()
+        teamspeak = self.teamspeak
+        mods = self.get_mods()
 
-        if self.servers:
-            ip = self.servers[0]['ip']
-            port = self.servers[0]['port']
-            password = self.servers[0]['password']
-            teamspeak_url = self.servers[0]['teamspeak']
+        Logger.info('run_the_game: Running Arma 3 and connecting to server: {}'.format(server))
 
-        self.run_the_game(ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
-        '''
+        if server:
+            if server.teamspeak:
+                teamspeak = server.teamspeak
+
+            third_party.helpers.run_the_game(mods,
+                                             ip=server.ip,
+                                             port=server.port,
+                                             password=server.password,
+                                             teamspeak_url=teamspeak)
+        else:
+            third_party.helpers.run_the_game(mods,
+                                             ip=None,
+                                             port=None,
+                                             password=None,
+                                             teamspeak_url=teamspeak)
 
     # Para functions below #####################################################
 
@@ -119,22 +129,10 @@ class ModManager(object):
         return para
 
     def on_download_mod_description_resolve(self, data):
-        mod_description_data = data['data']
-        self.settings.set('mod_data_cache', mod_description_data)
-
-        self.default_teamspeak_url = mod_description_data.get('teamspeak', None)
-        self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
-
+        self.settings.set('mod_data_cache', data['data'])
 
     def on_download_mod_description_reject(self, data):
         self.reset()
-
-        mod_data = self.settings.get('mod_data_cache')
-        if not mod_data:
-            return
-
-        self.default_teamspeak_url = mod_data.get('teamspeak', None)
-        self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
 
     def prepare_and_check(self, data):
         para = protected_para(
@@ -151,9 +149,19 @@ class ModManager(object):
         return para
 
     def on_prepare_and_check_resolve(self, data):
-        Logger.info('ModManager: Got mods ' + repr(data['mods']))
         self.mods = data['mods']
         self.launcher = data['launcher']
+        self.servers = data['servers']
+        self.teamspeak = data['teamspeak']
+
+        Logger.info('ModManager: Got base mods:\n' + '\n'.join(repr(mod)for mod in self.mods))
+        Logger.info('ModManager: Got servers:\n' + '\n'.join(repr(server) for server in self.servers))
+
+        if self.launcher:
+            Logger.info('ModManager: Got launcher:\n{}'.format(repr(self.launcher)))
+
+        if self.teamspeak:
+            Logger.info('ModManager: Got base teamspeak:\n{}'.format(repr(self.teamspeak)))
 
     def sync_all(self, seed):
         synced_elements = self.mods[:]  # Work on the copy

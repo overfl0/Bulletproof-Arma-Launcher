@@ -614,6 +614,23 @@ class Controller(object):
             self.view.ids.make_torrent.enable()
             self.view.ids.make_torrent.text = 'CREATE'
 
+
+        # Select the server for the mods
+        try:
+            self.mod_manager.select_server(self.settings.get('selected_server'))
+
+        except KeyError:
+            message = textwrap.dedent('''
+                The server you selected previously is not available anymore:
+                {}
+
+                The first server from the servers list has been automatically
+                selected. To change that, use the "more" button.
+            ''').format(self.settings.get('selected_server'))
+            MessageBox(text=message).chain_open()
+
+            self.mod_manager.select_first_server_available()
+
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
 

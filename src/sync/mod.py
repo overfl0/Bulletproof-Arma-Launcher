@@ -56,8 +56,8 @@ class Mod(object):
     def force_completion(self):
         self.up_to_date = True
 
-    @classmethod
-    def fromDict(cls, d):
+    @staticmethod
+    def fromDict(d):
         """Return a new mod instance constructed from a dictionary."""
 
         torrent_timestamp = d.get('torrent-timestamp', "")
@@ -71,8 +71,7 @@ class Mod(object):
         return m
 
     def __repr__(self):
-        s = '[Mod: {} -- utcts: {} -- {} -- durl: {} -- version: {}]'.format(
-            self.foldername, self.torrent_timestamp, self.full_name, self.torrent_url,
-            self.version)
+        s = '<Mod: {s.foldername} -- utcts: {s.torrent_timestamp} -- {s.full_name} -- durl: {s.torrent_url} -- version: {s.version}>'.format(
+            s=self)
 
         return s
