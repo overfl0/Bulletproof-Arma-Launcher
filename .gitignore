@@ -11,3 +11,4 @@ build.sha1
 pyinstaller.bat
 *.exe
 devmode.conf
+.settings

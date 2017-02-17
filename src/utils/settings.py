@@ -29,8 +29,8 @@ from utils.data.model import ModelInterceptorError, Model
 from utils.paths import mkdir_p, get_launcher_directory
 
 # str variant of the unicode string on_change
-# kivys api only works with non unicode strings
-ON_CHANGE = 'on_change'.encode('ascii')
+# kivy's api only works with non unicode strings
+ON_CHANGE = b'on_change'
 
 
 class Settings(Model):
@@ -42,10 +42,10 @@ class Settings(Model):
     This class defines get and set interceptors which should NOT Be
     called from the outside.
 
-    Autosaving:
-        On default, the settins-model saves it self on change. To
-        disable this behaviour, call suspend_autosave(). To reenable
-        the Autosaving call resume_autosave()
+    Auto-saving:
+        On default, the settings-model saves it self on change. To
+        disable this behaviour, call suspend_autosave(). To re-enable
+        the Auto-saving call resume_autosave()
 
     Path definitions:
         launcher_default_basedir -> this path must be CONSTANT, is build up
@@ -85,6 +85,8 @@ class Settings(Model):
             'name': 'max_download_speed', 'defaultValue': 0
         }, {
             'name': 'seeding_type', 'defaultValue': 'while_not_playing'
+        }, {
+            'name': 'selected_server', 'defaultValue': False
         }
     ]
 

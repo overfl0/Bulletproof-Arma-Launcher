@@ -31,7 +31,7 @@
     bgcolor_hover: get_color_from_hex('#212126')
 
     font_name: app.resource_path("fonts/Nexa_Light.ttf")
-    font_size: 26
+    font_size: 22
     on_release: app.play_sound('click')
 
 <NewsLabel@RstDocument>
@@ -47,7 +47,7 @@
 
     NewsLabel:
         id: news_label
-        right: root.right
+        right: root.width
         top: root.top - 80
         height: 380
         width: 0
@@ -57,11 +57,22 @@
         scroll_type: ['bars', 'content']
         bar_inactive_color: 0.7, 0.7, 0.7, 0.4
 
+#= Top =========================================================================
+
     Image:
         source: app.resource_path('images/logo.png')
         pos: 40, root.top - self.height - 7
         size_hint: None, None
         size: self.texture_size
+
+    Label:
+        id: server_selected
+        font_size: 14
+        font_name: app.resource_path("fonts/Nexa_Light.ttf")
+        size: self.texture_size
+        size_hint: None, None
+        x: root.width / 2 - self.width / 2
+        top: root.top - 64 + 17 + self.height
 
 #= Menu ========================================================================
 

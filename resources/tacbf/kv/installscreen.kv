@@ -50,7 +50,7 @@
 
     Image:
         source: app.resource_path('images/logo.png')
-        center_x: root.center_x
+        x: root.width / 2 - self.width / 2
         top: root.top - 20
         size_hint: None, None
         size: self.texture_size
@@ -65,7 +65,6 @@
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: 60
 
             StatusImage:
                 id: status_image
@@ -78,6 +77,11 @@
             BoxLayout:
                 orientation: 'vertical'
                 padding: 10, 0
+
+                Label:
+                    id: server_selected
+                    size: self.texture_size
+                    size_hint: None, None
 
                 Label:
                     id: status_label
@@ -160,7 +164,7 @@
         # on_release callbacks are bound in installscreen.py
         font_size: 60
         y: 50
-        center_x: root.width / 2 + self.width * 0
+        x: root.width / 2 - self.width / 2
         size: self.texture_size[0], boxes_menu.height
 
     # This button must be created after the PLAY button so that it is on top of it

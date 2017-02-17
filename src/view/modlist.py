@@ -125,7 +125,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
             size_hint=(None, None), size=(25, 25), anim_delay=0.05,
             source=paths.get_resources_path('images/checkmark2_white.png'))
 
-        # up_to_date_text = 'Up to date' if mod.up_to_date else 'Requires update'
+        # up_to_date_text = 'Up to date' if mod.is_complete() else 'Requires update'
         folder_path = paths.get_resources_path('images/folder_white.png')
         folder = HoverImage(color=self.icon_color, bubble_text='Manually\nselect\nlocation', arrow_pos='bottom_mid', source=folder_path, size_hint=(None, None), size=(25, 25))
         folder.bind(mouse_hover=self.highlight_button)

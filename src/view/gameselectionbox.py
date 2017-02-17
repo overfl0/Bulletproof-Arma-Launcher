@@ -17,7 +17,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 from view.themedpopup import ThemedPopup
 
-default_title = '''Connect to server:'''
+default_title = '''Select your server:'''
 
 
 class GameSelectionBox(ThemedPopup):
@@ -28,28 +28,29 @@ class GameSelectionBox(ThemedPopup):
 
     def __init__(self, on_selection, servers=[], title=default_title,
                  markup=False, on_dismiss=None, default_teamspeak=None):
-        bl = BoxLayout(orientation='vertical')
+        bl = BoxLayout(orientation='vertical', padding=(0, 20))
 
         buttons_count = 2  # Run arma and cancel
-        button = Button(text='Run Arma 3')  # , size_hint_y=0.2)
-        button.bind(on_release=lambda x, on_selection=on_selection: self.close_and_run(on_selection, None, None, None, default_teamspeak))
-        bl.add_widget(button)
-
-        bl.add_widget(Widget())  # Spacer
 
         for server in servers:
             buttons_count += 1
-            button = Button(text=server.get('name', '<no name>'), size_hint_x=0.8, pos_hint={'center_x': 0.5})  # , size_hint_y=0.2)
-            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server['ip'], server['port'], server['password'], server['teamspeak']))
+            button = Button(text=server.name, size_hint_x=0.8, pos_hint={'center_x': 0.5})
+            button.bind(on_release=lambda x, server=server, on_selection=on_selection: self.close_and_run(on_selection, server.name))
             bl.add_widget(button)
 
         bl.add_widget(Widget())  # Spacer
 
-        button = Button(text='Cancel')  # , size_hint_y=0.2)
+        button = Button(text='No server, just run Arma 3', size_hint_x=0.8, pos_hint={'center_x': 0.5})
+        button.bind(on_release=lambda x, on_selection=on_selection: self.close_and_run(on_selection, None))
+        bl.add_widget(button)
+
+        bl.add_widget(Widget())  # Spacer
+
+        button = Button(text='Cancel', size_hint_x=0.5, pos_hint={'center_x': 0.5})
         button.bind(on_release=self.dismiss)
         bl.add_widget(button)
 
-        popup_height = 120 + (26 * buttons_count)
+        popup_height = 140 + (26 * buttons_count)
 
         super(GameSelectionBox, self).__init__(
             title=default_title, content=bl, size_hint=(None, None), size=(300, popup_height))

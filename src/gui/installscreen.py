@@ -16,7 +16,6 @@ from __future__ import unicode_literals
 from multiprocessing import Queue
 
 import launcher_config
-import kivy
 import kivy.app  # To keep PyDev from complaining
 import os
 import textwrap
@@ -30,7 +29,7 @@ from functools import partial
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.network.urlrequest import UrlRequest
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import Screen
 from kivy.logger import Logger
 
 from sync.modmanager import ModManager
@@ -64,8 +63,8 @@ class Controller(object):
         application = kivy.app.App.get_running_app()
 
         self.view = widget
-        self.mod_manager = ModManager()
         self.settings = kivy.app.App.get_running_app().settings
+        self.mod_manager = ModManager(self.settings)
         self.version = version
         self.para = None
 
@@ -77,39 +76,44 @@ class Controller(object):
         # bind to settings change
         self.settings.bind(on_change=self.on_settings_change)
 
-        third_party.helpers.arma_not_found_workaround(on_ok=self.start_mod_checking,
-                                                      on_error=self.start_mod_checking)
+        def check_requirements_and_start():
+            """This function is present because we have to somehow run code
+            after the "arma_not_found_workaround" is run.
+            """
+
+            # Uncomment the code below to enable troubleshooting mode
+            # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
+            # return
+
+            # Don't run logic if required third party programs are not installed
+            if third_party.helpers.check_requirements(verbose=False):
+                # download mod description
+                self.start_mod_checking()
+
+            else:
+                # This will check_requirements(dt) which is not really what we
+                # want but it is good enough ;)
+                Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
+
+        third_party.helpers.arma_not_found_workaround(on_ok=check_requirements_and_start,
+                                                      on_error=check_requirements_and_start)
 
     def start_mod_checking(self):
         """Start the whole process of getting metadata and then checking if all
         the mods are correctly downloaded.
         """
 
-        self.para = None
-        self.mods = []
-        self.servers = []
         self.syncing_failed = False
-        self.launcher = None
+        self.mod_manager.reset()
 
-        # Uncomment the code below to enable troubleshooting mode
-        # Clock.schedule_once(third_party.helpers.check_requirements_troubleshooting, 0)
-        # return
+        # download mod description
+        self.para = self.mod_manager.download_mod_description()
+        self.para.then(self.on_download_mod_description_resolve,
+                       self.on_download_mod_description_reject,
+                       self.on_download_mod_description_progress)
 
-        # Don't run logic if required third party programs are not installed
-        if third_party.helpers.check_requirements(verbose=False):
-            # download mod description
-            self.para = self.mod_manager.download_mod_description()
-            self.para.then(self.on_download_mod_description_resolve,
-                           self.on_download_mod_description_reject,
-                           self.on_download_mod_description_progress)
-
-            Clock.schedule_interval(self.wait_to_init_action_button, 0)
-            Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
-
-        else:
-            # This will check_requirements(dt) which is not really what we
-            # want but it is good enough ;)
-            Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
+        Clock.schedule_interval(self.wait_to_init_action_button, 0)
+        Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
     def is_para_running(self, name=None):
         """Check if a given para is now running or if any para is running in
@@ -153,6 +157,15 @@ class Controller(object):
 
         return False  # Unschedule the method
 
+    def restart_checking_mods(self):
+        """Request that any paras be stopped, and as soon as they are stopped,
+        recheck all the mods again.
+        """
+
+        self.disable_action_buttons()
+        self.stop_mod_processing()
+        Clock.schedule_interval(self.wait_for_mod_checking_restart, 0.2)
+
     def seeding_and_action_button_upkeep(self, dt):
         """Check if seeding should be performed and if the play button should be available again.
         Start or stop seeding as needed.
@@ -179,7 +192,7 @@ class Controller(object):
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
                     # Don't start if no mods, syncing failed or if it's already running
-                    if self.mods and not self.para and not self.syncing_failed:
+                    if self.mod_manager.get_mods() and not self.para and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
 
@@ -241,16 +254,17 @@ class Controller(object):
 
         self.disable_action_buttons()
 
-        if is_pyinstaller_bundle() and self.launcher and autoupdater.should_update(
-                u_from=self.version, u_to=self.launcher.version):
+        launcher = self.mod_manager.get_launcher()
+        if is_pyinstaller_bundle() and launcher and autoupdater.should_update(
+                u_from=self.version, u_to=launcher.version):
 
-            launcher_executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
+            launcher_executable = os.path.join(launcher.parent_location, launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
             same_files = autoupdater.compare_if_same_files(launcher_executable)
 
             # Safety check
-            if self.launcher.up_to_date and same_files:
+            if launcher.is_complete() and same_files:
                 Logger.error('Metadata says there is a newer version {} than our version {} but the files are the same. Aborting upgrade request.'
-                             .format(self.launcher.version, self.version))
+                             .format(launcher.version, self.version))
 
             else:
                 # switch to play button and a different handler
@@ -278,8 +292,8 @@ class Controller(object):
         if not third_party.helpers.check_requirements(verbose=False):
             return
 
-        for mod in self.mods:
-            if not mod.up_to_date:
+        for mod in self.mod_manager.get_mods():
+            if not mod.is_complete():
                 return
 
         # switch to play button and a different handler
@@ -311,38 +325,11 @@ class Controller(object):
 
         self.view.ids.action_button.set_button_state(state)
 
-        # Position and resize
-        # self.view.ids.action_button.width = self.view.ids.action_button.texture_size[0]
-        # self.view.ids.action_button.center_x = self.view.center_x
-
-        # self.view.ids.action_button.x = self.view.ids.status_box.width
-        # self.view.ids.action_button.y = 0
-
         # Place the more_actions_button at the right place
-        if state != DynamicButtonStates.play:
+        if state != DynamicButtonStates.play and state != DynamicButtonStates.install:
             self.hide_more_play_button()
         else:
             self.show_more_play_button()
-
-    def _sanitize_server_list(self, servers, default_teamspeak):
-        """Filter out only the servers that contain a 'name', 'ip' and 'port' fields."""
-        # TODO: move me somewhere else
-
-        checked_servers = servers[:]
-        extra_server_string = devmode.get_extra_server()
-
-        if extra_server_string:
-            extra_server = {k: v for (k, v) in zip(('name', 'ip', 'port'), extra_server_string.split(':'))}
-            checked_servers.insert(0, extra_server)
-
-        ret_servers = filter(lambda x: all((x.get('name'), x.get('ip'), x.get('port'))), checked_servers)
-
-        # Add the default values, if not provided
-        for ret_server in ret_servers:
-            ret_server.setdefault('teamspeak', default_teamspeak)
-            ret_server.setdefault('password', None)
-
-        return ret_servers
 
     def _set_status_label(self, main, secondary=None):
         self.view.ids.status_label.text = main.upper() if main else ''
@@ -355,15 +342,34 @@ class Controller(object):
             else:
                 self.view.ids.status_box.text = ' / '.join(secondary).replace('@', '')
 
+    def set_selected_server_message(self, server_name):
+        """Set the server name message on the selected server label.
+        If serve_name is None, the message NO SERVER SELECTED is printed.
+        """
+
+        server_selected = server_name.upper() if server_name else 'NO SERVER SELECTED'
+        if 'server_selected' in self.view.ids:
+            self.view.ids.server_selected.text = server_selected
+
+    def set_selected_server(self, server_name):
+        """Select a new server and check if all the newly required mods are up
+        to date.
+        """
+
+        self.mod_manager.select_server(server_name)
+        self.set_selected_server_message(server_name)
+        self.restart_checking_mods()
+
     def on_more_play_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
-        if self.view.ids.action_button.get_button_state() != DynamicButtonStates.play:
+        button_state = self.view.ids.action_button.get_button_state()
+        if button_state != DynamicButtonStates.play and button_state != DynamicButtonStates.install:
             Logger.error('Button more_action pressed when it should not be accessible!')
             return
 
         Logger.info('Opening GameSelectionBox')
-        box = GameSelectionBox(self.run_the_game, self.servers, default_teamspeak=self.default_teamspeak_url)
+        box = GameSelectionBox(self.set_selected_server, self.mod_manager.get_servers())
         box.open()
 
     def start_syncing(self, seed=False):
@@ -390,7 +396,7 @@ class Controller(object):
 
             if command == 'missing_mods':
                 mod_names = params
-                mods = [mod for mod in self.mods if mod.foldername in mod_names]
+                mods = [mod for mod in self.mod_manager.get_mods() if mod.foldername in mod_names]
 
                 message_box_instance = ModSearchBox(on_selection=self.on_prepare_search_decision,
                                                     on_manual_path=self.on_mod_set_path,
@@ -453,7 +459,8 @@ class Controller(object):
             self.para.request_termination()
             Logger.info("sending termination to para action {}".format(self.para.action_name))
 
-        executable = os.path.join(self.launcher.parent_location, self.launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
+        launcher = self.mod_manager.get_launcher()
+        executable = os.path.join(launcher.parent_location, launcher.foldername, '{}.exe'.format(launcher_config.executable_name))
         autoupdater.request_my_update(executable)
         kivy.app.App.get_running_app().stop()
 
@@ -467,9 +474,9 @@ class Controller(object):
         self.view.ids.status_image.show()
         self._set_status_label('Creating torrents...')
 
-        mods_to_convert = self.mods[:]  # Work on the copy
-        if self.launcher:
-            mods_to_convert.append(self.launcher)
+        mods_to_convert = self.mod_manager.get_mods()[:]  # Work on the copy
+        if self.mod_manager.get_launcher():
+            mods_to_convert.append(self.mod_manager.get_launcher())
 
         self.para = self.mod_manager.make_torrent(mods=mods_to_convert)
         self.para.then(self.on_maketorrent_resolve,
@@ -538,24 +545,13 @@ class Controller(object):
         self.view.ids.status_image.show()
         self._set_status_label(progress.get('msg'))
 
-    def on_download_mod_description_resolve(self, progress):
-        self.para = None
-        mod_description_data = progress['data']
-
-        self.settings.set('mod_data_cache', mod_description_data)
-
+    def on_download_mod_description_resolve(self, data):
         # Continue with processing mod_description data
-        self.para = self.mod_manager.prepare_and_check(mod_description_data)
-        self.para.then(self.on_checkmods_resolve,
-                       self.on_checkmods_reject,
-                       self.on_checkmods_progress)
-
-        self.default_teamspeak_url = mod_description_data.get('teamspeak', None)
-
-        self.servers = self._sanitize_server_list(mod_description_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
+        self.checkmods(data['data'])
 
         if launcher_config.news_url:
-            UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
+            UrlRequest(launcher_config.news_url, on_success=partial(
+                self.on_news_success, self.view.ids.news_label))
 
     def on_download_mod_description_reject(self, data):
         self.para = None
@@ -588,8 +584,6 @@ class Controller(object):
 
         ErrorPopup(details=details, message=message).chain_open()
 
-        self.servers = []
-
         # Carry on with the execution! :)
         # Read data from cache and continue if successful
         mod_data = self.settings.get('mod_data_cache')
@@ -600,18 +594,18 @@ class Controller(object):
             Using cached data from the last time the launcher has been used.
             ''')).chain_open()
 
-            self.para = self.mod_manager.prepare_and_check(mod_data)
-            self.para.then(self.on_checkmods_resolve,
-                           self.on_checkmods_reject,
-                           self.on_checkmods_progress)
+            self.checkmods(mod_data)
 
-            self.default_teamspeak_url = mod_data.get('teamspeak', None)
-
-            self.servers = self._sanitize_server_list(mod_data.get('servers', []), default_teamspeak=self.default_teamspeak_url)
             if launcher_config.news_url:
                 UrlRequest(launcher_config.news_url, on_success=partial(self.on_news_success, self.view.ids.news_label))
 
     # Checkmods callbacks ######################################################
+
+    def checkmods(self, mod_data):
+        self.para = self.mod_manager.prepare_and_check(mod_data)
+        self.para.then(self.on_checkmods_resolve,
+                       self.on_checkmods_reject,
+                       self.on_checkmods_progress)
 
     def on_checkmods_progress(self, progress, speed):
         self.view.ids.status_image.show()
@@ -630,13 +624,30 @@ class Controller(object):
             self.view.ids.make_torrent.enable()
             self.view.ids.make_torrent.text = 'CREATE'
 
-        self.launcher = progress['launcher']
+        # Select the server for the mods
+        try:
+            selected_server = self.settings.get('selected_server')
+            if selected_server is False:
+                selected_server = self.mod_manager.select_first_server_available()
+            else:
+                self.mod_manager.select_server(selected_server)
 
-        Logger.debug('InstallScreen: got mods:')
-        for mod in progress['mods']:
-            Logger.info('InstallScreen: {}'.format(mod))
+        except KeyError:
+            message = textwrap.dedent('''
+                The server you selected previously is not available anymore:
+                {}
 
-        self.mods = progress['mods']
+                The first server from the servers list has been automatically
+                selected. To change that, use the "more" button.
+            ''').format(self.settings.get('selected_server'))
+            MessageBox(text=message).chain_open()
+
+            self.mod_manager.select_first_server_available()
+
+        # Set server name label
+        server_name = self.settings.get('selected_server')
+        self.set_selected_server_message(server_name)
+
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
 
@@ -655,7 +666,7 @@ class Controller(object):
         self.syncing_failed = True
         # self.try_enable_play_button()
 
-        ErrorPopup(details=details, message=message).chain_open()
+        ErrorPopup(details=details, message=message, auto_dismiss=False).chain_open()
 
     # Sync callbacks ###########################################################
 
@@ -740,7 +751,8 @@ class Controller(object):
 
     ############################################################################
 
-    def run_the_game(self, ip=None, port=None, password=None, teamspeak_url=None):
+    def on_play_button_release(self, btn):
+        Logger.info('InstallScreen: User hit play')
 
         if utils.system_processes.program_running('arma3launcher.exe'):
             ErrorPopup(message='Close Bohemia Interactive Arma 3 Launcher first!').chain_open()
@@ -753,20 +765,8 @@ class Controller(object):
             if self.is_para_running('sync'):
                 self.para.request_termination()
 
-        third_party.helpers.run_the_game(self.mods, ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
+        self.mod_manager.run_the_game()
         self.disable_action_buttons()
-
-    def on_play_button_release(self, btn):
-        Logger.info('InstallScreen: User hit play')
-        ip = port = password = None
-
-        if self.servers:
-            ip = self.servers[0]['ip']
-            port = self.servers[0]['port']
-            password = self.servers[0]['password']
-            teamspeak_url = self.servers[0]['teamspeak']
-
-        self.run_the_game(ip=ip, port=port, password=password, teamspeak_url=teamspeak_url)
 
     def on_settings_change(self, instance, key, old_value, value):
         Logger.debug('InstallScreen: Setting changed: {} : {} -> {}'.format(
@@ -785,8 +785,7 @@ class Controller(object):
 
         # Mod directory has changed. Restart all the checks from the beginning.
         if key == 'launcher_moddir':
-            self.stop_mod_processing()
-            Clock.schedule_interval(self.wait_for_mod_checking_restart, 0.2)
+            self.restart_checking_mods()
 
     def on_application_stop(self, something):
         Logger.info('InstallScreen: Application Stop, Trying to close child process')

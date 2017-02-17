@@ -146,7 +146,7 @@ def _make_torrent(message_queue, launcher_basedir, mods):
     for mod in mods:
         counter += 1
 
-        if mod.up_to_date:
+        if mod.is_complete():
             Logger.info('make_torrent: Mod {} is up to date, skipping...'.format(mod.foldername))
             continue
 
@@ -186,11 +186,16 @@ def _make_torrent(message_queue, launcher_basedir, mods):
             ''').format('\n'.join(mods_user_friendly_list))
 
         message2 = textwrap.dedent('''
-            The mods have been uploaded to the server and metadata.json has been
-            updated as well.
+            The mods' torrent files have been uploaded to the server and
+            metadata.json has been updated as well.
 
             To upload the new mods' contents, restart the launcher, click INSTALL
             and start seeding.
+
+            You CAN then start and stop the launcher as you wish. The upload will
+            resume on launcher restart.
+            Make sure the mods are fully uploaded before you stop seeding for good.
+
             You may need to change your seeding settings in OPTIONS.
             ''')
 
@@ -223,11 +228,10 @@ def update_metadata_json(metadata_json_orig, mods_created):
     tree = json.loads(metadata_json_orig, object_pairs_hook=lambda x : OrderedDict(x))
 
     for mod, _, _, timestamp in mods_created:
+        # Perform the global mods update
         for mod_leaf in tree['mods']:
-
             if mod_leaf['foldername'] == mod.foldername:
                 mod_leaf['torrent-timestamp'] = timestamp
-                break
 
         # Perform the launcher update
         if 'launcher' in tree:
@@ -237,7 +241,19 @@ def update_metadata_json(metadata_json_orig, mods_created):
                 # Get the new mod version
                 tree['launcher']['version'] = get_new_launcher_version(mod)
 
-    metadata_json_modified = json.dumps(tree, indent=4)
+        # Perform the per-server mods update
+        for server in tree['servers']:
+            server_mods = server.get('mods')
+            if server_mods is None:
+                continue
+
+            for mod_leaf in server_mods:
+                if mod_leaf['foldername'] == mod.foldername:
+                    mod_leaf['torrent-timestamp'] = timestamp
+
+
+
+    metadata_json_modified = json.dumps(tree, indent=4, separators=(',', ': '))
     return metadata_json_modified
 
 

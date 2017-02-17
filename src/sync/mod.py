@@ -15,6 +15,8 @@ from __future__ import unicode_literals
 
 import os
 
+from torrent_utils import is_complete_quick
+
 
 class Mod(object):
     """encapsulate data needed for a mod"""
@@ -26,7 +28,7 @@ class Mod(object):
             torrent_timestamp='',
             full_name='',
             version='0',
-            up_to_date=False):
+            up_to_date=None):
         super(Mod, self).__init__()
 
         self.parent_location = parent_location  # 'C:\Arma 3\<default_mod_dir>'
@@ -40,9 +42,23 @@ class Mod(object):
     def get_full_path(self):
         return os.path.join(self.parent_location, self.foldername)
 
-    @classmethod
-    def fromDict(cls, d):
-        """return a new mod instance constructed from dictionary"""
+    def is_complete(self):
+        """Return information on whether the mods is fully synchronized and
+        ready to use.
+        The data is cached so it is fine to call this method repeatedly.
+        """
+
+        if self.up_to_date is None:
+            self.up_to_date = is_complete_quick(self)
+
+        return self.up_to_date
+
+    def force_completion(self):
+        self.up_to_date = True
+
+    @staticmethod
+    def fromDict(d):
+        """Return a new mod instance constructed from a dictionary."""
 
         torrent_timestamp = d.get('torrent-timestamp', "")
         full_name = d.get('full_name', "Unknown Mod")
@@ -55,8 +71,7 @@ class Mod(object):
         return m
 
     def __repr__(self):
-        s = '[Mod: {} -- utcts: {} -- {} -- durl: {} -- version: {}]'.format(
-            self.foldername, self.torrent_timestamp, self.full_name, self.torrent_url,
-            self.version)
+        s = '<Mod: {s.foldername} -- utcts: {s.torrent_timestamp} -- {s.full_name} -- durl: {s.torrent_url} -- version: {s.version}>'.format(
+            s=self)
 
         return s

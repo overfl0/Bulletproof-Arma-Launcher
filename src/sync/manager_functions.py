@@ -24,6 +24,7 @@ from kivy.logger import Logger
 from kivy.config import Config
 from sync import integrity, torrent_utils
 from sync.mod import Mod
+from sync.server import Server
 from sync.torrentsyncer import TorrentSyncer
 from third_party import teamspeak
 from utils.devmode import devmode
@@ -119,7 +120,7 @@ def _get_mod_descriptions(para):
             message = textwrap.dedent('''
                 Failed to parse metadata received from the master server.
 
-                Contact the server owner to fix this issue.
+                Contact the master server owner to fix this issue.
                 '''.format(unicode(res.status_code)))
             para.reject({'msg': message})
 
@@ -152,7 +153,7 @@ def convert_metadata_to_mod(md, torrent_url_prefix):
     return mod
 
 
-def get_launcher_description(para, launcher_basedir, metadata):
+def parse_launcher_data(para, metadata, launcher_basedir):
     domain = devmode.get_launcher_domain(default=launcher_config.domain)
     torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
     torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
@@ -168,13 +169,13 @@ def get_launcher_description(para, launcher_basedir, metadata):
     return launcher_mod
 
 
-def process_description_data(para, data, launcher_moddir):
+def parse_mods_data(para, data, launcher_moddir):
     domain = devmode.get_launcher_domain(default=launcher_config.domain)
     torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
     torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
     mods = []
 
-    for md in data['mods']:
+    for md in data.get('mods', []):
         mod = convert_metadata_to_mod(md, torrent_url_prefix)
         mod.parent_location = launcher_moddir
         mods.append(mod)
@@ -184,26 +185,73 @@ def process_description_data(para, data, launcher_moddir):
     return mods
 
 
+def parse_teamspeak_data(para, data):
+    teamspeak = data.get('teamspeak')
+
+    return teamspeak
+
+
+def parse_servers_data(para, data, launcher_moddir):
+    servers = []
+
+    servers_list = data.get('servers')
+    if not servers_list:
+        para.reject({'msg': 'No servers present in the metadata!\nContact the master server owner!'})
+        raise Exception('No servers present in the metadata!\nContact the master server owner!')
+
+    for server_entry in servers_list:
+        for arg in ['name', 'ip', 'port']:
+            if arg not in server_entry:
+                para.reject({'msg': 'The server is missing the {} field in the metadata!\nContact the master server owner!'.format(arg)})
+                raise Exception('The server is missing the {} field in the metadata!\nContact the master server owner!'.format(arg))
+
+        server = Server.fromDict(server_entry)
+
+        # Add the server mods is available
+        if 'mods' in server_entry:
+            server.add_mods(parse_mods_data(para, server_entry, launcher_moddir))
+
+        server.teamspeak = parse_teamspeak_data(para, server_entry)
+
+        servers.append(server)
+
+    return servers
+
+
 def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_descriptions_data):
-    launcher = get_launcher_description(messagequeue, launcher_basedir, mod_descriptions_data)
-    mod_list = process_description_data(messagequeue, mod_descriptions_data, launcher_moddir)
+    launcher = parse_launcher_data(messagequeue, mod_descriptions_data, launcher_basedir)
+    mods_list = parse_mods_data(messagequeue, mod_descriptions_data, launcher_moddir)
+    servers_list = parse_servers_data(messagequeue, mod_descriptions_data, launcher_moddir)
+    teamspeak = parse_teamspeak_data(messagequeue, mod_descriptions_data)
 
     # Debug mode: decrease the number of mods to download
     mods_filter = devmode.get_mods_filter()
     if mods_filter:
         # Keep only the mods with names starting with any of the giver filters
-        mod_list = [mod for mod in mod_list if any(mod.full_name.startswith(prefix) for prefix in mods_filter)]
+        mods_list = [mod for mod in mods_list if any(mod.full_name.startswith(prefix) for prefix in mods_filter)]
+
+        for server in servers_list:
+            server.set_mods([mod for mod in server.mods if any(mod.full_name.startswith(prefix) for prefix in mods_filter)])
+
+    messagequeue.progress({'msg': 'Checking mods'})
 
     if launcher:
         # TODO: Perform a better check here. Should compare md5sum with actual launcher, etc...
-        launcher.up_to_date = torrent_utils.is_complete_quick(launcher)
+        launcher.is_complete()
 
-    # check if any of the the mods is installed with withSix
-    messagequeue.progress({'msg': 'Checking mods'})
-    for m in mod_list:
-        m.up_to_date = torrent_utils.is_complete_quick(m)
+    for server in servers_list:
+        for mod in server.mods:
+            mod.is_complete()
 
-    messagequeue.resolve({'msg': 'Checking mods finished', 'mods': mod_list, 'launcher': launcher})
+    for mod in mods_list:
+        mod.is_complete()
+
+    messagequeue.resolve({'msg': 'Checking mods finished',
+                          'mods': mods_list,
+                          'launcher': launcher,
+                          'servers': servers_list,
+                          'teamspeak': teamspeak,
+                          })
 
 
 def _tsplugin_wait_for_requirements(message_queue):
@@ -380,7 +428,7 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     # Perform post-download hooks for updated mods
     for m in mods:
         # If the mod had to be updated and the download was performed successfully
-        if not m.up_to_date and m.finished_hook_ran:
+        if not m.is_complete() and m.finished_hook_ran:
             # Will only fire up if mod == TFR
             if _try_installing_teamspeak_plugins(message_queue, m) == False:
                 return  # Alpha undocumented feature: stop processing on a reject()
