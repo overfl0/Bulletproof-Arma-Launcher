@@ -624,10 +624,13 @@ class Controller(object):
             self.view.ids.make_torrent.enable()
             self.view.ids.make_torrent.text = 'CREATE'
 
-
         # Select the server for the mods
         try:
-            self.mod_manager.select_server(self.settings.get('selected_server'))
+            selected_server = self.settings.get('selected_server')
+            if selected_server is False:
+                selected_server = self.mod_manager.select_first_server_available()
+            else:
+                self.mod_manager.select_server(selected_server)
 
         except KeyError:
             message = textwrap.dedent('''

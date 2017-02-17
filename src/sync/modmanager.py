@@ -69,6 +69,9 @@ class ModManager(object):
         if server_name is None:
             return None
 
+        if server_name is False:  # First time launcher user
+            raise Exception('Self protection: can\'t get selected server. Selection is "False". Report this bug!')
+
         for server in self.servers:
             if server.name == server_name:
                 return server
@@ -76,6 +79,12 @@ class ModManager(object):
         raise KeyError('Selected server not present in servers list: {}'.format(server_name))
 
     def select_server(self, selection):
+        if not self.servers:
+            raise Exception('Self protection: can\'t select server if the server list is empty!')
+
+        if selection is False:  # First time launcher user
+            raise Exception('Self protection: can\'t select server. Selection is "False". Report this bug!')
+
         if selection is None:
             self.settings.set('selected_server', selection)
             Logger.info('select_server: Selected {}'.format(selection))
@@ -92,8 +101,13 @@ class ModManager(object):
     def select_first_server_available(self):
         """Select the first server from the server list.
         This function assumes the server list is not empty!
+
+        return the selected server name
         """
-        self.select_server(self.servers[0].name)
+        first_server_name = self.servers[0].name
+        self.select_server(first_server_name)
+
+        return first_server_name
 
     def run_the_game(self):
         server = self.get_selected_server()

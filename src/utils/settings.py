@@ -86,7 +86,7 @@ class Settings(Model):
         }, {
             'name': 'seeding_type', 'defaultValue': 'while_not_playing'
         }, {
-            'name': 'selected_server', 'defaultValue': None
+            'name': 'selected_server', 'defaultValue': False
         }
     ]
 
