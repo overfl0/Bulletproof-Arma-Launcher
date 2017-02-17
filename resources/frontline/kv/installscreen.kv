@@ -57,11 +57,23 @@
         scroll_type: ['bars', 'content']
         bar_inactive_color: 0.7, 0.7, 0.7, 0.4
 
+#= Top =========================================================================
+
     Image:
         source: app.resource_path('images/logo.png')
         pos: 40, root.top - self.height - 7
         size_hint: None, None
         size: self.texture_size
+
+    Label:
+        id: server_selected
+        font_size: 14
+        font_name: app.resource_path("fonts/Nexa_Light.ttf")
+        size: self.texture_size
+        size_hint: None, None
+        # Why does setting center_x NOT work here?!?
+        x: root.center_x - self.width/2
+        top: root.top - 64 + 17 + self.height
 
 #= Menu ========================================================================
 

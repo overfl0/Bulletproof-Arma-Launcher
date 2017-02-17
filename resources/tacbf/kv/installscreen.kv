@@ -65,7 +65,6 @@
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: 60
 
             StatusImage:
                 id: status_image
@@ -78,6 +77,11 @@
             BoxLayout:
                 orientation: 'vertical'
                 padding: 10, 0
+
+                Label:
+                    id: server_selected
+                    size: self.texture_size
+                    size_hint: None, None
 
                 Label:
                     id: status_label

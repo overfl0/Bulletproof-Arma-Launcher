@@ -78,13 +78,13 @@ class ModManager(object):
     def select_server(self, selection):
         if selection is None:
             self.settings.set('selected_server', selection)
-            print 'Selected {}'.format(selection)
+            Logger.info('select_server: Selected {}'.format(selection))
             return
 
         for server in self.servers:
             if server.name == selection:
                 self.settings.set('selected_server', selection)
-                print 'Selected {}'.format(selection)
+                Logger.info('select_server: Selected {}'.format(selection))
                 return
 
         raise KeyError('Unknown server: {}'.format(selection))

@@ -342,12 +342,22 @@ class Controller(object):
             else:
                 self.view.ids.status_box.text = ' / '.join(secondary).replace('@', '')
 
+    def set_selected_server_message(self, server_name):
+        """Set the server name message on the selected server label.
+        If serve_name is None, the message NO SERVER SELECTED is printed.
+        """
+
+        server_selected = server_name.upper() if server_name else 'NO SERVER SELECTED'
+        if 'server_selected' in self.view.ids:
+            self.view.ids.server_selected.text = server_selected
+
     def set_selected_server(self, server_name):
         """Select a new server and check if all the newly required mods are up
         to date.
         """
 
         self.mod_manager.select_server(server_name)
+        self.set_selected_server_message(server_name)
         self.restart_checking_mods()
 
     def on_more_play_button_release(self, btn):
@@ -630,6 +640,10 @@ class Controller(object):
             MessageBox(text=message).chain_open()
 
             self.mod_manager.select_first_server_available()
+
+        # Set server name label
+        server_name = self.settings.get('selected_server')
+        self.set_selected_server_message(server_name)
 
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
