@@ -196,14 +196,14 @@ def parse_servers_data(para, data, launcher_moddir):
 
     servers_list = data.get('servers')
     if not servers_list:
-        para.reject({'msg': 'No servers present in the metadata!'})
-        raise Exception('No servers present in the metadata!')
+        para.reject({'msg': 'No servers present in the metadata!\nContact the server owner!'})
+        raise Exception('No servers present in the metadata!\nContact the server owner!')
 
     for server_entry in servers_list:
         for arg in ['name', 'ip', 'port']:
             if arg not in server_entry:
-                para.reject({'msg': 'The server is missing the {} field in the metadata!'.format(arg)})
-                raise Exception('The server is missing the {} field in the metadata!'.format(arg))
+                para.reject({'msg': 'The server is missing the {} field in the metadata!\nContact the server owner!'.format(arg)})
+                raise Exception('The server is missing the {} field in the metadata!\nContact the server owner!'.format(arg))
 
         server = Server.fromDict(server_entry)
 

@@ -663,7 +663,7 @@ class Controller(object):
         self.syncing_failed = True
         # self.try_enable_play_button()
 
-        ErrorPopup(details=details, message=message).chain_open()
+        ErrorPopup(details=details, message=message, auto_dismiss=False).chain_open()
 
     # Sync callbacks ###########################################################
 

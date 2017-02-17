@@ -48,7 +48,7 @@ class ErrorPopup(ChainedPopup):
     message - The message to be shown in a label.
     details - Shows an additional box containing details that may span dozens of lines.
     """
-    def __init__(self, message=DEFAULT_ERROR_MESSAGE, details=None, label_markup=True):
+    def __init__(self, message=DEFAULT_ERROR_MESSAGE, details=None, label_markup=True, **kwargs):
         bl = BoxLayout(orientation='vertical')
         la = Label(text=message, size_hint_y=0.3, markup=label_markup, halign='center')
         la.bind(on_ref_press=open_hyperlink)
@@ -60,7 +60,7 @@ class ErrorPopup(ChainedPopup):
             bl.add_widget(ti)
 
         super(ErrorPopup, self).__init__(
-            title=POPUP_TITLE, content=bl, size_hint=(None, None), size=(600, 400))
+            title=POPUP_TITLE, content=bl, size_hint=(None, None), size=(600, 400), **kwargs)
 
 
 def error_popup_decorator(func):
