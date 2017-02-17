@@ -47,7 +47,7 @@
 
     NewsLabel:
         id: news_label
-        right: root.right
+        right: root.width
         top: root.top - 80
         height: 380
         width: 0
@@ -71,8 +71,7 @@
         font_name: app.resource_path("fonts/Nexa_Light.ttf")
         size: self.texture_size
         size_hint: None, None
-        # Why does setting center_x NOT work here?!?
-        x: root.center_x - self.width/2
+        x: root.width / 2 - self.width / 2
         top: root.top - 64 + 17 + self.height
 
 #= Menu ========================================================================
