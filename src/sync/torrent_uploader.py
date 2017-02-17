@@ -186,11 +186,16 @@ def _make_torrent(message_queue, launcher_basedir, mods):
             ''').format('\n'.join(mods_user_friendly_list))
 
         message2 = textwrap.dedent('''
-            The mods have been uploaded to the server and metadata.json has been
-            updated as well.
+            The mods' torrent files have been uploaded to the server and
+            metadata.json has been updated as well.
 
             To upload the new mods' contents, restart the launcher, click INSTALL
             and start seeding.
+
+            You CAN then start and stop the launcher as you wish. The upload will
+            resume on launcher restart.
+            Make sure the mods are fully uploaded before you stop seeding for good.
+
             You may need to change your seeding settings in OPTIONS.
             ''')
 
