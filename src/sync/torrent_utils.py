@@ -148,8 +148,36 @@ def path_can_be_a_mod(path, mods_directory):
     launcher_moddir_casefold = unicode_helpers.casefold(launcher_moddir)
     path_casefold = unicode_helpers.casefold(os.path.realpath(path))
 
+    # Loop to parent (infinite loop)
     if launcher_moddir_casefold.startswith(path_casefold):
-        print "Skipping {}".format(path_casefold)
+        Logger.info("path_can_be_a_mod: Rejecting {}. Loop to parent.".format(path_casefold))
+        return False
+
+    directory_name = os.path.basename(path_casefold)
+    if not directory_name:  # Path ends with a '\' or '/'
+        directory_name = os.path.dirname(path_casefold)
+
+    # All names must be changed to lowercase
+    bad_directories = [
+        'steam',
+        'steamapps',
+        'workshop',
+        'content',
+        '107410',
+        'common',
+        'arma 3',
+        'desktop',
+    ]
+    if directory_name in bad_directories:
+        Logger.info("path_can_be_a_mod: Rejecting {}. Blacklisted directory.".format(path_casefold))
+        return False
+
+    if len(path_casefold) == 3 and path_casefold.endswith(':\\'):
+        Logger.info("path_can_be_a_mod: Rejecting {}. Root directory.".format(path_casefold))
+        return False
+
+    if path_casefold == unicode_helpers.casefold(os.path.expanduser('~')):
+        Logger.info("path_can_be_a_mod: Rejecting {}. Home directory.".format(path_casefold))
         return False
 
     return True
