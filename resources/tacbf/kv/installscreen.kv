@@ -9,12 +9,18 @@
     width: 100
     height: 75
 
+    # valign: 'middle'
+    # Don't ask my why! "valign: 'middle'" aligns too high!
+    # Workaround:
+    padding_y: (self.height - self.font_size) / 2 - self.height / 12
+
     color: self.color_normal
     background_color: self.bgcolor_normal
 
     background_normal: ''
     background_down: ''
     background_hover: ''
+    background_disabled_normal: ''
     background_disabled_down: ''
 
     color_hover: 1, 1, 0.66, 1
@@ -79,11 +85,6 @@
                 padding: 10, 0
 
                 Label:
-                    id: server_selected
-                    size: self.texture_size
-                    size_hint: None, None
-
-                Label:
                     id: status_label
                     size_hint: None, None
                     text_size: self.parent.width - self.parent.padding[0] - self.parent.padding[2], None
@@ -96,20 +97,20 @@
                     size: self.texture_size
 
         Widget:
-            height: 15
+            height: 10
             size_hint_y: None
 
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: 20
+            height: 30
+            spacing: 10
 
             ProgressBar:
                 id: progress_bar
                 value: 0
-                height: 20
         Widget:
-            height: 25
+            height: 20
             size_hint_y: None
 
         BoxLayout:
@@ -167,15 +168,17 @@
         x: root.width / 2 - self.width / 2
         size: self.texture_size[0], boxes_menu.height
 
-    # This button must be created after the PLAY button so that it is on top of it
-    # More play options button (|||)
     HoverButton:
-        id: more_play
-        text: '=' # \u2261 or 2630 For android character
-        font_size: 60
-        font_name: app.resource_path("fonts/Equality.ttf")
-        on_release: root.controller.on_more_play_button_release(self)
-        custom_hidden: True
-        width: 75
-        claim_space: False
-        y: -5000  # Stay out of the way for now
+        id: selected_server
+        size: self.texture_size
+        size_hint: None, None
+        font_size: 16
+        on_release: root.controller.on_selected_server_button_release(self)
+        text_prefix: '[size=17][font=fonts/Equality]=[/font][/size]'
+        text: 'SERVER SELECTION'
+        markup: True
+        disabled: True
+        padding: 0, 10
+        text_size: None, 30
+        x: root.width / 2 - self.width / 2
+        y: 11

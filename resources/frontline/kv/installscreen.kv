@@ -7,7 +7,7 @@
     border: 1,1,1,1
     size_hint: None, None
     size: 256, 32
-    text_size: self.size
+    text_size: None, self.height
     padding_x: 20
 
     # valign: 'middle'
@@ -33,6 +33,9 @@
     font_name: app.resource_path("fonts/Nexa_Light.ttf")
     font_size: 22
     on_release: app.play_sound('click')
+
+<HoverButtonLeft@HoverButton>:
+    text_size: self.size
 
 <NewsLabel@RstDocument>
     size_hint: (None, None)
@@ -65,14 +68,19 @@
         size_hint: None, None
         size: self.texture_size
 
-    Label:
-        id: server_selected
+    HoverButton:
+        id: selected_server
         font_size: 14
         font_name: app.resource_path("fonts/Nexa_Light.ttf")
         size: self.texture_size
-        size_hint: None, None
+        text_size: None, 32
         x: root.width / 2 - self.width / 2
-        top: root.top - 64 + 17 + self.height
+        top: root.top - 64 + 16 + self.height
+        on_release: root.controller.on_selected_server_button_release(self)
+        text_prefix: '[font=fonts/Equality]=[/font]'
+        markup: True
+        text: 'SERVER SELECTION'
+        disabled: True
 
 #= Menu ========================================================================
 
@@ -137,7 +145,7 @@
         padding: 0, 4 + progress_bar.height
 
         # OptionsButton
-        HoverButton:
+        HoverButtonLeft:
             id: options_button
             size_hint_x: 1
             on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
@@ -145,19 +153,19 @@
             disabled: True
 
         # ForumButton
-        HoverButton:
+        HoverButtonLeft:
             text: 'FORUM'
             size_hint_x: 1
             on_release: app.open_hyperlink(launcher_config.forum_url)
 
         # DonateButton
-        HoverButton:
+        HoverButtonLeft:
             size_hint_x: 1
             text: 'DONATE'
             on_release: app.open_hyperlink(launcher_config.donate_url)
 
         # MakeTorrentButton
-        HoverButton:
+        HoverButtonLeft:
             disabled: True
             background_color: 0, 0, 0, 0
             size_hint_x: 1
@@ -166,6 +174,7 @@
 
     # Install/Play button
     DynamicButton:
+        text_size: self.size
         id: action_button
         pos: status_box.right, 0
         # on_release callbacks are bound in installscreen.py
@@ -178,28 +187,6 @@
         bgcolor_normal: get_color_from_hex('#eca92d')
         bgcolor_hover: get_color_from_hex('#ffc94d')
         size: 256, 64
-
-    # This button must be created after the PLAY button so that it is on top of it
-    # More play options button (|||)
-    HoverButton:
-        id: more_play
-        text: '=' # \u2261 or 2630 For android character
-        font_size: 40
-        font_name: app.resource_path("fonts/Equality.ttf")
-        on_release: root.controller.on_more_play_button_release(self)
-        custom_hidden: True,
-        y: -5000
-
-        color_normal: [0, 0, 0, 1]
-        color_hover: [0, 0, 0, 1]
-        bgcolor_normal: get_color_from_hex('#eca92d')
-        bgcolor_hover: get_color_from_hex('#ffc94d')
-
-        size: 70, 64
-        padding_y: 12
-        padding_x: 10
-
-        claim_space: True
 
 #= Other =======================================================================
 

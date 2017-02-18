@@ -32,6 +32,18 @@ class HoverButton(HoverBehavior, Button):
         super(HoverButton, self).__init__(*args, **kwargs)
         self.bind(mouse_hover=self.on_hover)
         self.is_hovered = False
+        self.bind(text=self.on_text)
+
+    def on_text(self, instance, text):
+        try:
+            # Prevent infinite loop
+            if instance.text.startswith(instance.text_prefix):
+                return
+
+            instance.text = instance.text_prefix + text
+
+        except AttributeError:  # No text_prefix
+            pass
 
     def on_hover(self, instance, hover):
 

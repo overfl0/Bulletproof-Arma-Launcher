@@ -215,36 +215,13 @@ class Controller(object):
 
             return False  # Return False to remove the callback from the scheduler
 
-    def show_more_play_button(self):
-        """Show the "more play options" button."""
-        if not self.view.ids.more_play.custom_hidden:
-            return
-        self.view.ids.more_play.custom_hidden = False
-
-        if self.view.ids.more_play.claim_space:
-            self.view.ids.action_button.width = self.view.ids.action_button.width - self.view.ids.more_play.width
-
-        self.view.ids.more_play.y = self.view.ids.action_button.y
-        self.view.ids.more_play.x = self.view.ids.action_button.right
-
-    def hide_more_play_button(self):
-        """Hide the "more play options" button."""
-        if self.view.ids.more_play.custom_hidden:
-            return
-
-        self.view.ids.more_play.custom_hidden = True
-        self.view.ids.more_play.y = -5000
-
-        if self.view.ids.more_play.claim_space:
-            self.view.ids.action_button.width = self.view.ids.action_button.width + self.view.ids.more_play.width
-
     def enable_action_buttons(self):
-        self.view.ids.more_play.enable()
         self.view.ids.action_button.enable()
+        self.view.ids.selected_server.disabled = False
 
     def disable_action_buttons(self):
-        self.view.ids.more_play.disable()
         self.view.ids.action_button.disable()
+        self.view.ids.selected_server.disabled = True
 
     def try_enable_play_button(self):
         """Enables or disables the action button (play, install, etc...).
@@ -268,7 +245,7 @@ class Controller(object):
 
             else:
                 # switch to play button and a different handler
-                self.set_and_resize_action_button(DynamicButtonStates.self_upgrade)
+                self.set_action_button_state(DynamicButtonStates.self_upgrade)
                 self.enable_action_buttons()
 
                 if autoupdater.require_admin_privileges():
@@ -297,7 +274,7 @@ class Controller(object):
                 return
 
         # switch to play button and a different handler
-        self.set_and_resize_action_button(DynamicButtonStates.play)
+        self.set_action_button_state(DynamicButtonStates.play)
 
         if not third_party.helpers.arma_may_be_running(newly_launched=False):
             self.enable_action_buttons()
@@ -316,20 +293,12 @@ class Controller(object):
         for (name, text, callback) in button_states:
             self.view.ids.action_button.bind_state(name, text, callback)
 
-        self.set_and_resize_action_button(DynamicButtonStates.checking)
+        self.set_action_button_state(DynamicButtonStates.checking)
 
-    def set_and_resize_action_button(self, state):
-        """Change the action and the text on a button. Then, resize that button
-        and optionally show the more_play_button.
-        """
+    def set_action_button_state(self, state):
+        """Change the action and the text on the action_button."""
 
         self.view.ids.action_button.set_button_state(state)
-
-        # Place the more_actions_button at the right place
-        if state != DynamicButtonStates.play and state != DynamicButtonStates.install:
-            self.hide_more_play_button()
-        else:
-            self.show_more_play_button()
 
     def _set_status_label(self, main, secondary=None):
         self.view.ids.status_label.text = main.upper() if main else ''
@@ -347,9 +316,9 @@ class Controller(object):
         If serve_name is None, the message NO SERVER SELECTED is printed.
         """
 
-        server_selected = server_name.upper() if server_name else 'NO SERVER SELECTED'
-        if 'server_selected' in self.view.ids:
-            self.view.ids.server_selected.text = server_selected
+        selected_server = server_name.upper() if server_name else 'NO SERVER SELECTED'
+        if 'selected_server' in self.view.ids:
+            self.view.ids.selected_server.text = selected_server
 
     def set_selected_server(self, server_name):
         """Select a new server and check if all the newly required mods are up
@@ -360,12 +329,12 @@ class Controller(object):
         self.set_selected_server_message(server_name)
         self.restart_checking_mods()
 
-    def on_more_play_button_release(self, btn):
+    def on_selected_server_button_release(self, btn):
         """Allow the user to select optional ways to play the game."""
 
         button_state = self.view.ids.action_button.get_button_state()
         if button_state != DynamicButtonStates.play and button_state != DynamicButtonStates.install:
-            Logger.error('Button more_action pressed when it should not be accessible!')
+            Logger.error('Button selected_server pressed when it should not be accessible!')
             return
 
         Logger.info('Opening GameSelectionBox')
@@ -618,7 +587,7 @@ class Controller(object):
         self._set_status_label(progress.get('msg'))
         self.view.ids.options_button.disabled = False
         self.disable_action_buttons()
-        self.set_and_resize_action_button(DynamicButtonStates.install)
+        self.set_action_button_state(DynamicButtonStates.install)
 
         if devmode.get_create_torrents(False):
             self.view.ids.make_torrent.enable()
@@ -638,7 +607,7 @@ class Controller(object):
                 {}
 
                 The first server from the servers list has been automatically
-                selected. To change that, use the "more" button.
+                selected. To change that, click the server name.
             ''').format(self.settings.get('selected_server'))
             MessageBox(text=message).chain_open()
 
