@@ -679,6 +679,11 @@ class Controller(object):
 
         self.view.ids.status_image.show()
         self._set_status_label(progress.get('msg'), progress.get('mods'))
+
+        # By request: show an empty progress bar if seeding (progress == 100%)
+        if percentage == 1:
+            percentage = 0
+
         self.view.ids.progress_bar.value = percentage * 100
 
         tsplugin_request_action = progress.get('tsplugin_request_action')
