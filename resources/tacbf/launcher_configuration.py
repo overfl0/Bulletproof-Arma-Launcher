@@ -16,3 +16,4 @@ settings_directory = 'TacBF Launcher'
 news_url = None
 dominant_color = '#2FA7D4CC'
 donate_url = 'https://www.patreon.com/user?u=2944710'
+capitalize_status = False

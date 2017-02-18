@@ -301,7 +301,12 @@ class Controller(object):
         self.view.ids.action_button.set_button_state(state)
 
     def _set_status_label(self, main, secondary=None):
-        self.view.ids.status_label.text = main.upper() if main else ''
+        new_text = main if main else ''
+
+        if launcher_config.capitalize_status:
+            new_text = new_text.upper()
+
+        self.view.ids.status_label.text = new_text
 
         if not secondary:
             self.view.ids.status_box.text = ''

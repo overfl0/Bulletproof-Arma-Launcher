@@ -25,6 +25,7 @@ __all__ = [
     'news_url',
     'dominant_color',
     'donate_url',
+    'capitalize_status',
 ]
 
 import textwrap
