@@ -20,6 +20,7 @@ import string
 
 from kivy.logger import Logger
 from third_party.arma import Arma
+from utils import walker
 from utils.unicode_helpers import casefold
 from sync.torrent_utils import path_can_be_a_mod
 
@@ -98,8 +99,8 @@ def find_mods(mods_directory, names, locations=None):
     values. Only mods with found locations are returned.
 
     Note: windows Junctions and Symlinks are treated as directories, even if
-    they are broken. If broken, os.walk(onerror=...) will be called.
-    Otherwise, os.walk will enter that directory.
+    they are broken. If broken, walker.walk(onerror=...) will be called.
+    Otherwise, walker.walk will enter that directory.
     Note2: followlinks=False is IGNORED with windows Junctions and Symlinks!
     """
 
@@ -118,18 +119,7 @@ def find_mods(mods_directory, names, locations=None):
     for location in locations:
         Logger.info('Finder: Trying {}'.format(location))
 
-        for root, _, _ in os.walk(location, topdown=True, followlinks=True):
-
-            # infinite loop protection
-            """inode = os.lstat(root).st_ino  # Does not work on Windows!
-            print inode
-            if inode in inodes_visited:
-                Logger.info('Finder: directory already searched: {}'.format(root))
-
-                del dirs[:]  # Don't descend deeper
-                continue
-
-            inodes_visited.add(inode)"""
+        for root, _, _ in walker.walk(location, topdown=True, followlinks=True):
 
             filtered_base_root = keep_meaningful_data(os.path.basename(root))
             if filtered_base_root in filtered_names or filtered_base_root in MOD_MAPPING:

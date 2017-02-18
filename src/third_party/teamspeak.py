@@ -21,6 +21,7 @@ from third_party import SoftwareNotInstalled
 from third_party.clientquery import get_TS_servers_connected
 from utils import browser
 from utils import system_processes
+from utils import walker
 from utils.admin import run_admin
 from utils.devmode import devmode
 from utils.hashes import sha1
@@ -233,7 +234,7 @@ def create_ts3_plugin_package(path, name, author, version, platforms, descriptio
     zipf = zipfile.ZipFile(ts3_plugin_path, 'w')
     zipf.writestr('package.ini', package_ini_contents.encode('utf-8'))
 
-    for root, _, files in os.walk(os.path.join(path, 'plugins')):
+    for root, _, files in walker.walk(os.path.join(path, 'plugins')):
         for file_entry in files:
             file_path = os.path.join(root, file_entry)
 

@@ -22,7 +22,9 @@ import textwrap
 from kivy.logger import Logger
 from sync.integrity import check_mod_directories, check_files_mtime_correct, are_ts_plugins_installed, is_whitelisted
 from utils.metadatafile import MetadataFile
-from utils import paths, unicode_helpers
+from utils import paths
+from utils import unicode_helpers
+from utils import walker
 
 
 class AdminRequiredError(Exception):
@@ -251,7 +253,7 @@ def ensure_directory_structure_is_correct(mod_directory):
         error_message = get_admin_error('directory is not writable', mod_directory)
         raise AdminRequiredError(error_message)
 
-    for (dirpath, dirnames, filenames) in os.walk(mod_directory):
+    for (dirpath, dirnames, filenames) in walker.walk(mod_directory):
         # Needs to check the dirnames like this because if a child directory is
         # a broken junction, it's never going to be used as dirpath
         for node_name in dirnames:

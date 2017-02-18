@@ -25,6 +25,7 @@ import os
 import shutil
 
 from kivy.logger import Logger
+from utils import walker
 from utils.context import ignore_exceptions
 from utils.hashes import sha1
 from utils.unicode_helpers import casefold
@@ -172,7 +173,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='',
             _unlink_safety_assert(base_directory, full_base_path, action='enter')
             # FIXME: on OSError, this might indicate a broken junction or symlink on windows
             # Must act accordingly then.
-            for (dirpath, dirnames, filenames) in os.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=True):
+            for (dirpath, dirnames, filenames) in walker.walk(full_base_path, topdown=True, onerror=_raiser, followlinks=True):
                 relative_path = os.path.relpath(dirpath, base_directory)
                 Logger.debug('check_mod_directories: In directory: {}'.format(relative_path))
 

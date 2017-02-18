@@ -20,6 +20,7 @@ import unittest
 
 from nose.plugins.attrib import attr
 from sync import integrity
+from utils import walker
 
 BASE_DIR = 'c:\\base'
 TOP_DIR = 'top_dir'
@@ -117,7 +118,7 @@ class IntegrityTest(unittest.TestCase):
             self.assertTrue(os.path.isdir(d), "Directory does not exist, but should: {}".format(d))
 
         # Are all files on disk required by the torrent?
-        for (dirpath, dirnames, filenames) in os.walk(dirpath):
+        for (dirpath, dirnames, filenames) in walker.walk(dirpath):
             for f in filenames:
                 full_f = os.path.join(dirpath, f)
                 # print "_check_if_dir_contains_only: {}".format(full_f)
