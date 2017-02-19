@@ -130,6 +130,11 @@ def get_admin_error(text, path):
         {}
 
         Please fix the file permissions before continuing.
+
+        This may also happen if the file is open by another program.
+        Make sure that Steam is NOT updating files right now. Otherwise, wait
+        until Steam finishes updating files and retry.
+
         If not, running the launcher as Administrator may help (not recommended).
 
         If you reinstalled your system lately, [ref=http://superuser.com/a/846155][color=3572b0]you may need to fix files ownership.[/color][/ref]
