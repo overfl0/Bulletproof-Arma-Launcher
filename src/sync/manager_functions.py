@@ -126,6 +126,9 @@ def _get_mod_descriptions(para):
                 Failed to parse metadata received from the master server.
 
                 Contact the master server owner to fix this issue.
+
+                If you're the master server owner, consider checking your
+                metadata.json file with a JSON validator.
                 '''.format(unicode(res.status_code)))
             para.reject({'msg': message})
 
