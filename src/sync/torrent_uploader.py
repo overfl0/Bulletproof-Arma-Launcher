@@ -12,6 +12,7 @@
 
 from __future__ import unicode_literals
 
+import errno
 import inspect
 import json
 import launcher_config
@@ -52,6 +53,7 @@ if devmode.get_create_torrents():
     password = devmode.get_server_password(mandatory=True)
     port = devmode.get_server_port(22)
     metadata_path = devmode.get_server_metadata_path(mandatory=True)
+    metadata_file = devmode.get_server_metadata_filename('metadata.json')
     torrents_path = devmode.get_server_torrents_path(mandatory=True)
     server_delay = devmode.get_server_torrent_delay(0)
 
@@ -269,9 +271,17 @@ def perform_update(message_queue, mods_created):
 
         # Fetch metadata.json
         message_queue.progress({'msg': 'Fetching metadata.json...'}, 1)
-        # TODO: handle IOError: [Errno 2]
-        metadata_json_path = remote.join(metadata_path, 'metadata.json')
-        metadata_json = connection.read_file(metadata_json_path)
+
+        metadata_json_path = remote.join(metadata_path, metadata_file)
+        try:
+            metadata_json = connection.read_file(metadata_json_path)
+        except IOError as ex:
+            if ex.errno != errno.ENOENT:
+                raise
+
+            message_queue.reject({
+                'msg': 'Could not fetch file from the server:\n{}'.format(metadata_json_path)})
+
         Logger.info('perform_update: Got metadata.json:\n{}'.format(metadata_json))
 
         metadata_json_updated = update_metadata_json(metadata_json, mods_created)
