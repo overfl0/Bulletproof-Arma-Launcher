@@ -70,8 +70,13 @@ def create_timestamp(epoch):
 
 def symlink_mod(message_queue, mod_location, real_location):
     """Just create a symlink for a mod and resolve."""
-    torrent_utils.symlink_mod(mod_location, real_location)
-    message_queue.resolve(real_location)
+
+    try:
+        torrent_utils.symlink_mod(mod_location, real_location)
+        message_queue.resolve(real_location)
+
+    except torrent_utils.AdminRequiredError as ex:
+        message_queue.reject({'msg': ex.message})
 
 
 def _get_mod_descriptions(para):

@@ -52,6 +52,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
     def on_reject(self, data):
         # #print 'on_reject', data
+        self.status_image.opacity = 0
         ErrorPopup(details=data.get('details', None), message=data.get('msg', DEFAULT_ERROR_MESSAGE)).open()
 
     def on_resolve(self, new_path):
@@ -122,7 +123,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
         mod_name_label = Label(text=self.mod.foldername)
 
         self.status_image = HoverImage(opacity=0,
-            size_hint=(None, None), size=(25, 25), anim_delay=0.05,
+            size_hint=(None, None), size=(25, 25), anim_delay=0.5,
             source=paths.get_resources_path('images/checkmark2_white.png'))
 
         # up_to_date_text = 'Up to date' if mod.is_complete() else 'Requires update'

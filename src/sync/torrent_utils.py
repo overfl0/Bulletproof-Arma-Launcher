@@ -356,7 +356,12 @@ def symlink_mod(mod_full_path, real_location):
         os.rmdir(mod_full_path)
 
     create_symlink(mod_full_path, real_location)
-    prepare_mod_directory(mod_full_path)
+    try:
+        prepare_mod_directory(mod_full_path)
+
+    except:
+        os.rmdir(mod_full_path)
+        raise
 
 def create_add_torrent_flags():
     """Create default flags for adding a new torrent to a syncer."""
