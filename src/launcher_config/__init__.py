@@ -16,7 +16,6 @@ __all__ = [
     'executable_name',
     'forum_url',
     'domain',
-    'web_seeds_path',
     'metadata_path',
     'torrents_path',
     'troubleshooting_url',

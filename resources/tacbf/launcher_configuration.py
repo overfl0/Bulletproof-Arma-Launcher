@@ -7,7 +7,6 @@ original_url = 'https://github.com/overfl0/Bulletproof-Arma-Launcher/releases/la
 executable_name = 'TB_Launcher'
 forum_url = 'http://tacticalbattlefield.net/forum'
 domain = 'launcher.tacbf.com'
-web_seeds_path = '/mods'
 metadata_path = '/metadata.json'
 torrents_path = '/torrents'
 troubleshooting_url = 'https://github.com/overfl0/Bulletproof-Arma-Launcher/wiki/Troubleshooting'
