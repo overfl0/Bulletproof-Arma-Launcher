@@ -76,7 +76,7 @@ class Controller(object):
         # bind to settings change
         self.settings.bind(on_change=self.on_settings_change)
 
-        def check_requirements_and_start():
+        def stage2_check_requirements_and_start():
             """This function is present because we have to somehow run code
             after the "arma_not_found_workaround" is run.
             """
@@ -95,8 +95,22 @@ class Controller(object):
                 # want but it is good enough ;)
                 Clock.schedule_once(third_party.helpers.check_requirements, 0.1)
 
-        third_party.helpers.arma_not_found_workaround(on_ok=check_requirements_and_start,
-                                                      on_error=check_requirements_and_start)
+        def stage1_wait_to_init_action_button(call_next, dt):
+            # self.view.width is normally set to 100 by default, it seems...
+            if 'action_button' in self.view.ids and self.view.width != 100:
+                self.action_button_init()
+                self.disable_action_buttons()
+
+                call_next()
+                return False  # Return False to remove the callback from the scheduler
+
+        # Call stage1 and stage2 functions asynchronously
+
+        workaround_partial = partial(third_party.helpers.arma_not_found_workaround,
+                                     on_ok=stage2_check_requirements_and_start,
+                                     on_error=stage2_check_requirements_and_start)
+
+        Clock.schedule_interval(partial(stage1_wait_to_init_action_button, workaround_partial), 0)
 
     def start_mod_checking(self):
         """Start the whole process of getting metadata and then checking if all
@@ -112,7 +126,6 @@ class Controller(object):
                        self.on_download_mod_description_reject,
                        self.on_download_mod_description_progress)
 
-        Clock.schedule_interval(self.wait_to_init_action_button, 0)
         Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
     def is_para_running(self, name=None):
@@ -139,7 +152,6 @@ class Controller(object):
             self.para.request_termination_and_break_promises()
 
         Clock.unschedule(self.seeding_and_action_button_upkeep)
-        Clock.unschedule(self.wait_to_init_action_button)
 
         self.disable_action_buttons()
 
@@ -206,14 +218,6 @@ class Controller(object):
         footer_text = 'Version: {}\nBuild: {}'.format(self.version,
                                                       git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text.upper()
-
-    def wait_to_init_action_button(self, dt):
-        # self.view.width is normally set to 100 by default, it seems...
-        if 'action_button' in self.view.ids and self.view.width != 100:
-            self.action_button_init()
-            self.disable_action_buttons()
-
-            return False  # Return False to remove the callback from the scheduler
 
     def enable_action_buttons(self):
         self.view.ids.action_button.enable()
