@@ -98,7 +98,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
                 {}
 
                 You realize that selecting that directory will cause EVERYTHING
-                in there to be DELETED (save for that mod contents)?
+                inside that is not part of that mod to be DELETED?
 
                 Think twice next time!
             ''').format(self.mod.foldername, path)
@@ -116,11 +116,14 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
         self.on_manual_path = on_manual_path
         self.paras = []  # TODO: Move this to some para_manager
         kwargs['size_hint_y'] = None
-        kwargs['height'] = 26
+        kwargs['height'] = 36
         super(ModListEntry, self).__init__(**kwargs)
 
         entry = BoxLayout(spacing=10, padding=(20, 0))
-        mod_name_label = Label(text=self.mod.foldername)
+
+        text = '{}\n[size=8]{}[/size]'.format(self.mod.foldername, 'This is some text')
+        mod_name_label = Label(text=text, size_hint=(None, None), markup=True)
+        mod_name_label.bind(texture_size=mod_name_label.setter('size'))
 
         self.status_image = HoverImage(opacity=0,
             size_hint=(None, None), size=(25, 25), anim_delay=0.5,

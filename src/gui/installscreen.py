@@ -116,6 +116,7 @@ class Controller(object):
         """Start the whole process of getting metadata and then checking if all
         the mods are correctly downloaded.
         """
+        self.set_action_button_state(DynamicButtonStates.checking)
 
         self.syncing_failed = False
         self.mod_manager.reset()
@@ -219,13 +220,31 @@ class Controller(object):
                                                       git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text.upper()
 
+    def enable_updated_settings_mods_list(self):
+        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
+        mods_list.disabled = False
+        mods = self.mod_manager.get_mods()
+        mods_list.set_mods(mods)
+
+    def disable_updated_settings_mods_list(self):
+        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
+        mods_list.disabled = True
+
     def enable_action_buttons(self):
+        if not self.view.ids.action_button.disabled:
+            return
+
         self.view.ids.action_button.enable()
         self.view.ids.selected_server.disabled = False
+        self.enable_updated_settings_mods_list()
 
     def disable_action_buttons(self):
+        if self.view.ids.action_button.disabled:
+            return
+
         self.view.ids.action_button.disable()
         self.view.ids.selected_server.disabled = True
+        self.disable_updated_settings_mods_list()
 
     def try_enable_play_button(self):
         """Enables or disables the action button (play, install, etc...).

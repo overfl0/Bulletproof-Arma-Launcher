@@ -182,6 +182,17 @@
 
             BoxLayout:  # Second column
                 orientation: 'vertical'
+                padding: 20
+                Label:
+                    text: 'Mods:'
+                    size: self.texture_size
+                    size_hint: None, None
+
+                ModList:
+                    size_hint: 1, None
+                    id: mods_list
+
+                Widget
 
     Label:
         # Please do not remove this message. We worked hard to bring you this program.
