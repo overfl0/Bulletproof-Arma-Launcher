@@ -192,7 +192,7 @@ class Controller(object):
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
                     # Don't start if no mods, syncing failed or if it's already running
-                    if self.mod_manager.get_mods() and not self.para and not self.syncing_failed:
+                    if not self.para and self.mod_manager.get_mods() and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
 

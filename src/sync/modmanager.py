@@ -178,7 +178,7 @@ class ModManager(object):
             Logger.info('ModManager: Got base teamspeak:\n{}'.format(repr(self.teamspeak)))
 
     def sync_all(self, seed):
-        synced_elements = self.mods[:]  # Work on the copy
+        synced_elements = self.get_mods()  # Work on the copy
         if self.launcher:
             synced_elements.append(self.launcher)
 
@@ -202,7 +202,7 @@ class ModManager(object):
 
         mod_synchronised = data.get('workaround_finished')
         if mod_synchronised:
-            for mod in self.mods:
+            for mod in self.get_mods():
                 if mod.foldername == mod_synchronised:
                     mod.force_completion()
 
@@ -224,7 +224,7 @@ class ModManager(object):
     def prepare_all(self):
         para = protected_para(
             prepare_all,
-            (list(self.mods), self.settings.get('launcher_moddir')),
+            (self.get_mods(), self.settings.get('launcher_moddir')),
             'prepare_all')
         return para
 
