@@ -20,6 +20,7 @@ import textwrap
 
 from utils import paths
 
+from kivy.lang import Builder
 from kivy.logger import Logger
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
@@ -36,13 +37,11 @@ from view.filechooser import FileChooser
 from view.messagebox import MessageBox
 
 
-
 class HoverImage(HoverBehavior, BubbleBehavior, ButtonBehavior, Image):
     pass
 
 
 class ModListEntry(BgcolorBehavior, BoxLayout):
-
     icon_color = kivy.utils.get_color_from_hex(launcher_config.dominant_color)[:3] + [0.8]
     icon_highlight_color = list([4 * i for i in icon_color[:3]] + [0.8])
 
@@ -111,34 +110,11 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
                              'Manually select {} location on your disk'.format(self.mod.foldername),
                              on_success=self.select_success)
 
-    def __init__(self, mod, on_manual_path, **kwargs):
+    def __init__(self, mod, on_manual_path, *args, **kwargs):
         self.mod = mod
         self.on_manual_path = on_manual_path
         self.paras = []  # TODO: Move this to some para_manager
-        kwargs['size_hint_y'] = None
-        kwargs['height'] = 36
-        super(ModListEntry, self).__init__(**kwargs)
-
-        entry = BoxLayout(spacing=10, padding=(20, 0))
-
-        text = '{}\n[size=8]{}[/size]'.format(self.mod.foldername, 'This is some text')
-        mod_name_label = Label(text=text, size_hint=(None, None), markup=True)
-        mod_name_label.bind(texture_size=mod_name_label.setter('size'))
-
-        self.status_image = HoverImage(opacity=0,
-            size_hint=(None, None), size=(25, 25), anim_delay=0.5,
-            source=paths.get_resources_path('images/checkmark2_white.png'))
-
-        # up_to_date_text = 'Up to date' if mod.is_complete() else 'Requires update'
-        folder_path = paths.get_resources_path('images/folder_white.png')
-        folder = HoverImage(color=self.icon_color, bubble_text='Manually\nselect\nlocation', arrow_pos='bottom_mid', source=folder_path, size_hint=(None, None), size=(25, 25))
-        folder.bind(mouse_hover=self.highlight_button)
-        folder.bind(on_release=self.select_dir)
-
-        entry.add_widget(mod_name_label)
-        entry.add_widget(self.status_image)
-        entry.add_widget(folder)
-        self.add_widget(entry)
+        super(ModListEntry, self).__init__(*args, **kwargs)
 
 
 class ModList(BoxLayout):
@@ -194,3 +170,4 @@ class ModList(BoxLayout):
         for entry in entries:
             self.add_mod(entry)
 
+Builder.load_file('kv/modlist.kv')

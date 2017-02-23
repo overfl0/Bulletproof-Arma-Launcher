@@ -1,0 +1,28 @@
+<ModListEntry@BgcolorBehavior+BoxLayout>:
+    height: 26
+    size_hint_y: None
+
+    BoxLayout:
+        spacing: 10
+        padding: 20, 0
+
+        Label:
+            text: root.mod.foldername
+
+        HoverImage:
+            opacity: 0
+            size_hint: None, None
+            size: 25, 25
+            anim_delay: 0.5
+            source: app.resource_path('images/checkmark2_white.png')
+
+        HoverImage:
+            color: root.icon_color
+            source: app.resource_path('images/folder_white.png')
+            size_hint: None, None
+            size: 25, 25
+
+            on_mouse_hover: root.highlight_button(*args)
+            on_release: root.select_dir(*args)
+            bubble_text: 'Manually\nselect\nlocation'
+            arrow_pos: 'bottom_mid'
