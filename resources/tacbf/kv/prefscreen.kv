@@ -184,12 +184,11 @@
                 orientation: 'vertical'
                 padding: 20
                 Label:
-                    text: 'Mods:'
+                    text: 'Mods:\n'
                     size: self.texture_size
                     size_hint: None, None
 
-                ModList:
-                    size_hint: 1, None
+                ModListScrolled:
                     id: mods_list
 
                 Widget

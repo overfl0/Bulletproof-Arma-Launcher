@@ -27,3 +27,16 @@
             on_release: root.select_dir(*args)
             bubble_text: 'Manually\nselect\nlocation'
             arrow_pos: 'bottom_mid'
+
+<ModListScrolled@ScrollView>:
+    size_hint: 1, None
+    height: 300
+    bar_width: 12
+    scroll_timeout: 100
+    bar_inactive_color: 0.7, 0.7, 0.7, 0.5
+
+    scroll_type: ['bars', 'content']
+
+    ModList:
+        size_hint: 1, None
+        id: mods_list

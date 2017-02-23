@@ -26,6 +26,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.uix.label import Label
+from kivy.uix.scrollview import ScrollView
 from sync import manager_functions
 from sync.torrent_utils import path_can_be_a_mod
 from utils.paths import is_dir_writable
@@ -164,13 +165,25 @@ class ModList(BoxLayout):
         if entries is None:
             entries = []
 
-        # import itertools
-        # from sync.mod import Mod
-        # def multiply(elements, number):
-        #     return itertools.islice(itertools.cycle(elements), number)
-        # entries = list(multiply([Mod('@First'), Mod('@Second'), Mod('@Third')], 30))
+#         import itertools
+#         from sync.mod import Mod
+#         def multiply(elements, number):
+#             return itertools.islice(itertools.cycle(elements), number)
+#         # second = '\n[i][size=10]Link: C:\\Some\\Directory\\Here\\Steam\\SteamApps\\Workshop\\Stuff[/size][/i]'
+#         second = ''
+#         entries = list(multiply([Mod('@First' + second), Mod('@Second' + second), Mod('@Third' + second)], 30))
 
         for entry in entries:
             self.add_mod(entry)
+
+
+class ModListScrolled(ScrollView):
+
+    def set_mods(self, mods):
+        self.ids.mods_list.set_mods(mods)
+
+    def set_on_manual_path(self, on_manual_path):
+        self.ids.mods_list.set_on_manual_path(on_manual_path)
+
 
 Builder.load_file('kv/modlist.kv')

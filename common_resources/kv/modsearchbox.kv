@@ -21,17 +21,7 @@
 
             on_size: root.resize_box(self.parent, *args)
 
-        ScrollView:
-            size_hint: 1, None
-            height: 300
-            bar_width: 12
-            scroll_timeout: 100
-            bar_inactive_color: 0.7, 0.7, 0.7, 0.5
-
-            on_size: root.resize_box(self.parent, *args)
-            #scroll_type=['bars']
-
-        ModList:
+        ModListScrolled:
             id: modlist
             on_size: root.resize_box(self.parent.parent, *args)
 
