@@ -95,6 +95,16 @@ def get_source_path(*relative):
     return get_base_path('src', *relative)
 
 
+def get_common_resources_path(*relative):
+    """Return the path relative to the common resources directory of the program.
+    The common resources directory is common for all the launchers.
+    This is quite experimental at this stage, do not rely much on this directory
+
+    relative - optional path to append to the returned path
+    """
+
+    return get_base_path('common_resources', *relative)
+
 def get_resources_path(*relative):
     """Return the path relative to the resources directory of the program.
 

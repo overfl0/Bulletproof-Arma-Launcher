@@ -51,11 +51,16 @@ try:
         # configure kivy
         from kivy import resources
         from kivy.config import Config
-        from utils.paths import get_resources_path, get_source_path, get_base_path
+        from utils.paths import (
+            get_common_resources_path,
+            get_resources_path,
+            get_source_path,
+        )
         from utils.devmode import devmode
 
         default_log_level = devmode.get_log_level('info')
 
+        resources.resource_add_path(get_common_resources_path())
         resources.resource_add_path(get_source_path())
         resources.resource_add_path(get_resources_path())
 

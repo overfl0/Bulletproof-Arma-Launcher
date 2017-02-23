@@ -29,6 +29,7 @@ pyz = PYZ(a.pure)
 exe = EXE(pyz,
           Tree('./src', prefix='src', excludes=['*.pyc']),
           Tree(config_dir, prefix='resources'),  # resources/<name> directory contents
+          Tree('./common_resources', prefix='common_resources'),
           a.scripts,
           a.binaries,
           a.zipfiles,
