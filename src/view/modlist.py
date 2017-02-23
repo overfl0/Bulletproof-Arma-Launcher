@@ -51,7 +51,7 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
     def on_reject(self, data):
         # #print 'on_reject', data
-        self.status_image.opacity = 0
+        self.ids.status_image.opacity = 0
         ErrorPopup(details=data.get('details', None), message=data.get('msg', DEFAULT_ERROR_MESSAGE)).open()
 
     def on_resolve(self, new_path):
@@ -59,13 +59,13 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
         MessageBox('Selected the following directory for mod {}:\n{}'.format(self.mod.foldername, new_path)).open()
         self.on_manual_path(self.mod, new_path)
 
-        self.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
+        self.ids.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
 
     def set_new_path(self, new_path):
         # Set the loader icon for the time being
-        self.status_image.source = paths.get_resources_path('images/loader.zip')
-        self.status_image.opacity = 1
-        self.status_image.color = self.icon_color
+        self.ids.status_image.source = paths.get_resources_path('images/loader.zip')
+        self.ids.status_image.opacity = 1
+        self.ids.status_image.color = self.icon_color
 
         para = protected_para(
             manager_functions.symlink_mod, (self.mod.get_full_path(), new_path), 'symlink_mod',
@@ -151,6 +151,9 @@ class ModList(BoxLayout):
     def set_mod_directory(self, mod, new_path):
         if self.on_manual_path:
             self.on_manual_path(mod, new_path)
+
+    def set_on_manual_path(self, on_manual_path):
+        self.on_manual_path = on_manual_path
 
     def __init__(self, entries=None, on_manual_path=None, **kwargs):
         super(ModList, self).__init__(orientation='vertical', spacing=0, **kwargs)
