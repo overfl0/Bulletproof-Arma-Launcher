@@ -36,5 +36,5 @@ class BgcolorBehavior(object):
         self.bind(size=self.update_background_rectangle)
 
     def update_background_rectangle(self, *args):
-        self.bgrectangle.pos = self.pos
+        self.bgrectangle.pos = self.to_widget(*self.to_window(*self.pos))
         self.bgrectangle.size = self.size

@@ -27,6 +27,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.relativelayout import RelativeLayout
 from sync import manager_functions
 from sync.torrent_utils import path_can_be_a_mod
 from utils.paths import is_dir_writable
@@ -42,7 +43,7 @@ class HoverImage(HoverBehavior, BubbleBehavior, ButtonBehavior, Image):
     pass
 
 
-class ModListEntry(BgcolorBehavior, BoxLayout):
+class ModListEntry(BgcolorBehavior, RelativeLayout):
     icon_color = kivy.utils.get_color_from_hex(launcher_config.dominant_color)[:3] + [0.8]
     icon_highlight_color = list([4 * i for i in icon_color[:3]] + [0.8])
 
@@ -119,8 +120,8 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
 
 class ModList(BoxLayout):
-    color_odd = [0.3, 0.3, 0.3, 0.3]
-    color_even = [0.3, 0.3, 0.3, 0.8]
+    color_odd = [0.3, 0.3, 0.3, 0.4]
+    color_even = [0.3, 0.3, 0.3, 0]
 
     def resize(self, *args):
         self.height = sum(child.height for child in self.children)

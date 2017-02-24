@@ -1,13 +1,31 @@
-<ModListEntry@BgcolorBehavior+BoxLayout>:
-    height: 26
-    size_hint_y: None
+<ModListEntry@BgcolorBehavior+RelativeLayout>:
+    #height: 56
+    #size_hint_y: None
+    size_hint: 1, None
+    height: 46
 
     BoxLayout:
+        orientation: 'horizontal'
         spacing: 10
-        padding: 20, 0
+        padding: 10, 0, 20, 0
+        #size: self.parent.size
+        #size_hint: None, None
+
+        CheckBox:
+            active: True
+            disabled: True
+            size_hint: None, None
+            size: 25, 25
+            pos_hint: {'center_y': 0.5}
 
         Label:
             text: root.mod.foldername
+            #size: self.texture_size
+            height: self.texture_size[1]
+            text_size: self.size[0], None
+            size_hint: 1, None
+            pos_hint: {'center_y': 0.5}
+            id: mod_name
 
         HoverImage:
             id: status_image
@@ -16,6 +34,7 @@
             size: 25, 25
             anim_delay: 0.5
             source: app.resource_path('images/checkmark2_white.png')
+            pos_hint: {'center_y': 0.5}
 
         HoverImage:
             color: root.icon_color
@@ -27,6 +46,17 @@
             on_release: root.select_dir(*args)
             bubble_text: 'Manually\nselect\nlocation'
             arrow_pos: 'bottom_mid'
+            pos_hint: {'center_y': 0.5}
+
+    Label:
+        text: 'Link: tralala'
+        italic: True
+        size: self.texture_size
+        size_hint: None, None
+        font_size: 10
+        top: mod_name.y
+        x: mod_name.x
+
 
 <ModListScrolled@ScrollView>:
     size_hint: 1, None
