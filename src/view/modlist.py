@@ -25,7 +25,6 @@ from kivy.logger import Logger
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
-from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.relativelayout import RelativeLayout
 from sync import manager_functions
@@ -120,8 +119,7 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
 
 
 class ModList(BoxLayout):
-    color_odd = [0.3, 0.3, 0.3, 0.4]
-    color_even = [0.3, 0.3, 0.3, 0]
+
 
     def resize(self, *args):
         self.height = sum(child.height for child in self.children)
@@ -129,7 +127,7 @@ class ModList(BoxLayout):
 
     def add_mod(self, mod):
         self.modlist.append(mod)
-        color = self.color_even if len(self.modlist) % 2 else self.color_odd
+        color = self.color_odd if len(self.modlist) % 2 else self.color_even
 
         boxentry = ModListEntry(bcolor=color, mod=mod, on_manual_path=self.set_mod_directory)
         boxentry.bind(size=self.resize)

@@ -18,14 +18,29 @@
             size: 25, 25
             pos_hint: {'center_y': 0.5}
 
-        Label:
-            text: root.mod.foldername
-            #size: self.texture_size
-            height: self.texture_size[1]
-            text_size: self.size[0], None
-            size_hint: 1, None
+        StackLayout:
+            #orientation: 'vertical'
             pos_hint: {'center_y': 0.5}
-            id: mod_name
+            size_hint: 1, None
+            height: mod_name.height + mod_location.height
+
+            Label:
+                text: root.mod.foldername
+                #size: self.texture_size
+                height: self.texture_size[1]
+                text_size: self.size[0], None
+                size_hint: 1, None
+                id: mod_name
+
+            Label:
+                text: 'Location: D:\\Steam\\steamapps\\common\\Arma 3\\!Workshop\\@ArmCandy Insignia Pack'
+                shorten: True
+                italic: True
+                size: self.texture_size
+                text_size: self.parent.width, None
+                size_hint: None, None
+                font_size: 10
+                id: mod_location
 
         HoverImage:
             id: status_image
@@ -48,16 +63,6 @@
             arrow_pos: 'bottom_mid'
             pos_hint: {'center_y': 0.5}
 
-    Label:
-        text: 'Link: tralala'
-        italic: True
-        size: self.texture_size
-        size_hint: None, None
-        font_size: 10
-        top: mod_name.y
-        x: mod_name.x
-
-
 <ModListScrolled@ScrollView>:
     size_hint: 1, None
     height: 300
@@ -70,3 +75,5 @@
     ModList:
         size_hint: 1, None
         id: mods_list
+        color_odd: 0.3, 0.3, 0.3, 0.1
+        color_even: 0.3, 0.3, 0.3, 0.4
