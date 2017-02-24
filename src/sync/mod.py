@@ -13,8 +13,10 @@
 
 from __future__ import unicode_literals
 
+import external.junctions
 import os
 
+from kivy.logger import Logger
 from torrent_utils import is_complete_quick
 
 
@@ -55,6 +57,42 @@ class Mod(object):
 
     def force_completion(self):
         self.up_to_date = True
+
+    def is_using_a_link(self):
+        """Is the mod using a juction to point to another directory on the file
+        system.
+
+        Returns True if the mod direct folder exists and is an NTFS junction.
+        Returns False if that directory is not a junction or does not exist.
+        """
+        try:
+            return external.junctions.islink(self.get_full_path())
+
+        except Exception as ex:
+            Logger.error('is_using_a_link: Exception occurred: {}'.format(repr(ex)))
+            return False
+
+    def get_real_full_path(self):
+        """Get the path where the real data resides by resolving the first NTFS
+        junction of the mod location where the mod resides on disk.
+
+        If some junctions are chained (point to other junctions), only the first
+        junction is resolved.
+
+        Return the resolved path or the original path if it is not a junction.
+        """
+
+        full_path = self.get_full_path()
+
+        try:
+            if self.is_using_a_link():
+                full_path = external.junctions.readlink(full_path)
+
+        except Exception as ex:
+            # Log the error and return the original path
+            Logger.error('get_real_full_path: Exception occurred: {}'.format(repr(ex)))
+
+        return full_path
 
     @staticmethod
     def fromDict(d):

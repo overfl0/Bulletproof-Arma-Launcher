@@ -117,6 +117,15 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
         self.paras = []  # TODO: Move this to some para_manager
         super(ModListEntry, self).__init__(*args, **kwargs)
 
+        if not os.path.isdir(self.mod.get_full_path()):
+            self.ids.mod_location.text = 'Missing. Requires download'
+
+        else:
+            if self.mod.is_using_a_link():
+                self.ids.mod_location.text = 'Link: ' + self.mod.get_real_full_path()
+
+            else:
+                self.ids.mod_location.text = 'Local copy'
 
 class ModList(BoxLayout):
 
