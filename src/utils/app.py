@@ -28,7 +28,12 @@ class BaseApp(App):
         super(BaseApp, self).__init__()
         self.popup_chain = PopupChain()
 
-        pygame.mixer.init(44100, -16, 1, 512)
+        try:
+            pygame.mixer.init(44100, -16, 1, 512)
+
+        except Exception as ex:
+            Logger.error('BaseApp.__init__: Could not initialize sound: {}'.format(repr(ex)))
+
         self.sounds = {}
         self.load_sound('hover', self.resource_path('sounds/hover.wav'), 0.5)
         self.load_sound('click', self.resource_path('sounds/click.wav'))
