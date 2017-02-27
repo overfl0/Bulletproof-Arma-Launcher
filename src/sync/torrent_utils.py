@@ -181,7 +181,7 @@ def path_can_be_a_mod(path, mods_directory):
         Logger.info("path_can_be_a_mod: Rejecting {}. Root directory.".format(path_casefold))
         return False
 
-    if path_casefold == unicode_helpers.casefold(os.path.expanduser('~')):
+    if path_casefold == unicode_helpers.casefold(paths.get_user_home_directory()):
         Logger.info("path_can_be_a_mod: Rejecting {}. Home directory.".format(path_casefold))
         return False
 

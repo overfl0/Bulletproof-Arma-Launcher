@@ -106,6 +106,15 @@ def get_resources_path(*relative):
         return get_base_path('resources', launcher_config.config_select.config_dir, *relative)
 
 
+def get_user_home_directory():
+    """Return the user home directory.
+    Seriously, it is ridiculous that this needs a special workaround to work
+    with unicode strings in 2017!
+    """
+
+    return unicode_helpers.fs_to_u(os.path.expanduser(b'~'))
+
+
 def get_local_user_directory(*relative):
     """Return the local user directory. Optionally append <relative> at the end.
     This means AppData\Local on windows.
@@ -117,7 +126,7 @@ def get_local_user_directory(*relative):
 
     else:
         # No LOCALAPPDATA variable? Try to build it yourself based on the user home
-        home = os.path.expanduser('~')
+        home = get_user_home_directory()
 
         if platform.system() == 'Linux':
             local_app_data = os.path.join(home, '.local', 'share')
