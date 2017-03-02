@@ -186,7 +186,10 @@
                 orientation: 'vertical'
                 padding: 20
                 Label:
-                    text: 'Mods:\n[i][size=12]Note: the launcher will try to find all missing mods automatically when installing[/size][/i]'
+                    text:
+                        '''Mods:
+                        [i][size=12]Note: the launcher will try to find all missing mods automatically when installing[/size][/i]
+                        [i][size=12]Note: Mods' locations can only be changed when seeding is turned off.[/size][/i]'''
                     markup: True
                     text_size: self.parent.size[0], None
                     size: self.texture_size

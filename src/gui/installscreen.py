@@ -204,6 +204,10 @@ class Controller(object):
                 Logger.info('Timer check: stopping seeding.')
                 self.para.request_termination()
 
+                # Enable preferences screen mods_list
+                Logger.info('upkeep: Enabling mods list in preferences')
+                self.enable_updated_settings_mods_list()
+
         # Check if seeding needs to start
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
@@ -211,6 +215,10 @@ class Controller(object):
                     if not self.para and self.mod_manager.get_mods() and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
+
+                        # Disable preferences screen mods_list
+                        Logger.info('upkeep: Disabling mods list in preferences')
+                        self.disable_settings_mods_list()
 
         if not arma_is_running:
             # Allow the game to be run once again by enabling the play button.
@@ -228,6 +236,10 @@ class Controller(object):
         mods_list.disabled = False
         mods = self.mod_manager.get_mods()
         mods_list.set_mods(mods)
+
+    def disable_settings_mods_list(self):
+        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
+        mods_list.disabled = True
 
     def enable_action_buttons(self):
         if not self.view.ids.action_button.disabled:

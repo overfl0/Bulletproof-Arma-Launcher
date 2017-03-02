@@ -58,8 +58,6 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
         self.update_status()
 
     def on_resolve(self, new_path):
-        # print 'on_resolve', new_path
-        MessageBox('Selected the following directory for mod {}:\n{}'.format(self.mod.foldername, new_path)).open()
         self.on_manual_path(self.mod, new_path)
 
         self.ids.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
