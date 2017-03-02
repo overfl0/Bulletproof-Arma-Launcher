@@ -11,12 +11,12 @@
         #size: self.parent.size
         #size_hint: None, None
 
-        CheckBox:
-            active: True
-            disabled: True
-            size_hint: None, None
-            size: 25, 25
-            pos_hint: {'center_y': 0.5}
+#         CheckBox:
+#             active: True
+#             disabled: True
+#             size_hint: None, None
+#             size: 25, 25
+#             pos_hint: {'center_y': 0.5}
 
         StackLayout:
             #orientation: 'vertical'
@@ -34,7 +34,7 @@
 
             Label:
                 id: mod_location
-                text: 'Location: D:\\Steam\\steamapps\\common\\Arma 3\\!Workshop\\@ArmCandy Insignia Pack'
+                text: ''
                 shorten: True
                 italic: True
                 size: self.texture_size
@@ -50,7 +50,7 @@
             size_hint: None, None
             size: 25, 25
             anim_delay: 0.5
-            source: app.resource_path('images/checkmark2_white.png')
+            #source: app.resource_path('images/checkmark2_white.png')
             pos_hint: {'center_y': 0.5}
 
         HoverImage:

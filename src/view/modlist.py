@@ -60,7 +60,8 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
     def on_resolve(self, new_path):
         self.on_manual_path(self.mod, new_path)
 
-        self.ids.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
+        # self.ids.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
+        self.ids.status_image.opacity = 0
         self.update_status()
 
     def set_new_path(self, new_path):
