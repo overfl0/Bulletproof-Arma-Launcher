@@ -37,7 +37,6 @@ from view.behaviors import HoverBehavior
 from view.behaviors import BgcolorBehavior, BubbleBehavior
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.filechooser import FileChooser
-from view.messagebox import MessageBox
 
 
 class HoverImage(HoverBehavior, BubbleBehavior, ButtonBehavior, Image):
