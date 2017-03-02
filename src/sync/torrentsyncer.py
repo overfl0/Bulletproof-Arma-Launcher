@@ -241,7 +241,7 @@ class TorrentSyncer(object):
 
             else:  # Torrent from url
                 try:
-                    res = requests_wrapper.download_url(None, mod.torrent_url, timeout=10)
+                    res = requests_wrapper.download_url(None, mod.torrent_url, timeout=5)
                 except requests_wrapper.DownloadException as ex:
                     error_message = 'Downloading metadata: {}'.format(ex.args[0])
                     raise PrepareParametersException(error_message)
