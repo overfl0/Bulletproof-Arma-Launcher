@@ -325,7 +325,7 @@ class Controller(object):
             (DynamicButtonStates.play, 'PLAY', self.on_play_button_release),
             (DynamicButtonStates.checking, 'CHECKING...', None),
             (DynamicButtonStates.install, 'INSTALL', self.on_install_button_click),
-            (DynamicButtonStates.self_upgrade, 'UPGRADE', self.on_self_upgrade_button_release)
+            (DynamicButtonStates.self_upgrade, 'UPDATE', self.on_self_upgrade_button_release)
         ]
 
         # Bind text and callbacks for button states
