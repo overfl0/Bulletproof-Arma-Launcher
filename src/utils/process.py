@@ -89,7 +89,7 @@ class ConnectionWrapper(object):
         try:
             self.con.send(msg)
         except (EOFError, IOError):
-            Logger.error('ConnectionWrapper: _send_message: Broken pipe!')
+            Logger.error('ConnectionWrapper: _send_message({}): Broken pipe!'.format(self.action_name))
             self.broken_pipe = True
 
     def reject(self, data=None):

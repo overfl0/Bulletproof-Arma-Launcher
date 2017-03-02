@@ -22,6 +22,7 @@ from utils import paths
 
 from kivy.lang import Builder
 from kivy.logger import Logger
+from kivy.properties import ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
@@ -54,6 +55,7 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
         # #print 'on_reject', data
         self.ids.status_image.opacity = 0
         ErrorPopup(details=data.get('details', None), message=data.get('msg', DEFAULT_ERROR_MESSAGE)).open()
+        self.update_status()
 
     def on_resolve(self, new_path):
         # print 'on_resolve', new_path
@@ -61,6 +63,7 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
         self.on_manual_path(self.mod, new_path)
 
         self.ids.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
+        self.update_status()
 
     def set_new_path(self, new_path):
         # Set the loader icon for the time being
@@ -111,12 +114,7 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
                              'Manually select {} location on your disk'.format(self.mod.foldername),
                              on_success=self.select_success)
 
-    def __init__(self, mod, on_manual_path, *args, **kwargs):
-        self.mod = mod
-        self.on_manual_path = on_manual_path
-        self.paras = []  # TODO: Move this to some para_manager
-        super(ModListEntry, self).__init__(*args, **kwargs)
-
+    def update_status(self):
         if not os.path.isdir(self.mod.get_full_path()):
             self.ids.mod_location.text = 'Missing. Requires download'
 
@@ -126,6 +124,14 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
 
             else:
                 self.ids.mod_location.text = 'Local copy'
+
+    def __init__(self, mod, on_manual_path, *args, **kwargs):
+        self.mod = mod
+        self.on_manual_path = on_manual_path
+        self.paras = []  # TODO: Move this to some para_manager
+        super(ModListEntry, self).__init__(*args, **kwargs)
+
+        self.update_status()
 
 class ModList(BoxLayout):
 
@@ -187,11 +193,17 @@ class ModList(BoxLayout):
 
 class ModListScrolled(ScrollView):
 
+    selection_callback = ObjectProperty(None)
+
+    def __init__(self, *args, **kwargs):
+        super(ModListScrolled, self).__init__(orientation='vertical', spacing=0, **kwargs)
+
+        self.bind(selection_callback=self.set_on_manual_path)
+
     def set_mods(self, mods):
-        self.ids.mods_list.set_mods(mods)
+        self.ids.mods_list_scrolled.set_mods(mods)
 
-    def set_on_manual_path(self, on_manual_path):
-        self.ids.mods_list.set_on_manual_path(on_manual_path)
-
+    def set_on_manual_path(self, instance, on_manual_path):
+        self.ids.mods_list_scrolled.set_on_manual_path(on_manual_path)
 
 Builder.load_file('kv/modlist.kv')

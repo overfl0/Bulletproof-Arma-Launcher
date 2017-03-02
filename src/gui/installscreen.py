@@ -129,7 +129,7 @@ class Controller(object):
 
         Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
-    def is_para_running(self, name=None):
+    def is_para_running(self, name=None, not_name=None):
         """Check if a given para is now running or if any para is running in
         case no name is given.
         """
@@ -139,8 +139,11 @@ class Controller(object):
 
         if name:
             return self.para.action_name == name
-        else:
-            return True
+
+        if not_name:
+            return self.para.action_name != name
+
+        return True
 
     def stop_mod_processing(self):
         """Forcefully stop any processing and ignore all the para promises.
@@ -226,16 +229,15 @@ class Controller(object):
         mods = self.mod_manager.get_mods()
         mods_list.set_mods(mods)
 
-    def disable_updated_settings_mods_list(self):
-        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
-        mods_list.disabled = True
-
     def enable_action_buttons(self):
         if not self.view.ids.action_button.disabled:
             return
 
         self.view.ids.action_button.enable()
         self.view.ids.selected_server.disabled = False
+
+        pref_screen = self.view.manager.get_screen('pref_screen')
+        pref_screen.controller.enable_action_widgets()
         self.enable_updated_settings_mods_list()
 
     def disable_action_buttons(self):
@@ -244,7 +246,9 @@ class Controller(object):
 
         self.view.ids.action_button.disable()
         self.view.ids.selected_server.disabled = True
-        self.disable_updated_settings_mods_list()
+
+        pref_screen = self.view.manager.get_screen('pref_screen')
+        pref_screen.controller.disable_action_widgets()
 
     def try_enable_play_button(self):
         """Enables or disables the action button (play, install, etc...).

@@ -68,6 +68,7 @@
         height: 524
 
         BoxLayout:  # Mods location
+            id: mod_location_selection
             orientation: 'horizontal'
             size_hint_y: None
             height: 30
@@ -185,12 +186,15 @@
                 orientation: 'vertical'
                 padding: 20
                 Label:
-                    text: 'Mods:\n'
+                    text: 'Mods:\n[i][size=12]Note: the launcher will try to find all missing mods automatically when installing[/size][/i]'
+                    markup: True
+                    text_size: self.parent.size[0], None
                     size: self.texture_size
                     size_hint: None, None
 
                 ModListScrolled:
                     id: mods_list
+                    selection_callback: root.controller.request_mods_recheck()
 
                 Widget
 

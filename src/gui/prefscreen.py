@@ -125,3 +125,17 @@ class Controller(object):
     def on_radio_button_active(self, radio_button, active):
         if active:
             self.settings.set('seeding_type', radio_button.seeding_type)
+
+    def request_mods_recheck(self, *args):
+        install_screen = self.view.manager.get_screen('install_screen')
+        install_screen.controller.restart_checking_mods()
+
+    def disable_action_widgets(self):
+        print "disabling prefscreen"
+        self.view.ids.mod_location_selection.disabled = True
+        self.view.ids.mods_list.disabled = True
+
+    def enable_action_widgets(self):
+        print "enabling prefscreen"
+        self.view.ids.mod_location_selection.disabled = False
+        self.view.ids.mods_list.disabled = False
