@@ -30,6 +30,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.relativelayout import RelativeLayout
 from sync import manager_functions
 from sync.torrent_utils import path_can_be_a_mod
+from utils.unicode_helpers import casefold
 from utils.paths import is_dir_writable
 from utils.process import protected_para
 from view.behaviors import HoverBehavior
@@ -105,6 +106,10 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
                 Think twice next time!
             ''').format(self.mod.foldername, path)
             return message
+
+        if casefold(path) == casefold(self.mod.get_full_path()):
+            Logger.info('select_success: Selected directory is the current one. Ignoring...')
+            return
 
         self.set_new_path(path)
 
