@@ -131,11 +131,9 @@ class Controller(object):
         install_screen.controller.restart_checking_mods()
 
     def disable_action_widgets(self):
-        print "disabling prefscreen"
         self.view.ids.mod_location_selection.disabled = True
         self.view.ids.mods_list.disabled = True
 
     def enable_action_widgets(self):
-        print "enabling prefscreen"
         self.view.ids.mod_location_selection.disabled = False
         self.view.ids.mods_list.disabled = False

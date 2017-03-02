@@ -173,7 +173,7 @@ class ModList(BoxLayout):
     def __init__(self, entries=None, on_manual_path=None, **kwargs):
         super(ModList, self).__init__(orientation='vertical', spacing=0, **kwargs)
 
-        self.on_manual_path = on_manual_path
+        self.set_on_manual_path(on_manual_path)
 
         self.modlist = []
         if entries is None:
