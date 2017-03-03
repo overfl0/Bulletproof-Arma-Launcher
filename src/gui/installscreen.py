@@ -116,6 +116,7 @@ class Controller(object):
         """Start the whole process of getting metadata and then checking if all
         the mods are correctly downloaded.
         """
+        self.set_action_button_state(DynamicButtonStates.checking)
 
         self.syncing_failed = False
         self.mod_manager.reset()
@@ -128,7 +129,7 @@ class Controller(object):
 
         Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
-    def is_para_running(self, name=None):
+    def is_para_running(self, name=None, not_name=None):
         """Check if a given para is now running or if any para is running in
         case no name is given.
         """
@@ -138,8 +139,11 @@ class Controller(object):
 
         if name:
             return self.para.action_name == name
-        else:
-            return True
+
+        if not_name:
+            return self.para.action_name != name
+
+        return True
 
     def stop_mod_processing(self):
         """Forcefully stop any processing and ignore all the para promises.
@@ -200,6 +204,10 @@ class Controller(object):
                 Logger.info('Timer check: stopping seeding.')
                 self.para.request_termination()
 
+                # Enable preferences screen mods_list
+                Logger.info('upkeep: Enabling mods list in preferences')
+                self.enable_updated_settings_mods_list()
+
         # Check if seeding needs to start
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
@@ -207,6 +215,10 @@ class Controller(object):
                     if not self.para and self.mod_manager.get_mods() and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
+
+                        # Disable preferences screen mods_list
+                        Logger.info('upkeep: Disabling mods list in preferences')
+                        self.disable_settings_mods_list()
 
         if not arma_is_running:
             # Allow the game to be run once again by enabling the play button.
@@ -219,13 +231,36 @@ class Controller(object):
                                                       git_sha1[:7] if git_sha1 else 'N/A')
         self.view.ids.footer_label.text = footer_text.upper()
 
+    def enable_updated_settings_mods_list(self):
+        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
+        mods_list.disabled = False
+        mods = self.mod_manager.get_mods()
+        mods_list.set_mods(mods)
+
+    def disable_settings_mods_list(self):
+        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
+        mods_list.disabled = True
+
     def enable_action_buttons(self):
+        if not self.view.ids.action_button.disabled:
+            return
+
         self.view.ids.action_button.enable()
         self.view.ids.selected_server.disabled = False
 
+        pref_screen = self.view.manager.get_screen('pref_screen')
+        pref_screen.controller.enable_action_widgets()
+        self.enable_updated_settings_mods_list()
+
     def disable_action_buttons(self):
+        if self.view.ids.action_button.disabled:
+            return
+
         self.view.ids.action_button.disable()
         self.view.ids.selected_server.disabled = True
+
+        pref_screen = self.view.manager.get_screen('pref_screen')
+        pref_screen.controller.disable_action_widgets()
 
     def try_enable_play_button(self):
         """Enables or disables the action button (play, install, etc...).

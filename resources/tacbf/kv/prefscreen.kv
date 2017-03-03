@@ -68,6 +68,7 @@
         height: 524
 
         BoxLayout:  # Mods location
+            id: mod_location_selection
             orientation: 'horizontal'
             size_hint_y: None
             height: 30
@@ -82,6 +83,7 @@
             BaseTextInput:
                 id: path_text_input
                 text: 'some/path/to/the/mods/dir'
+                shorten: True
                 text_size: self.width, self.height
                 font_size: 20
                 height: 30
@@ -182,6 +184,22 @@
 
             BoxLayout:  # Second column
                 orientation: 'vertical'
+                padding: 20
+                Label:
+                    text:
+                        '''Mods:
+                        [i][size=12]Note: the launcher will try to find all missing mods automatically when installing[/size][/i]
+                        [i][size=12]Note: Mods' locations can only be changed when seeding is turned off.[/size][/i]'''
+                    markup: True
+                    text_size: self.parent.size[0], None
+                    size: self.texture_size
+                    size_hint: None, None
+
+                ModListScrolled:
+                    id: mods_list
+                    selection_callback: root.controller.request_mods_recheck()
+
+                Widget
 
     Label:
         # Please do not remove this message. We worked hard to bring you this program.

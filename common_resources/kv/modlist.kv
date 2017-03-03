@@ -1,0 +1,81 @@
+<ModListEntry@BgcolorBehavior+RelativeLayout>:
+    #height: 56
+    #size_hint_y: None
+    size_hint: 1, None
+    height: 46
+
+    BoxLayout:
+        orientation: 'horizontal'
+        spacing: 10
+        padding: 10, 0, 20, 0
+        #size: self.parent.size
+        #size_hint: None, None
+
+#         CheckBox:
+#             active: True
+#             disabled: True
+#             size_hint: None, None
+#             size: 25, 25
+#             pos_hint: {'center_y': 0.5}
+
+        StackLayout:
+            #orientation: 'vertical'
+            pos_hint: {'center_y': 0.5}
+            size_hint: 1, None
+            height: mod_name.height + mod_location.height
+
+            Label:
+                id: mod_name
+                text: root.mod.foldername
+                #size: self.texture_size
+                height: self.texture_size[1]
+                text_size: self.size[0], None
+                size_hint: 1, None
+
+            Label:
+                id: mod_location
+                text: ''
+                shorten: True
+                italic: True
+                size: self.texture_size
+                text_size: self.parent.width, None
+                size_hint: None, None
+                font_size: 10
+                opacity: 0.3
+                outline_width: 1
+
+        HoverImage:
+            id: status_image
+            opacity: 0
+            size_hint: None, None
+            size: 25, 25
+            anim_delay: 0.5
+            #source: app.resource_path('images/checkmark2_white.png')
+            pos_hint: {'center_y': 0.5}
+
+        HoverImage:
+            color: root.icon_color
+            source: app.resource_path('images/folder_white.png')
+            size_hint: None, None
+            size: 25, 25
+
+            on_mouse_hover: root.highlight_button(*args)
+            on_release: root.select_dir(*args)
+            bubble_text: 'Manually\nselect\nlocation'
+            arrow_pos: 'bottom_mid'
+            pos_hint: {'center_y': 0.5}
+
+<ModListScrolled@ScrollView>:
+    size_hint: 1, None
+    height: 300
+    bar_width: 12
+    scroll_timeout: 100
+    bar_inactive_color: 0.7, 0.7, 0.7, 0.5
+
+    scroll_type: ['bars', 'content']
+
+    ModList:
+        size_hint: 1, None
+        id: mods_list_scrolled
+        color_odd: 0.3, 0.3, 0.3, 0.1
+        color_even: 0.3, 0.3, 0.3, 0.4

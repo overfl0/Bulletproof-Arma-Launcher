@@ -1,0 +1,61 @@
+# Note: the classes used here are defined in view/modsearchbox.py
+
+<ModSearchBox@ChainedPopup>:
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: 1, None
+        on_size: root.update_vertical_size(*args)
+
+        Label:
+            text_size: 570, None
+            size_hint: 1, None
+            size: self.texture_size
+            text:
+                '''
+                The following mods are missing and will need to be downloaded.
+
+                Click "Search on disk" to have the launcher search for all the mods.
+                Click on the directory icon to select a mod location manually if
+                the mod was not found but is already installed on your computer.
+                '''
+
+            on_size: root.resize_box(self.parent, *args)
+
+        ModListScrolled:
+            id: modlist
+            on_size: root.resize_box(self.parent.parent, *args)
+
+        Widget:
+            size_hint: None, None
+            height: 20
+
+        # Buttons
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 50
+            width: 300
+            height: 30
+            size_hint: 1, None
+
+            DefaultHoverButton:
+                text: 'Search on disk'
+                size: 100, 30
+                size_hint: 1, None
+                bubble_text:
+                    '''
+                    Select a directory to search for existing
+                    mods to use, to prevent redownloading.
+                    '''
+                on_release: root.search_button_clicked(*args)
+
+            HButton:
+                id: continue_button
+                text: 'Download missing'
+                size: 100, 30
+                size_hint: 1, None
+                bubble_text:
+                    '''
+                    Download all the mods listed above
+                    using your internet connection.
+                    '''
+                on_release: root.ignore_button_clicked(*args)

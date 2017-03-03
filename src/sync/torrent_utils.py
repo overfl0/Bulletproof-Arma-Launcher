@@ -358,7 +358,35 @@ def symlink_mod(mod_full_path, real_location):
 
     # TODO: What if the directory is not a symlink but a real directory with contents
     if os.path.exists(mod_full_path):  # sometimes the junction may already exist
-        os.rmdir(mod_full_path)
+        try:
+            os.rmdir(mod_full_path)
+
+        except OSError as ex:
+            if ex.errno != 41:  # TODO: Figure out which error this is
+                raise
+
+            # The directory is not empty
+
+            # Really ugly workaround...
+            import tkMessageBox
+            import Tkinter
+
+            root = Tkinter.Tk()
+            root.withdraw()  # use to hide tkinter window
+
+            message = textwrap.dedent('''\
+            To perform this action, the following directory will first have to be completely deleted:
+            {}
+
+            Are you sure you want to continue?
+            '''.format(mod_full_path))
+
+            result = tkMessageBox.askquestion('Are you sure?', message, icon='warning', parent=root)
+            if result == 'yes':
+                import shutil
+                shutil.rmtree(mod_full_path)
+            else:
+                return
 
     create_symlink(mod_full_path, real_location)
     try:

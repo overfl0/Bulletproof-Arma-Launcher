@@ -20,29 +20,30 @@ import textwrap
 
 from utils import paths
 
+from kivy.lang import Builder
 from kivy.logger import Logger
+from kivy.properties import ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
-from kivy.uix.label import Label
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.relativelayout import RelativeLayout
 from sync import manager_functions
 from sync.torrent_utils import path_can_be_a_mod
+from utils.unicode_helpers import casefold
 from utils.paths import is_dir_writable
 from utils.process import protected_para
 from view.behaviors import HoverBehavior
 from view.behaviors import BgcolorBehavior, BubbleBehavior
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.filechooser import FileChooser
-from view.messagebox import MessageBox
-
 
 
 class HoverImage(HoverBehavior, BubbleBehavior, ButtonBehavior, Image):
     pass
 
 
-class ModListEntry(BgcolorBehavior, BoxLayout):
-
+class ModListEntry(BgcolorBehavior, RelativeLayout):
     icon_color = kivy.utils.get_color_from_hex(launcher_config.dominant_color)[:3] + [0.8]
     icon_highlight_color = list([4 * i for i in icon_color[:3]] + [0.8])
 
@@ -52,21 +53,22 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
 
     def on_reject(self, data):
         # #print 'on_reject', data
-        self.status_image.opacity = 0
+        self.ids.status_image.opacity = 0
         ErrorPopup(details=data.get('details', None), message=data.get('msg', DEFAULT_ERROR_MESSAGE)).open()
+        self.update_status()
 
     def on_resolve(self, new_path):
-        # print 'on_resolve', new_path
-        MessageBox('Selected the following directory for mod {}:\n{}'.format(self.mod.foldername, new_path)).open()
         self.on_manual_path(self.mod, new_path)
 
-        self.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
+        # self.ids.status_image.source = paths.get_resources_path('images/checkmark2_white.png')
+        self.ids.status_image.opacity = 0
+        self.update_status()
 
     def set_new_path(self, new_path):
         # Set the loader icon for the time being
-        self.status_image.source = paths.get_resources_path('images/loader.zip')
-        self.status_image.opacity = 1
-        self.status_image.color = self.icon_color
+        self.ids.status_image.source = paths.get_resources_path('images/loader.zip')
+        self.ids.status_image.opacity = 1
+        self.ids.status_image.color = self.icon_color
 
         para = protected_para(
             manager_functions.symlink_mod, (self.mod.get_full_path(), new_path), 'symlink_mod',
@@ -98,11 +100,15 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
                 {}
 
                 You realize that selecting that directory will cause EVERYTHING
-                in there to be DELETED (save for that mod contents)?
+                inside that is not part of that mod to be DELETED?
 
                 Think twice next time!
             ''').format(self.mod.foldername, path)
             return message
+
+        if casefold(path) == casefold(self.mod.get_full_path()):
+            Logger.info('select_success: Selected directory is the current one. Ignoring...')
+            return
 
         self.set_new_path(path)
 
@@ -111,36 +117,27 @@ class ModListEntry(BgcolorBehavior, BoxLayout):
                              'Manually select {} location on your disk'.format(self.mod.foldername),
                              on_success=self.select_success)
 
-    def __init__(self, mod, on_manual_path, **kwargs):
+    def update_status(self):
+        if not os.path.isdir(self.mod.get_full_path()):
+            self.ids.mod_location.text = 'Missing. Requires download'
+
+        else:
+            if self.mod.is_using_a_link():
+                self.ids.mod_location.text = 'Link: ' + self.mod.get_real_full_path()
+
+            else:
+                self.ids.mod_location.text = 'Local copy'
+
+    def __init__(self, mod, on_manual_path, *args, **kwargs):
         self.mod = mod
         self.on_manual_path = on_manual_path
         self.paras = []  # TODO: Move this to some para_manager
-        kwargs['size_hint_y'] = None
-        kwargs['height'] = 26
-        super(ModListEntry, self).__init__(**kwargs)
+        super(ModListEntry, self).__init__(*args, **kwargs)
 
-        entry = BoxLayout(spacing=10, padding=(20, 0))
-        mod_name_label = Label(text=self.mod.foldername)
-
-        self.status_image = HoverImage(opacity=0,
-            size_hint=(None, None), size=(25, 25), anim_delay=0.5,
-            source=paths.get_resources_path('images/checkmark2_white.png'))
-
-        # up_to_date_text = 'Up to date' if mod.is_complete() else 'Requires update'
-        folder_path = paths.get_resources_path('images/folder_white.png')
-        folder = HoverImage(color=self.icon_color, bubble_text='Manually\nselect\nlocation', arrow_pos='bottom_mid', source=folder_path, size_hint=(None, None), size=(25, 25))
-        folder.bind(mouse_hover=self.highlight_button)
-        folder.bind(on_release=self.select_dir)
-
-        entry.add_widget(mod_name_label)
-        entry.add_widget(self.status_image)
-        entry.add_widget(folder)
-        self.add_widget(entry)
-
+        self.update_status()
 
 class ModList(BoxLayout):
-    color_odd = [0.3, 0.3, 0.3, 0.3]
-    color_even = [0.3, 0.3, 0.3, 0.8]
+
 
     def resize(self, *args):
         self.height = sum(child.height for child in self.children)
@@ -148,7 +145,7 @@ class ModList(BoxLayout):
 
     def add_mod(self, mod):
         self.modlist.append(mod)
-        color = self.color_even if len(self.modlist) % 2 else self.color_odd
+        color = self.color_odd if len(self.modlist) % 2 else self.color_even
 
         boxentry = ModListEntry(bcolor=color, mod=mod, on_manual_path=self.set_mod_directory)
         boxentry.bind(size=self.resize)
@@ -173,21 +170,43 @@ class ModList(BoxLayout):
         if self.on_manual_path:
             self.on_manual_path(mod, new_path)
 
+    def set_on_manual_path(self, on_manual_path):
+        self.on_manual_path = on_manual_path
+
     def __init__(self, entries=None, on_manual_path=None, **kwargs):
         super(ModList, self).__init__(orientation='vertical', spacing=0, **kwargs)
 
-        self.on_manual_path = on_manual_path
+        self.set_on_manual_path(on_manual_path)
 
         self.modlist = []
         if entries is None:
             entries = []
 
-        # import itertools
-        # from sync.mod import Mod
-        # def multiply(elements, number):
-        #     return itertools.islice(itertools.cycle(elements), number)
-        # entries = list(multiply([Mod('@First'), Mod('@Second'), Mod('@Third')], 30))
+#         import itertools
+#         from sync.mod import Mod
+#         def multiply(elements, number):
+#             return itertools.islice(itertools.cycle(elements), number)
+#         # second = '\n[i][size=10]Link: C:\\Some\\Directory\\Here\\Steam\\SteamApps\\Workshop\\Stuff[/size][/i]'
+#         second = ''
+#         entries = list(multiply([Mod('@First' + second), Mod('@Second' + second), Mod('@Third' + second)], 30))
 
         for entry in entries:
             self.add_mod(entry)
 
+
+class ModListScrolled(ScrollView):
+
+    selection_callback = ObjectProperty(None)
+
+    def __init__(self, *args, **kwargs):
+        super(ModListScrolled, self).__init__(orientation='vertical', spacing=0, **kwargs)
+
+        self.bind(selection_callback=self.set_on_manual_path)
+
+    def set_mods(self, mods):
+        self.ids.mods_list_scrolled.set_mods(mods)
+
+    def set_on_manual_path(self, instance, on_manual_path):
+        self.ids.mods_list_scrolled.set_on_manual_path(on_manual_path)
+
+Builder.load_file('kv/modlist.kv')

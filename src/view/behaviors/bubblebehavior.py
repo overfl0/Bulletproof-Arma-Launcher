@@ -13,24 +13,48 @@
 from __future__ import unicode_literals
 
 from functools import partial
+from kivy.properties import StringProperty
 from kivy.uix.bubble import Bubble, BubbleButton
 
 
 class BubbleBehavior(object):
 
-    def __init__(self, **kwargs):
-        super(BubbleBehavior, self).__init__(**kwargs)
-        text = kwargs.get('bubble_text')
-        arrow_pos = kwargs.get('arrow_pos', 'top_mid')
+    bubble_text = StringProperty('')
+    arrow_pos = StringProperty('top_mid')
 
-        if text:
-            text = text.strip()
-            self.bubble = bubble = Bubble(size_hint=(None, None))
-            self.bubble_button = bubble_button = BubbleButton(markup=True, text=text)
-            bubble_button.bind(texture_size=lambda obj, size: bubble.setter('size')(bubble, (size[0] + 30, size[1] + 30)))
-            bubble.add_widget(bubble_button)
+    def __init__(self, *args, **kwargs):
+        self.bind(bubble_text=self.create_bubble)
+        self.bind(arrow_pos=self.create_bubble)
 
-            self.bind(mouse_hover=partial(self.show_bubble, self, bubble, arrow_pos))
+        self.bubble_callback = None
+
+        super(BubbleBehavior, self).__init__(*args, **kwargs)
+
+        bubble_text = kwargs.get('bubble_text')
+        if bubble_text:
+            self.bubble_text = bubble_text
+
+        arrow_pos = kwargs.get('arrow_pos')
+        if arrow_pos:
+            self.arrow_pos = arrow_pos
+
+    def create_bubble(self, instance, value):
+        if not self.bubble_text:
+            return
+
+        if self.bubble_callback:
+            self.funbind('mouse_hover', self.bubble_callback)
+
+        text = self.bubble_text.strip()
+        self.bubble = bubble = Bubble(size_hint=(None, None))
+        self.bubble_button = bubble_button = BubbleButton(markup=True, text=text)
+        bubble_button.bind(texture_size=lambda obj, size: bubble.setter('size')(bubble, (size[0] + 30, size[1] + 30)))
+        bubble.add_widget(bubble_button)
+
+        self.bubble_callback = partial(self.show_bubble, self, bubble, self.arrow_pos)
+
+        # self.bind(mouse_hover=self.bubble_callback)
+        self.fbind('mouse_hover', self.bubble_callback)
 
     @staticmethod
     def show_bubble(button, bubble, arrow_pos, instance, value):
