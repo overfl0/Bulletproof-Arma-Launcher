@@ -87,6 +87,10 @@ class Settings(Model):
             'name': 'seeding_type', 'defaultValue': 'while_not_playing'
         }, {
             'name': 'selected_server', 'defaultValue': False
+        }, {
+            'name': 'run_trackir', 'defaultValue': True
+        }, {
+            'name': 'run_facetracknoir', 'defaultValue': True
         }
     ]
 
@@ -95,17 +99,17 @@ class Settings(Model):
 
     def __init__(self, argv):
         super(Settings, self).__init__()
-        # save automaticly to disc if changes to the settings are made
+        # save automatically to disc if changes to the settings are made
         self.auto_save_on_change = True
 
-        # get the basedir for config files. This has to be the same everytime
+        # get the basedir for config files. This has to be the same every time
         self.config_path = os.path.join(self.launcher_default_basedir(), 'config.json')
 
         # load config
         try:
             store = JsonStore(self.config_path)
-            # this is ugly self modification, but i dont want to introduce
-            # a settingsmanager
+            # this is ugly self modification, but i don't want to introduce
+            # a settings manager
             store.load(self, update=True)
         except Exception:
             Logger.warn('Settings: Launcher config could not be loaded')
