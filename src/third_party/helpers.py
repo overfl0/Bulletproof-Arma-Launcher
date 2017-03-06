@@ -246,20 +246,38 @@ def check_requirements(verbose=True):
     return True
 
 
+def create_game_parameters():
+    settings = kivy.app.App.get_running_app().settings
+    args = []
+
+    if settings.get('arma_win64'):
+        args.append('-win64')
+
+    return args
+
+
 def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
     """Run the game with the right parameters.
     Handle the exceptions by showing an appropriate message on error.
     """
 
+    # Gathering data
     settings = kivy.app.App.get_running_app().settings
+    custom_args = create_game_parameters()
+    mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.parent_location but it isn't!
 
+    mods_paths = []
+    for mod in mods:
+        mod_full_path = os.path.join(mod_dir, mod.foldername)
+        mods_paths.append(mod_full_path)
+
+    # Running all the programs
     ts_run_on_start = devmode.get_ts_run_on_start(default=True)
     if ts_run_on_start:
         if teamspeak_url:
             teamspeak.run_and_connect(teamspeak_url)
     else:
         Logger.info('Third party: Not running teamspeak because of devmode settings.')
-
 
     if settings.get('run_facetracknoir'):
         Logger.info('Third party: Trying to run FaceTrackNoIR...')
@@ -270,16 +288,7 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
         headtracking.run_TrackIR()
 
     Logger.info('Third party: Running the game')
-
-    mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.parent_location but it isn't!
-
-    mods_paths = []
-    for mod in mods:
-        mod_full_path = os.path.join(mod_dir, mod.foldername)
-        mods_paths.append(mod_full_path)
-
     try:
-        custom_args = []  # TODO: Make this user selectable
         _ = Arma.run_game(mod_list=mods_paths, custom_args=custom_args, ip=ip, port=port, password=password)
         # Note: although run_game returns an object, due to the way steam works,
         # it is unreliable. You never know whether it is the handle to Arma,

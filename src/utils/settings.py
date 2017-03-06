@@ -91,7 +91,11 @@ class Settings(Model):
             'name': 'run_trackir', 'defaultValue': True
         }, {
             'name': 'run_facetracknoir', 'defaultValue': True
-        }
+
+        # Arma launching parameters ############################################
+        }, {
+            'name': 'arma_win64', 'defaultValue': False
+        },
     ]
 
     # path to the registry entry which holds the users document path
