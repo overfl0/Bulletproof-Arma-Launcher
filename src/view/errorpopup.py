@@ -18,9 +18,10 @@ import sys
 
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.textinput import TextInput
 from utils import browser
 from utils.primitive_git import get_git_sha1_auto
 from utils.critical_messagebox import MessageBox
@@ -32,6 +33,7 @@ If you can't find an answer to your problem [color=3572b0][ref={}]on the trouble
 copy the text below and post it on the bugtracker:
 
 [color=3572b0][ref={}]{}[/ref][/color]
+The error message has been copied to your clipboard. Press Ctrl+V to paste it.
 """.format(launcher_config.troubleshooting_url, launcher_config.bugtracker_url, launcher_config.bugtracker_url)
 
 POPUP_TITLE = """An error occurred"""
@@ -56,11 +58,20 @@ class ErrorPopup(ChainedPopup):
         bl.add_widget(la)
 
         if details:
-            ti = TextInput(text=details, size_hint_y=0.7)
-            bl.add_widget(ti)
+            sv = ScrollView(size_hint=(1, 0.7),
+                            bar_width=12,
+                            scroll_type=['bars', 'content'],
+                            bar_inactive_color=(0.5, 0.5, 0.5, 0.7)
+                           )
+
+            ti = TextInput(text=details, size_hint=(1, None))
+            ti.copy(data=details)
+            ti.bind(minimum_height=ti.setter('height'))
+            sv.add_widget(ti)
+            bl.add_widget(sv)
 
         super(ErrorPopup, self).__init__(
-            title=POPUP_TITLE, content=bl, size_hint=(None, None), size=(600, 400), **kwargs)
+            title=POPUP_TITLE, content=bl, size_hint=(None, None), size=(600, 500), **kwargs)
 
 
 def error_popup_decorator(func):
