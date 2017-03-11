@@ -32,13 +32,13 @@ To know if we need UAC, check if the directory is writable
 import hashlib
 import os
 import shutil
-import subprocess
 import sys
 
 from distutils.version import LooseVersion
 from kivy.logger import Logger
 from utils.devmode import devmode
 from utils import paths
+from utils import process_launcher
 from utils import unicode_helpers
 
 '''
@@ -99,7 +99,7 @@ def request_my_update(new_executable):
     args.extend(['--', '-u', my_executable_path])
 
     Logger.info('Autoupdater: Will call with args: [{}]'.format(', '.join(args)))
-    subprocess.Popen(unicode_helpers.u_to_fs_list(args))
+    process_launcher.run(args)
 
 
 def compare_if_same_files(other_executable):
@@ -149,7 +149,7 @@ def run_updated(old_executable_name):
     Logger.info('Autoupdater: Running the updated file: {}'.format(old_executable_name))
     args = call_file_arguments(old_executable_name)
 
-    subprocess.Popen(unicode_helpers.u_to_fs_list(args))
+    process_launcher.run(args)
 
 
 def should_update(u_from, u_to):

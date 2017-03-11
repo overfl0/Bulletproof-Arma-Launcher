@@ -21,12 +21,10 @@ if __name__ == "__main__":
 
 
 import os
-import subprocess
 
 from kivy.logger import Logger
-from utils import unicode_helpers
 from utils.devmode import devmode
-from utils.singleton import Singleton
+from utils import process_launcher
 from utils.registry import Registry
 
 from . import SoftwareNotInstalled
@@ -42,8 +40,6 @@ class SteamNotInstalled(SoftwareNotInstalled):
 
 
 class Arma(object):
-    __metaclass__ = Singleton
-
     # Registry paths
     _arma_registry_path = r"software\bohemia interactive\arma 3"
     _arma_registry_path_alternate = r"software\Bohemia Interactive Studio\arma 3"
@@ -119,7 +115,7 @@ class Arma(object):
         game_args = [steam_exe_path, '-applaunch', '107410']
 
         Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
-        popen_object = subprocess.Popen(unicode_helpers.u_to_fs_list(game_args))  # May raise OSError
+        popen_object = process_launcher.run(game_args)  # May raise OSError
 
         return popen_object
 
@@ -168,7 +164,7 @@ class Arma(object):
             game_args.extend(custom_args)
 
         Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
-        popen_object = subprocess.Popen(unicode_helpers.u_to_fs_list(game_args))  # May raise OSError
+        popen_object = process_launcher.run(game_args)  # May raise OSError
 
         return popen_object
 

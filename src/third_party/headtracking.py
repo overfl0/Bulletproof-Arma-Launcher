@@ -13,12 +13,12 @@
 from __future__ import unicode_literals
 
 import os
-import subprocess
 import utils.system_processes
 
+from utils.devmode import devmode
 from kivy.logger import Logger
 from third_party import SoftwareNotInstalled
-from utils import unicode_helpers
+from utils import process_launcher
 from utils.registry import Registry
 
 
@@ -28,6 +28,10 @@ class FaceTrackNoIRNotInstalled(SoftwareNotInstalled):
 
 def get_faceTrackNoIR_path():
     """Get the path to FaceTrackNoIR installation."""
+
+    fake_path = devmode.get_facetracknoir_path()
+    if fake_path:
+        return fake_path
 
     try:
         key = 'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\FaceTrackNoIR_is1'
@@ -66,7 +70,7 @@ def run_faceTrackNoIR():
         return
 
     Logger.info('FaceTrackNoIR: Running file: {}'.format(faceTrackNoIR_path))
-    subprocess.Popen(unicode_helpers.u_to_fs_list([faceTrackNoIR_path]))
+    process_launcher.run([faceTrackNoIR_path])
 
 
 class TrackIRNotInstalled(SoftwareNotInstalled):
@@ -75,6 +79,10 @@ class TrackIRNotInstalled(SoftwareNotInstalled):
 
 def get_TrackIR_path():
     """Get the path to FaceTrackNoIR installation."""
+
+    fake_path = devmode.get_trackir_path()
+    if fake_path:
+        return fake_path
 
     try:
         key = 'Software\\NaturalPoint\\NaturalPoint\\NPClient Location'
@@ -113,4 +121,4 @@ def run_TrackIR():
         return
 
     Logger.info('TrackIR: Running file: {}'.format(TrackIR_path))
-    subprocess.Popen(unicode_helpers.u_to_fs_list([TrackIR_path]))
+    process_launcher.run([TrackIR_path])

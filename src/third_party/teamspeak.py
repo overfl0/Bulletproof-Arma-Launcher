@@ -267,7 +267,7 @@ def install_ts3_plugin(path):
     '''
     # This was dropped because it was too unreliable
     if not only_as_root:
-        handle = subprocess.Popen(unicode_helpers.u_to_fs_list(args))
+        handle = process_launcher.run(args)
         retval = handle.wait()
 
         if retval == 0:  # TODO: AND CHECK FOR FILES FAILS!
