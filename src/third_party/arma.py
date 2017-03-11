@@ -26,6 +26,7 @@ from kivy.logger import Logger
 from utils.devmode import devmode
 from utils import process_launcher
 from utils.registry import Registry
+from utils.system_processes import program_running
 
 from . import SoftwareNotInstalled
 
@@ -132,15 +133,26 @@ class Arma(object):
         Raises SteamNotInstalled if Steam is not installed.
         Raises OSError if running the executable fails."""
 
-        # http://feedback.arma3.com/view.php?id=23435
-        # Correct launching method when steam is turned off:
-        # steam.exe -applaunch 107410 -usebe -nolauncher -connect=IP -port=PORT -mod=<modparameters>
+        # If steam is running, run Arma.exe directly (some users have had this
+        # strange bug that arma would not launch if Steam.exe was already running
+        # Even though running the exact same command from cmd.exe worked fine!
+        if program_running('Steam.exe'):
+            # Steam is not running right now so run the game through steam
+            game_args = [Arma.get_executable_path(battleye=battleye)]
 
-        steam_exe_path = Arma.get_steam_exe_path()
-        game_args = [steam_exe_path, '-applaunch', '107410']
+            if battleye:
+                game_args.extend(['0', '1'])
 
-        if battleye:
-            game_args.append('-usebe')
+        else:
+            # http://feedback.arma3.com/view.php?id=23435
+            # Correct launching method when steam is turned off:
+            # steam.exe -applaunch 107410 -usebe -nolauncher -connect=IP -port=PORT -mod=<modparameters>
+
+            steam_exe_path = Arma.get_steam_exe_path()
+            game_args = [steam_exe_path, '-applaunch', '107410']
+
+            if battleye:
+                game_args.append('-usebe')
 
         game_args.extend(['-nosplash', '-skipIntro', '-nolauncher'])
 
