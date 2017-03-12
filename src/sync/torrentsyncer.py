@@ -186,9 +186,14 @@ class TorrentSyncer(object):
             ETA = ''
 
         if download_fraction != 1:
+            # Don't round to 100.00% if the actual value is 99.999%
+            fraction_to_show = download_fraction * 100.0
+            if fraction_to_show > 99.99:
+                fraction_to_show = 99.99
+
             progress_message = '{} {:0.2f}% complete ({:0.2f} KB/s) {}'.format(
                                action,
-                               download_fraction * 100.0,
+                               fraction_to_show,
                                float(status.payload_download_rate) / 1024.0,
                                'ETA: {}'.format(ETA) if ETA else '')
             progress_mods = unfinished_mods
