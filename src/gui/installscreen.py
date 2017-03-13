@@ -232,13 +232,13 @@ class Controller(object):
         self.view.ids.footer_label.text = footer_text.upper()
 
     def enable_updated_settings_mods_list(self):
-        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
+        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_options.ids.mods_list
         mods_list.disabled = False
         mods = self.mod_manager.get_mods()
         mods_list.set_mods(mods)
 
     def disable_settings_mods_list(self):
-        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_list
+        mods_list = self.view.manager.get_screen('pref_screen').ids.mods_options.ids.mods_list
         mods_list.disabled = True
 
     def enable_action_buttons(self):

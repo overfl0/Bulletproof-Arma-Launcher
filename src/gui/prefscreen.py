@@ -52,13 +52,13 @@ class Controller(object):
         Clock.schedule_once(self.check_childs, 0)
 
     def check_childs(self, dt):
-        inputfield = self.view.ids.path_text_input
-        max_download_speed_input = self.view.ids.max_download_speed_input
-        max_upload_speed_input = self.view.ids.max_upload_speed_input
+        inputfield = self.view.ids.mods_options.ids.path_text_input
+        max_download_speed_input = self.view.ids.mods_options.ids.max_download_speed_input
+        max_upload_speed_input = self.view.ids.mods_options.ids.max_upload_speed_input
         seedingtype_radios = [
-            self.view.ids.sbox_while_not_playing,
-            self.view.ids.sbox_never,
-            self.view.ids.sbox_always
+            self.view.ids.mods_options.ids.sbox_while_not_playing,
+            self.view.ids.mods_options.ids.sbox_never,
+            self.view.ids.mods_options.ids.sbox_always
         ]
 
         # init path selection
@@ -110,7 +110,7 @@ class Controller(object):
         # this will save automatically
         self.settings.set('launcher_moddir', path)
 
-        self.view.ids.path_text_input.text = self.settings.get('launcher_moddir')
+        self.view.ids.mods_options.ids.path_text_input.text = self.settings.get('launcher_moddir')
 
     def on_max_download_speed_input_focus(self, numberinput, focus):
         if not focus:
@@ -131,9 +131,9 @@ class Controller(object):
         install_screen.controller.restart_checking_mods()
 
     def disable_action_widgets(self):
-        self.view.ids.mod_location_selection.disabled = True
-        self.view.ids.mods_list.disabled = True
+        self.view.ids.mods_options.ids.mod_location_selection.disabled = True
+        self.view.ids.mods_options.ids.mods_list.disabled = True
 
     def enable_action_widgets(self):
-        self.view.ids.mod_location_selection.disabled = False
-        self.view.ids.mods_list.disabled = False
+        self.view.ids.mods_options.ids.mod_location_selection.disabled = False
+        self.view.ids.mods_options.ids.mods_list.disabled = False
