@@ -89,6 +89,7 @@ try:
         from kivy.uix.button import Button
         from kivy.uix.rst import RstDocument
         from kivy.uix.stacklayout import StackLayout
+        from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem, TabbedPanelStrip, TabbedPanelHeader
         from kivy.graphics import Line, Color
         from kivy.properties import NumericProperty, ObjectProperty, BooleanProperty, StringProperty
         from kivy.core.window import Window

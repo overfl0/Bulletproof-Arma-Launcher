@@ -22,7 +22,7 @@ from utils import paths
 
 from kivy.lang import Builder
 from kivy.logger import Logger
-from kivy.properties import ObjectProperty
+from kivy.properties import ListProperty, ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
@@ -137,7 +137,8 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
         self.update_status()
 
 class ModList(BoxLayout):
-
+    color_odd = ListProperty([0, 0, 0, 1])
+    color_even = ListProperty([0, 0, 0, 1])
 
     def resize(self, *args):
         self.height = sum(child.height for child in self.children)
@@ -188,7 +189,11 @@ class ModList(BoxLayout):
 #             return itertools.islice(itertools.cycle(elements), number)
 #         # second = '\n[i][size=10]Link: C:\\Some\\Directory\\Here\\Steam\\SteamApps\\Workshop\\Stuff[/size][/i]'
 #         second = ''
-#         entries = list(multiply([Mod('@First' + second), Mod('@Second' + second), Mod('@Third' + second)], 30))
+#         entries = list(multiply([
+#             Mod('@First' + second, parent_location=''),
+#             Mod('@Second' + second, parent_location=''),
+#             Mod('@Third' + second, parent_location=''),
+#         ], 30))
 
         for entry in entries:
             self.add_mod(entry)
