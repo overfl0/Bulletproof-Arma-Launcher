@@ -95,13 +95,16 @@ class Settings(Model):
         # Arma launching parameters ############################################
         {'name': 'arma_win64', 'defaultValue': False},
         {'name': 'arma_name', 'defaultValue': ''},
+        {'name': 'arma_name_enabled', 'defaultValue': False},
         {'name': 'arma_showScriptErrors', 'defaultValue': False},
         {'name': 'arma_noPause', 'defaultValue': False},
         {'name': 'arma_window', 'defaultValue': False},
         {'name': 'arma_checkSignatures', 'defaultValue': False},
         {'name': 'arma_filePatching', 'defaultValue': False},
         {'name': 'arma_unit', 'defaultValue': ''},
+        {'name': 'arma_unit_enabled', 'defaultValue': False},
         {'name': 'arma_mission_file', 'defaultValue': ''},
+        {'name': 'arma_mission_file_enabled', 'defaultValue': False},
     ]
 
     # path to the registry entry which holds the users document path

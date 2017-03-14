@@ -58,17 +58,16 @@ class CheckStringLabel(BoxLayout):
             return
 
         settings_value = self.settings.get(value)
+        settings_active = self.settings.get(value + '_enabled')
         self.ids.textinput.text = settings_value
-        self.ids.checkbox.active = bool(settings_value)
+        self.ids.checkbox.active = bool(settings_active)
 
     def save_settings(self, instance, value):
         if not self.settings_name:
             return
 
-        if not self.ids.checkbox.active:
-            self.settings.set(self.settings_name, '')
-        else:
-            self.settings.set(self.settings_name, self.ids.textinput.text)
+        self.settings.set(self.settings_name + '_enabled', self.ids.checkbox.active)
+        self.settings.set(self.settings_name, self.ids.textinput.text)
 
 
 Builder.load_file('kv/simplewidgets.kv')

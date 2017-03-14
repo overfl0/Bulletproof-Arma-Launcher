@@ -18,6 +18,7 @@
 
 <CheckStringLabel@BoxLayout>:
     text: ''
+    hint_text: ''
     spacing: 10
     orientation: 'horizontal'
     height: 30
@@ -37,6 +38,7 @@
 
     TextInput:
         id: textinput
+        hint_text: root.hint_text
         on_focus: root.save_settings(*args)
         background_color: 0.3, 0.3, 0.3, 0.7
         foreground_color: 0.9, 0.9, 0.9, 1

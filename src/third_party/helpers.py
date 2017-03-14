@@ -253,7 +253,7 @@ def create_game_parameters():
     if settings.get('arma_win64'):
         args.append('-win64')
 
-    if settings.get('arma_name'):
+    if settings.get('arma_name') and settings.get('arma_name_enabled'):
         args.append('-name=' + settings.get('arma_name'))
 
     if settings.get('arma_showScriptErrors'):
@@ -271,10 +271,10 @@ def create_game_parameters():
     if settings.get('arma_filePatching'):
         args.append('-filePatching')
 
-    if settings.get('arma_unit'):
+    if settings.get('arma_unit') and settings.get('arma_unit_enabled'):
         args.append('-unit=' + settings.get('arma_unit'))
 
-    if settings.get('arma_mission_file'):
+    if settings.get('arma_mission_file') and settings.get('arma_mission_file_enabled'):
         file_path = settings.get('arma_mission_file')
         if os.path.isfile(file_path):
             args.append(file_path)
