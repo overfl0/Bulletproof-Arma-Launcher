@@ -91,13 +91,17 @@ class Settings(Model):
             'name': 'run_trackir', 'defaultValue': True
         }, {
             'name': 'run_facetracknoir', 'defaultValue': True
-
-        # Arma launching parameters ############################################
-        }, {
-            'name': 'arma_win64', 'defaultValue': False
-        }, {
-            'name': 'arma_name', 'defaultValue': ''
         },
+        # Arma launching parameters ############################################
+        {'name': 'arma_win64', 'defaultValue': False},
+        {'name': 'arma_name', 'defaultValue': ''},
+        {'name': 'arma_showScriptErrors', 'defaultValue': False},
+        {'name': 'arma_noPause', 'defaultValue': False},
+        {'name': 'arma_window', 'defaultValue': False},
+        {'name': 'arma_checkSignatures', 'defaultValue': False},
+        {'name': 'arma_filePatching', 'defaultValue': False},
+        {'name': 'arma_unit', 'defaultValue': ''},
+        {'name': 'arma_mission_file', 'defaultValue': ''},
     ]
 
     # path to the registry entry which holds the users document path

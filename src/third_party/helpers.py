@@ -256,6 +256,29 @@ def create_game_parameters():
     if settings.get('arma_name'):
         args.append('-name=' + settings.get('arma_name'))
 
+    if settings.get('arma_showScriptErrors'):
+        args.append('-showScriptErrors')
+
+    if settings.get('arma_noPause'):
+        args.append('-noPause')
+
+    if settings.get('arma_window'):
+        args.append('-window')
+
+    if settings.get('arma_checkSignatures'):
+        args.append('-checkSignatures')
+
+    if settings.get('arma_filePatching'):
+        args.append('-filePatching')
+
+    if settings.get('arma_unit'):
+        args.append('-unit=' + settings.get('arma_unit'))
+
+    if settings.get('arma_mission_file'):
+        file_path = settings.get('arma_mission_file')
+        if os.path.isfile(file_path):
+            args.append(file_path)
+
     return args
 
 

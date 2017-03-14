@@ -23,6 +23,45 @@
             height: self.minimum_height
             size_hint: 1, None
 
+            Label:
+                text: 'Basic options:'
+                size_hint: None, None
+                size: self.texture_size[0], 50
+
+
             CheckStringLabel:
                 text: 'Profile name'
                 settings_name: 'arma_name'
+
+            CheckStringLabel:
+                text: 'Unit name'
+                settings_name: 'arma_unit'
+
+            Label:
+                text: 'Advanced options:'
+                size_hint: None, None
+                size: self.texture_size[0], 50
+
+            CheckLabel:
+                text: 'Show script errors'
+                settings_name: 'arma_showScriptErrors'
+
+            CheckLabel:
+                text: 'No Pause'
+                settings_name: 'arma_noPause'
+
+            CheckLabel:
+                text: 'Force window mode'
+                settings_name: 'arma_window'
+
+            CheckLabel:
+                text: 'Check signatures at start'
+                settings_name: 'arma_checkSignatures'
+
+            CheckLabel:
+                text: 'Allow file patching'
+                settings_name: 'arma_filePatching'
+
+            CheckStringLabel:
+                text: 'Mission file (editor)'
+                settings_name: 'arma_mission_file'
