@@ -13,11 +13,13 @@
 from __future__ import unicode_literals
 
 import kivy.app
+import os
 
 from kivy.lang import Builder
 from kivy.logger import Logger
 from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
+from view.filechooser import FileChooser
 
 
 class CheckLabel(BoxLayout):
@@ -69,5 +71,44 @@ class CheckStringLabel(BoxLayout):
         self.settings.set(self.settings_name + '_enabled', self.ids.checkbox.active)
         self.settings.set(self.settings_name, self.ids.textinput.text)
 
+
+class CheckFileLabel(BoxLayout):
+
+    settings_name = StringProperty(None)
+
+    def __init__(self, entries=None, on_manual_path=None, **kwargs):
+        self.settings = kivy.app.App.get_running_app().settings
+        super(CheckFileLabel, self).__init__(**kwargs)
+
+        self.bind(settings_name=self.set_settings_name)
+
+    def set_settings_name(self, instance, value):
+        if not value:
+            return
+
+        settings_value = self.settings.get(value)
+        settings_active = self.settings.get(value + '_enabled')
+        self.ids.textinput.text = settings_value
+        self.ids.checkbox.active = bool(settings_active)
+
+    def save_settings(self, *args, **kwargs):
+        if not self.settings_name:
+            return
+
+        self.settings.set(self.settings_name + '_enabled', self.ids.checkbox.active)
+        self.settings.set(self.settings_name, self.ids.textinput.text)
+
+    def path_chosen_cb(self, path):
+        if not os.path.isfile(path):
+            return 'This is not a file: {}'.format(path)
+
+        self.ids.textinput.text = path
+        self.save_settings(None, None)
+
+    def choose_path(self):
+        self.p = FileChooser(self.ids.textinput.text,
+                             on_success=self.path_chosen_cb,
+                             select_dir=False,
+                             filetypes=[('SQM files', '*.sqm'), ('All files', '*')])
 
 Builder.load_file('kv/simplewidgets.kv')

@@ -23,11 +23,14 @@ from kivy.uix.modalview import ModalView
 
 
 class FileChooser():
-    def __init__(self, path, title='', on_success=None, on_canceled=None):
+    def __init__(self, path, title='', on_success=None, on_canceled=None,
+                 select_dir=True, filetypes=[("all files", "*")]):
         self.path = path
         self.on_success = on_success
         self.on_canceled = on_canceled
         self.title = title
+        self.select_dir = select_dir
+        self.filetypes = filetypes
 
         self.open()
 
@@ -37,12 +40,19 @@ class FileChooser():
 
         while True:
 
-            tempdir = tkFileDialog.askdirectory(
-                parent=root,
-                initialdir=self.path,
-                title=self.title)
+            if self.select_dir:
+                tempnode = tkFileDialog.askdirectory(
+                    parent=root,
+                    initialdir=self.path,
+                    title=self.title)
+            else:
+                tempnode = tkFileDialog.askopenfilename(
+                    parent=root,
+                    initialdir=self.path,
+                    title=self.title,
+                    filetypes=self.filetypes)
 
-            if not tempdir:
+            if not tempnode:
                 Logger.info('FileChooser: User canceled the prompt')
                 if self.on_canceled:
                     self.on_canceled()
@@ -51,16 +61,16 @@ class FileChooser():
                 return
 
             if os.sep != '/':  # askdirectory uses '/' as separator
-                tempdir = tempdir.replace('/', os.sep)
+                tempnode = tempnode.replace('/', os.sep)
 
-            Logger.info('FileChooser: User selected {}'.format(tempdir))
+            Logger.info('FileChooser: User selected {}'.format(tempnode))
 
             if not self.on_success:
                 break
 
             # Call callback. If the callback returns something other than False
             # Show the message and get show the dir selection prompt again.
-            message = self.on_success(tempdir)
+            message = self.on_success(tempnode)
             if message:
                 Logger.error('FileChooser: {}'.format(message))
                 tkMessageBox.showinfo('Error', message)
