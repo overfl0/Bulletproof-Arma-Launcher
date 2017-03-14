@@ -20,12 +20,11 @@ import kivy.app
 
 from kivy.clock import Clock
 from kivy.uix.screenmanager import Screen
+from kivy.uix.gridlayout import GridLayout
 from kivy.logger import Logger
-from kivy.uix.behaviors import ToggleButtonBehavior
 
-from view.messagebox import MessageBox
 from view.filechooser import FileChooser
-from utils.data.jsonstore import JsonStore
+from utils.devmode import devmode
 from utils.paths import is_dir_writable
 
 
@@ -37,6 +36,28 @@ class PrefScreen(Screen):
         super(PrefScreen, self).__init__(**kwargs)
         self.controller = Controller(self)
 
+        if devmode.get_devmode_options():
+            Clock.schedule_interval(self.enable_devmode_options, 1)
+
+    def enable_devmode_options(self, *args):
+        """Append additional options available only if set in devmode.
+        The variable that needs to be set is: `devmode_options`.
+        """
+
+        try:
+            # Try getting access to the widget we want to append to
+            self.ids.arma_options.ids.scrollview_content
+        except:
+            return
+
+        class Devmode_options(GridLayout):
+            pass
+
+        devmode_options = Devmode_options()
+        self.ids.arma_options.ids.scrollview_content.add_widget(devmode_options)
+
+        # Return False to unschedule the function
+        return False
 
 class Controller(object):
     def __init__(self, widget):

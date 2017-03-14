@@ -17,11 +17,13 @@
         scroll_type: ['bars', 'content']
 
         GridLayout:
+            id: scrollview_content
             cols: 1
             height: self.minimum_height
             width: self.parent.width - self.parent.bar_width
             size_hint: None, None
 
+            # ==================================================================
             Label:
                 text: 'Non-Arma options:'
                 size_hint: None, None
@@ -35,6 +37,7 @@
                 text: 'Run FreeTrackNoIR at game start (if installed)'
                 settings_name: 'run_facetracknoir'
 
+            # ==================================================================
             Label:
                 text: 'Basic options:'
                 size_hint: None, None
@@ -52,6 +55,7 @@
                 text: 'Force 64-bit Arma executable'
                 settings_name: 'arma_win64'
 
+            # ==================================================================
             Label:
                 text: 'Advanced options:'
                 size_hint: None, None
@@ -62,22 +66,35 @@
                 settings_name: 'arma_showScriptErrors'
 
             CheckLabel:
-                text: 'No Pause'
-                settings_name: 'arma_noPause'
-
-            CheckLabel:
                 text: 'Force window mode'
                 settings_name: 'arma_window'
 
-            CheckLabel:
-                text: 'Check signatures at start'
-                settings_name: 'arma_checkSignatures'
+# ==============================================================================
+# Note: These options are appended to `scrollview_content` if `devmode_options`
+# is set to true in devmode.conf
+<devmode_options@GridLayout>:
+    cols: 1
+    height: self.minimum_height
+    size_hint: 1, None
 
-            CheckLabel:
-                text: 'Allow file patching'
-                settings_name: 'arma_filePatching'
+    Label:
+        text: 'Devmode options:'
+        size_hint: None, None
+        size: self.texture_size[0], 50
 
-            CheckFileLabel:
-                text: 'Mission file (editor)'
-                settings_name: 'arma_mission_file'
-                hint_text: '<path to the file>'
+    CheckLabel:
+        text: 'No Pause'
+        settings_name: 'arma_noPause'
+
+    CheckLabel:
+        text: 'Check signatures at start'
+        settings_name: 'arma_checkSignatures'
+
+    CheckLabel:
+        text: 'Allow file patching'
+        settings_name: 'arma_filePatching'
+
+    CheckFileLabel:
+        text: 'Mission file (editor)'
+        settings_name: 'arma_mission_file'
+        hint_text: '<path to the file>'
