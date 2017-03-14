@@ -43,4 +43,32 @@ class CheckLabel(BoxLayout):
         self.settings.set(self.settings_name, value)
 
 
+class CheckStringLabel(BoxLayout):
+
+    settings_name = StringProperty(None)
+
+    def __init__(self, entries=None, on_manual_path=None, **kwargs):
+        self.settings = kivy.app.App.get_running_app().settings
+        super(CheckStringLabel, self).__init__(**kwargs)
+
+        self.bind(settings_name=self.set_settings_name)
+
+    def set_settings_name(self, instance, value):
+        if not value:
+            return
+
+        settings_value = self.settings.get(value)
+        self.ids.textinput.text = settings_value
+        self.ids.checkbox.active = bool(settings_value)
+
+    def save_settings(self, instance, value):
+        if not self.settings_name:
+            return
+
+        if not self.ids.checkbox.active:
+            self.settings.set(self.settings_name, '')
+        else:
+            self.settings.set(self.settings_name, self.ids.textinput.text)
+
+
 Builder.load_file('kv/simplewidgets.kv')

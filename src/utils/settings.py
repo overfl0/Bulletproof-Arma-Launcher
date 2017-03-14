@@ -95,6 +95,8 @@ class Settings(Model):
         # Arma launching parameters ############################################
         }, {
             'name': 'arma_win64', 'defaultValue': False
+        }, {
+            'name': 'arma_name', 'defaultValue': ''
         },
     ]
 

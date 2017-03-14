@@ -15,3 +15,33 @@
     Label:
         text: root.text
         text_size: self.width, None
+
+<CheckStringLabel@BoxLayout>:
+    text: ''
+    spacing: 10
+    orientation: 'horizontal'
+    height: 30
+    size_hint: 1, None
+
+    CheckBox:
+        id: checkbox
+        size_hint: None, None
+        size: 25, 25
+        pos_hint: {'center_y': 0.5}
+        on_active: root.save_settings(*args)
+
+    Label:
+        text: root.text
+        size: self.texture_size
+        size_hint: None, 1
+
+    TextInput:
+        id: textinput
+        on_focus: root.save_settings(*args)
+        background_color: 0.3, 0.3, 0.3, 0.7
+        foreground_color: 0.9, 0.9, 0.9, 1
+        multiline: False
+        height: self.minimum_height
+        size_hint_y: None
+
+        disabled: not checkbox.active
