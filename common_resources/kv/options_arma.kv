@@ -9,7 +9,7 @@
 
     ScrollView:
         size_hint: 1, None
-        height: 470
+        height: self.parent.height - 34
         bar_width: 12
         scroll_timeout: 100
         bar_inactive_color: 0.7, 0.7, 0.7, 0.5
@@ -17,11 +17,10 @@
         scroll_type: ['bars', 'content']
 
         GridLayout:
-            #orientation: 'vertical'
             cols: 1
-            #height: 1000
             height: self.minimum_height
-            size_hint: 1, None
+            width: self.parent.width - self.parent.bar_width
+            size_hint: None, None
 
             Label:
                 text: 'Non-Arma options:'

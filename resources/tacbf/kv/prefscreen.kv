@@ -15,6 +15,7 @@
         BackButton:
 
     TabbedPanel:
+        id: options_tabbed_panel
         do_default_tab: False
         height: 500
         size_hint: 1, None
@@ -37,6 +38,7 @@
             ArmaOptionsBox:
                 screen: root
                 id: arma_options
+                height: options_tabbed_panel.height - options_tabbed_panel.tab_height
 
     Label:
         # Please do not remove this message. We worked hard to bring you this program.
