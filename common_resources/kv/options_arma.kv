@@ -1,0 +1,28 @@
+# Settings contents
+<ArmaOptionsBox@BoxLayout>
+    padding: 20
+    orientation: 'vertical'
+    size_hint: 1, None
+    screen: None
+    top: (root.screen.top if root.screen else 0)
+    height: 504
+
+    ScrollView:
+        size_hint: 1, None
+        height: 470
+        bar_width: 12
+        scroll_timeout: 100
+        bar_inactive_color: 0.7, 0.7, 0.7, 0.5
+
+        scroll_type: ['bars', 'content']
+
+        GridLayout:
+            #orientation: 'vertical'
+            cols: 1
+            #height: 1000
+            height: self.minimum_height
+            size_hint: 1, None
+
+            CheckLabel:
+                text: 'Run TrackIR at game start (if installed)'
+                settings_name: 'run_trackir'

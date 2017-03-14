@@ -1,6 +1,7 @@
 # Section: Screen for settings and configuration
 
 #:include kv/options_mods.kv
+#:include kv/options_arma.kv
 
 <PrefScreen>:
     name: 'pref_screen'
@@ -32,6 +33,10 @@
 
         TabbedPanelItem:
             text: 'Arma parameters'
+
+            ArmaOptionsBox:
+                screen: root
+                id: arma_options
 
     Label:
         # Please do not remove this message. We worked hard to bring you this program.
