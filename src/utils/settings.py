@@ -105,6 +105,7 @@ class Settings(Model):
         {'name': 'arma_unit_enabled', 'defaultValue': False},
         {'name': 'arma_mission_file', 'defaultValue': ''},
         {'name': 'arma_mission_file_enabled', 'defaultValue': False},
+        {'name': 'arma_noSound', 'defaultValue': False},
     ]
 
     # path to the registry entry which holds the users document path

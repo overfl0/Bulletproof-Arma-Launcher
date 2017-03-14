@@ -122,7 +122,7 @@ class Arma(object):
 
     @staticmethod
     def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True,
-                 ip=None, port=None, password=None):
+                 ip=None, port=None, password=None, mission_file=None):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
@@ -164,7 +164,10 @@ class Arma(object):
             game_args.extend(['-name=' + profile_name])
 
         if ip:
-            game_args.extend(['-connect=' + ip])
+            if not mission_file:
+                game_args.extend(['-connect=' + ip])
+            else:
+                Logger.info('Arma: Mission file parameter present. Not connecting to server!')
 
         if port:
             game_args.extend(['-port=' + port])
@@ -174,6 +177,9 @@ class Arma(object):
 
         if custom_args:
             game_args.extend(custom_args)
+
+        if mission_file:
+            game_args.append(mission_file)
 
         Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
         popen_object = process_launcher.run(game_args)  # May raise OSError

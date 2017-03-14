@@ -274,12 +274,20 @@ def create_game_parameters():
     if settings.get('arma_unit') and settings.get('arma_unit_enabled'):
         args.append('-unit=' + settings.get('arma_unit'))
 
+    return args
+
+def get_mission_file_parameter():
+    """Return an existing mission path file selected in the settings."""
+
+    settings = kivy.app.App.get_running_app().settings
+
     if settings.get('arma_mission_file') and settings.get('arma_mission_file_enabled'):
         file_path = settings.get('arma_mission_file')
-        if os.path.isfile(file_path):
-            args.append(file_path)
 
-    return args
+        if os.path.isfile(file_path):
+            return file_path
+
+    return None
 
 
 def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
@@ -290,6 +298,7 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
     # Gathering data
     settings = kivy.app.App.get_running_app().settings
     custom_args = create_game_parameters()
+    mission_file = get_mission_file_parameter()
     mod_dir = settings.get('launcher_moddir')  # Why from there? This should be in mod.parent_location but it isn't!
 
     mods_paths = []
@@ -315,7 +324,12 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
 
     Logger.info('Third party: Running the game')
     try:
-        _ = Arma.run_game(mod_list=mods_paths, custom_args=custom_args, ip=ip, port=port, password=password)
+        _ = Arma.run_game(mod_list=mods_paths,
+                          custom_args=custom_args,
+                          ip=ip,
+                          port=port,
+                          password=password,
+                          mission_file=mission_file)
         # Note: although run_game returns an object, due to the way steam works,
         # it is unreliable. You never know whether it is the handle to Arma,
         # Steam or Arma's own launcher.
