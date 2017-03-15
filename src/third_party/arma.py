@@ -93,7 +93,6 @@ class Arma(object):
 
         try:
             arma_profiles_dir_contents = os.listdir(profiles_directory)
-            print arma_profiles_dir_contents
 
         except OSError:
             return profiles
