@@ -48,6 +48,33 @@
 
         disabled: not checkbox.active
 
+<CheckDropdownLabel@BoxLayout>:
+    text: ''
+    values: []
+    hint_text: ''
+    spacing: 10
+    orientation: 'horizontal'
+    height: 30
+    size_hint: 1, None
+
+    CheckBox:
+        id: checkbox
+        size_hint: None, None
+        size: 25, 25
+        pos_hint: {'center_y': 0.5}
+        on_active: root.save_settings(*args)
+
+    Label:
+        text: root.text
+        size: self.texture_size
+        size_hint: None, 1
+
+    DropdownBox:
+        id: dropdown
+        disabled: not checkbox.active
+        values: root.values
+        on_text: root.save_settings(*args)
+
 <CheckFileLabel@BoxLayout>:
     text: ''
     hint_text: ''
