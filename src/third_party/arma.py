@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
 
 import os
+import urllib
 
 from kivy.logger import Logger
 from utils.devmode import devmode
@@ -47,6 +48,7 @@ class Arma(object):
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
     _steam_registry_path = r"Software\Valve\Steam"
+    _profile_directory_name = "Arma 3 - Other Profiles"
 
     @staticmethod
     def get_installation_path():
@@ -78,6 +80,41 @@ class Arma(object):
             raise ArmaNotInstalled()
 
         return user_docs
+
+    @staticmethod
+    def get_player_profiles():
+        """Retrieve available player profiles.
+        The profiles are stored in '~/Documents/Arma 3 - Other Profiles' (on
+        Windows) and are in utf-8 that is then urlencoded.
+        """
+
+        profiles = []
+        profiles_directory = os.path.join(Arma.get_user_directory(), Arma._profile_directory_name)
+
+        try:
+            arma_profiles_dir_contents = os.listdir(profiles_directory)
+            print arma_profiles_dir_contents
+
+        except OSError:
+            return profiles
+
+        for filename in arma_profiles_dir_contents:
+            if not os.path.isdir(os.path.join(profiles_directory, filename)):
+                continue
+
+            try:
+                # We need to convert the unquoted unicode python string to bytes
+                # so we use encode('latin-1') for that.
+                # Any error here indicates that this is not a valid profile
+                profile_name = urllib.unquote(filename).encode('latin-1').decode('utf-8')
+
+            except:
+                Logger.error('Arma: get_player_profiles: Error when converting {}'.format(repr(filename)))
+                continue
+
+            profiles.append(profile_name)
+
+        return profiles
 
     @staticmethod
     def get_executable_path(battleye=True):
