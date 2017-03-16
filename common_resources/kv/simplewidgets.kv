@@ -40,7 +40,7 @@
         id: textinput
         hint_text: root.hint_text
         on_focus: root.save_settings(*args)
-        background_color: 0.3, 0.3, 0.3, 0.7
+        background_color: 0.3, 0.3, 0.3, 0.3
         foreground_color: 0.9, 0.9, 0.9, 1
         multiline: False
         height: self.minimum_height
@@ -99,7 +99,7 @@
         id: textinput
         hint_text: root.hint_text
         on_focus: root.save_settings(*args)
-        background_color: 0.3, 0.3, 0.3, 0.7
+        background_color: 0.3, 0.3, 0.3, 0.3
         foreground_color: 0.9, 0.9, 0.9, 1
         multiline: False
         height: self.minimum_height
@@ -110,6 +110,7 @@
     Button:
         size_hint: None, None
         height: 30
-        text: 'Choose Path'
+        width: 30
+        text: '...'
         on_release: root.choose_path()
         disabled: not checkbox.active
