@@ -226,11 +226,23 @@ def parse_servers_data(para, data, launcher_moddir):
     return servers
 
 
-def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir, mod_descriptions_data):
+def _prepare_and_check(messagequeue, launcher_moddir, launcher_basedir,
+                       mod_descriptions_data, selected_optional_mods):
     launcher = parse_launcher_data(messagequeue, mod_descriptions_data, launcher_basedir)
     mods_list = parse_mods_data(messagequeue, mod_descriptions_data, launcher_moddir)
     servers_list = parse_servers_data(messagequeue, mod_descriptions_data, launcher_moddir)
     teamspeak = parse_teamspeak_data(messagequeue, mod_descriptions_data)
+
+    # Set the selection flag near for all the mods that have been selected
+    # by the user
+    for mod in mods_list:
+        if mod.foldername in selected_optional_mods:
+            mod.selected = True
+
+        for server in servers_list:
+            for mod in server.mods:
+                if mod.foldername in selected_optional_mods:
+                    mod.selected = True
 
     # Debug mode: decrease the number of mods to download
     mods_filter = devmode.get_mods_filter()

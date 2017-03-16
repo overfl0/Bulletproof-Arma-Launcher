@@ -154,7 +154,8 @@ class ModManager(object):
             (
                 self.settings.get('launcher_moddir'),
                 self.settings.get('launcher_basedir'),
-                data
+                data,
+                self.settings.get('selected_optional_mods')
             ),
             'checkmods',
             then=(self.on_prepare_and_check_resolve, None, None)

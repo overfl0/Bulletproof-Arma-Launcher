@@ -91,6 +91,8 @@ class Settings(Model):
             'name': 'run_trackir', 'defaultValue': True
         }, {
             'name': 'run_facetracknoir', 'defaultValue': True
+        }, {
+            'name': 'selected_optional_mods', 'defaultValue': []
         },
         # Arma launching parameters ############################################
         {'name': 'arma_win64', 'defaultValue': False},

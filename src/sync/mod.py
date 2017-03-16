@@ -25,6 +25,7 @@ class Mod(object):
     def __init__(
             self,
             foldername='@noname',
+            optional=False,
             parent_location=None,
             torrent_url=None,
             torrent_timestamp='',
@@ -33,6 +34,7 @@ class Mod(object):
             up_to_date=None):
         super(Mod, self).__init__()
 
+        self.optional = optional  # Is the mod optional
         self.parent_location = parent_location  # 'C:\Arma 3\<default_mod_dir>'
         self.torrent_url = torrent_url  # 'https://my.domain/file.torrent'
         self.foldername = foldername  # '@CBA_A3'
@@ -40,6 +42,7 @@ class Mod(object):
         self.full_name = full_name  # 'Community Base Addons v.123.4'
         self.version = version  # "0.1-alpha6" (optional)
         self.up_to_date = up_to_date
+        self.selected = False  # Is the mod selectec if it is set as optional
 
     def get_full_path(self):
         return os.path.join(self.parent_location, self.foldername)
@@ -103,13 +106,15 @@ class Mod(object):
         foldername = d.get('foldername', "@Unknown")
         torrent_url = d.get('torrent_url', "")
         version = d.get('version', '0')
+        optional = d.get('optional', False)
 
         m = Mod(foldername=foldername, torrent_timestamp=torrent_timestamp,
-                full_name=full_name, torrent_url=torrent_url, version=version)
+                full_name=full_name, torrent_url=torrent_url, version=version,
+                optional=optional)
         return m
 
     def __repr__(self):
-        s = '<Mod: {s.foldername} -- utcts: {s.torrent_timestamp} -- {s.full_name} -- durl: {s.torrent_url} -- version: {s.version}>'.format(
+        s = '<Mod: {s.foldername} -- utcts: {s.torrent_timestamp} -- optional: {s.optional} -- selected: {s.selected} -- {s.full_name} -- durl: {s.torrent_url} -- version: {s.version}>'.format(
             s=self)
 
         return s

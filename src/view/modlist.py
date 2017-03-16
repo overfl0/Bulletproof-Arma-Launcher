@@ -128,6 +128,26 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
             else:
                 self.ids.mod_location.text = 'Local copy'
 
+    def set_mod_selection(self, selected):
+        """Callback that is called when the user checks or unchecks the
+        "selected" checkbox of a mod.
+        """
+
+        settings = kivy.app.App.get_running_app().settings
+        selected_optional_mods = settings.get('selected_optional_mods')
+
+        # We're using such a way of adding and removing elements to change
+        # the ID of the object because otherwise settings.set won't notice
+        # the change and won't save the data
+        if selected:
+            selected_optional_mods = selected_optional_mods + [self.mod.foldername]
+
+        else:
+            selected_optional_mods = \
+                [v for v in selected_optional_mods if v != self.mod.foldername]
+
+        settings.set('selected_optional_mods', selected_optional_mods)
+
     def __init__(self, mod, on_manual_path, *args, **kwargs):
         self.mod = mod
         self.on_manual_path = on_manual_path
