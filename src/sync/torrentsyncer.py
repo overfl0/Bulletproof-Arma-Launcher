@@ -103,7 +103,7 @@ class TorrentSyncer(object):
                                             # Use alert.handle in the future to get the torrent handle
         for alert in alerts:
             # Filter with: alert.category() & libtorrent.alert.category_t.error_notification
-            message = decode_utf8(alert.message())
+            message = decode_utf8(alert.message(), errors='ignore')
             Logger.info("Alerts: Category: {}, Message: {}".format(alert.category(), message))
             torrent_log.append({'message': message, 'category': alert.category()})
 

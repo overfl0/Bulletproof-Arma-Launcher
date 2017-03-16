@@ -19,19 +19,19 @@ if unicode('Python 2.7') is b'itch':
     pass
 
 
-def decode_utf8(message):
+def decode_utf8(message, errors='strict'):
     """Wrapper that prints the decoded message if an error occurs."""
     try:
-        return message.decode('utf-8')
+        return message.decode('utf-8', errors=errors)
     except UnicodeDecodeError as ex:
         error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
         raise UnicodeError(error_message)
 
 
-def encode_utf8(message):
+def encode_utf8(message, errors='strict'):
     """Wrapper that prints the encoded message if an error occurs."""
     try:
-        return message.encode('utf-8')
+        return message.encode('utf-8', errors=errors)
     except UnicodeEncodeError as ex:
         error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
         raise UnicodeError(error_message)
