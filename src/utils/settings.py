@@ -95,6 +95,7 @@ class Settings(Model):
             'name': 'selected_optional_mods', 'defaultValue': []
         },
         # Arma launching parameters ############################################
+        {'name': 'arma_win32', 'defaultValue': False},
         {'name': 'arma_win64', 'defaultValue': False},
         {'name': 'arma_name', 'defaultValue': ''},
         {'name': 'arma_name_enabled', 'defaultValue': False},

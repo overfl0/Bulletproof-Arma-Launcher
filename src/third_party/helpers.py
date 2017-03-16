@@ -253,6 +253,9 @@ def create_game_parameters():
     if settings.get('arma_win64'):
         args.append('-win64')
 
+    if settings.get('arma_win32'):
+        args.append('-win32')
+
     if settings.get('arma_name') and settings.get('arma_name_enabled'):
         args.append('-name=' + settings.get('arma_name'))
 
