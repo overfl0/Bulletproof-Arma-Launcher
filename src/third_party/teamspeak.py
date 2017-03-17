@@ -178,10 +178,7 @@ def is_teamspeak_running():
     if system_processes.file_running(ts3_path):
         return True
 
-    if system_processes.program_running('ts3client_win32.exe'):
-        return True
-
-    if system_processes.program_running('ts3client_win64.exe'):
+    if system_processes.program_running('ts3client_win32.exe', 'ts3client_win64.exe'):
         return True
 
     return False

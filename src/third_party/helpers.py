@@ -401,7 +401,7 @@ def arma_may_be_running(newly_launched=False):
     if ARMA_PROCESS_TERMINATED:  # If it is known the process has already terminated, don't iterate through processes
         return False
 
-    is_process_running = utils.system_processes.program_running('arma3.exe')
+    is_process_running = utils.system_processes.program_running('arma3.exe', 'arma3_x64.exe')
 
     if is_process_running:
         ARMA_PROCESS_EVER_SEEN = True

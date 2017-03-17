@@ -19,15 +19,15 @@ import unicode_helpers
 from kivy.logger import Logger
 
 
-def program_running(executable_name):
-    """Return if any process running on the system matches the given name."""
+def program_running(*executable_names):
+    """Return if any process running on the system matches the given names."""
 
-    executable_casefold = unicode_helpers.casefold(executable_name)
+    executables_casefold = [unicode_helpers.casefold(name) for name in executable_names]
 
     for process in psutil.process_iter():
         try:
             name = unicode_helpers.fs_to_u(process.name())
-            if unicode_helpers.casefold(name) == executable_casefold:
+            if unicode_helpers.casefold(name) in executables_casefold:
                 return True
 
         except psutil.Error:
