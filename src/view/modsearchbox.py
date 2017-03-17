@@ -61,12 +61,28 @@ class ModSearchBox(ChainedPopup):
         self.dismiss()
         self.on_selection('download')
 
+    def update_continue_button(self, *args):
+        """Set button label to OK if all selected mods have a selected directory"""
+
+        self.ids.continue_button.text = 'Download missing'
+
+        for mod in self.mods:
+            if mod.optional and not mod.selected:
+                continue
+
+            if not os.path.exists(mod.get_full_path()):
+                return
+
+        self.ids.continue_button.text = 'OK'
+
     def mod_location_selected(self, mod, new_path):
         if self.on_manual_path:
             self.on_manual_path(mod, new_path)
 
-        if all (os.path.exists(mod.get_full_path()) for mod in self.mods):
-            self.ids.continue_button.text = 'OK'
+        self.update_continue_button()
+
+    def mod_selected(self, mod):
+        self.update_continue_button()
 
     def __init__(self, on_selection, on_manual_path, mods, title=default_title):
         self.mods = mods
@@ -78,3 +94,4 @@ class ModSearchBox(ChainedPopup):
 
         self.ids.modlist.set_mods(mods)
         self.ids.modlist.set_on_manual_path(None, self.mod_location_selected)
+        self.ids.modlist.set_on_select(None, self.mod_selected)

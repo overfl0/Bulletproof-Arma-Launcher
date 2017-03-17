@@ -20,6 +20,7 @@ import kivy.app  # To keep PyDev from complaining
 import os
 import textwrap
 import third_party.helpers
+import urllib
 import utils.system_processes
 
 from autoupdater import autoupdater
@@ -212,7 +213,7 @@ class Controller(object):
         elif seeding_type == 'always' or \
                 (seeding_type == 'while_not_playing' and not arma_is_running):
                     # Don't start if no mods, syncing failed or if it's already running
-                    if not self.para and self.mod_manager.get_mods() and not self.syncing_failed:
+                    if not self.para and self.mod_manager.get_mods(only_selected=True) and not self.syncing_failed:
                         Logger.info('Timer check: starting seeding.')
                         self.start_syncing(seed=True)
 
@@ -308,7 +309,7 @@ class Controller(object):
         if not third_party.helpers.check_requirements(verbose=False):
             return
 
-        for mod in self.mod_manager.get_mods():
+        for mod in self.mod_manager.get_mods(only_selected=True):
             if not mod.is_complete():
                 return
 
@@ -487,7 +488,7 @@ class Controller(object):
         self.view.ids.status_image.show()
         self._set_status_label('Creating torrents...')
 
-        mods_to_convert = self.mod_manager.get_mods()[:]  # Work on the copy
+        mods_to_convert = self.mod_manager.get_mods(only_selected=True)[:]  # Work on the copy
         if self.mod_manager.get_launcher():
             mods_to_convert.append(self.mod_manager.get_launcher())
 
@@ -565,6 +566,8 @@ class Controller(object):
         if launcher_config.news_url:
             UrlRequest(launcher_config.news_url, on_success=partial(
                 self.on_news_success, self.view.ids.news_label))
+        UrlRequest('http://launcherstats.frontline.frl/launcher?domain=' +
+                   urllib.quote(launcher_config.domain))
 
     def on_download_mod_description_reject(self, data):
         self.para = None

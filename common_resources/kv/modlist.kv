@@ -11,13 +11,13 @@
         #size: self.parent.size
         #size_hint: None, None
 
-#         CheckBox:
-#             active: root.mod.selected or not root.mod.optional
-#             on_active: root.set_mod_selection(self.active)
-#             disabled: not root.mod.optional
-#             size_hint: None, None
-#             size: 25, 25
-#             pos_hint: {'center_y': 0.5}
+        CheckBox:
+            active: root.mod.selected or not root.mod.optional
+            on_active: root.set_mod_selection(self.active)
+            disabled: not root.mod.optional
+            size_hint: None, None
+            size: 25, 25
+            pos_hint: {'center_y': 0.5}
 
         StackLayout:
             #orientation: 'vertical'

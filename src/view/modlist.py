@@ -133,6 +133,8 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
         "selected" checkbox of a mod.
         """
 
+        self.mod.selected = selected
+
         settings = kivy.app.App.get_running_app().settings
         selected_optional_mods = settings.get('selected_optional_mods')
 
@@ -148,9 +150,12 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
 
         settings.set('selected_optional_mods', selected_optional_mods)
 
-    def __init__(self, mod, on_manual_path, *args, **kwargs):
+        self.on_select(self.mod)
+
+    def __init__(self, mod, on_manual_path, on_select, *args, **kwargs):
         self.mod = mod
         self.on_manual_path = on_manual_path
+        self.on_select = on_select
         self.paras = []  # TODO: Move this to some para_manager
         super(ModListEntry, self).__init__(*args, **kwargs)
 
@@ -168,7 +173,10 @@ class ModList(BoxLayout):
         self.modlist.append(mod)
         color = self.color_odd if len(self.modlist) % 2 else self.color_even
 
-        boxentry = ModListEntry(bcolor=color, mod=mod, on_manual_path=self.set_mod_directory)
+        boxentry = ModListEntry(bcolor=color,
+                                mod=mod,
+                                on_manual_path=self.set_mod_directory,
+                                on_select=self.call_on_select)
         boxentry.bind(size=self.resize)
         self.add_widget(boxentry)
 
@@ -194,10 +202,18 @@ class ModList(BoxLayout):
     def set_on_manual_path(self, on_manual_path):
         self.on_manual_path = on_manual_path
 
-    def __init__(self, entries=None, on_manual_path=None, **kwargs):
+    def call_on_select(self, mod):
+        if self.on_select:
+            self.on_select(mod)
+
+    def set_on_select(self, on_select):
+        self.on_select = on_select
+
+    def __init__(self, entries=None, on_manual_path=None, on_select=None, **kwargs):
         super(ModList, self).__init__(orientation='vertical', spacing=0, **kwargs)
 
         self.set_on_manual_path(on_manual_path)
+        self.set_on_select(on_select)
 
         self.modlist = []
         if entries is None:
@@ -221,17 +237,22 @@ class ModList(BoxLayout):
 
 class ModListScrolled(ScrollView):
 
-    selection_callback = ObjectProperty(None)
+    directory_selection_callback = ObjectProperty(None)
+    mod_selection_callback = ObjectProperty(None)
 
     def __init__(self, *args, **kwargs):
         super(ModListScrolled, self).__init__(orientation='vertical', spacing=0, **kwargs)
 
-        self.bind(selection_callback=self.set_on_manual_path)
+        self.bind(directory_selection_callback=self.set_on_manual_path)
+        self.bind(mod_selection_callback=self.set_on_select)
 
     def set_mods(self, mods):
         self.ids.mods_list_scrolled.set_mods(mods)
 
     def set_on_manual_path(self, instance, on_manual_path):
         self.ids.mods_list_scrolled.set_on_manual_path(on_manual_path)
+
+    def set_on_select(self, instance, on_select):
+        self.ids.mods_list_scrolled.set_on_select(on_select)
 
 Builder.load_file('kv/modlist.kv')

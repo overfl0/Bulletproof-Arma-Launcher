@@ -175,8 +175,8 @@
             Label:
                 text:
                     '''Mods:
-                    [i][size=12]Note: the launcher will try to find all missing mods automatically when installing[/size][/i]
-                    [i][size=12]Note: Mods' locations can only be changed when seeding is turned off.[/size][/i]'''
+                    [i][size=12]Note: The launcher will try to find all missing mods automatically when installing[/size][/i]
+                    [i][size=12]Note: The settings below can only be changed when seeding is turned off![/size][/i]'''
                 markup: True
                 text_size: self.parent.size[0], None
                 size: self.texture_size
@@ -184,6 +184,7 @@
 
             ModListScrolled:
                 id: mods_list
-                selection_callback: (root.screen.controller.request_mods_recheck if root.screen else None)
+                directory_selection_callback: (root.screen.controller.request_mods_recheck if root.screen else None)
+                mod_selection_callback: (root.screen.controller.request_mods_recheck if root.screen else None)
 
             Widget

@@ -215,6 +215,11 @@ class Preparer(object):
             for mod in self.mods:
                 torrent_utils.prepare_mod_directory(mod.get_full_path())
 
+            # Dropping all the mods that should not be shown here
+            # (optional AND not selected)
+            self.mods = filter(lambda m: not m.optional or m.selected, self.mods)
+
+            for mod in self.mods:
                 # If directory does not exist
                 if not os.path.lexists(mod.get_full_path()):
                     self.missing_mods.add(mod)

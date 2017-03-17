@@ -41,11 +41,14 @@ class ModManager(object):
         self.clear_servers()
         self.default_teamspeak_url = None
 
-    def get_mods(self):
+    def get_mods(self, only_selected=False):
         mods = self.mods[:]
         server = self.get_selected_server()
         if server:
             mods.extend(server.mods)
+
+        if only_selected:
+            mods = filter(lambda x: not x.optional or x.selected, mods)
 
         return mods
 
@@ -112,7 +115,7 @@ class ModManager(object):
     def run_the_game(self):
         server = self.get_selected_server()
         teamspeak = self.teamspeak
-        mods = self.get_mods()
+        mods = self.get_mods(only_selected=True)
 
         Logger.info('run_the_game: Running Arma 3 and connecting to server: {}'.format(server))
 
@@ -179,7 +182,7 @@ class ModManager(object):
             Logger.info('ModManager: Got base teamspeak:\n{}'.format(repr(self.teamspeak)))
 
     def sync_all(self, seed):
-        synced_elements = self.get_mods()  # Work on the copy
+        synced_elements = self.get_mods(only_selected=True)  # Work on the copy
         if self.launcher:
             synced_elements.append(self.launcher)
 
@@ -225,6 +228,10 @@ class ModManager(object):
     def prepare_all(self):
         para = protected_para(
             prepare_all,
+            # Note: the launcher takes the list of all the mod here but then it
+            # drops the ones that are optional and not selected after the
+            # directory normalizing process is done and before starting the
+            # "search on disk for the mod" part.
             (self.get_mods(), self.settings.get('launcher_moddir')),
             'prepare_all')
         return para
