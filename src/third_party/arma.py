@@ -130,6 +130,12 @@ class Arma(object):
         return os.path.join(Arma.get_installation_path(), executable)
 
     @staticmethod
+    def get_launcher_path():
+        """Return the path to the arma launcher executable."""
+
+        return os.path.join(Arma.get_installation_path(), 'arma3launcher.exe')
+
+    @staticmethod
     def get_steam_exe_path():
         """Return the path to the steam executable.
 
@@ -174,10 +180,7 @@ class Arma(object):
         # Even though running the exact same command from cmd.exe worked fine!
         if program_running('Steam.exe'):
             # Steam is not running right now so run the game through steam
-            game_args = [Arma.get_executable_path(battleye=battleye)]
-
-            if battleye:
-                game_args.extend(['0', '1'])
+            game_args = [Arma.get_launcher_path()]
 
         else:
             # http://feedback.arma3.com/view.php?id=23435
@@ -187,8 +190,8 @@ class Arma(object):
             steam_exe_path = Arma.get_steam_exe_path()
             game_args = [steam_exe_path, '-applaunch', '107410']
 
-            if battleye:
-                game_args.append('-usebe')
+        if battleye:
+            game_args.append('-usebe')
 
         game_args.extend(['-nosplash', '-skipIntro', '-nolauncher'])
 
