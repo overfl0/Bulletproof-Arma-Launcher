@@ -16,7 +16,7 @@ from __future__ import unicode_literals
 class Server(object):
     """Encapsulate data needed for a server"""
 
-    def __init__(self, name, ip, port, password=None, teamspeak=None):
+    def __init__(self, name, ip, port, password=None, teamspeak=None, battleye=True):
 
         super(Server, self).__init__()
 
@@ -25,6 +25,7 @@ class Server(object):
         self.port = port
         self.password = password
         self.teamspeak = teamspeak
+        self.battleye = battleye
         self.mods = []
 
     def add_mods(self, mods):
@@ -54,9 +55,10 @@ class Server(object):
         port = d['port']
         password = d.get('password', None)
         teamspeak = d.get('teamspeak', None)
+        battleye = d.get('battleye', True)
 
         server = Server(name=name, ip=ip, port=port, password=password,
-                        teamspeak=teamspeak)
+                        teamspeak=teamspeak, battleye=battleye)
 
         return server
 
@@ -65,7 +67,7 @@ class Server(object):
         if self.mods:
             mods_repr = '\n{}\n'.format('\n'.join('    ' + repr(mod) for mod in self.mods))
 
-        s = '<Server: Name: {s.name}, IP: {s.ip}, Port: {s.port}, Teamspeak: {s.teamspeak}{}>'.format(
+        s = '<Server: Name: {s.name}, IP: {s.ip}, Port: {s.port}, Battleye: {s.battleye}, Teamspeak: {s.teamspeak}{}>'.format(
                 mods_repr, s=self)
 
         return s

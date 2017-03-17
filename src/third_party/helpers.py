@@ -293,7 +293,7 @@ def get_mission_file_parameter():
     return None
 
 
-def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
+def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None, battleye=True):
     """Run the game with the right parameters.
     Handle the exceptions by showing an appropriate message on error.
     """
@@ -332,7 +332,8 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None):
                           ip=ip,
                           port=port,
                           password=password,
-                          mission_file=mission_file)
+                          mission_file=mission_file,
+                          battleye=battleye)
         # Note: although run_game returns an object, due to the way steam works,
         # it is unreliable. You never know whether it is the handle to Arma,
         # Steam or Arma's own launcher.
