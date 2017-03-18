@@ -62,6 +62,16 @@ def get_executable_path():
         return args[0]
 
     except Registry.Error:
+        fallback_file1 = os.path.join(get_install_location(), 'ts3client_win32.exe')
+        if os.path.isfile(fallback_file1):
+            Logger.info('TS: Guessing TS installer path: {}'.format(fallback_file1))
+            return fallback_file1
+
+        fallback_file2 = os.path.join(get_install_location(), 'ts3client_win64.exe')
+        if os.path.isfile(fallback_file2):
+            Logger.info('TS: Guessing TS installer path: {}'.format(fallback_file2))
+            return fallback_file2
+
         raise TeamspeakNotInstalled('Could not find the TS executable path')
 
     except IndexError:
@@ -82,6 +92,11 @@ def get_addon_installer_path():
         return args[0]
 
     except Registry.Error:
+        fallback_file = os.path.join(get_install_location(), 'package_inst.exe')
+        if os.path.isfile(fallback_file):
+            Logger.info('TS: Guessing TS installer path: {}'.format(fallback_file))
+            return fallback_file
+
         raise TeamspeakNotInstalled('Could not get the TS plugin installer path')
 
     except IndexError:
@@ -155,10 +170,10 @@ def check_installed():
     install_location = get_install_location()
     config_location = get_config_location()
 
-    Logger.debug('TS: executable path: {}'.format(executable_path))
-    Logger.debug('TS: addon installer path: {}'.format(addon_installer_path))
-    Logger.debug('TS: install location: {}'.format(install_location))
-    Logger.debug('TS: config location: {}'.format(config_location))
+    Logger.info('TS: executable path: {}'.format(executable_path))
+    Logger.info('TS: addon installer path: {}'.format(addon_installer_path))
+    Logger.info('TS: install location: {}'.format(install_location))
+    Logger.info('TS: config location: {}'.format(config_location))
 
     if not os.path.isfile(addon_installer_path):
         raise TeamspeakNotInstalled('Could not find TeamSpeak addon installer which should be located at:\n{}'.
