@@ -297,6 +297,9 @@ def perform_update(message_queue, mods_created):
                 if not remote_file_name.startswith(mod.foldername):
                     continue
 
+                if len(remote_file_name) != len(file_name):
+                    continue
+
                 # Got the file[s] to remove
                 file_path = remote.join(torrents_path, remote_file_name)
                 connection.remove_file(file_path)
