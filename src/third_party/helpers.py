@@ -333,7 +333,9 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None, ba
                           port=port,
                           password=password,
                           mission_file=mission_file,
-                          battleye=battleye)
+                          battleye=battleye,
+                          force_32bit='-win32' in custom_args,
+                          force_64bit='-win64' in custom_args)
         # Note: although run_game returns an object, due to the way steam works,
         # it is unreliable. You never know whether it is the handle to Arma,
         # Steam or Arma's own launcher.

@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
 
 import os
+import platform
 import urllib
 
 from kivy.logger import Logger
@@ -49,6 +50,10 @@ class Arma(object):
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
     _steam_registry_path = r"Software\Valve\Steam"
     _profile_directory_name = "Arma 3 - Other Profiles"
+
+    @staticmethod
+    def _is_os_64bit():
+        return platform.machine().endswith('64')
 
     @staticmethod
     def get_installation_path():
@@ -116,18 +121,25 @@ class Arma(object):
         return profiles
 
     @staticmethod
-    def get_executable_path(battleye=True):
+    def get_executable(force_32bit=False, force_64bit=False):
         """Return path to the arma executable.
-        The battleye variable allows to run the battleye-enhanced version of the game.
+
+        If neither 32bit nor 64bit are forced, the executable is selected based
+        on the operating system running right now.
 
         Raises ArmaNotInstalled if Arma is not installed."""
 
-        if battleye:
-            executable = "arma3battleye.exe"
-        else:
+        if force_64bit:
+            executable = "arma3_x64.exe"
+        elif force_32bit:
             executable = "arma3.exe"
+        else:
+            if Arma._is_os_64bit():
+                executable = "arma3_x64.exe"
+            else:
+                executable = "arma3.exe"
 
-        return os.path.join(Arma.get_installation_path(), executable)
+        return executable
 
     @staticmethod
     def get_launcher_path():
@@ -163,8 +175,51 @@ class Arma(object):
         return popen_object
 
     @staticmethod
+    def get_args_to_execute(battleye=True, force_32bit=False, force_64bit=False):
+        """Return a list containing arguments needed to start the game.
+        This list can the further be extended with additional arguments but
+        this one will be the absolute minimum in order to start anything.
+
+        The battleye variable allows to run the battleye-enhanced version of the game.
+
+        Raises ArmaNotInstalled if Arma is not installed.
+        """
+
+        # If steam is running, run Arma.exe directly (some users have had this
+        # strange bug that arma would not launch if Steam.exe was already running
+        # Even though running the exact same command from cmd.exe worked fine!
+        if program_running('Steam.exe'):
+            executable = Arma.get_executable(force_32bit=force_32bit,
+                                             force_64bit=force_64bit)
+
+            if battleye:
+                game_args = ['2', '1', '0', '-exe', executable]
+                executable = "arma3battleye.exe"
+
+            else:
+                game_args = []
+
+            executable_path = os.path.join(Arma.get_installation_path(), executable)
+            return [executable_path] + game_args
+
+        else:
+            # Steam is not running right now so run the game through steam
+            # http://feedback.arma3.com/view.php?id=23435
+            # Correct launching method when steam is turned off:
+            # steam.exe -applaunch 107410 -usebe -nolauncher -connect=IP -port=PORT -mod=<modparameters>
+
+            steam_exe_path = Arma.get_steam_exe_path()
+            game_args = [steam_exe_path, '-applaunch', '107410', '-nolauncher']
+
+            if battleye:
+                game_args.append('-usebe')
+
+        return game_args
+
+    @staticmethod
     def run_game(mod_list=None, profile_name=None, custom_args=None, battleye=True,
-                 ip=None, port=None, password=None, mission_file=None):
+                 ip=None, port=None, password=None, mission_file=None,
+                 force_32bit=False, force_64bit=False):
         """Run the game in a separate process.
 
         All mods in mod_list are applied as command line parameters. The profile_name is also used.
@@ -175,25 +230,11 @@ class Arma(object):
         Raises SteamNotInstalled if Steam is not installed.
         Raises OSError if running the executable fails."""
 
-        # If steam is running, run Arma.exe directly (some users have had this
-        # strange bug that arma would not launch if Steam.exe was already running
-        # Even though running the exact same command from cmd.exe worked fine!
-        if program_running('Steam.exe'):
-            # Steam is not running right now so run the game through steam
-            game_args = [Arma.get_launcher_path()]
+        game_args = Arma.get_args_to_execute(battleye=battleye,
+                                             force_32bit=force_32bit,
+                                             force_64bit=force_64bit)
 
-        else:
-            # http://feedback.arma3.com/view.php?id=23435
-            # Correct launching method when steam is turned off:
-            # steam.exe -applaunch 107410 -usebe -nolauncher -connect=IP -port=PORT -mod=<modparameters>
-
-            steam_exe_path = Arma.get_steam_exe_path()
-            game_args = [steam_exe_path, '-applaunch', '107410']
-
-        if battleye:
-            game_args.append('-usebe')
-
-        game_args.extend(['-nosplash', '-skipIntro', '-nolauncher'])
+        game_args.extend(['-nosplash', '-skipIntro'])
 
         if mod_list:
             modlist_argument = '-mod=' + ';'.join(mod_list)
