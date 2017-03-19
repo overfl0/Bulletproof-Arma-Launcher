@@ -89,7 +89,7 @@ class Controller(object):
             # Don't run logic if required third party programs are not installed
             if third_party.helpers.check_requirements(verbose=False):
                 # download mod description
-                self.start_mod_checking()
+                self.start_mod_checking(force_download_new=True)
 
             else:
                 # This will check_requirements(dt) which is not really what we
@@ -113,7 +113,7 @@ class Controller(object):
 
         Clock.schedule_interval(partial(stage1_wait_to_init_action_button, workaround_partial), 0)
 
-    def start_mod_checking(self):
+    def start_mod_checking(self, force_download_new=False):
         """Start the whole process of getting metadata and then checking if all
         the mods are correctly downloaded.
         """
@@ -122,11 +122,16 @@ class Controller(object):
         self.syncing_failed = False
         self.mod_manager.reset()
 
-        # download mod description
-        self.para = self.mod_manager.download_mod_description()
-        self.para.then(self.on_download_mod_description_resolve,
-                       self.on_download_mod_description_reject,
-                       self.on_download_mod_description_progress)
+        if force_download_new:
+            # download mod description
+            self.para = self.mod_manager.download_mod_description()
+            self.para.then(self.on_download_mod_description_resolve,
+                           self.on_download_mod_description_reject,
+                           self.on_download_mod_description_progress)
+
+        else:
+            # Reuse the cached value
+            self.on_download_mod_description_resolve({'data': self.settings.get('mod_data_cache')})
 
         Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
 
