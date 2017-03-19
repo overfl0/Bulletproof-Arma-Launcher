@@ -191,8 +191,7 @@ def _make_torrent(message_queue, launcher_basedir, mods):
             The mods' torrent files have been uploaded to the server and
             metadata.json has been updated as well.
 
-            To upload the new mods' contents, restart the launcher, click INSTALL
-            and start seeding.
+            To upload the new mods' contents, click INSTALL and start seeding.
 
             You CAN then start and stop the launcher as you wish. The upload will
             resume on launcher restart.

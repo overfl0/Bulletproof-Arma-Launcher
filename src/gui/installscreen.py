@@ -165,7 +165,7 @@ class Controller(object):
 
         self.disable_action_buttons()
 
-    def wait_for_mod_checking_restart(self, dt):
+    def wait_for_mod_checking_restart(self, force_download_new, dt):
         """Scheduled method will wait until the para that is running is stopped
         and then restart the whole mod checking process.
         This is used when the mod directory has changed and everything needs to
@@ -175,18 +175,18 @@ class Controller(object):
         if self.is_para_running():
             return  # Keep waiting
 
-        self.start_mod_checking()
+        self.start_mod_checking(force_download_new=force_download_new)
 
         return False  # Unschedule the method
 
-    def restart_checking_mods(self):
+    def restart_checking_mods(self, force_download_new=False):
         """Request that any paras be stopped, and as soon as they are stopped,
         recheck all the mods again.
         """
 
         self.disable_action_buttons()
         self.stop_mod_processing()
-        Clock.schedule_interval(self.wait_for_mod_checking_restart, 0.2)
+        Clock.schedule_interval(partial(self.wait_for_mod_checking_restart, force_download_new), 0.2)
 
     def seeding_and_action_button_upkeep(self, dt):
         """Check if seeding should be performed and if the play button should be available again.
@@ -521,6 +521,8 @@ class Controller(object):
         self._set_status_label(progress.get('msg'))
         self.view.ids.make_torrent.enable()
         self.view.ids.status_image.hide()
+
+        self.restart_checking_mods(force_download_new=True)
 
     def on_maketorrent_reject(self, data):
         self.para = None
