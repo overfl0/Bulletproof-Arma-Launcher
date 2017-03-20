@@ -186,7 +186,7 @@ def _make_torrent(message_queue, launcher_basedir, mods):
             Click OK to upload all those mods to the server.
             If you do not want to upload ALL those mods, close the launcher now.
 
-            After upload, the launcher will start seeding all the new mods.
+            After the upload is done, the launcher will start seeding all the new mods.
             You CAN then start and stop the launcher as you wish as long as you
             enabled seeding in OPTIONS!
 

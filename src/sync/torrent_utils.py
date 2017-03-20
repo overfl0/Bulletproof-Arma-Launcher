@@ -356,7 +356,6 @@ def symlink_mod(mod_full_path, real_location):
     This includes making sure the mod is ready for being user afterwards.
     """
 
-    # TODO: What if the directory is not a symlink but a real directory with contents
     if os.path.exists(mod_full_path):  # sometimes the junction may already exist
         try:
             os.rmdir(mod_full_path)
@@ -384,7 +383,19 @@ def symlink_mod(mod_full_path, real_location):
             result = tkMessageBox.askquestion('Are you sure?', message, icon='warning', parent=root)
             if result == 'yes':
                 import shutil
-                shutil.rmtree(mod_full_path)
+                try:
+                    shutil.rmtree(mod_full_path)
+                except:
+                    message = textwrap.dedent('''
+                    An error happened while deleting the directory:
+
+                    {}
+
+                    This may be because the laucnher does not have the permissions required.
+                    You need to delete it manually to proceed.
+                    ''').format(mod_full_path)
+
+                    raise AdminRequiredError(message)
             else:
                 return
 

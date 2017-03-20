@@ -53,6 +53,7 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
 
     def on_reject(self, data):
         # #print 'on_reject', data
+        self.on_manual_path(self.mod, self.mod.get_real_full_path())  # Keep the old path
         self.ids.status_image.opacity = 0
         ErrorPopup(details=data.get('details', None), message=data.get('msg', DEFAULT_ERROR_MESSAGE)).open()
         self.update_status()
