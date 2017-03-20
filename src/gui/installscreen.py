@@ -89,7 +89,7 @@ class Controller(object):
             # Don't run logic if required third party programs are not installed
             if third_party.helpers.check_requirements(verbose=False):
                 # download mod description
-                self.start_mod_checking(force_download_new=True)
+                self.start_mod_checking(force_download_new=False)
 
             else:
                 # This will check_requirements(dt) which is not really what we
@@ -253,6 +253,7 @@ class Controller(object):
 
         self.view.ids.action_button.enable()
         self.view.ids.selected_server.disabled = False
+        self.view.ids.server_list_scrolled.disabled = False
 
         pref_screen = self.view.manager.get_screen('pref_screen')
         pref_screen.controller.enable_action_widgets()
@@ -267,6 +268,7 @@ class Controller(object):
 
         self.view.ids.action_button.disable()
         self.view.ids.selected_server.disabled = True
+        self.view.ids.server_list_scrolled.disabled = True
 
         pref_screen = self.view.manager.get_screen('pref_screen')
         pref_screen.controller.disable_action_widgets()
