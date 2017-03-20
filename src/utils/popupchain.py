@@ -42,10 +42,18 @@ class PopupChain(object):
         self.chain[0].open()
 
     def open_next(self):
-        """Callback the shows the first pending popup from the chain."""
-        self.chain.pop(0)
+        """Callback that shows the first pending popup from the chain."""
+        try:
+            self.chain.pop(0)
 
-        if len(self.chain):
-            self.chain[0].open()
+            if len(self.chain):
+                self.chain[0].open()
+        except IndexError:
+            # Sometimes Kivy will just block because of a CPU-intensive
+            # operation. Then clicking several times on the OK button will
+            # trigger several open_next callbacks.
+            # I don't see any other workaround for this than just ignoring
+            # the error :(.
+            pass
 
         # Return True to keep the current window open
