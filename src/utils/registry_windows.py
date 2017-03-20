@@ -104,3 +104,20 @@ class Registry(object):
                 return Registry.ReadValue(_winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
 
             raise
+
+    @staticmethod
+    def ReadValueMachineAndUser(key_path, value_name, check_both_architectures=False):
+        """Read the value value_name from the key key_path from Local Machine and
+        then Current User if reading from Local Machine failed.
+
+        If check_both_architectures is True, it will first check for a 64bit key
+        and then for a 32bit key if no 64bit key is present.
+        """
+
+        try:
+            return Registry.ReadValue(_winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
+        except Registry.Error as ex:
+            if ex.errno == 2:  # Key/file not found
+                return Registry.ReadValue(_winreg.HKEY_CURRENT_USER, key_path, value_name, check_both_architectures)
+
+            raise

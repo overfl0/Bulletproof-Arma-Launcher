@@ -26,16 +26,20 @@ class Registry(object):
 
     @staticmethod
     def ReadValue(super_key_handle, key_path, value_name, check_both_architectures=False):
-        return '/tmp'
+        raise NotImplementedError()
 
     @staticmethod
     def ReadValueMachine(key_path, value_name, check_both_architectures=False):
-        return '/tmp'
+        raise NotImplementedError()
 
     @staticmethod
     def ReadValueCurrentUser(key_path, value_name, check_both_architectures=False):
-        return '/tmp'
+        raise NotImplementedError()
 
     @staticmethod
     def ReadValueUserAndMachine(key_path, value_name, check_both_architectures=False):
-        return '/tmp'
+        raise NotImplementedError()
+
+    @staticmethod
+    def ReadValueMachineAnduser(key_path, value_name, check_both_architectures=False):
+        raise NotImplementedError()

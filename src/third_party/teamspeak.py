@@ -32,75 +32,39 @@ class TeamspeakNotInstalled(SoftwareNotInstalled):
     pass
 
 
-def _parse_windows_cmdline(cmdline):
-    """Parse command line from windows with its bizarre quoting mechanism."""
-
-    import ctypes
-    reload(ctypes)  # This fixes problems with ipython
-
-    size = ctypes.c_int()
-    ptr = ctypes.windll.shell32.CommandLineToArgvW(cmdline, ctypes.byref(size))
-    ref = ctypes.c_wchar_p * size.value
-    raw = ref.from_address(ptr)
-    args = [arg for arg in raw]
-    ctypes.windll.kernel32.LocalFree(ptr)
-
-    return args
-
-
 def get_executable_path():
-    """Return the path of the teamspeak executable."""
+    """Return the path of the teamspeak executable.
+    Guesses the path by looking at the executable in the install location.
+    """
 
     if devmode.get_ts_executable():
         return devmode.get_ts_executable()
 
-    try:
-        key = 'SOFTWARE\\classes\\ts3file\\shell\\open\\command'
-        reg_val = Registry.ReadValueUserAndMachine(key, '', False)
-        args = _parse_windows_cmdline(reg_val)
+    exe_file_32 = os.path.join(get_install_location(), 'ts3client_win32.exe')
+    if os.path.isfile(exe_file_32):
+        return exe_file_32
 
-        return args[0]
+    exe_file_64 = os.path.join(get_install_location(), 'ts3client_win64.exe')
+    if os.path.isfile(exe_file_64):
+        return exe_file_64
 
-    except Registry.Error:
-        fallback_file1 = os.path.join(get_install_location(), 'ts3client_win32.exe')
-        if os.path.isfile(fallback_file1):
-            Logger.info('TS: Guessing TS installer path: {}'.format(fallback_file1))
-            return fallback_file1
-
-        fallback_file2 = os.path.join(get_install_location(), 'ts3client_win64.exe')
-        if os.path.isfile(fallback_file2):
-            Logger.info('TS: Guessing TS installer path: {}'.format(fallback_file2))
-            return fallback_file2
-
-        raise TeamspeakNotInstalled('Could not find the TS executable path')
-
-    except IndexError:
-        raise
+    raise TeamspeakNotInstalled('Could not find the TS executable path')
 
 
 def get_addon_installer_path():
-    """Return the path of the addon installer for teamspeak."""
+    """Return the path of the addon installer for teamspeak.
+    Guesses the path by looking at the executable in the install location.
+    """
 
     if devmode.get_ts_addon_installer():
         return devmode.get_ts_addon_installer()
 
-    try:
-        key = 'SOFTWARE\\Classes\\ts3addon\\shell\\open\\command'
-        reg_val = Registry.ReadValueUserAndMachine(key, '', False)
-        args = _parse_windows_cmdline(reg_val)
+    exe_file = os.path.join(get_install_location(), 'package_inst.exe')
+    if os.path.isfile(exe_file):
+        Logger.info('TS: Guessing TS installer path: {}'.format(exe_file))
+        return exe_file
 
-        return args[0]
-
-    except Registry.Error:
-        fallback_file = os.path.join(get_install_location(), 'package_inst.exe')
-        if os.path.isfile(fallback_file):
-            Logger.info('TS: Guessing TS installer path: {}'.format(fallback_file))
-            return fallback_file
-
-        raise TeamspeakNotInstalled('Could not get the TS plugin installer path')
-
-    except IndexError:
-        raise
+    raise TeamspeakNotInstalled('Could not get the TS plugin installer path')
 
 
 def get_install_location():
@@ -111,7 +75,7 @@ def get_install_location():
 
     try:
         key = 'SOFTWARE\\TeamSpeak 3 Client'
-        reg_val = Registry.ReadValueUserAndMachine(key, '', True)
+        reg_val = Registry.ReadValueMachineAndUser(key, '', True)
         return reg_val
 
     except Registry.Error:
@@ -130,7 +94,7 @@ def _get_config_location():
 
     try:
         key = 'SOFTWARE\\TeamSpeak 3 Client'
-        reg_val = Registry.ReadValueUserAndMachine(key, 'ConfigLocation', True)
+        reg_val = Registry.ReadValueMachineAndUser(key, 'ConfigLocation', True)
         return reg_val
 
     except Registry.Error:
