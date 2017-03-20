@@ -27,6 +27,7 @@ class Server(object):
         self.teamspeak = teamspeak
         self.battleye = battleye
         self.mods = []
+        self.selected = False
 
     def add_mods(self, mods):
         """Add mods to a server.

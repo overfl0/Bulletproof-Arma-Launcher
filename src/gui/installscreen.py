@@ -690,6 +690,8 @@ class Controller(object):
         server_name = self.settings.get('selected_server')
         self.set_selected_server_message(server_name)
 
+        self.view.ids.server_list_scrolled.servers = self.mod_manager.get_servers()
+
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
 

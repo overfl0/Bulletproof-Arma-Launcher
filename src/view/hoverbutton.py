@@ -15,7 +15,7 @@ from __future__ import unicode_literals
 
 import kivy.app
 
-from kivy.properties import ListProperty
+from kivy.properties import BooleanProperty, ListProperty
 from kivy.uix.button import Button
 from view.behaviors import HoverBehavior
 
@@ -27,12 +27,14 @@ class HoverButton(HoverBehavior, Button):
     # bgcolor_normal = ListProperty([1, 1, 1, 1])
     bgcolor_normal = ListProperty([])
     bgcolor_hover = ListProperty([])
+    force_hover = BooleanProperty(False)
 
     def __init__(self, *args, **kwargs):
         super(HoverButton, self).__init__(*args, **kwargs)
         self.bind(mouse_hover=self.on_hover)
         self.is_hovered = False
         self.bind(text=self.on_text)
+        self.bind(force_hover=self.on_force_hover)
 
     def on_text(self, instance, text):
         try:
@@ -45,11 +47,17 @@ class HoverButton(HoverBehavior, Button):
         except AttributeError:  # No text_prefix
             pass
 
+    def on_force_hover(self, *args):
+        self.on_hover(self, self.is_hovered)
+
     def on_hover(self, instance, hover):
 
         self.is_hovered = hover
         if self.disabled:
             return
+
+        if self.force_hover:
+            hover = True
 
         if hover:
             kivy.app.App.get_running_app().play_sound('hover')

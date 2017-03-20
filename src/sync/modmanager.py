@@ -95,9 +95,13 @@ class ModManager(object):
 
         for server in self.servers:
             if server.name == selection:
+                server.selected = True
                 self.settings.set('selected_server', selection)
                 Logger.info('select_server: Selected {}'.format(selection))
                 return
+
+            else:
+                server.selected = False
 
         raise KeyError('Unknown server: {}'.format(selection))
 

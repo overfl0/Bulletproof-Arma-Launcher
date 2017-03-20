@@ -209,6 +209,14 @@
         bgcolor_hover: get_color_from_hex('#ffc94d')
         size: 256, 64
 
+    ServerListScrolled:
+        id: server_list_scrolled
+        x: status_box.right
+        y: progress_bar.top + 10
+        width: root.width - self.x
+        max_height: root.top - 64 - 10 - self.y
+        selection_callback: root.controller.set_selected_server
+
 #= Other =======================================================================
 
     # Version number

@@ -107,6 +107,7 @@ try:
         from view.errorpopup import error_popup_decorator
         from view.errorpopup import PopupHandler
         from view.modlist import ModList
+        from view.serverlist import ServerListScrolled
         from view.simplewidgets import CheckLabel
 
         from gui.mainwidget import MainWidget

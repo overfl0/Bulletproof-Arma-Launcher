@@ -1,0 +1,68 @@
+<ServerListEntry@BoxLayout>:
+    size_hint: 1, None
+    height: contents.height
+    text: server_name.text + '(' + server_players.text + ')'
+
+    HoverButtonLeft:
+        id: contents
+        on_release: root.clicked(*args)
+        font_size: 14
+        #bgcolor_hover: get_color_from_hex('#21212680')
+
+        text_prefix: ''
+
+        BoxLayout:
+            size_hint: None, None
+            size: contents.size
+            x: contents.x
+            y: contents.y
+
+            padding: 20, 0
+            spacing: 10
+
+
+            Label:
+                id: server_name
+                text: contents.text
+                font_size: contents.font_size
+                font_name: contents.font_name
+                padding_y: contents.padding_y
+                color: contents.color
+
+                size_hint: 1, None
+                height: self.texture_size[1]
+                text_size: self.width, contents.height
+                shorten: True
+
+
+            Label:
+                id: server_players
+                font_size: contents.font_size
+                font_name: contents.font_name
+                padding_y: contents.padding_y
+                color: contents.color
+
+                size_hint: None, None
+                size: self.texture_size
+
+                text: '5/64'
+                text_size: None, contents.height#None, self.height
+
+<ServerListScrolled@ScrollView>:
+    size_hint: None, None
+    max_height: 300
+    height: min(self.max_height, servers_list.height)
+
+    bar_width: 12
+    scroll_timeout: 100
+    bar_inactive_color: 0.7, 0.7, 0.7, 0.7
+
+    scroll_type: ['bars', 'content']
+
+    GridLayout:
+        id: servers_list
+        cols: 1
+        height: self.minimum_height
+        width: self.parent.width - self.parent.bar_width
+        size_hint_y: None
+        spacing: 4
