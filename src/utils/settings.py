@@ -63,37 +63,25 @@ class Settings(Model):
 
     """
     fields = [
-        {
-            'name': 'use_exception_popup',
-            'defaultValue': False,
-            'persist': False
-        }, {
-            'name': 'update',
-            'defaultValue': False,
-            'persist': False
-        }, {
-            'name': 'basedir_change_notice', 'defaultValue': 0
-        }, {
-            'name': 'launcher_basedir'
-        }, {
-            'name': 'launcher_moddir'
-        }, {
-            'name': 'mod_data_cache', 'defaultValue': None
-        }, {
-            'name': 'max_upload_speed', 'defaultValue': 0
-        }, {
-            'name': 'max_download_speed', 'defaultValue': 0
-        }, {
-            'name': 'seeding_type', 'defaultValue': 'while_not_playing'
-        }, {
-            'name': 'selected_server', 'defaultValue': False
-        }, {
-            'name': 'run_trackir', 'defaultValue': True
-        }, {
-            'name': 'run_facetracknoir', 'defaultValue': True
-        }, {
-            'name': 'selected_optional_mods', 'defaultValue': []
-        },
+        # Temporary values
+        {'name': 'use_exception_popup', 'defaultValue': False, 'persist': False},
+        {'name': 'update', 'defaultValue': False, 'persist': False},
+        {'name': 'automatic_download', 'defaultValue': False, 'persist': False},
+        {'name': 'automatic_seed', 'defaultValue': False, 'persist': False},
+
+        # Other persisting
+        {'name': 'basedir_change_notice', 'defaultValue': 0},
+        {'name': 'launcher_basedir'},
+        {'name': 'launcher_moddir'},
+        {'name': 'mod_data_cache', 'defaultValue': None},
+        {'name': 'max_upload_speed', 'defaultValue': 0},
+        {'name': 'max_download_speed', 'defaultValue': 0},
+        {'name': 'seeding_type', 'defaultValue': 'while_not_playing'},
+        {'name': 'selected_server', 'defaultValue': False},
+        {'name': 'run_trackir', 'defaultValue': True},
+        {'name': 'run_facetracknoir', 'defaultValue': True},
+        {'name': 'selected_optional_mods', 'defaultValue': []},
+
         # Arma launching parameters ############################################
         {'name': 'arma_win32', 'defaultValue': False},
         {'name': 'arma_win64', 'defaultValue': False},

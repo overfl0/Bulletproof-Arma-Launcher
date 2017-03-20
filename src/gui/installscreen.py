@@ -258,6 +258,9 @@ class Controller(object):
         pref_screen.controller.enable_action_widgets()
         self.enable_updated_settings_mods_list()
 
+    def action_button_enabled(self):
+        return self.view.ids.action_button.disabled == False
+
     def disable_action_buttons(self):
         if self.view.ids.action_button.disabled:
             return
@@ -345,6 +348,11 @@ class Controller(object):
 
         self.view.ids.action_button.set_button_state(state)
 
+    def get_action_button_state(self):
+        """Get the action_button state."""
+
+        return self.view.ids.action_button.get_button_state()
+
     def _set_status_label(self, main, secondary=None):
         new_text = main if main else ''
 
@@ -399,8 +407,8 @@ class Controller(object):
         self.para = self.mod_manager.sync_all(seed=seed)
         self.para.then(self.on_sync_resolve, self.on_sync_reject, self.on_sync_progress)
 
-    def on_prepare_resolve(self, progress):
-        self.start_syncing(seed=False)
+    def on_prepare_resolve(self, seed, progress):
+        self.start_syncing(seed=seed)
 
     def on_prepare_progress(self, progress, percentage):
         self.view.ids.status_image.show()
@@ -462,10 +470,14 @@ class Controller(object):
 
     def on_install_button_click(self, btn):
         """Just start syncing the mods."""
-        self.disable_action_buttons()
+
+        if self.get_action_button_state() != DynamicButtonStates.play:
+            self.disable_action_buttons()
 
         self.para = self.mod_manager.prepare_all()
-        self.para.then(self.on_prepare_resolve, self.on_sync_reject, self.on_prepare_progress)
+        self.para.then(partial(self.on_prepare_resolve, self.settings.get('automatic_seed')),
+                       self.on_sync_reject,
+                       self.on_prepare_progress)
 
     def on_self_upgrade_button_release(self, btn):
         self.disable_action_buttons()
@@ -522,7 +534,10 @@ class Controller(object):
         self.view.ids.make_torrent.enable()
         self.view.ids.status_image.hide()
 
-        self.restart_checking_mods(force_download_new=True)
+        if progress.get('mods_created', 0) > 0:
+            # Set the settings to start seeding ASAP and restart everything
+            self.settings.set('automatic_seed', True)
+            self.restart_checking_mods(force_download_new=True)
 
     def on_maketorrent_reject(self, data):
         self.para = None
@@ -673,6 +688,28 @@ class Controller(object):
 
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
+
+        # Automatic launching of scheduled one-time actions
+        if self.action_button_enabled():
+            if self.get_action_button_state() == DynamicButtonStates.install and \
+                self.settings.get('automatic_download') or self.settings.get('automatic_seed'):
+                    self.on_install_button_click(None)
+
+            elif self.get_action_button_state() == DynamicButtonStates.play and \
+                self.settings.get('automatic_seed'):
+                    self.on_install_button_click(None)
+
+        else:
+            # Safety check
+            if self.settings.get('automatic_download'):
+                Logger.error('on_checkmods_resolve: Automatic download scheduled but button not enabled. Removing...')
+
+            if self.settings.get('automatic_seed'):
+                Logger.error('on_checkmods_resolve: Automatic seed scheduled but button not enabled. Removing...')
+
+        # Reset the flags
+        self.settings.set('automatic_download', False)
+        self.settings.set('automatic_seed', False)
 
     def on_checkmods_reject(self, data):
         self.para = None

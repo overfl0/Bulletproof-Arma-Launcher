@@ -185,26 +185,19 @@ def _make_torrent(message_queue, launcher_basedir, mods):
 
             Click OK to upload all those mods to the server.
             If you do not want to upload ALL those mods, close the launcher now.
-            ''').format('\n'.join(mods_user_friendly_list))
 
-        message2 = textwrap.dedent('''
-            The mods' torrent files have been uploaded to the server and
-            metadata.json has been updated as well.
+            After upload, the launcher will start seeding all the new mods.
+            You CAN then start and stop the launcher as you wish as long as you
+            enabled seeding in OPTIONS!
 
-            To upload the new mods' contents, click INSTALL and start seeding.
-
-            You CAN then start and stop the launcher as you wish. The upload will
-            resume on launcher restart.
             Make sure the mods are fully uploaded before you stop seeding for good.
-
-            You may need to change your seeding settings in OPTIONS.
-            ''')
+            ''').format('\n'.join(mods_user_friendly_list))
 
         yield Message.msgbox(message, name='confirm_upload_mods')
         perform_update(message_queue, mods_created)
-        yield Message.msgbox(message2, name='mods_uploaded_note')
 
-    message_queue.resolve({'msg': 'Torrents created: {}'.format(len(mods_created))})
+    message_queue.resolve({'msg': 'Torrents created: {}'.format(len(mods_created)),
+                           'mods_created': len(mods_created)})
 
 
 def get_new_launcher_version(mod):
