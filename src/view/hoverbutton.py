@@ -48,9 +48,9 @@ class HoverButton(HoverBehavior, Button):
             pass
 
     def on_force_hover(self, *args):
-        self.on_hover(self, self.is_hovered)
+        self.on_hover(self, self.is_hovered, play_sound=False)
 
-    def on_hover(self, instance, hover):
+    def on_hover(self, instance, hover, play_sound=True):
 
         self.is_hovered = hover
         if self.disabled:
@@ -60,7 +60,8 @@ class HoverButton(HoverBehavior, Button):
             hover = True
 
         if hover:
-            kivy.app.App.get_running_app().play_sound('hover')
+            if play_sound:
+                kivy.app.App.get_running_app().play_sound('hover')
 
             if self.color_hover:
                 self.color = self.color_hover
