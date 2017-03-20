@@ -19,6 +19,7 @@ from kivy.logger import Logger
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
+from sync.server import Server
 from view.hoverbutton import HoverButton
 
 
@@ -28,7 +29,11 @@ class ServerListEntry(BoxLayout):
 
         self.server_list = server_list
         self.server = server
-        self.ids.server_name.text = server.name
+        if self.server.name:
+            self.ids.server_name.text = server.name
+
+        else:
+            self.ids.server_name.text = 'No server, just run Arma'
 
         if self.server.selected:
             self.select()
@@ -75,5 +80,13 @@ class ServerListScrolled(ScrollView):
             server_entry = ServerListEntry(self, server)
             self.server_widgets.append(server_entry)
             self.ids.servers_list.add_widget(server_entry)
+
+        # Add the "just run Arma" entry
+        dummy_server = Server(None, None, None)
+
+        dummy_server.selected = not any(s.selected for s in  self.servers)
+        dummy_server_entry = ServerListEntry(self, dummy_server)
+        self.server_widgets.append(dummy_server_entry)
+        self.ids.servers_list.add_widget(dummy_server_entry)
 
 Builder.load_file('kv/serverlist.kv')
