@@ -50,11 +50,14 @@
 
     NewsLabel:
         id: news_label
-        right: root.width
-        top: root.top - 80
-        height: 380
+        x: 0
+        #top: root.top - 74
+        #height: 380
+        height: root.top - 74 - self.y
+        y: main_buttons.top + 10
         width: 0
         width_final: 256
+        direction: 'right'
 
         bar_width: 10
         scroll_type: ['bars', 'content']
@@ -64,7 +67,7 @@
 
     Image:
         source: app.resource_path('images/logo.png')
-        pos: 40, root.top - self.height - 7
+        pos: root.width / 2 - self.width / 2, root.top - self.height - 7
         size_hint: None, None
         size: self.texture_size
 
@@ -139,35 +142,28 @@
 #= Buttons =====================================================================
 
     # Vertical buttons
-    StackLayout:
-        y: status_box.top
-        x: status_box.right
+#     StackLayout:
+#         id: main_buttons
+#         y: status_box.top
+#         x: 0
+#         width: 256
+#         size_hint_x: None
+#         #size_hint_y: 0
+#         orientation: 'bt-lr'
+#         spacing: 4
+#         padding: 0, 4 + progress_bar.height
+
+    GridLayout:
+        id: main_buttons
+        cols: 1
+        size_hint: None, None
+
+        x: 0
+        y: progress_bar.top + 10
         width: 256
-        size_hint_x: None
-        #size_hint_y: 0
-        orientation: 'bt-lr'
+        height: self.minimum_height
+
         spacing: 4
-        padding: 0, 4 + progress_bar.height
-
-        # OptionsButton
-        HoverButtonLeft:
-            id: options_button
-            size_hint_x: 1
-            on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
-            text: 'OPTIONS'
-            disabled: False
-
-        # ForumButton
-        HoverButtonLeft:
-            text: 'FORUM'
-            size_hint_x: 1
-            on_release: app.open_hyperlink(launcher_config.forum_url)
-
-        # DonateButton
-        HoverButtonLeft:
-            size_hint_x: 1
-            text: 'DONATE'
-            on_release: app.open_hyperlink(launcher_config.donate_url)
 
         # MakeTorrentButton
         HoverButtonLeft:
@@ -176,6 +172,26 @@
             size_hint_x: 1
             id: make_torrent
             on_release: root.controller.on_make_torrent_button_release(self)
+
+        # DonateButton
+        HoverButtonLeft:
+            size_hint_x: 1
+            text: 'DONATE'
+            on_release: app.open_hyperlink(launcher_config.donate_url)
+
+        # ForumButton
+        HoverButtonLeft:
+            text: 'FORUM'
+            size_hint_x: 1
+            on_release: app.open_hyperlink(launcher_config.forum_url)
+
+        # OptionsButton
+        HoverButtonLeft:
+            id: options_button
+            size_hint_x: 1
+            on_release: app.root.ids.main_screen_manager.current = 'pref_screen'
+            text: 'OPTIONS'
+            disabled: False
 
     # Install/Play button
     DynamicButton:
