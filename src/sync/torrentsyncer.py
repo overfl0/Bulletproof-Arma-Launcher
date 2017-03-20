@@ -281,7 +281,7 @@ class TorrentSyncer(object):
 
         return torrent_info, torrent_content
 
-    def prepare_libtorrent_params(self, mod, force_sync=False, intend_to_seed=False):
+    def prepare_libtorrent_params(self, mod, force_sync=False, just_seed=False):
         """Prepare mod for download over bittorrent.
         This effectively downloads the .torrent file if its contents are not
         already cached.
@@ -297,7 +297,7 @@ class TorrentSyncer(object):
         # A little bit of a workaround. If we intend to seed, we can assume the data is all right.
         # This way, if the torrent is closed before checking_resume_data is finished, and the post-
         # download hook is not fired, the torrent is not left in a state marked as dirty.
-        if not intend_to_seed and not force_sync:
+        if not just_seed and not force_sync:
             metadata_file.set_dirty(True)  # Set as dirty in case this process is not terminated cleanly
 
         # If the torrent url changed, invalidate the resume data
@@ -315,7 +315,7 @@ class TorrentSyncer(object):
         params = {
             'save_path': encode_utf8(mod.parent_location),
             'storage_mode': libtorrent.storage_mode_t.storage_mode_allocate,  # Reduce fragmentation on disk
-            'flags': torrent_utils.create_add_torrent_flags()
+            'flags': torrent_utils.create_add_torrent_flags(just_seed)
         }
 
         torrent_info, torrent_content = self.get_mod_torrent_metadata(mod, metadata_file)
@@ -332,10 +332,11 @@ class TorrentSyncer(object):
 
         mod.libtorrent_params = params
 
-        # Ensure the mod directory is correct (no bad links and read-write)
-        # This should have been already done with preparer.py but it doesn't
-        # hurt to do that again in case something changed in the meantime.
-        torrent_utils.prepare_mod_directory(mod.get_full_path())
+        if not just_seed:
+            # Ensure the mod directory is correct (no bad links and read-write)
+            # This should have been already done with preparer.py but it doesn't
+            # hurt to do that again in case something changed in the meantime.
+            torrent_utils.prepare_mod_directory(mod.get_full_path())
 
     def get_torrents_status(self):
         """Get the status of all torrents with valid handles and cache them in
@@ -433,7 +434,7 @@ class TorrentSyncer(object):
 
             self.session.set_settings(session_settings)
 
-    def sync(self, force_sync=False, intend_to_seed=False):
+    def sync(self, force_sync=False, just_seed=False):
         """
         Synchronize the mod directory contents to contain exactly the files that
         are described in the torrent file.
@@ -458,7 +459,7 @@ class TorrentSyncer(object):
 
         for mod in self.mods:
             try:
-                self.prepare_libtorrent_params(mod, force_sync, intend_to_seed)
+                self.prepare_libtorrent_params(mod, force_sync, just_seed)
             except (PrepareParametersException, torrent_utils.AdminRequiredError) as ex:
                 self.result_queue.reject({'msg': ex.args[0]})
                 sync_success = False
@@ -540,7 +541,7 @@ class TorrentSyncer(object):
                         self.resume_torrent(mod)
 
             # If all are in state (4)
-            if self.all_torrents_ran_finished_hooks() and not intend_to_seed:
+            if self.all_torrents_ran_finished_hooks() and not just_seed:
                 Logger.info('Sync: Pausing all torrents for syncing end.')
                 self.pause_all_torrents()
 

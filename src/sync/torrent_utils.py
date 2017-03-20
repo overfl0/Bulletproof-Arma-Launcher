@@ -407,7 +407,7 @@ def symlink_mod(mod_full_path, real_location):
         os.rmdir(mod_full_path)
         raise
 
-def create_add_torrent_flags():
+def create_add_torrent_flags(just_seed=False):
     """Create default flags for adding a new torrent to a syncer."""
     f = libtorrent.add_torrent_params_flags_t
 
@@ -419,7 +419,8 @@ def create_add_torrent_flags():
     flags |= f.flag_auto_managed
     flags |= f.flag_override_resume_data
     # flags |= f.flag_seed_mode
-    # flags |= f.flag_upload_mode
+    if just_seed:
+        flags |= f.flag_upload_mode
     # flags |= f.flag_share_mode
     flags |= f.flag_duplicate_is_error  # default?
 
