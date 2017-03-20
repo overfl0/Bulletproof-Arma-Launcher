@@ -35,6 +35,13 @@
     font_size: 32
     on_release: app.play_sound('click')
 
+<HoverButtonLeft@HoverButton>:
+    text_size: self.size
+    width: 330
+    height: 32
+    bgcolor_normal: 0, 0, 0, 1
+    bgcolor_hover: 0.1, 0.1, 0.1, 1#get_color_from_hex('#21212680')
+
 <NewsLabel@RstDocument>
     size_hint: (None, None)
     colors: {'background': '000000c0', 'link': 'ce5c00ff', 'paragraph': 'eeeeeeff', 'title': 'ffffccff', 'bullet': 'ffffffff'}
@@ -184,3 +191,14 @@
         text_size: None, 30
         x: root.width / 2 - self.width / 2
         y: 11
+
+    ServerListScrolled:
+        id: server_list_scrolled
+        x: (root.width - self.width) / 2
+        y: selected_server.top + 10
+        width: 330
+
+        unfolded_height: root.top - 20 - self.y
+        folded_height: 0
+        selection_callback: root.controller.set_selected_server
+        spacing: 0

@@ -247,6 +247,15 @@ class Controller(object):
         mods_list = self.view.manager.get_screen('pref_screen').ids.mods_options.ids.mods_list
         mods_list.disabled = True
 
+    def fold_server_list_scrolled(self):
+        folded_height = getattr(self.view.ids.server_list_scrolled, 'folded_height', None)
+
+        if folded_height is not None:
+            if self.view.ids.server_list_scrolled.max_height != folded_height:
+                anim = Animation(max_height=folded_height, t='out_circ', duration=0.5)
+                anim.start(self.view.ids.server_list_scrolled)
+
+
     def enable_action_buttons(self):
         if not self.view.ids.action_button.disabled:
             return
@@ -254,6 +263,7 @@ class Controller(object):
         self.view.ids.action_button.enable()
         self.view.ids.selected_server.disabled = False
         self.view.ids.server_list_scrolled.disabled = False
+        self.fold_server_list_scrolled()
 
         pref_screen = self.view.manager.get_screen('pref_screen')
         pref_screen.controller.enable_action_widgets()
@@ -269,6 +279,7 @@ class Controller(object):
         self.view.ids.action_button.disable()
         self.view.ids.selected_server.disabled = True
         self.view.ids.server_list_scrolled.disabled = True
+        self.fold_server_list_scrolled()
 
         pref_screen = self.view.manager.get_screen('pref_screen')
         pref_screen.controller.disable_action_widgets()
@@ -396,6 +407,21 @@ class Controller(object):
         if button_state != DynamicButtonStates.play and button_state != DynamicButtonStates.install:
             Logger.error('Button selected_server pressed when it should not be accessible!')
             return
+
+        unfolded_height = getattr(self.view.ids.server_list_scrolled, 'unfolded_height', None)
+        if unfolded_height:
+            folded_height = getattr(self.view.ids.server_list_scrolled, 'folded_height', 0)
+
+            if self.view.ids.server_list_scrolled.max_height != folded_height:
+                anim = Animation(max_height=folded_height, t='out_circ', duration=0.5)
+
+            else:
+                anim = Animation(max_height=unfolded_height, t='in_circ', duration=0.5)
+
+            anim.start(self.view.ids.server_list_scrolled)
+
+        return
+        # TODO: Remove all of the code below at a later time
 
         Logger.info('Opening GameSelectionBox')
         box = GameSelectionBox(self.set_selected_server, self.mod_manager.get_servers())
@@ -693,6 +719,7 @@ class Controller(object):
         self.set_selected_server_message(server_name)
 
         self.view.ids.server_list_scrolled.servers = self.mod_manager.get_servers()
+        self.fold_server_list_scrolled()
 
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()

@@ -46,7 +46,7 @@
                 size: self.texture_size
 
                 text: ''
-                text_size: None, contents.height#None, self.height
+                text_size: None, contents.height
 
 <ServerListScrolled@ScrollView>:
     size_hint: None, None
@@ -58,6 +58,7 @@
     bar_inactive_color: 0.7, 0.7, 0.7, 0.7
 
     scroll_type: ['bars', 'content']
+    spacing: 4
 
     GridLayout:
         id: servers_list
@@ -65,4 +66,4 @@
         height: self.minimum_height
         width: self.parent.width - self.parent.bar_width
         size_hint_y: None
-        spacing: 4
+        spacing: root.spacing
