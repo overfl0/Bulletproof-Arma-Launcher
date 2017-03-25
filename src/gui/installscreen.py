@@ -89,7 +89,7 @@ class Controller(object):
             # Don't run logic if required third party programs are not installed
             if third_party.helpers.check_requirements(verbose=False):
                 # download mod description
-                self.start_mod_checking(force_download_new=False)
+                self.start_mod_checking(force_download_new=True)
 
             else:
                 # This will check_requirements(dt) which is not really what we
