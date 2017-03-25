@@ -20,15 +20,32 @@ from kivy.logger import Logger
 from multiprocessing.pool import ThreadPool
 
 
+RESPONSE_UNKNOWN = '??/??'
+RESPONSE_DOWN = 'XX/XX'
+
+CONNECTIONS_ATTEMPTS = 3
+CONNECTION_TIMEOUT = 2
+MAX_SLEEP_TIMEOUT = 0.5
+POOL_PROCESSES = 10
+
+
 def format_response(answers):
-    return [answer if answer else '??/??' for answer in answers]
+    """Return responses while the checking is still running."""
+    return [answer if answer else RESPONSE_UNKNOWN for answer in answers]
+
 
 def format_response_final(answers):
-    return [answer if answer else 'XX/XX' for answer in answers]
+    """Return the final responses when it is clear that some servers are down."""
+    return [answer if answer != RESPONSE_UNKNOWN else RESPONSE_DOWN for answer in answers]
+
 
 def query_server((server_id, server)):
+    """Query a server for its player count.
+    This function is run in a separate thread.
+    """
+
     # Sleep to prevent flooding the network
-    time.sleep(random.random() * 0.5)
+    time.sleep(random.random() * MAX_SLEEP_TIMEOUT)
 
     Logger.info('query_server: [{}] Querying server {} at {}:{}'.format(
         server_id, server.name, server.ip, int(server.port) + 1))
@@ -36,7 +53,7 @@ def query_server((server_id, server)):
     address = (server.ip, int(server.port) + 1)
 
     try:
-        server = valve.source.a2s.ServerQuerier(address, timeout=2)
+        server = valve.source.a2s.ServerQuerier(address, timeout=CONNECTION_TIMEOUT)
         info = server.get_info()
         answer = '{}/{}'.format(info['player_count'], info['max_players'])
 
@@ -44,7 +61,7 @@ def query_server((server_id, server)):
         Logger.error('query_server: [{}] Exception encountered: {}'.format(server_id, ex))
         Logger.error('query_server: [{}] Exception details: {}'.format(server_id, repr(ex)))
 
-        return server_id, 'XX/XX'
+        return server_id, RESPONSE_UNKNOWN
 
     return server_id, answer
 
@@ -52,27 +69,37 @@ def query_server((server_id, server)):
 def query_servers(message_queue, servers):
     Logger.info('query_servers: Querying servers: {}'.format(servers))
 
-    pool = ThreadPool(processes=10)
-    pool_generator = pool.imap_unordered(query_server, enumerate(servers))
-    answers = [None for _ in servers]
+    answers = [RESPONSE_UNKNOWN for _ in servers]
+    pool = ThreadPool(processes=POOL_PROCESSES)
 
-    # This is an overly complicated `for i in pool.imap_unordered`
-    # That allows catching (and ignoring) exceptions in the workers
-    while True:
-        try:
-            server_id, response = pool_generator.next()
+    # Check the failed servers 3 times
+    for iteration in range(CONNECTIONS_ATTEMPTS):
+        # Get all the servers that have not yet responded
+        servers_to_check = [(i, server) for i, server in enumerate(servers) if answers[i] == RESPONSE_UNKNOWN]
 
-        except StopIteration:
-            break
+        if servers_to_check and iteration > 0:
+            # Wait a bit in case the network was the culprit of previous failures
+            time.sleep(MAX_SLEEP_TIMEOUT)
 
-        except Exception:
-            raise
-            # print "Got Exception: {}, continuing...".format(type(ex))
-            # continue
+        pool_generator = pool.imap_unordered(query_server, servers_to_check)
 
-        Logger.info('query_servers: Players: {}'.format(response))
-        answers[server_id] = response
-        message_queue.progress({'msg': 'progress', 'server_data': format_response(answers)}, 0)
+        # This is an overly complicated `for i in pool.imap_unordered`
+        # That allows catching (and ignoring) exceptions in the workers
+        while True:
+            try:
+                server_id, response = pool_generator.next()
+
+            except StopIteration:
+                break
+
+            except Exception:
+                raise
+                # print "Got Exception: {}, continuing...".format(type(ex))
+                # continue
+
+            Logger.info('query_servers: Players: {}'.format(response))
+            answers[server_id] = response
+            message_queue.progress({'msg': 'progress', 'server_data': format_response(answers)}, 0)
 
     message_queue.resolve({'msg': 'Done', 'server_data': format_response_final(answers)})
     # message_queue.reject({'msg': 'Message!'})
