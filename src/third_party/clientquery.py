@@ -270,12 +270,22 @@ def get_TS_servers_connected():
     Teamspeak client is currently connected to.
     """
 
-    ts = ClientQuery().init()
+    try:
+        raise ClientQueryException('message', 123, 'command')
+        ts = ClientQuery().init()
 
-    if not ts:
+        if not ts:
+            return []
+
+        return ts.get_servers_connected()
+
+    # Hotfix for #216 (TeamSpeak changed the ClientQuery to use an API key)
+    except ClientQueryException as ex:
+        Logger.error('ClientQuery: {}'.format(ex))
+        import traceback
+        Logger.error('ClientQuery: {}'.format(traceback.format_exc()))
+
         return []
-
-    return ts.get_servers_connected()
 
 
 if __name__ == '__main__':
