@@ -2,3 +2,4 @@ pyinstaller
 futures
 nose
 mock
+python-valve==0.1.1

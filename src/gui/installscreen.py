@@ -387,7 +387,7 @@ class Controller(object):
         If serve_name is None, the message NO SERVER SELECTED is printed.
         """
 
-        selected_server = server_name.upper() if server_name else 'NO SERVER SELECTED'
+        selected_server = server_name if server_name else 'NO SERVER SELECTED'
         if 'selected_server' in self.view.ids:
             self.view.ids.selected_server.text = selected_server
 

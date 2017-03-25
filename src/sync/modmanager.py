@@ -14,6 +14,7 @@
 from __future__ import unicode_literals
 
 import third_party
+import third_party.steam
 
 from manager_functions import (
     _get_mod_descriptions,
@@ -249,6 +250,17 @@ class ModManager(object):
                 mods
             ),
             'make_torrent'
+        )
+        return para
+
+    @staticmethod
+    def query_servers(servers):
+        para = protected_para(
+            third_party.steam.query_servers,
+            (
+                servers
+            ),
+            'query_servers'
         )
         return para
 

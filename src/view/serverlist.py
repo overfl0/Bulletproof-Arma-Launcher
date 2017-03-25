@@ -19,8 +19,10 @@ from kivy.logger import Logger
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
+from sync.modmanager import ModManager
 from sync.server import Server
 from view.hoverbutton import HoverButton
+from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 
 
 class ServerListEntry(BoxLayout):
@@ -58,9 +60,47 @@ class ServerListScrolled(ScrollView):
         super(ServerListScrolled, self).__init__(**kwargs)
 
         self.bind(servers=self.set_servers)
+        self.para = None
+
+    def on_query_servers_resolve(self, data):
+        print 'on_query_servers_resolve:', data
+        self.para = None
+
+        for server, widget, data in zip(self.servers, self.server_widgets, data.get('server_data', [])):
+            widget.ids.server_players.text = data
+
+            if server.selected:
+                self.text = '{} ({})'.format(server.name, data)
+
+    def on_query_servers_reject(self, data):
+        print 'on_query_servers_reject:', data
+        message = data.get('msg', DEFAULT_ERROR_MESSAGE)
+        details = data.get('details', None)
+
+        ErrorPopup(details=details, message=message).chain_open()
+
+        self.para = None
+
+    def on_query_servers_progress(self, data, percentage):
+        print 'on_query_servers_progress:', data
+
+        for server, widget, data in zip(self.servers, self.server_widgets, data.get('server_data', [])):
+            widget.ids.server_players.text = data
+
+            if server.selected:
+                self.text = '{} ({})'.format(server.name, data)
+
+    def query_servers(self):
+        # Clean up an older para
+        if self.para:
+            self.para.request_termination_and_break_promises()
+
+        self.para = ModManager.query_servers((tuple(server for server in self.servers),))
+        self.para.then(self.on_query_servers_resolve,
+                       self.on_query_servers_reject,
+                       self.on_query_servers_progress)
 
     def selection_changed(self, selected):
-        print "Selection changed"
         for list_entry in self.server_widgets:
             if list_entry is selected:
                 list_entry.select()
@@ -88,5 +128,7 @@ class ServerListScrolled(ScrollView):
         dummy_server_entry = ServerListEntry(self, dummy_server)
         self.server_widgets.append(dummy_server_entry)
         self.ids.servers_list.add_widget(dummy_server_entry)
+
+        self.query_servers()
 
 Builder.load_file('kv/serverlist.kv')

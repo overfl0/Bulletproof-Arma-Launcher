@@ -184,7 +184,7 @@
         font_size: 16
         on_release: root.controller.on_selected_server_button_release(self)
         text_prefix: '[size=17][font=fonts/Equality]=[/font][/size]'
-        text: 'SERVER SELECTION'
+        text: server_list_scrolled.text if server_list_scrolled.text else 'SERVER SELECTION'
         markup: True
         disabled: True
         padding: 0, 10
