@@ -65,8 +65,34 @@ def query_server((server_id, server)):
 
     return server_id, answer
 
+# TODO: Move all of this into a class
+force_termination = False
+def handle_messages(message_queue):
+    """Handle all incoming messages passed from the main process.
+    For now, the amount of commands is too small to implement a fully
+    fledged message handling mechanism with callbacks and decorators.
+    A simple if/elif will do.
+    """
+
+    global force_termination
+
+    # We are canceling the downloads
+    message = message_queue.receive_message()
+    if not message:
+        return
+
+    command = message.get('command')
+    # params = message.get('params')
+
+    if command == 'terminate':
+        Logger.info('query_servers wants termination')
+        force_termination = True
+
 
 def query_servers(message_queue, servers):
+    global force_termination
+
+    force_termination = False
     Logger.info('query_servers: Querying servers: {}'.format(servers))
 
     answers = [RESPONSE_UNKNOWN for _ in servers]
@@ -86,6 +112,11 @@ def query_servers(message_queue, servers):
         # This is an overly complicated `for i in pool.imap_unordered`
         # That allows catching (and ignoring) exceptions in the workers
         while True:
+            handle_messages(message_queue)
+            if force_termination:
+                Logger.info('query_servers: Received termination request. Stopping...')
+                break
+
             try:
                 server_id, response = pool_generator.next()
 
@@ -100,6 +131,10 @@ def query_servers(message_queue, servers):
             Logger.info('query_servers: Players: {}'.format(response))
             answers[server_id] = response
             message_queue.progress({'msg': 'progress', 'server_data': format_response(answers)}, 0)
+
+        if force_termination:
+            Logger.info('query_servers: Received termination request. Stopping... (2)')
+            break
 
     message_queue.resolve({'msg': 'Done', 'server_data': format_response_final(answers)})
     # message_queue.reject({'msg': 'Message!'})

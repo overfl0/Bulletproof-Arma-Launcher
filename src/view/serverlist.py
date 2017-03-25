@@ -40,7 +40,7 @@ class ServerListEntry(BoxLayout):
             self.select()
 
     def clicked(self, *args):
-        print 'Selected: ', self.server.name
+        # print 'Selected: ', self.server.name
         self.server_list.selection_changed(self)
 
     def select(self):
@@ -110,7 +110,7 @@ class ServerListScrolled(ScrollView):
             self.selection_callback(selected.server.name)
 
     def set_servers(self, instance, servers):
-        print instance, servers
+        # print instance, servers
 
         self.ids.servers_list.clear_widgets()
         self.server_widgets = []
