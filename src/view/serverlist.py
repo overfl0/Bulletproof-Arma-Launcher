@@ -21,7 +21,6 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
 from sync.modmanager import ModManager
 from sync.server import Server
-from view.hoverbutton import HoverButton
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 
 
@@ -63,7 +62,7 @@ class ServerListScrolled(ScrollView):
         self.para = None
 
     def on_query_servers_resolve(self, data):
-        print 'on_query_servers_resolve:', data
+        Logger.info('on_query_servers_resolve: {}'.format(data))
         self.para = None
 
         for server, widget, data in zip(self.servers, self.server_widgets, data.get('server_data', [])):
@@ -73,16 +72,16 @@ class ServerListScrolled(ScrollView):
                 self.text = '{} ({})'.format(server.name, data)
 
     def on_query_servers_reject(self, data):
-        print 'on_query_servers_reject:', data
+        Logger.info('on_query_servers_reject: {}'.format(data))
+        self.para = None
+
         message = data.get('msg', DEFAULT_ERROR_MESSAGE)
         details = data.get('details', None)
 
         ErrorPopup(details=details, message=message).chain_open()
 
-        self.para = None
-
-    def on_query_servers_progress(self, data, percentage):
-        print 'on_query_servers_progress:', data
+    def on_query_servers_progress(self, data, progress):
+        Logger.info('on_query_servers_progress: {}'.format(data))
 
         for server, widget, data in zip(self.servers, self.server_widgets, data.get('server_data', [])):
             widget.ids.server_players.text = data

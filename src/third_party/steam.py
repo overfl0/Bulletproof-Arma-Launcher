@@ -31,21 +31,22 @@ def query_servers(message_queue, servers):
     # message_queue.reject({'msg': 'Message!'})
 
     for i, server in enumerate(servers):
-        Logger.info('query_servers: Querying server {}'.format(server.name))
+        Logger.info('query_servers: Querying server {} at{}:{}'.format(
+            server.name, server.ip, int(server.port) + 1))
 
         address = (server.ip, int(server.port) + 1)
-        print address
+
         try:
             server = valve.source.a2s.ServerQuerier(address)
             info = server.get_info()
-        except valve.source.a2s.NoResponseError:
-            print "Error, continuing..."
+
+        except Exception as ex:  # valve.source.a2s.NoResponseError:
+            Logger.error('query_servers: Exception encountered: {}'.format(ex))
+            Logger.error('query_servers: Exception details: {}'.format(repr(ex)))
             continue
 
         Logger.info('query_servers: Players: {} / {}'.format(info['player_count'], info['max_players']))
-
         answers[i] = '{}/{}'.format(info['player_count'], info['max_players'])
-
         message_queue.progress({'msg': 'progress', 'server_data': format_response(answers)}, 0)
 
     message_queue.resolve({'msg': 'Done', 'server_data': format_response_final(answers)})
