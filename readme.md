@@ -1,3 +1,8 @@
+# Create your own launcher
+
+See the extensive [documentation on the wiki](https://github.com/overfl0/Bulletproof-Arma-Launcher/wiki/Launcher-management) for a step by step guide.
+The wiki is updated much more often than this readme file.
+
 # Install
 
 Manually installing the environment is now quite tricky as it involves, among other things, getting the right version of Kivy (1.9.1) and patching it with our own custom patches ([located in the Patches directory](https://github.com/overfl0/Bulletproof-Build-Environment/tree/master/Patches) of the `Bulletproof-Build-Environment` repository).
