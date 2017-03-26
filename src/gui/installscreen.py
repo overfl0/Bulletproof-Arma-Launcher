@@ -267,7 +267,9 @@ class Controller(object):
 
         pref_screen = self.view.manager.get_screen('pref_screen')
         pref_screen.controller.enable_action_widgets()
-        self.enable_updated_settings_mods_list()
+
+        if self.get_action_button_state() != DynamicButtonStates.self_upgrade:
+            self.enable_updated_settings_mods_list()
 
     def action_button_enabled(self):
         return self.view.ids.action_button.disabled == False
@@ -714,15 +716,17 @@ class Controller(object):
 
             self.mod_manager.select_first_server_available()
 
-        # Set server name label
-        server_name = self.settings.get('selected_server')
-        self.set_selected_server_message(server_name)
-
-        self.view.ids.server_list_scrolled.servers = self.mod_manager.get_servers()
-        self.fold_server_list_scrolled()
-
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
+
+
+        if self.get_action_button_state() != DynamicButtonStates.self_upgrade:
+            # Set server name label
+            server_name = self.settings.get('selected_server')
+            self.set_selected_server_message(server_name)
+
+            self.view.ids.server_list_scrolled.servers = self.mod_manager.get_servers()
+            self.fold_server_list_scrolled()
 
         # Automatic launching of scheduled one-time actions
         if self.action_button_enabled():
