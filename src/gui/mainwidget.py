@@ -13,12 +13,14 @@
 
 from __future__ import unicode_literals
 
+import io
 import kivy.app
 import os
 
 from functools import partial
 from kivy.animation import Animation
 from kivy.clock import Clock
+from kivy.core.image import Image as CoreImage
 from kivy.logger import Logger
 from kivy.network.urlrequest import UrlRequest
 from kivy.uix.widget import Widget
@@ -54,12 +56,25 @@ class Controller(object):
         """Callback called when a background image fetch failed."""
         Logger.error('Background: Fetching the background image failed')
 
+    def _background_fetch_error(self, request, error):
+        """Callback called when a background image fetch raised an internal error."""
+        Logger.info('Background: Fetching the background image raised an error: {}'.format(error))
+
     def _background_fetch_success(self, url, request, result):
         """Callback called when a background image fetch succeeded."""
         Logger.info('Background: Fetching the background image succeeded!')
 
-        filecache.save_file(url, result)
-        self.set_background_path(filecache.map_file(url))
+        # Check if the image data is correct and can actually be loaded
+        try:
+            im = CoreImage(io.BytesIO(result), ext=url.split('.')[-1])
+
+        except Exception as ex:
+            Logger.error('Background: The image downloaded could not be correctly loaded: {}'.format(repr(ex)))
+            im = None
+
+        if im:
+            filecache.save_file(url, result)
+            self.set_background_path(filecache.map_file(url))
 
 
     def _pop_background(self, animation, widget):
@@ -119,7 +134,8 @@ class Controller(object):
 
         else:
             Logger.info('Background: Fetching url: {}'.format(url))
-            UrlRequest(url,
+            self.url_request = UrlRequest(url,
                        on_success=partial(self._background_fetch_success, url),
+                       on_error=self._background_fetch_error,
                        decode=False,
                        timeout=30)
