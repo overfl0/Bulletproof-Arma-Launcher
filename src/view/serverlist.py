@@ -21,7 +21,25 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
 from sync.modmanager import ModManager
 from sync.server import Server
+from view.behaviors import HoverBehavior
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
+
+
+class ServerListRefresh(BoxLayout):
+    def __init__(self, owner, *args, **kwargs):
+        super(ServerListRefresh, self).__init__(**kwargs)
+        self.owner = owner
+
+    def clicked(self, *args):
+        self.owner.query_servers()
+
+    def disable(self):
+        self.ids.contents.disable()
+        self.disabled = True
+
+    def enable(self):
+        self.ids.contents.enable()
+        self.disabled = False
 
 
 class ServerListEntry(BoxLayout):
@@ -49,17 +67,24 @@ class ServerListEntry(BoxLayout):
     def deselect(self):
         self.ids.contents.force_hover = False
 
-class ServerListScrolled(ScrollView):
+
+class ServerListScrolled(ScrollView, HoverBehavior):
 
     selection_callback = ObjectProperty(None)
     servers = ListProperty()
     server_widgets = []
 
+    def hover(self, *args):
+        if self.refresh_widget:
+            self.refresh_widget.opacity = int(self.mouse_hover)
+
     def __init__(self, *args, **kwargs):
         super(ServerListScrolled, self).__init__(**kwargs)
 
         self.bind(servers=self.set_servers)
+        self.bind(mouse_hover=self.hover)
         self.para = None
+        self.refresh_widget = None
 
     def on_query_servers_resolve(self, data):
         Logger.info('on_query_servers_resolve: {}'.format(data))
@@ -70,6 +95,9 @@ class ServerListScrolled(ScrollView):
 
             if server.selected:
                 self.text = '{} ({})'.format(server.name, data)
+
+        if self.refresh_widget:
+            self.refresh_widget.enable()
 
     def on_query_servers_reject(self, data):
         Logger.info('on_query_servers_reject: {}'.format(data))
@@ -90,6 +118,9 @@ class ServerListScrolled(ScrollView):
                 self.text = '{} ({})'.format(server.name, data)
 
     def query_servers(self):
+        if self.refresh_widget:
+            self.refresh_widget.disable()
+
         # Clean up an older para
         if self.para:
             self.para.request_termination_and_break_promises()
@@ -110,11 +141,14 @@ class ServerListScrolled(ScrollView):
             self.selection_callback(selected.server.name)
 
     def set_servers(self, instance, servers):
-        # print instance, servers
-
         self.ids.servers_list.clear_widgets()
         self.server_widgets = []
 
+        # Refresh widget
+        self.refresh_widget = ServerListRefresh(self)
+        self.ids.servers_list.add_widget(self.refresh_widget)
+
+        # All the servers
         for server in self.servers:
             server_entry = ServerListEntry(self, server)
             self.server_widgets.append(server_entry)
@@ -122,12 +156,13 @@ class ServerListScrolled(ScrollView):
 
         # Add the "just run Arma" entry
         dummy_server = Server(None, None, None)
-
         dummy_server.selected = not any(s.selected for s in  self.servers)
         dummy_server_entry = ServerListEntry(self, dummy_server)
         self.server_widgets.append(dummy_server_entry)
         self.ids.servers_list.add_widget(dummy_server_entry)
 
+        # Check people on the servers
         self.query_servers()
+
 
 Builder.load_file('kv/serverlist.kv')

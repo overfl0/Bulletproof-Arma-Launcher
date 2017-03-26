@@ -98,6 +98,8 @@ def query_servers(message_queue, servers):
     answers = [RESPONSE_UNKNOWN for _ in servers]
     pool = ThreadPool(processes=POOL_PROCESSES)
 
+    message_queue.progress({'msg': 'progress', 'server_data': format_response(answers)}, 0)
+
     # Check the failed servers 3 times
     for iteration in range(CONNECTIONS_ATTEMPTS):
         # Get all the servers that have not yet responded

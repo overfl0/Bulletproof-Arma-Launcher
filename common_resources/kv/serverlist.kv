@@ -46,7 +46,7 @@
                 text: ''
                 text_size: None, contents.height
 
-<ServerListScrolled@ScrollView>:
+<ServerListScrolled@ScrollView+HoverBehavior>:
     size_hint: None, None
     max_height: 300
     height: min(self.max_height, servers_list.height)
@@ -66,3 +66,25 @@
         width: self.parent.width - self.parent.bar_width
         size_hint_y: None
         spacing: root.spacing
+
+<ServerListRefresh@BoxLayout>:
+    size_hint: 1, None
+    height: contents.height
+    opacity: 0
+
+    Widget
+
+    HoverButtonLeft:
+        id: contents
+        on_release: root.clicked(*args)
+        font_size: 14
+
+        text_prefix: ''
+        width: 30
+
+        Image:
+            source: app.resource_path('images/refresh.png')
+            #pos: root.width / 2 - self.width / 2, root.top - self.height - 7
+            size_hint: None, None
+            size: self.texture_size
+            pos: self.parent.pos

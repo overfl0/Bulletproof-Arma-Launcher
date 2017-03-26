@@ -73,12 +73,10 @@ class HoverBehavior(object):
             return
 
         window_pos = args[1]
-
-        # The property mouse_hover should be set only when it changes
-        # So all the bound functions are called only when needed
         widget_pos = self.to_widget(*window_pos)
+        parent_pos = self.to_parent(*widget_pos)
 
-        if self.collide_point(*widget_pos) and self.point_visible(window_pos):
+        if self.collide_point(*parent_pos) and self.point_visible(window_pos):
             self.mouse_hover = True
 
         else:
