@@ -12,6 +12,7 @@
 
 from __future__ import unicode_literals
 
+import ConfigParser
 import os
 import textwrap
 import zipfile
@@ -169,7 +170,8 @@ def run_and_connect(url):
     full_url = 'ts3server://{}'.format(url)
 
     if is_teamspeak_running():
-        ts_servers = get_TS_servers_connected()
+        api_key = get_api_key()
+        ts_servers = get_TS_servers_connected(api_key)
         host = url.split(':')[0]
 
         if host in ts_servers:
@@ -323,3 +325,27 @@ def ts3_plugin_is_valid(zip_filename):
             return error
 
     return True
+
+
+def get_api_key():
+    """Return the clientquery api key from Teamspeak config directory."""
+
+    clientquery_ini = os.path.join(get_config_location(), 'clientquery.ini')
+    if not os.path.isfile(clientquery_ini):
+        Logger.info('ClientQuery: Could not find clientquery.ini. Assuming no api key')
+        return None
+
+    try:
+        config = ConfigParser.RawConfigParser(allow_no_value=True)
+        config.read(clientquery_ini)
+        api_key = config.get('General', 'api_key')
+
+        return api_key
+
+    except Exception as ex:
+        Logger.error('ClientQuery: get_api_key: {}'.format(ex))
+        return None
+
+
+if __name__ == '__main__':
+    print get_api_key()

@@ -13,9 +13,14 @@
 from __future__ import unicode_literals
 
 import socket
+import textwrap
 import time
 
 from kivy.logger import Logger
+from utils.critical_messagebox import MessageBox
+
+# from kivy.config import Config
+# Config.set('kivy', 'log_level', 'debug')
 
 class ClientQueryException(Exception):
     def __init__(self, message, errno, command):
@@ -129,11 +134,11 @@ class ClientQuery(object):
                     return lines
 
             # Workaround for the first message after connecting
-            if len(lines) == 4 and lines[0] == 'TS3 Client' and \
+            if lines[0] == 'TS3 Client' and \
                lines[-2].startswith('selected schandlerid='):
                 return lines
 
-    def init(self):
+    def init(self, api_key=None):
         """Perform a set of actions to initialize the TS connection so that
         further commands can be executed on that connection.
 
@@ -146,6 +151,17 @@ class ClientQuery(object):
             return None
 
         self._recv()
+
+        if self.auth_call_present():
+            if api_key:
+                self.authenticate(api_key)
+
+            else:
+                message = textwrap.dedent('''
+                    Teamspeak clientquery requires api_key but it it could not  be found on disk!
+                    The Teamspeak server detection will not work correctly!
+                ''')
+                MessageBox(message, 'Teamspeak detection error!')
 
         return self
 
@@ -223,6 +239,27 @@ class ClientQuery(object):
 
     # Higher level commands
 
+    def authenticate(self, api_key):
+        response = self.run_command('auth apikey={}'.format(api_key))
+
+    def auth_call_present(self):
+        """Check if the `auth` call is present in Teamspeak.
+        This is done by trying to call the `help auth` call. If it succeeds, it
+        means the call is present and you have to authenticate before performing
+        any serious actions.
+        """
+
+        try:
+            self.run_command('help auth')
+
+        except ClientQueryException as ex:
+            if ex.errno == 1538:
+                return False  # Invalid parameter - command auth is not present
+
+            raise
+
+        return True
+
     def get_server_tokens(self, handler_id):
         """Retrieve the IDs of all the server handlers used by Teamspeak.
         Note that not all handlers are actually connected and will return an
@@ -265,14 +302,13 @@ class ClientQuery(object):
         return ips
 
 
-def get_TS_servers_connected():
+def get_TS_servers_connected(api_key):
     """Get the addresses (IP or domain string) of all the servers the
     Teamspeak client is currently connected to.
     """
 
     try:
-        raise ClientQueryException('message', 123, 'command')
-        ts = ClientQuery().init()
+        ts = ClientQuery().init(api_key=api_key)
 
         if not ts:
             return []
@@ -289,4 +325,4 @@ def get_TS_servers_connected():
 
 
 if __name__ == '__main__':
-    get_TS_servers_connected()
+    print get_TS_servers_connected()
