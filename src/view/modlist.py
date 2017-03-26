@@ -256,4 +256,9 @@ class ModListScrolled(ScrollView):
     def set_on_select(self, instance, on_select):
         self.ids.mods_list_scrolled.set_on_select(on_select)
 
+    def disable(self):
+        self.disabled = True
+
+    def enable(self):
+        self.disabled = False
 Builder.load_file('kv/modlist.kv')

@@ -239,13 +239,13 @@ class Controller(object):
 
     def enable_updated_settings_mods_list(self):
         mods_list = self.view.manager.get_screen('pref_screen').ids.mods_options.ids.mods_list
-        mods_list.disabled = False
+        mods_list.enable()
         mods = self.mod_manager.get_mods()
         mods_list.set_mods(mods)
 
     def disable_settings_mods_list(self):
         mods_list = self.view.manager.get_screen('pref_screen').ids.mods_options.ids.mods_list
-        mods_list.disabled = True
+        mods_list.disable()
 
     def fold_server_list_scrolled(self):
         folded_height = getattr(self.view.ids.server_list_scrolled, 'folded_height', None)

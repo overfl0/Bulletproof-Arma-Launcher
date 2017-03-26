@@ -153,8 +153,8 @@ class Controller(object):
 
     def disable_action_widgets(self):
         self.view.ids.mods_options.ids.mod_location_selection.disabled = True
-        self.view.ids.mods_options.ids.mods_list.disabled = True
+        self.view.ids.mods_options.ids.mods_list.disable()
 
     def enable_action_widgets(self):
         self.view.ids.mods_options.ids.mod_location_selection.disabled = False
-        self.view.ids.mods_options.ids.mods_list.disabled = False
+        self.view.ids.mods_options.ids.mods_list.enable()
