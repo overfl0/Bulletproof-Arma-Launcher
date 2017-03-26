@@ -45,7 +45,10 @@ class Controller(object):
 
     def on_next_frame(self, dt):
         """Called once, when the view is ready."""
-        pass
+
+        background_path = self.settings.get('last_custom_background')
+        Logger.info('MainWidget: Settings background to: {}'.format(background_path))
+        self.set_background_path(background_path, use_transition=False)
 
     def _background_fetch_failure(self, request, result):
         """Callback called when a background image fetch failed."""
@@ -67,11 +70,17 @@ class Controller(object):
         self.view.ids.background.source = self.view.ids.background_new.source
         self.view.ids.background_new.opacity = 0
 
-    def set_background_path(self, path):
+    def set_background_path(self, path, use_transition=True):
         """Set the background to a file on disk pointed by the path."""
+
+        self.settings.set('last_custom_background', path)
 
         if path is None:
             path = get_resources_path('images/back.png')
+
+        if self.view.ids.background.source == path:
+            Logger.info('Background: The requested background is already used. Not doing anything.')
+            return
 
         Logger.info('Background: setting background to: {}'.format(path))
 
@@ -81,11 +90,15 @@ class Controller(object):
             return
 
         self.view.ids.background_new.opacity = 0
-        self.view.ids.background_new.source = path
+        if use_transition:
+            self.view.ids.background_new.source = path
 
-        anim = Animation(opacity=1, transition='linear')
-        anim.bind(on_complete=self._pop_background)
-        anim.start(self.view.ids.background_new)
+            anim = Animation(opacity=1, transition='linear', duration=2)
+            anim.bind(on_complete=self._pop_background)
+            anim.start(self.view.ids.background_new)
+
+        else:
+            self.view.ids.background.source = path
 
     def set_background(self, url):
         """Set the background to a file pointed by the url. The file will be
