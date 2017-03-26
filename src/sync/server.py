@@ -16,7 +16,8 @@ from __future__ import unicode_literals
 class Server(object):
     """Encapsulate data needed for a server"""
 
-    def __init__(self, name, ip, port, password=None, teamspeak=None, battleye=True):
+    def __init__(self, name, ip, port, password=None, teamspeak=None,
+                 battleye=True, background=None):
 
         super(Server, self).__init__()
 
@@ -28,6 +29,7 @@ class Server(object):
         self.battleye = battleye
         self.mods = []
         self.selected = False
+        self.background = background
 
     def add_mods(self, mods):
         """Add mods to a server.
@@ -57,9 +59,10 @@ class Server(object):
         password = d.get('password', None)
         teamspeak = d.get('teamspeak', None)
         battleye = d.get('battleye', True)
+        background = d.get('background')
 
         server = Server(name=name, ip=ip, port=port, password=password,
-                        teamspeak=teamspeak, battleye=battleye)
+                        teamspeak=teamspeak, battleye=battleye, background=background)
 
         return server
 
@@ -68,7 +71,7 @@ class Server(object):
         if self.mods:
             mods_repr = '\n{}\n'.format('\n'.join('    ' + repr(mod) for mod in self.mods))
 
-        s = '<Server: Name: {s.name}, IP: {s.ip}, Port: {s.port}, Battleye: {s.battleye}, Teamspeak: {s.teamspeak}{}>'.format(
+        s = '<Server: Name: {s.name}, IP: {s.ip}, Port: {s.port}, Battleye: {s.battleye}, Teamspeak: {s.teamspeak}, Background: {s.background}{}>'.format(
                 mods_repr, s=self)
 
         return s

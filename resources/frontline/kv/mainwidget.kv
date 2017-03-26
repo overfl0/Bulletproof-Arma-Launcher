@@ -6,9 +6,17 @@
     id: main_widget
 
     Image:
+        id: background
         source: app.resource_path('images/back.png')
         size: root.width, root.height
         pos: root.x, root.y
+
+    Image:
+        id: background_new
+        #source: app.resource_path('images/back.png')
+        size: root.width, root.height
+        pos: root.x, root.y
+        opacity: 0
 
     # Semi-transparent bars at the top and the bottom
     LabelB:
