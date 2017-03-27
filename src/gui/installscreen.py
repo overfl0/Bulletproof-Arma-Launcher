@@ -606,7 +606,12 @@ class Controller(object):
             anim = Animation(width=label.width_final, right=label.right, t='in_out_circ')
 
         anim.bind(on_complete=partial(do_fade_in, result))
-        anim.start(label)
+
+        # Only animate if this is the first time we load the text
+        if label.text:
+            label.text = result
+        else:
+            anim.start(label)
 
         # Fix something that cannot be fixed in kv files
         label.ids.content.padding = 10, 0
