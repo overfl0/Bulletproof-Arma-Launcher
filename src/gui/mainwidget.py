@@ -42,6 +42,9 @@ class Controller(object):
         self.view = widget
         self.settings = kivy.app.App.get_running_app().settings
 
+        self.last_background_url = None  # Race condition prevention
+        self.anim = None  # Race condition prevention
+
         # this effectively calls on_next_frame, when the view is ready
         Clock.schedule_once(self.on_next_frame, 0)
 
@@ -62,7 +65,7 @@ class Controller(object):
 
     def _background_fetch_success(self, url, request, result):
         """Callback called when a background image fetch succeeded."""
-        Logger.info('Background: Fetching the background image succeeded!')
+        Logger.info('Background: Fetching the background image succeeded! {}'.format(url))
 
         # Check if the image data is correct and can actually be loaded
         try:
@@ -74,7 +77,10 @@ class Controller(object):
 
         if im:
             filecache.save_file(url, result)
-            self.set_background_path(filecache.map_file(url))
+
+            # If a new request has been made in the meantime, don't change the background!
+            if url == self.last_background_url:
+                self.set_background_path(filecache.map_file(url))
 
 
     def _pop_background(self, animation, widget):
@@ -85,6 +91,8 @@ class Controller(object):
         self.view.ids.background.source = self.view.ids.background_new.source
         self.view.ids.background_new.opacity = 0
 
+        self.anim = None
+
     def set_background_path(self, path, use_transition=True):
         """Set the background to a file on disk pointed by the path."""
 
@@ -93,7 +101,7 @@ class Controller(object):
         if path is None:
             path = get_resources_path('images/back.png')
 
-        if self.view.ids.background.source == path:
+        if self.view.ids.background.source == path and self.anim is None:
             Logger.info('Background: The requested background is already used. Not doing anything.')
             return
 
@@ -108,9 +116,11 @@ class Controller(object):
         if use_transition:
             self.view.ids.background_new.source = path
 
-            anim = Animation(opacity=1, transition='linear', duration=2)
-            anim.bind(on_complete=self._pop_background)
-            anim.start(self.view.ids.background_new)
+            self.anim = Animation(opacity=1, transition='linear', duration=2)
+            self.anim.bind(on_complete=self._pop_background)
+
+            Animation.cancel_all(self.view.ids.background_new)
+            self.anim.start(self.view.ids.background_new)
 
         else:
             self.view.ids.background.source = path
@@ -121,6 +131,8 @@ class Controller(object):
 
         If url is None, the default background will be used.
         """
+
+        self.last_background_url = url
 
         if url is None:
             Logger.info('Background: No background set')
