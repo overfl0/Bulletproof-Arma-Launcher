@@ -722,7 +722,7 @@ class Controller(object):
             self.mod_manager.select_first_server_available()
 
         server = self.mod_manager.get_selected_server()
-        self.view.parent.parent.controller.set_background(server.background)
+        self.view.parent.parent.controller.set_background(server.background if server else None)
 
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
