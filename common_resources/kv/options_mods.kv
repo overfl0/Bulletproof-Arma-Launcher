@@ -175,8 +175,7 @@
             Label:
                 text:
                     '''Mods:
-                    [i][size=12]Note: The launcher will try to find all missing mods automatically when installing[/size][/i]
-                    [i][size=12]Note: The settings below can only be changed when seeding is turned off![/size][/i]'''
+                    [i][size=12]Note: The launcher will try to find all missing mods automatically when installing[/size][/i]'''
                 markup: True
                 text_size: self.parent.size[0], None
                 size: self.texture_size
@@ -186,5 +185,16 @@
                 id: mods_list
                 directory_selection_callback: (root.screen.controller.request_mods_recheck if root.screen else None)
                 mod_selection_callback: (root.screen.controller.request_mods_recheck if root.screen else None)
+                height: 350
 
-            Widget
+            FloatLayout:
+                LabelB:
+                    id: mods_list_notification
+                    text: 'Disabled while checking\ndownloading or seeding'
+                    bcolor: 0.2, 0.2, 0.2, 0.5
+                    color: 0.5, 0.5, 0.5, 1
+                    size: mods_list.width, mods_list.visible_content_height
+                    size_hint: None, None
+                    x: mods_list.x
+                    top: mods_list.top
+                    opacity: int(mods_list.disabled)
