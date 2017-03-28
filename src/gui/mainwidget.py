@@ -41,6 +41,7 @@ class Controller(object):
         super(Controller, self).__init__()
         self.view = widget
         self.settings = kivy.app.App.get_running_app().settings
+        kivy.app.App.get_running_app().main_widget = widget
 
         self.last_background_url = None  # Race condition prevention
         self.anim = None  # Race condition prevention
