@@ -89,7 +89,7 @@ class ConnectionWrapper(object):
         try:
             self.con.send(msg)
         except (EOFError, IOError):
-            Logger.error('ConnectionWrapper: _send_message({}): Broken pipe!'.format(self.action_name))
+            Logger.error('ConnectionWrapper: _send_message({}): Broken pipe! The remote process has probably terminated.'.format(self.action_name))
             self.broken_pipe = True
 
     def reject(self, data=None):
@@ -130,7 +130,7 @@ class ConnectionWrapper(object):
             return message
 
         except (EOFError, IOError):
-            Logger.error('ConnectionWrapper: receive_message: Broken pipe!')
+            Logger.error('ConnectionWrapper: receive_message: Broken pipe! The remote process has probably terminated.')
             self.broken_pipe = True
             return None
 
