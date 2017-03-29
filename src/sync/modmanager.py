@@ -143,11 +143,17 @@ class ModManager(object):
 
     # Para functions below #####################################################
 
-    def download_mod_description(self):
+    def download_mod_description(self, dry_run=False):
+        if dry_run:
+            then = None
+
+        else:
+            then = (self.on_download_mod_description_resolve,
+                    self.on_download_mod_description_reject,
+                    None)
+
         para = protected_para(_get_mod_descriptions, (), 'download_description',
-                              then=(self.on_download_mod_description_resolve,
-                                    self.on_download_mod_description_reject,
-                                    None)
+                              then=then
                               )
         return para
 

@@ -246,6 +246,7 @@ class TorrentSyncer(object):
 
             else:  # Torrent from url
                 try:
+                    Logger.info('TorrentSyncer: Fetching torrent: {}'.format(mod.torrent_url))
                     res = requests_wrapper.download_url(None, mod.torrent_url, timeout=5)
                 except requests_wrapper.DownloadException as ex:
                     error_message = 'Downloading metadata: {}'.format(ex.args[0])

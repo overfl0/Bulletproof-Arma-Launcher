@@ -134,6 +134,7 @@ class Controller(object):
             self.on_download_mod_description_resolve({'data': self.settings.get('mod_data_cache')})
 
         Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
+        Clock.schedule_interval(self.metadata_watchdog, 10 * 60)
 
     def is_para_running(self, name=None, not_name=None):
         """Check if a given para is now running or if any para is running in
@@ -162,6 +163,7 @@ class Controller(object):
             self.para.request_termination_and_break_promises()
 
         Clock.unschedule(self.seeding_and_action_button_upkeep)
+        Clock.unschedule(self.metadata_watchdog)
 
         self.disable_action_buttons()
 
@@ -187,6 +189,54 @@ class Controller(object):
         self.disable_action_buttons()
         self.stop_mod_processing()
         Clock.schedule_interval(partial(self.wait_for_mod_checking_restart, force_download_new), 0.2)
+
+    def watchdog_requirements(self):
+        """The requirements for the watchdog to try fetch an updated
+        metadata.json file.
+        """
+
+        arma_is_running = third_party.helpers.arma_may_be_running(newly_launched=False)
+        if arma_is_running:
+            return False
+
+        if not self.is_para_running('sync'):
+            return False
+
+        return True
+
+    def on_watchdog_metadata_fetch(self, data):
+        Logger.debug('on_watchdog_metadata_fetch: Fetch completed.')
+
+        if not self.watchdog_requirements():
+            Logger.debug('on_watchdog_metadata_fetch: Requirements not met. Aborting.')
+            return
+
+        data = data['data']
+
+        if data != self.settings.get('mod_data_cache'):
+            Logger.info('on_watchdog_metadata_fetch: Data differs, restarting the checking routine.')
+            self.settings.set('automatic_download', True)
+            self.restart_checking_mods(force_download_new=True)
+
+        else:
+            Logger.debug('on_watchdog_metadata_fetch: Data is still the same. Not doing anything.')
+
+    def metadata_watchdog(self, dt):
+        """Check if the metadata has changed from the time it was last fetched.
+
+        Only do this if:
+        - Arma is NOT running
+        - We are either installing or seeding
+        """
+
+        if not self.watchdog_requirements():
+            Logger.debug('metadata_watchdog: Requirements not met.')
+            return
+
+        Logger.debug('metadata_watchdog: Requirements met proceeding with the download.')
+
+        self.watchdog_para = self.mod_manager.download_mod_description(dry_run=True)
+        self.watchdog_para.then(self.on_watchdog_metadata_fetch, None, None)
 
     def seeding_and_action_button_upkeep(self, dt):
         """Check if seeding should be performed and if the play button should be available again.
