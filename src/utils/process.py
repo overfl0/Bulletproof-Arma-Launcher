@@ -26,7 +26,7 @@ import multiprocessing.forking
 import multiprocessing
 import os
 import sys
-import io
+import textwrap
 
 from multiprocessing.queues import SimpleQueue
 from multiprocessing import Lock, Pipe
@@ -34,7 +34,6 @@ from kivy.clock import Clock
 from kivy.logger import Logger
 from utils.primitive_git import get_git_sha1_auto
 from utils.testtools_compat import _format_exc_info
-import time
 
 
 class _Popen(multiprocessing.forking.Popen):
@@ -323,6 +322,17 @@ class Para(object):
             if not self.current_child_process.is_alive():
                 message = '[{}] Child process terminated unexpectedly with code {}.'.format(
                     self.action_name, self.current_child_process.exitcode)
+
+                # Special case (libtorrent crash)
+                if self.current_child_process.exitcode == -529697949:
+                    message += '\n\n' + textwrap.dedent("""
+                    This is probably a bug in Libtorrent that manifests itself
+                    if there are more than 6 network interfaces enabled on the system.
+
+                    To fix the issue, disable or remove unneeded interfaces until
+                    you have 6 or less interfaces enabled.
+                    """)
+
                 self.lastdata = {'data': {'msg': message}}
                 self._call_reject_handler(self.lastdata)
 
