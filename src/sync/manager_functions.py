@@ -161,16 +161,19 @@ def convert_metadata_to_mod(md, torrent_url_prefix):
     return mod
 
 
-def parse_launcher_data(para, metadata, launcher_basedir):
+def _torrent_url_base():
     domain = devmode.get_launcher_domain(default=launcher_config.domain)
     torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
     torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
 
+    return torrent_url_prefix
+
+def parse_launcher_data(para, metadata, launcher_basedir):
     if 'launcher' not in metadata:
         return None
 
     launcher = metadata['launcher']
-    launcher_mod = convert_metadata_to_mod(launcher, torrent_url_prefix)
+    launcher_mod = convert_metadata_to_mod(launcher, _torrent_url_base())
     launcher_mod.parent_location = launcher_basedir
     launcher_mod.is_launcher = True
 
@@ -178,13 +181,10 @@ def parse_launcher_data(para, metadata, launcher_basedir):
 
 
 def parse_mods_data(para, data, launcher_moddir):
-    domain = devmode.get_launcher_domain(default=launcher_config.domain)
-    torrents_path = devmode.get_torrents_path(default=launcher_config.torrents_path)
-    torrent_url_prefix = 'http://{}{}/'.format(domain, torrents_path)
     mods = []
 
     for md in data.get('mods', []):
-        mod = convert_metadata_to_mod(md, torrent_url_prefix)
+        mod = convert_metadata_to_mod(md, _torrent_url_base())
         mod.parent_location = launcher_moddir
         mods.append(mod)
 

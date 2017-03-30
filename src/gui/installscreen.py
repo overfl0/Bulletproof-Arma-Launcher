@@ -637,6 +637,11 @@ class Controller(object):
         if progress.get('mods_created', 0) > 0:
             # Set the settings to start seeding ASAP and restart everything
             self.settings.set('automatic_seed', True)
+
+            # Prevent the the seeding process to be shut down
+            if self.settings.get('seeding_type') == 'never':
+                self.settings.set('seeding_type', 'while_not_playing')
+
             self.restart_checking_mods(force_download_new=True)
 
     def on_maketorrent_reject(self, data):

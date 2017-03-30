@@ -113,3 +113,9 @@ class MetadataFile(object):
 
     def get_dirty(self):
         return self.data.setdefault('dirty', False)
+
+    def set_force_creator_complete(self, complete):
+        self.data['force_creator_complete'] = complete
+
+    def get_force_creator_complete(self):
+        return self.data.setdefault('force_creator_complete', False)

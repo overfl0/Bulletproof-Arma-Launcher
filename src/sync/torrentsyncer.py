@@ -295,6 +295,9 @@ class TorrentSyncer(object):
         metadata_file = MetadataFile(mod.foldername)
         metadata_file.read_data(ignore_open_errors=True)  # In case the mod does not exist, we would get an error
 
+        # Clear the force clean flag
+        metadata_file.set_force_creator_complete(False)
+
         # A little bit of a workaround. If we intend to seed, we can assume the data is all right.
         # This way, if the torrent is closed before checking_resume_data is finished, and the post-
         # download hook is not fired, the torrent is not left in a state marked as dirty.

@@ -23,6 +23,7 @@ import time
 from collections import OrderedDict
 from kivy.logger import Logger
 from kivy.config import Config
+from manager_functions import _torrent_url_base
 from sync import torrent_utils
 from sync import manager_functions
 from utils.devmode import devmode
@@ -166,6 +167,9 @@ def _make_torrent(message_queue, launcher_basedir, mods):
 
         message_queue.progress({'msg': 'Creating file: {}'.format(output_file)}, counter / len(mods))
         file_created = torrent_utils.create_torrent(directory, announces, output_path, comment, web_seeds)
+        with file(file_created, 'rb') as f:
+            mod.torrent_content = f.read()
+        mod.torrent_url = '{}{}'.format(_torrent_url_base(), output_file)
         mods_created.append((mod, file_created, output_file, timestamp))
         Logger.info('make_torrent: New torrent for mod {} created!'.format(mod.foldername))
 
@@ -195,6 +199,9 @@ def _make_torrent(message_queue, launcher_basedir, mods):
 
         yield Message.msgbox(message, name='confirm_upload_mods')
         perform_update(message_queue, mods_created)
+
+        for mod, _, _, _ in mods_created:
+            torrent_utils.set_torrent_complete(mod)
 
     message_queue.resolve({'msg': 'Torrents created: {}'.format(len(mods_created)),
                            'mods_created': len(mods_created)})

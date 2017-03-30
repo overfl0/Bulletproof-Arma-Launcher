@@ -31,11 +31,24 @@ class AdminRequiredError(Exception):
     pass
 
 
+def set_torrent_complete(mod):
+    metadata_file = MetadataFile(mod.foldername)
+    metadata_file.read_data(ignore_open_errors=True)
+    metadata_file.set_dirty(False)
+    metadata_file.set_torrent_url(mod.torrent_url)
+    metadata_file.set_torrent_content(mod.torrent_content)
+    metadata_file.set_torrent_resume_data('')
+
+    metadata_file.set_force_creator_complete(True)
+    metadata_file.write_data()
+
+
 def is_complete_quick(mod):
     """Performs a quick check to see if the mod *seems* to be correctly installed.
     This check assumes no external changes have been made to the mods.
 
     1. Check if metadata file exists and can be opened (instant)
+    1a. WORKAROUND: Check if the file has just been created so it must be complete
     2. Check if torrent is not dirty [download completed successfully] (instant)
     3. Check if torrent url matches (instant)
     4. Check if files have the right size and modification time (very quick)
@@ -51,6 +64,11 @@ def is_complete_quick(mod):
     except (IOError, ValueError):
         Logger.info('Is_complete: Metadata file could not be read successfully. Marking as not complete')
         return False
+
+    # Workaround
+    if metadata_file.get_force_creator_complete():
+        Logger.info('Is_complete: Torrent marked as (forced) complete by the creator. Treating as complete')
+        return True
 
     # (2)
     if metadata_file.get_dirty():
