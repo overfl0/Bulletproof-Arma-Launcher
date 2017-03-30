@@ -134,7 +134,8 @@ class Controller(object):
             self.on_download_mod_description_resolve({'data': self.settings.get('mod_data_cache')})
 
         Clock.schedule_interval(self.seeding_and_action_button_upkeep, 1)
-        Clock.schedule_interval(self.metadata_watchdog, 10 * 60)
+        self.watchdog_reschedule(self.settings.get('mod_data_cache'))
+
 
     def is_para_running(self, name=None, not_name=None):
         """Check if a given para is now running or if any para is running in
@@ -189,6 +190,25 @@ class Controller(object):
         self.disable_action_buttons()
         self.stop_mod_processing()
         Clock.schedule_interval(partial(self.wait_for_mod_checking_restart, force_download_new), 0.2)
+
+    def watchdog_reschedule(self, data=None):
+        """Schedule or reschedule the metadata watchdog."""
+
+        Clock.unschedule(self.metadata_watchdog)
+
+        refresh_interval = 60 * 10  # Default interval - 10 minutes
+
+        # Get the refresh interval from the last metadata.json we got
+        if data:
+            new_refresh = int(data.get('refresh', refresh_interval))
+            print new_refresh
+
+            if new_refresh >= 10:
+                refresh_interval = new_refresh
+
+        Logger.info('watchdog_reschedule: Scheduling check every {} seconds'.format(refresh_interval))
+
+        Clock.schedule_interval(self.metadata_watchdog, refresh_interval)
 
     def watchdog_requirements(self):
         """The requirements for the watchdog to try fetch an updated
@@ -673,6 +693,7 @@ class Controller(object):
     def on_download_mod_description_resolve(self, data):
         # Continue with processing mod_description data
         self.checkmods(data['data'])
+        self.watchdog_reschedule(data['data'])
 
         if launcher_config.news_url:
             UrlRequest(launcher_config.news_url, on_success=partial(
