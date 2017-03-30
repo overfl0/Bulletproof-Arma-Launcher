@@ -435,6 +435,11 @@ def _sync_all(message_queue, mods, max_download_speed, max_upload_speed, seed):
     """Run syncers for all the mods in parallel and then their post-download hooks."""
 
     syncer = TorrentSyncer(message_queue, mods, max_download_speed, max_upload_speed)
+    ip_whitelist = devmode.get_ip_whitelist(default=[])
+    if ip_whitelist:
+        Logger.info('_sync_all: Setting whitelist: {}'.format(ip_whitelist))
+        syncer.set_whitelist_filter(ip_whitelist)
+
     sync_ok = syncer.sync(force_sync=False, just_seed=seed)  # Use force_sync to force full recheck of all the files' checksums
 
     # If we had an error or we're closing the launcher, don't call post_download_hooks

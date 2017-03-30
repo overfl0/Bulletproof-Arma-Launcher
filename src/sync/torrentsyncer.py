@@ -109,6 +109,26 @@ class TorrentSyncer(object):
 
         return torrent_log
 
+    def set_whitelist_filter(self, whitelisted):
+        """Set an IP whitelist so that the torrent client will ONLY seed (and
+        download from) those IPs.
+        This is to prevent seeding to everyone if you only want to seed to your
+        seedbox.
+        """
+
+        blocked = 1  # From include/libtorrent/ip_filter.hpp
+        unblocked = 0
+
+        filter_bt = libtorrent.ip_filter()
+        filter_bt.add_rule('0.0.0.0', '255.255.255.255', blocked)
+        try:
+            for addr in whitelisted:
+                filter_bt.add_rule(addr, addr, unblocked)
+        except RuntimeError:
+            raise Exception('A bad IP was passed as a whitelist filter!')
+
+        self.session.set_ip_filter(filter_bt)
+
     def log_torrent_progress(self, s, mod_name):
         """Just log the download progress for now.
         Do not log anything if the torrent is 100% completed to prevent spamming
