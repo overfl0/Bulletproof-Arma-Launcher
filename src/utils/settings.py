@@ -97,6 +97,8 @@ class Settings(Model):
         {'name': 'arma_unit_enabled', 'defaultValue': False},
         {'name': 'arma_mission_file', 'defaultValue': ''},
         {'name': 'arma_mission_file_enabled', 'defaultValue': False},
+        {'name': 'arma_exThreads', 'defaultValue': '0'},
+        {'name': 'arma_exThreads_enabled', 'defaultValue': False},
         {'name': 'arma_noSound', 'defaultValue': False},
     ]
 
