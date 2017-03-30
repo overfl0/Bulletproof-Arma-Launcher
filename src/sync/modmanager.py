@@ -198,6 +198,12 @@ class ModManager(object):
         if self.launcher:
             synced_elements.append(self.launcher)
 
+        # If we are only seeding, ensure we pass only ready-to-seed mods
+        # Note: the libtorrent seed-only flags prevent downloading data, but
+        # still truncate the file anyway - something we want to prevent here
+        if seed:
+            synced_elements = filter(lambda mod: mod.is_complete(), synced_elements)
+
         para = protected_para(
             _sync_all,
             (

@@ -201,7 +201,7 @@ class Controller(object):
         # Get the refresh interval from the last metadata.json we got
         if data:
             new_refresh = int(data.get('refresh', refresh_interval))
-            print new_refresh
+            # print new_refresh
 
             if new_refresh >= 10:
                 refresh_interval = new_refresh
