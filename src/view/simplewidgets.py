@@ -19,7 +19,9 @@ from kivy.lang import Builder
 from kivy.logger import Logger
 from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from view.filechooser import FileChooser
+from view.errorpopup import ErrorPopup
 
 
 class CheckLabel(BoxLayout):
@@ -138,5 +140,45 @@ class CheckFileLabel(BoxLayout):
                              on_success=self.path_chosen_cb,
                              select_dir=False,
                              filetypes=[('SQM files', '*.sqm'), ('All files', '*')])
+
+
+class Devmode_options(GridLayout):
+    def __init__(self, mod_manager, *args, **kwargs):
+        super(Devmode_options, self).__init__(*args, **kwargs)
+        self.mod_manager = mod_manager
+
+    def show_torrents(self, option):
+        options = ('base_server', 'server', 'base', 'all')
+        if option not in options:
+            raise Exception('Unsupported torrent option')
+
+        try:
+            if option == 'base_server':
+                mods = self.mod_manager.get_mods(include_base=True, include_server=True, include_all_servers=False)
+
+            elif option == 'server':
+                mods = self.mod_manager.get_mods(include_base=False, include_server=True, include_all_servers=False)
+
+            elif option == 'base':
+                mods = self.mod_manager.get_mods(include_base=True, include_server=False, include_all_servers=False)
+
+            elif option == 'all':
+                mods = self.mod_manager.get_mods(include_base=True, include_server=True, include_all_servers=True)
+
+        except KeyError:
+            ErrorPopup(message='The server data is probably still being fetched. Wait a few seconds and retry.').chain_open()
+            return
+
+        details = '\n'.join(mod.torrent_url for mod in mods)
+        title = 'Torrents exporter'
+
+        if mods:
+            message = 'The torrent URLs have been copied to your clipboard. Press Ctrl+V to paste them.'
+        else:
+            message = 'No mods meeting the criteria were found.'
+
+
+        ErrorPopup(details=details, message=message, title=title, size=(900, 400)).chain_open()
+
 
 Builder.load_file('kv/simplewidgets.kv')

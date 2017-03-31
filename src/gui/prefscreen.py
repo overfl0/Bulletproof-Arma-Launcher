@@ -24,6 +24,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.logger import Logger
 
 from view.filechooser import FileChooser
+from view.simplewidgets import Devmode_options
 from utils.devmode import devmode
 from utils.paths import is_dir_writable
 
@@ -50,10 +51,10 @@ class PrefScreen(Screen):
         except:
             return
 
-        class Devmode_options(GridLayout):
-            pass
+        install_screen = self.manager.get_screen('install_screen')
+        mod_manager = install_screen.controller.mod_manager
 
-        devmode_options = Devmode_options()
+        devmode_options = Devmode_options(mod_manager)
         self.ids.arma_options.ids.scrollview_content.add_widget(devmode_options)
 
         # Return False to unschedule the function

@@ -42,11 +42,21 @@ class ModManager(object):
         self.clear_servers()
         self.default_teamspeak_url = None
 
-    def get_mods(self, only_selected=False):
-        mods = self.mods[:]
-        server = self.get_selected_server()
-        if server:
-            mods.extend(server.mods)
+    def get_mods(self, only_selected=False, include_base=True,
+                 include_server=True, include_all_servers=False):
+        if include_base:
+            mods = self.mods[:]
+        else:
+            mods = []
+
+        if include_all_servers:
+            for server in self.servers:
+                mods.extend(server.mods)
+
+        elif include_server:
+            server = self.get_selected_server()
+            if server:
+                mods.extend(server.mods)
 
         if only_selected:
             mods = filter(lambda x: not x.optional or x.selected, mods)

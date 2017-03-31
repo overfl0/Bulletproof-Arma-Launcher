@@ -115,3 +115,40 @@
     CheckLabel:
         text: 'No sound'
         settings_name: 'arma_noSound'
+
+
+    Label:
+        text: 'Get all the torrent urls for:'
+        size_hint: None, None
+        size: self.texture_size[0], 50
+
+    GridLayout:
+        rows: 1
+        height: 30
+        size_hint: 1, None
+        size_hint_y: None
+        spacing: 10
+
+        Button:
+            text: 'Base + Current server'
+            size_hint: None, 1
+            width: self.texture_size[0] + self.border[0] * 2
+            on_release: root.show_torrents('base_server')
+
+        Button:
+            text: 'Curent server'
+            size_hint: None, 1
+            width: self.texture_size[0] + self.border[0] * 2
+            on_release: root.show_torrents('server')
+
+        Button:
+            text: 'Base mods'
+            size_hint: None, 1
+            width: self.texture_size[0] + self.border[0] * 2
+            on_release: root.show_torrents('base')
+
+        Button:
+            text: 'Everything'
+            size_hint: None, 1
+            width: self.texture_size[0] + self.border[0] * 2
+            on_release: root.show_torrents('all')
