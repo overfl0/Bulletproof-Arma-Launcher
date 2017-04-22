@@ -20,8 +20,8 @@ from kivy.logger import Logger
 from multiprocessing.pool import ThreadPool
 
 
-RESPONSE_UNKNOWN = '??/??'
-RESPONSE_DOWN = 'XX/XX'
+RESPONSE_UNKNOWN = '?/?'
+RESPONSE_DOWN = '-/-'
 
 CONNECTIONS_ATTEMPTS = 3
 CONNECTION_TIMEOUT = 2
