@@ -218,7 +218,7 @@ class TorrentSyncer(object):
                                'ETA: {}'.format(ETA) if ETA else '')
             progress_mods = unfinished_mods
         else:
-            progress_message = 'Seeding: {} connections ({:0.2f} KB/s). Total: {} MB'.format(
+            progress_message = 'Uploading: {} connections ({:0.2f} KB/s). Total: {} MB'.format(
                                session_actual_peers,
                                status.payload_upload_rate / 1024,
                                status.total_payload_upload / 1024 / 1024)
