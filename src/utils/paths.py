@@ -125,6 +125,15 @@ def get_user_home_directory():
     return unicode_helpers.fs_to_u(os.path.expanduser(b'~'))
 
 
+def get_user_documents_directory():
+    """Return the user's MyDocuments directory.
+    Fortunately, using 'Documents' works fine with any windows version (not only
+    with english versions).
+    """
+
+    return os.path.join(get_user_home_directory(), 'Documents')
+
+
 def get_local_user_directory(*relative):
     """Return the local user directory. Optionally append <relative> at the end.
     This means AppData\Local on windows.

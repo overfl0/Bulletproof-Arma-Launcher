@@ -61,9 +61,6 @@ def check_requirements_troubleshooting(dummy_var):
     with ignore_exceptions(Exception):
         steam_path = Arma.get_steam_exe_path()
 
-    with ignore_exceptions(Exception):
-        user_path = Arma.get_user_directory()
-
     for _ in xrange(10):
         Logger.info('')
 
@@ -86,9 +83,6 @@ def check_requirements_troubleshooting(dummy_var):
 
         Steam location: {}
 
-        Sanity check: the value below should ALWAYS be available.
-        User directory: {}
-
         {}
         '''.format('*' * 70,
                    executable_path,
@@ -97,7 +91,6 @@ def check_requirements_troubleshooting(dummy_var):
                    config_location,
                    arma_path,
                    steam_path,
-                   user_path,
                    '*' * 70
                    ))
     Logger.info(message)

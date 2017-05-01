@@ -27,6 +27,7 @@ import urllib
 from kivy.logger import Logger
 from utils.devmode import devmode
 from utils import process_launcher
+from utils import paths
 from utils.registry import Registry
 from utils.system_processes import program_running
 
@@ -77,16 +78,6 @@ class Arma(object):
         return path
 
     @staticmethod
-    def get_user_directory():
-
-        try:
-            user_docs = Registry.ReadValueCurrentUser(Arma._user_document_path, 'Personal')
-        except Registry.Error:
-            raise ArmaNotInstalled()
-
-        return user_docs
-
-    @staticmethod
     def get_player_profiles():
         """Retrieve available player profiles.
         The profiles are stored in '~/Documents/Arma 3 - Other Profiles' (on
@@ -94,7 +85,7 @@ class Arma(object):
         """
 
         profiles = []
-        profiles_directory = os.path.join(Arma.get_user_directory(), Arma._profile_directory_name)
+        profiles_directory = os.path.join(paths.get_user_documents_directory(), Arma._profile_directory_name)
 
         try:
             arma_profiles_dir_contents = os.listdir(profiles_directory)
