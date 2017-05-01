@@ -79,7 +79,17 @@ class ErrorPopup(ChainedPopup):
 def error_popup_decorator(func):
     def wrapper(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+
+            except UnicodeDecodeError as ex:
+                error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
+                raise UnicodeError(error_message)
+
+            except UnicodeEncodeError as ex:
+                error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
+                raise UnicodeError(error_message)
+
         except Exception:
             build = get_git_sha1_auto()
             stacktrace = "".join(_format_exc_info(*sys.exc_info()))
