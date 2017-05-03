@@ -8,7 +8,6 @@ files contained in all torrents served.
 import argparse
 import os
 import json
-import libtorrent
 import urllib2
 import time
 
@@ -19,6 +18,8 @@ WAIT_TIMEOUT = 6
 
 def check_file(filename):
     """List the files that are inside the torrent file."""
+
+    import libtorrent
 
     with open(filename, 'rb') as file_handle:
         file_contents = file_handle.read()
