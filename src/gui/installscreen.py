@@ -398,10 +398,6 @@ class Controller(object):
 
                 return False
 
-        # TODO: Perform this check once, at the start of the launcher
-        if not third_party.helpers.check_requirements(verbose=False):
-            return
-
         for mod in self.mod_manager.get_mods(only_selected=True):
             if not mod.is_complete():
                 return

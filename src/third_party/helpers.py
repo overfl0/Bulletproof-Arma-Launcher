@@ -24,6 +24,7 @@ import utils.system_processes
 from kivy.logger import Logger
 from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
 from utils import unicode_helpers
+from utils import exe_version_checker
 from utils.devmode import devmode
 from view.messagebox import MessageBox
 
@@ -235,6 +236,43 @@ def check_requirements(verbose=True):
             box.open()
 
         return False
+
+    # Arma is not using the dev version
+    # Note: we assume no 32/64bit forcing because the executables are at the same version anyway
+    arma_path = os.path.join(Arma.get_installation_path(), Arma.get_executable())
+    Logger.info('check_requirements: Checking for arma exe file version: {}'.format(arma_path))
+    arma_version = exe_version_checker.get_version(arma_path)
+
+    if not arma_version:
+        Logger.error('check_requirements: Checking the file failed')
+    else:
+        Logger.info('Got version: {}'.format(arma_version))
+
+        if arma_version.minor % 2:
+            Logger.error('check_requirements: The user is using the development branch of Arma!')
+
+            if verbose:
+                message = textwrap.dedent('''
+                    You seem to be using the Development Build of Arma!
+
+                    You will not be able to connect to the game server while you are using
+                    the Development Build.
+
+                    To change this, open Steam and click:
+                    Arma 3 -> Properties -> BETAS
+
+                    Then, select "NONE - Opt out of all beta programs" and wait for the
+                    game to finish downloading.
+
+                    Afterwards, restart this launcher.[/b]
+                    ''')
+
+                box = MessageBox(message, title='Arma 3 Development Build detected!', markup=True,
+                                 on_dismiss=cancel_dismiss, hide_button=True)
+                box.open()
+
+            return False
+
 
     return True
 
