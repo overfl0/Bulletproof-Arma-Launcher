@@ -19,6 +19,7 @@ import sys
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
@@ -50,7 +51,8 @@ class ErrorPopup(ChainedPopup):
     message - The message to be shown in a label.
     details - Shows an additional box containing details that may span dozens of lines.
     """
-    def __init__(self, message=DEFAULT_ERROR_MESSAGE, details=None, label_markup=True, **kwargs):
+    def __init__(self, message=DEFAULT_ERROR_MESSAGE, details=None, label_markup=True,
+                 auto_dismiss=False, **kwargs):
         kwargs.setdefault('size', (600, 500))
         kwargs.setdefault('title', POPUP_TITLE)
 
@@ -59,6 +61,9 @@ class ErrorPopup(ChainedPopup):
         la.bind(on_ref_press=open_hyperlink)
         la.text_size = (550, None)  # Enable wrapping when text inside label is over 550px wide
         bl.add_widget(la)
+
+        button = Button(text="Ok", size_hint=(None, None), height=40, width=150, pos_hint={'center_x': 0.5})
+        button.bind(on_release=self.dismiss)
 
         if details:
             sv = ScrollView(size_hint=(1, 0.7),
@@ -73,7 +78,12 @@ class ErrorPopup(ChainedPopup):
             sv.add_widget(ti)
             bl.add_widget(sv)
 
-        super(ErrorPopup, self).__init__(content=bl, size_hint=(None, None), **kwargs)
+        if not auto_dismiss:
+            bl.add_widget(button)
+
+        super(ErrorPopup, self).__init__(
+            content=bl, size_hint=(None, None), auto_dismiss=auto_dismiss, **kwargs
+        )
 
 
 def error_popup_decorator(func):
