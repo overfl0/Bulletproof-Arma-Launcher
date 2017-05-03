@@ -14,7 +14,7 @@
 from __future__ import unicode_literals
 
 import third_party
-import third_party.steam
+import third_party.steam_query
 
 from manager_functions import (
     _get_mod_descriptions,
@@ -278,7 +278,7 @@ class ModManager(object):
     @staticmethod
     def query_servers(servers):
         para = protected_para(
-            third_party.steam.query_servers,
+            third_party.steam_query.query_servers,
             (
                 servers
             ),
