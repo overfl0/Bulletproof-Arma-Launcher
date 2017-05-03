@@ -1,16 +1,16 @@
 Hello,
 
-I'm the author of TacBF Launcher, a software that is an installer and launcher for Tactical Battlefield - a mod for the game Arma 3.
+I'm the author of Bulletproof Arma Launcher, a software that is an installer and launcher for mods for the game Arma 3.
 
 The launcher is written in python and then wrapped with PyInstaller to create an exe file. Its sources are freely available here:
-https://bitbucket.org/tacbf_launcher/tacbf_launcher
+https://github.com/overfl0/Bulletproof-Arma-Launcher
 
 The wrapped exe can be downloaded here:
-https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads
-Direct link: https://bitbucket.org/tacbf_launcher/tacbf_launcher/downloads/TB_Launcher.exe
+https://github.com/overfl0/Bulletproof-Arma-Launcher/releases
+Direct link: <link here>
 
-Unfortunately, the launcher is regarded as a threat by your antivirus (<Name Here>), as can be seen on this Virustotal report:
-<Report Link Here>
+Unfortunately, the launcher is regarded as a threat by your antivirus, as can be seen on this Virustotal report:
+<virustotal report link here>
 
 Please update your AV rules/patterns. Also please note that this software is still being developed, which means new versions are going to be released in the future and the code *will* change. This means, whitelisting based on file checksums will not work.
 Please RSVP as soon as possible!
