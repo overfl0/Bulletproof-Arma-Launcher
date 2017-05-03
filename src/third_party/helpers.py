@@ -22,7 +22,8 @@ import textwrap
 import utils.system_processes
 
 from kivy.logger import Logger
-from third_party.arma import Arma, ArmaNotInstalled, SteamNotInstalled
+from third_party import steam
+from third_party.arma import Arma, ArmaNotInstalled
 from utils import unicode_helpers
 from utils import exe_version_checker
 from utils.devmode import devmode
@@ -60,7 +61,7 @@ def check_requirements_troubleshooting(dummy_var):
         arma_path = Arma.get_installation_path()
 
     with ignore_exceptions(Exception):
-        steam_path = Arma.get_steam_exe_path()
+        steam_path = steam.get_steam_exe_path()
 
     for _ in xrange(10):
         Logger.info('')
@@ -132,7 +133,7 @@ def arma_not_found_workaround(on_ok, on_error):
         try:
             Arma.run_arma3_launcher()
 
-        except (SteamNotInstalled, OSError):
+        except (steam.SteamNotInstalled, OSError):
             on_error()
             return
 
@@ -199,8 +200,8 @@ def check_requirements(verbose=True):
         return False
 
     try:
-        Arma.get_steam_exe_path()
-    except SteamNotInstalled:
+        steam.get_steam_exe_path()
+    except steam.SteamNotInstalled:
         if verbose:
             message = textwrap.dedent('''
                 Steam does not seem to be installed.
@@ -380,7 +381,7 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None, ba
         no_arma_info = MessageBox(text, title='Arma not installed!')
         no_arma_info.chain_open()
 
-    except SteamNotInstalled:
+    except steam.SteamNotInstalled:
         text = "Steam does not seem to be installed."
         no_steam_info = MessageBox(text, title='Steam not installed!')
         no_steam_info.chain_open()

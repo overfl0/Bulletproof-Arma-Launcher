@@ -25,6 +25,7 @@ import platform
 import urllib
 
 from kivy.logger import Logger
+from third_party import steam
 from utils.devmode import devmode
 from utils import process_launcher
 from utils import paths
@@ -39,17 +40,12 @@ class ArmaNotInstalled(SoftwareNotInstalled):
     pass
 
 
-class SteamNotInstalled(SoftwareNotInstalled):
-    pass
-
-
 class Arma(object):
     # Registry paths
     _arma_registry_path = r"software\bohemia interactive\arma 3"
     _arma_registry_path_alternate = r"software\Bohemia Interactive Studio\arma 3"
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
-    _steam_registry_path = r"Software\Valve\Steam"
     _profile_directory_name = "Arma 3 - Other Profiles"
 
     @staticmethod
@@ -138,26 +134,11 @@ class Arma(object):
 
         return os.path.join(Arma.get_installation_path(), 'arma3launcher.exe')
 
-    @staticmethod
-    def get_steam_exe_path():
-        """Return the path to the steam executable.
-
-        Raises SteamNotInstalled if steam is not installed."""
-
-        if devmode.get_steam_executable():
-            return devmode.get_steam_executable()
-
-        try:
-            # Optionally, there is also SteamPath
-            return Registry.ReadValueUserAndMachine(Arma._steam_registry_path, 'SteamExe', check_both_architectures=True)  # SteamPath
-
-        except Registry.Error:
-            raise SteamNotInstalled()
 
     @staticmethod
     def run_arma3_launcher():
         """Run the original arma 3 launcher."""
-        steam_exe_path = Arma.get_steam_exe_path()  # May raise SteamNotInstalled!
+        steam_exe_path = steam.get_steam_exe_path()  # May raise SteamNotInstalled!
         game_args = [steam_exe_path, '-applaunch', '107410']
 
         Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
@@ -199,7 +180,7 @@ class Arma(object):
             # Correct launching method when steam is turned off:
             # steam.exe -applaunch 107410 -usebe -nolauncher -connect=IP -port=PORT -mod=<modparameters>
 
-            steam_exe_path = Arma.get_steam_exe_path()
+            steam_exe_path = steam.get_steam_exe_path()
             game_args = [steam_exe_path, '-applaunch', '107410', '-nolauncher']
 
             if battleye:
