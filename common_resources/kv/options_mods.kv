@@ -100,7 +100,7 @@
                 halign: 'left'
                 valign: 'middle'
                 height: 30
-                text: 'Seed mods:'
+                text: 'Seed (share/upload) finished mods:'
 
             # Seeding mods radio buttons
             BoxLayout:
@@ -152,6 +152,17 @@
                     size_hint_x: None
                 SpeedLabel:
                     text: 'KB/s   (0 = unlimited)'
+
+            Label:
+                size_hint_y: None
+                text_size: self.width, None#self.size
+                halign: 'left'
+                valign: 'middle'
+                height: 0 if self.disabled else self.texture_size[1]
+                opacity: 0 if self.disabled else 1
+                text: '[i][size=10][color=#FF0000]Note: Setting a very low upload speed value will also slow your download speed down!\nIf you don\'t want to upload, set seeding to "Never", instead.[/color][/size][/i]'
+                markup: True
+                disabled: False if max_upload_speed_input.text and (0 < int(max_upload_speed_input.text) <= 20) else True
 
             BoxLayout:  # Download speed
                 orientation: 'horizontal'
