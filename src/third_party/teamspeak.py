@@ -41,15 +41,26 @@ def get_executable_path():
     if devmode.get_ts_executable():
         return devmode.get_ts_executable()
 
-    exe_file_32 = os.path.join(get_install_location(), 'ts3client_win32.exe')
-    if os.path.isfile(exe_file_32):
-        return exe_file_32
+    install_location = get_install_location()
+    matches = ['ts3client_win32.exe', 'ts3client_win64.exe']
 
-    exe_file_64 = os.path.join(get_install_location(), 'ts3client_win64.exe')
-    if os.path.isfile(exe_file_64):
-        return exe_file_64
+    for match in matches:
+        exe_file = os.path.join(install_location, match)
+        if os.path.isfile(exe_file):
+            return exe_file
 
-    raise TeamspeakNotInstalled('Could not find the TS executable path')
+    error_message = textwrap.dedent("""\
+        Could not find the TS executable path.
+
+        The following directory was retrieved from your Windows registry
+        and searched for the executables:
+        {}
+
+        None of the following executables were found there:
+        {}\
+    """).format(install_location, '\n'.join('- ' + match for match in matches))
+
+    raise TeamspeakNotInstalled(error_message)
 
 
 def get_addon_installer_path():
@@ -60,12 +71,26 @@ def get_addon_installer_path():
     if devmode.get_ts_addon_installer():
         return devmode.get_ts_addon_installer()
 
-    exe_file = os.path.join(get_install_location(), 'package_inst.exe')
+    install_location = get_install_location()
+    match = 'package_inst.exe'
+
+    exe_file = os.path.join(install_location, match)
     if os.path.isfile(exe_file):
-        Logger.info('TS: Guessing TS installer path: {}'.format(exe_file))
+        Logger.info('TS: Guessed TS installer path: {}'.format(exe_file))
         return exe_file
 
-    raise TeamspeakNotInstalled('Could not get the TS plugin installer path')
+    error_message = textwrap.dedent("""\
+        Could not get the TS plugin installer path.
+
+        The following directory was retrieved from your Windows registry
+        and searched for the executable:
+        {}
+
+        The following executable was not found there:
+        {}\
+    """).format(install_location, match)
+
+    raise TeamspeakNotInstalled(error_message)
 
 
 def get_install_location():

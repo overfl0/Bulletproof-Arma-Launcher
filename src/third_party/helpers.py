@@ -188,7 +188,7 @@ def check_requirements(verbose=True):
             message = textwrap.dedent('''
                 Your Teamspeak installation is too old or not installed correctly.
 
-                [color=FF0000]{}[/color][ref=https://www.teamspeak.com/downloads][color=3572b0]Get Teamspeak here.[/color][/ref]
+                [color=FF0000]{}[/color][ref=https://www.teamspeak.com/downloads][color=3572b0]>> Click here to get Teamspeak <<[/color][/ref]
 
                 (Re)Install Teamspeak and restart the launcher.
                 ''').format(detailed_message)
@@ -206,7 +206,7 @@ def check_requirements(verbose=True):
                 Steam does not seem to be installed.
                 Having Steam is required in order to play {}.
 
-                [ref=http://store.steampowered.com/about/][color=3572b0]Get Steam here.[/color][/ref]
+                [ref=http://store.steampowered.com/about/][color=3572b0]>> Click here to get Steam <<[/color][/ref]
 
                 Install Steam and restart the launcher.
                 '''.format(launcher_config.launcher_name))
@@ -228,7 +228,7 @@ def check_requirements(verbose=True):
                 [b]To fix this problem you have to run the original Arma 3 launcher once.
                 Afterwards, restart this launcher.[/b]
 
-                [ref=steam://run/107410][color=3572b0]Click here to run the Arma 3 launcher.[/color][/ref]
+                [ref=steam://run/107410][color=3572b0]>> Click here to run the Arma 3 launcher <<[/color][/ref]
                 ''')
 
             box = MessageBox(message, title='Arma 3 required!', markup=True,
