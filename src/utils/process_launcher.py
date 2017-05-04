@@ -35,7 +35,7 @@ ADMIN_REQUIRED_MESSAGE = textwrap.dedent('''
     -Uncheck "Run this program as an Administrator
 ''')
 
-def run(program_args, no_cancel=True):
+def run(program_args, shell=False):
     """Run the given program with the given parameters.
     In case the program requires elevation, run an UAC prompt if on Windows.
     Returns a Popen or Popen compatible object.
@@ -44,7 +44,7 @@ def run(program_args, no_cancel=True):
     fs_program_args = unicode_helpers.u_to_fs_list(program_args)
 
     try:
-        return subprocess.Popen(fs_program_args)
+        return subprocess.Popen(fs_program_args, shell=shell)
 
     except WindowsError as ex:
         if ex.winerror != 740:  # The requested operation requires elevation

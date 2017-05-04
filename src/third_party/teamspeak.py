@@ -15,12 +15,13 @@ from __future__ import unicode_literals
 import ConfigParser
 import os
 import textwrap
+import urllib
 import zipfile
 
 from kivy.logger import Logger
 from third_party import SoftwareNotInstalled
 from third_party.clientquery import get_TS_servers_connected
-from utils import browser
+from utils import process_launcher
 from utils import system_processes
 from utils import walker
 from utils.admin import run_admin
@@ -189,10 +190,18 @@ def is_teamspeak_running():
     return False
 
 
+def _sanitize_url(url):
+    """Replace all the characters with their %xx equivalents for all but the
+    basic characters.
+    """
+    if not url:
+        return url
+
+    return urllib.quote(urllib.unquote(url), ':')
+
+
 def run_and_connect(url):
     """Run the teamspeak client and connect to the given server."""
-
-    full_url = 'ts3server://{}'.format(url)
 
     if is_teamspeak_running():
         api_key = get_api_key()
@@ -205,8 +214,11 @@ def run_and_connect(url):
 
         Logger.info('TS: Teamspeak process found running but NOT connected to the right TS server.')
 
-    Logger.info('TS: Connecting to teamspeak server: {}'.format(url))
-    browser.open_hyperlink(full_url)
+
+    full_url = 'ts3server://{}'.format(_sanitize_url(url))
+    Logger.info('TS: Connecting to teamspeak server: {} using the executable: {}'.format(full_url, get_executable_path()))
+    call_args = [get_executable_path(), full_url]
+    process_launcher.run(call_args, shell=True)
 
 
 def create_package_ini_file_contents(path, name, author, version, platforms, description):
