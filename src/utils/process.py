@@ -22,11 +22,13 @@ They serve as workarounds, for windows issues regarding multiprocessing
 
 from __future__ import unicode_literals
 
+import copy
 import multiprocessing.forking
 import multiprocessing
 import os
 import sys
 import textwrap
+import threading
 
 from multiprocessing.queues import SimpleQueue
 from multiprocessing import Lock, Pipe
@@ -138,7 +140,7 @@ class Para(object):
 
     JOIN_TIMEOUT_GRANULATION = 0.1
 
-    def __init__(self, func, args, action_name):
+    def __init__(self, func, args, action_name, use_threads=False):
         """
         constructor of the Para
 
@@ -154,8 +156,9 @@ class Para(object):
         super(Para, self).__init__()
         self.messagequeue = None
         self.func = func
-        self.args = args
+        self.args = copy.deepcopy(args)
         self.action_name = action_name
+        self.use_threads = use_threads
         self.current_child_process = None
         self.progress_handler = []
         self.resolve_handler = []
@@ -272,8 +275,13 @@ class Para(object):
         self.lock = Lock()
         self.parent_conn, child_conn = Pipe()
         self.messagequeue = ConnectionWrapper(self.action_name, self.lock, child_conn)
-        Logger.debug('Para: {} spawning new process'.format(self))
-        p = Process(target=self.func, args=(self.messagequeue,) + self.args)
+        Logger.debug('Para: {} spawning new {}'.format(self, 'thread' if self.use_threads else 'process'))
+
+        if self.use_threads:
+            p = threading.Thread(target=self.func, args=(self.messagequeue,) + self.args)
+        else:
+            p = Process(target=self.func, args=(self.messagequeue,) + self.args)
+
         p.start()
         self.current_child_process = p
         Clock.schedule_interval(self.handle_messagequeue, 0.1)
