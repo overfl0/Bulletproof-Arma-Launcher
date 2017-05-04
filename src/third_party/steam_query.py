@@ -139,4 +139,6 @@ def query_servers(message_queue, servers):
             break
 
     message_queue.resolve({'msg': 'Done', 'server_data': format_response_final(answers)})
-    # message_queue.reject({'msg': 'Message!'})
+
+    pool.close()
+    pool.join()
