@@ -15,9 +15,16 @@ from __future__ import unicode_literals
 from utils.paths import fix_unicode_paths
 fix_unicode_paths()
 
-# Mega catch-all. This is ugly but probably the only way to show users a message
-# in any possible case something fails at any possible place.
-try:
+
+def start():
+    """This is the main function that is called unconditionally.
+    Unconditionally means, regardless of whether __name__ == '__main__' or not.
+
+    It is all a mess but with historical reasons where imports had to be in the
+    right order :).
+
+    It would be nice to refactor it one day.
+    """
 
     # Enforce all requirements so that the program doesn't crash in the middle of execution.
     if __name__ == '__main__':
@@ -162,6 +169,20 @@ try:
                 launcher_app = LauncherApp(settings)
                 launcher_app.run = error_popup_decorator(launcher_app.run)
                 launcher_app.run()
+
+
+# Mega catch-all. This is ugly but probably the only way to show users a message
+# in any possible case something fails at any possible place.
+try:
+    # Workaround for unicode exceptions that don't ever tell you WHAT caused them
+    try:
+        # Call this unconditionally
+        start()
+
+    except (UnicodeEncodeError, UnicodeDecodeError) as ex:
+        import sys
+        error_message = "{}. Original exception: {} Text: {}".format(unicode(ex), type(ex).__name__, repr(ex.args[1]))
+        raise UnicodeError, UnicodeError(error_message), sys.exc_info()[2]
 
 except Exception:
     # Mega catch-all requirements

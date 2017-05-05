@@ -92,13 +92,9 @@ def error_popup_decorator(func):
             try:
                 func(*args, **kwargs)
 
-            except UnicodeDecodeError as ex:
-                error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-                raise UnicodeError(error_message)
-
-            except UnicodeEncodeError as ex:
-                error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-                raise UnicodeError(error_message)
+            except (UnicodeEncodeError, UnicodeDecodeError) as ex:
+                error_message = "{}. Original exception: {} Text: {}".format(unicode(ex), type(ex).__name__, repr(ex.args[1]))
+                raise UnicodeError, UnicodeError(error_message), sys.exc_info()[2]
 
         except Exception:
             build = get_git_sha1_auto()

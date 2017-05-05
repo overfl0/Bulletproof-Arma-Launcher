@@ -24,8 +24,8 @@ def decode_utf8(message, errors='strict'):
     try:
         return message.decode('utf-8', errors=errors)
     except UnicodeDecodeError as ex:
-        error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-        raise UnicodeError(error_message)
+        error_message = "{}. Original exception: {} Text: {}".format(unicode(ex), type(ex).__name__, repr(ex.args[1]))
+        raise UnicodeError, UnicodeError(error_message), sys.exc_info()[2]
 
 
 def encode_utf8(message, errors='strict'):
@@ -33,8 +33,8 @@ def encode_utf8(message, errors='strict'):
     try:
         return message.encode('utf-8', errors=errors)
     except UnicodeEncodeError as ex:
-        error_message = "{}. Text: {}".format(unicode(ex), repr(ex.args[1]))
-        raise UnicodeError(error_message)
+        error_message = "{}. Original exception: {} Text: {}".format(unicode(ex), type(ex).__name__, repr(ex.args[1]))
+        raise UnicodeError, UnicodeError(error_message), sys.exc_info()[2]
 
 
 def u_to_fs(unicode_string):
