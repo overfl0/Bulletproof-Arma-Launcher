@@ -6,6 +6,7 @@ icon = 'icons/tb.ico'
 original_url = 'https://github.com/overfl0/Bulletproof-Arma-Launcher/releases/latest'
 executable_name = 'TB_Launcher'
 forum_url = 'http://tacticalbattlefield.net/forum'
+discord_url = None
 domain = 'launcher.tacbf.com'
 metadata_path = '/metadata.json'
 torrents_path = '/torrents'

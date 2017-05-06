@@ -21,6 +21,9 @@ executable_name = 'TB_Launcher'
 # Forum button url (if you set it up in installscreen.kv)
 forum_url = 'http://tacticalbattlefield.net/forum'
 
+# Discord button url (if you set it up in installscreen.kv)
+discord_url = 'https://discordapp.com/channels/...'
+
 # The domain the launcher will use to fetch metadata.json
 domain = 'launcher.tacbf.com'
 
