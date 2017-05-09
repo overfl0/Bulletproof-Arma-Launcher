@@ -29,7 +29,7 @@ from kivy.uix.image import Image
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.relativelayout import RelativeLayout
 from sync import manager_functions
-from sync.torrent_utils import path_can_be_a_mod
+from sync.torrent_utils import path_can_be_a_mod, path_already_used_for_mod
 from utils.unicode_helpers import casefold
 from utils.paths import is_dir_writable
 from utils.process import protected_para
@@ -92,8 +92,10 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
             return 'Directory {} is not writable'.format(path)
 
         # Prevent idiot-loops (seriously, people doing this are idiots!)
+        already_used_by = path_already_used_for_mod(path, self.owner.all_existing_mods)
         settings = kivy.app.App.get_running_app().settings
-        if not path_can_be_a_mod(path, settings.get('launcher_moddir')):
+        if not path_can_be_a_mod(path, settings.get('launcher_moddir')) or \
+            (already_used_by and already_used_by != self.mod.foldername):
             message = textwrap.dedent('''
                 Really???
 
@@ -153,10 +155,11 @@ class ModListEntry(BgcolorBehavior, RelativeLayout):
 
         self.on_select(self.mod)
 
-    def __init__(self, mod, on_manual_path, on_select, *args, **kwargs):
+    def __init__(self, mod, on_manual_path, on_select, owner, *args, **kwargs):
         self.mod = mod
         self.on_manual_path = on_manual_path
         self.on_select = on_select
+        self.owner = owner
         self.paras = []  # TODO: Move this to some para_manager
         super(ModListEntry, self).__init__(*args, **kwargs)
 
@@ -177,7 +180,8 @@ class ModList(BoxLayout):
         boxentry = ModListEntry(bcolor=color,
                                 mod=mod,
                                 on_manual_path=self.set_mod_directory,
-                                on_select=self.call_on_select)
+                                on_select=self.call_on_select,
+                                owner=self)
         boxentry.bind(size=self.resize)
         self.add_widget(boxentry)
 
@@ -191,6 +195,9 @@ class ModList(BoxLayout):
     def set_mods(self, mods):
         self.clear_mods()
         self.add_mods(mods)
+
+    def set_all_existing_mods(self, all_existing_mods):
+        self.all_existing_mods = all_existing_mods
 
     def add_mods(self, mods):
         for mod in mods:
@@ -217,6 +224,7 @@ class ModList(BoxLayout):
         self.set_on_select(on_select)
 
         self.modlist = []
+        self.all_existing_mods = []
         if entries is None:
             entries = []
 
@@ -249,6 +257,9 @@ class ModListScrolled(ScrollView):
 
     def set_mods(self, mods):
         self.ids.mods_list_scrolled.set_mods(mods)
+
+    def set_all_existing_mods(self, all_existing_mods):
+        self.ids.mods_list_scrolled.set_all_existing_mods(all_existing_mods)
 
     def set_on_manual_path(self, instance, on_manual_path):
         self.ids.mods_list_scrolled.set_on_manual_path(on_manual_path)

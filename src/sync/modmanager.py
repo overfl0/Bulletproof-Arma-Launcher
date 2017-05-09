@@ -260,7 +260,7 @@ class ModManager(object):
             # drops the ones that are optional and not selected after the
             # directory normalizing process is done and before starting the
             # "search on disk for the mod" part.
-            (self.get_mods(), self.settings.get('launcher_moddir')),
+            (self.get_mods(), self.get_mods(include_all_servers=True), self.settings.get('launcher_moddir')),
             'prepare_all')
         return para
 

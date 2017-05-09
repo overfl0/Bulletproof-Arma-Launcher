@@ -311,6 +311,8 @@ class Controller(object):
         mods_list = self.view.manager.get_screen('pref_screen').ids.mods_options.ids.mods_list
         mods_list.enable()
         mods = self.mod_manager.get_mods()
+        all_existing_mods = self.mod_manager.get_mods(include_all_servers=True)
+        mods_list.set_all_existing_mods(all_existing_mods)
         mods_list.set_mods(mods)
 
     def disable_settings_mods_list(self):
@@ -520,10 +522,12 @@ class Controller(object):
             if command == 'missing_mods':
                 mod_names = params
                 mods = [mod for mod in self.mod_manager.get_mods() if mod.foldername in mod_names]
+                all_existing_mods = self.mod_manager.get_mods(include_all_servers=True)
 
                 message_box_instance = ModSearchBox(on_selection=self.on_prepare_search_decision,
                                                     on_manual_path=self.on_mod_set_path,
                                                     mods=mods,
+                                                    all_existing_mods=all_existing_mods
                                                    )
                 message_box_instance.chain_open()
 

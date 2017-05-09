@@ -161,6 +161,25 @@ def get_admin_error(text, path):
     return error_message
 
 
+def path_already_used_for_mod(path, all_existing_mods):
+    """Check if a given path is already used by a mod and return its name.
+    Return None otherwise.
+    """
+
+    path = unicode_helpers.casefold(os.path.realpath(path))
+
+    for mod in all_existing_mods:
+        mod_full_path = unicode_helpers.casefold(mod.get_full_path())
+        mod_real_full_path = unicode_helpers.casefold(mod.get_real_full_path())
+        if path == mod_full_path or \
+           path == mod_real_full_path or \
+           path.startswith(mod_full_path + os.path.sep) or \
+           path.startswith(mod_real_full_path + os.path.sep):
+            return mod.foldername
+
+    return None
+
+
 def path_can_be_a_mod(path, mods_directory):
     """Check if a given path could be used by a mod.
     path - patch to be checked.

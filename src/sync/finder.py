@@ -22,7 +22,7 @@ from kivy.logger import Logger
 from third_party.arma import Arma
 from utils import walker
 from utils.unicode_helpers import casefold
-from sync.torrent_utils import path_can_be_a_mod
+from sync.torrent_utils import path_can_be_a_mod, path_already_used_for_mod
 
 
 def keep_meaningful_data(name):
@@ -89,7 +89,7 @@ def get_mod_locations():
     return mod_locations
 
 
-def find_mods(mods_directory, names, locations=None):
+def find_mods(mods_directory, names, all_existing_mods, locations=None):
     """Find all the places where mods could already be stored on disk.
     For now this only does simple name matching and returns directories that
     have a name that matches the requested name. The search is case-insensitive.
@@ -129,9 +129,10 @@ def find_mods(mods_directory, names, locations=None):
                     if (meaningful_name == filtered_base_root or
                         MOD_MAPPING.get(filtered_base_root) == meaningful_name) and \
                        path_can_be_a_mod(root, mods_directory):
-                        # response[name].append(root)
-                        response.setdefault(name, []).append(root)
-                        break
+                        if not path_already_used_for_mod(root, all_existing_mods):
+                            # response[name].append(root)
+                            response.setdefault(name, []).append(root)
+                            break
 
     Logger.info('Finder: probable mods locations: {}'.format(response))
     return response

@@ -84,7 +84,7 @@ class ModSearchBox(ChainedPopup):
     def mod_selected(self, mod):
         self.update_continue_button()
 
-    def __init__(self, on_selection, on_manual_path, mods, title=default_title):
+    def __init__(self, on_selection, on_manual_path, mods, all_existing_mods, title=default_title):
         self.mods = mods
         self.on_selection = on_selection
         self.on_manual_path = on_manual_path
@@ -92,6 +92,7 @@ class ModSearchBox(ChainedPopup):
         super(ModSearchBox, self).__init__(
             title=default_title, size_hint=(None, None), width=600, auto_dismiss=False)
 
+        self.ids.modlist.set_all_existing_mods(all_existing_mods)
         self.ids.modlist.set_mods(mods)
         self.ids.modlist.set_on_manual_path(None, self.mod_location_selected)
         self.ids.modlist.set_on_select(None, self.mod_selected)
