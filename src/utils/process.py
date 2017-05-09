@@ -139,6 +139,7 @@ class ConnectionWrapper(object):
 class Para(object):
 
     JOIN_TIMEOUT_GRANULATION = 0.1
+    HANDLE_MESSAGES_INTERVAL = 0.1
 
     def __init__(self, func, args, action_name, use_threads=False):
         """
@@ -284,7 +285,7 @@ class Para(object):
 
         p.start()
         self.current_child_process = p
-        Clock.schedule_interval(self.handle_messagequeue, 0.1)
+        Clock.schedule_interval(self.handle_messagequeue, self.HANDLE_MESSAGES_INTERVAL)
 
     def handle_messagequeue(self, dt):
         con = self.parent_conn
@@ -332,13 +333,17 @@ class Para(object):
                     self.action_name, self.current_child_process.exitcode)
 
                 # Special case (libtorrent crash)
-                if self.current_child_process.exitcode == -529697949:
+                if self.current_child_process.exitcode == -529697949 or \
+                   self.current_child_process.exitcode == -1073741819:
                     message += '\n\n' + textwrap.dedent("""
                     This is probably a bug in Libtorrent that manifests itself
                     if there are more than 6 network interfaces enabled on the system.
 
                     To fix the issue, disable or remove unneeded interfaces until
                     you have 6 or less interfaces enabled.
+
+                    Control Panel -> Network status and tasks -> Change adapter settings
+                    Then, right-click and disable unneeded interfaces.
                     """)
 
                 self.lastdata = {'data': {'msg': message}}
