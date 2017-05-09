@@ -329,22 +329,30 @@ class Para(object):
                 self.state = 'closingforreject'
         else:
             if not self.current_child_process.is_alive():
-                message = '[{}] Child process terminated unexpectedly with code {}.'.format(
-                    self.action_name, self.current_child_process.exitcode)
 
-                # Special case (libtorrent crash)
-                if self.current_child_process.exitcode == -529697949 or \
-                   self.current_child_process.exitcode == -1073741819:
-                    message += '\n\n' + textwrap.dedent("""
-                    This is probably a bug in Libtorrent that manifests itself
-                    if there are more than 6 network interfaces enabled on the system.
+                if hasattr(self.current_child_process, 'exitcode'):
+                    # It's a Process
+                    message = '[{}] Child process terminated unexpectedly with code {}.'.format(
+                        self.action_name, self.current_child_process.exitcode)
 
-                    To fix the issue, disable or remove unneeded interfaces until
-                    you have 6 or less interfaces enabled.
+                    # Special case (libtorrent crash)
+                    if self.current_child_process.exitcode == -529697949 or \
+                       self.current_child_process.exitcode == -1073741819:
+                        message += '\n\n' + textwrap.dedent("""
+                        This is probably a bug in Libtorrent that manifests itself
+                        if there are more than 6 network interfaces enabled on the system.
 
-                    Control Panel -> Network status and tasks -> Change adapter settings
-                    Then, right-click and disable unneeded interfaces.
-                    """)
+                        To fix the issue, disable or remove unneeded interfaces until
+                        you have 6 or less interfaces enabled.
+
+                        Control Panel -> Network status and tasks -> Change adapter settings
+                        Then, right-click and disable unneeded interfaces.
+                        """)
+
+                else:
+                    # It's a Thread
+                    message = '[{}] Child thread terminated unexpectedly.'.format(
+                        self.action_name)
 
                 self.lastdata = {'data': {'msg': message}}
                 self._call_reject_handler(self.lastdata)
