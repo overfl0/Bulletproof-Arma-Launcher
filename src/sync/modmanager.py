@@ -223,7 +223,8 @@ class ModManager(object):
                 seed
             ),
             'sync',
-            then=(None, None, self.on_sync_all_progress)
+            then=(None, None, self.on_sync_all_progress),
+            use_threads=False
         )
 
         return para
@@ -248,7 +249,8 @@ class ModManager(object):
                 seed
             ),
             'sync',
-            then=(None, None, self.on_sync_all_progress)
+            then=(None, None, self.on_sync_all_progress),
+            use_threads=False
         )
 
         return para
