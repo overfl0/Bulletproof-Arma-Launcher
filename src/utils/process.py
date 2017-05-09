@@ -293,14 +293,14 @@ class Para(object):
         # handle closingphases first
         # try to join the child process
         if self.state == 'closingforreject':
-            self.current_child_process.join(0.1)
+            self.current_child_process.join(self.JOIN_TIMEOUT_GRANULATION)
             if not self.current_child_process.is_alive():
                 self._call_reject_handler(self.lastprogress)
 
             return
 
         if self.state == 'closingforresolve':
-            self.current_child_process.join(0.1)
+            self.current_child_process.join(self.JOIN_TIMEOUT_GRANULATION)
             if not self.current_child_process.is_alive():
                 self._call_resolve_handler(self.lastprogress)
 
