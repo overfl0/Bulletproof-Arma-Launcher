@@ -124,6 +124,8 @@ def start():
 
         import logging
 
+        Logger.info('Para: Starting MAIN PROCESS')
+
         if settings.get('use_exception_popup') == True:
             ExceptionManager.add_handler(PopupHandler())
 

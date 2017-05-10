@@ -358,13 +358,17 @@ class Para(object):
                 self._call_reject_handler(self.lastdata)
 
 # TODO: Maybe make a decorator out of this
-def _protected_call(messagequeue, function, *args, **kwargs):
+def _protected_call(messagequeue, function, action_name, *args, **kwargs):
     try:
+        Logger.info('Para: Starting new thread/process for: {}'.format(action_name))
         return function(messagequeue, *args, **kwargs)
     except Exception:
         stacktrace = "".join(_format_exc_info(*sys.exc_info()))
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
         messagequeue.reject({'details': error})
+
+    finally:
+        Logger.info('Para: Closing thread/process for: {}'.format(action_name))
 
 
 def protected_para(func, args, action_name, then=None):
@@ -372,7 +376,7 @@ def protected_para(func, args, action_name, then=None):
     On error a reject() is sent.
     """
 
-    para = Para(_protected_call, (func,) + args, action_name)
+    para = Para(_protected_call, (func, action_name) + args, action_name)
 
     # Optionally bind events before running the Para
     if then:
