@@ -43,10 +43,11 @@ class ArmaNotInstalled(SoftwareNotInstalled):
 class Arma(object):
     # Registry paths
     _arma_registry_path = r"software\bohemia interactive\arma 3"
-    _arma_registry_path_alternate = r"software\Bohemia Interactive Studio\arma 3"
     _arma_expansions_registry_path = r"software\bohemia interactive\arma 3\expansions\arma 3"
     _user_document_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders"
     _profile_directory_name = "Arma 3 - Other Profiles"
+
+    installation_path_cached = None
 
     @staticmethod
     def _is_os_64bit():
@@ -55,23 +56,60 @@ class Arma(object):
     @staticmethod
     def get_installation_path():
         """Return the folder where Arma is installed.
+
+        1) Check local directory
+        2) Search the registry entry
+        3) Browse steam libraries in search for Arma
+
         Raises ArmaNotInstalled if the required registry keys cannot be found."""
 
-        if devmode.get_arma_path():
-            return devmode.get_arma_path()
+        if Arma.installation_path_cached:
+            return Arma.installation_path_cached
 
-        path = None
+        if devmode.get_arma_path():
+            Arma.installation_path_cached = devmode.get_arma_path()
+            return Arma.installation_path_cached
+
+        # 1) Check local directory
+        path = paths.get_external_executable_dir()
+
+        if os.path.isfile(os.path.join(path, 'Arma3.exe')):
+            Logger.info('Arma: Arma3.exe found in launcher directory: {}'.format(path))
+            Arma.installation_path_cached = path
+            return Arma.installation_path_cached
+
+        Logger.error('Arma: Could not find Arma3.exe in launcher directory')
+
+        # 2) Search the registry entry
         try:
             path = Registry.ReadValueUserAndMachine(Arma._arma_registry_path, 'main', check_both_architectures=True)
 
+            if os.path.isfile(os.path.join(path, 'Arma3.exe')):
+                Logger.info('Arma: Arma3.exe found through registry: {}'.format(path))
+
+                Arma.installation_path_cached = path
+                return Arma.installation_path_cached
+
+            else:
+                Logger.error('Arma: Could not find Arma3.exe at the location pointed by the registry: {}'.format(path))
+
         except Registry.Error:
-            try:
-                path = Registry.ReadValueUserAndMachine(Arma._arma_registry_path_alternate, 'main', check_both_architectures=True)
+            Logger.error('Arma: Could not find registry entry for installation path')
 
-            except Registry.Error:
-                raise ArmaNotInstalled()
+        # 3) Browse steam libraries in search for Arma
+        steam_libraries = steam.find_steam_libraries()
 
-        return path
+        for library in steam_libraries:
+            path = os.path.join(library, 'steamapps', 'common', 'Arma 3')
+
+            if os.path.isfile(os.path.join(path, 'Arma3.exe')):
+                Logger.info('Arma: Arma3.exe found in Steam libraries: {}'.format(path))
+                Arma.installation_path_cached = path
+                return Arma.installation_path_cached
+
+        # All failed :(
+        raise ArmaNotInstalled()
+
 
     @staticmethod
     def get_player_profiles():
@@ -233,8 +271,13 @@ class Arma(object):
         if mission_file:
             game_args.append(mission_file)
 
-        Logger.info('Arma: game args: [{}]'.format(', '.join(game_args)))
-        popen_object = process_launcher.run(game_args)  # May raise OSError
+        Logger.info('Arma: Running Arma: [{}]'.format(', '.join(game_args)))
+        try:
+            popen_object = process_launcher.run(game_args)  # May raise OSError
+
+        except Exception as ex:
+            Logger.error('Arma: Error while launching arma: {}'.format(ex))
+            raise
 
         return popen_object
 

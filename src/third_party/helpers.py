@@ -226,7 +226,8 @@ def check_requirements(verbose=True):
                 Cannot find Arma 3 installation directory.
                 This happens after clicking "Verify integrity of game cache" on Steam.
 
-                [b]To fix this problem you have to run the original Arma 3 launcher once.
+                [b]To fix this problem you have to run the original Arma 3 launcher once
+                or move this launcher directly to Arma 3 directory.
                 Afterwards, restart this launcher.[/b]
 
                 [ref=steam://run/107410][color=3572b0]>> Click here to run the Arma 3 launcher <<[/color][/ref]
