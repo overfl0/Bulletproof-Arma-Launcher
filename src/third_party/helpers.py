@@ -121,11 +121,29 @@ def arma_not_found_workaround(on_ok, on_error):
     from kivy.uix.label import Label
     from view.themedpopup import ThemedPopup
 
+    message = textwrap.dedent('''
+        Running Arma 3 launcher after Steam integrity check.
+        Please wait...
+
+
+        If this takes more than 20 seconds, open it manually.
+        After it opens, close the Arma launcher.
+
+                [ref=steam://run/107410][color=3572b0]>> Click here to run the Arma 3 launcher <<[/color][/ref]
+        ''')
+
+    from utils import browser  # TODO: Move this
+
+    def open_hyperlink(obj, ref):
+        browser.open_hyperlink(ref)
+
+    label = Label(text=message, markup=True)
+    label.bind(on_ref_press=open_hyperlink)
     arma_not_found_fix_popup = ThemedPopup(
         title='Fixing registry entries',
-        content=Label(text='Running Arma 3 launcher after Steam integrity check.\nPlease wait...'),
+        content=label,
         size_hint=(None, None),
-        size=(400, 200),
+        size=(400, 280),
         auto_dismiss=False)
 
     def start_workaround(dt):
