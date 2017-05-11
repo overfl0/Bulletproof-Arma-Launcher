@@ -347,7 +347,7 @@ def get_mission_file_parameter():
     return None
 
 
-def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None, battleye=True):
+def run_the_game(mods, ip=None, port=None, password=None, teamspeak_urls=None, battleye=True):
     """Run the game with the right parameters.
     Handle the exceptions by showing an appropriate message on error.
     """
@@ -366,8 +366,11 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_url=None, ba
     # Running all the programs
     ts_run_on_start = devmode.get_ts_run_on_start(default=True)
     if ts_run_on_start:
-        if teamspeak_url:
-            teamspeak.run_and_connect(teamspeak_url)
+        if teamspeak_urls:
+            if isinstance(teamspeak_urls, basestring):
+                teamspeak.run_and_connect([teamspeak_urls])
+            else:
+                teamspeak.run_and_connect(teamspeak_urls)
     else:
         Logger.info('Third party: Not running teamspeak because of devmode settings.')
 

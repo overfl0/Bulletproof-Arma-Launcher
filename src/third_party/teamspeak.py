@@ -200,22 +200,31 @@ def _sanitize_url(url):
     return urllib.quote(urllib.unquote(url), ':')
 
 
-def run_and_connect(url):
-    """Run the teamspeak client and connect to the given server."""
+def run_and_connect(urls):
+    """Run the teamspeak client and connect to the first TS server if the user
+    is not already connected to any of the servers in the list.
+
+    This allows passing several addresses that the users may be using, like
+    both the human-readable url and IP:port pair.
+    """
+
+    url_to_open = urls[0]
 
     if is_teamspeak_running():
         api_key = get_api_key()
         ts_servers = get_TS_servers_connected(api_key)
-        host = url.split(':')[0]
+        for url in urls:
+            host = url.split(':')[0]
 
-        if host in ts_servers:
-            Logger.info('TS: Teamspeak process found running and already connected to the right TS server.')
-            return
+            if host in ts_servers:
+                Logger.info('TS: Teamspeak process found running and already connected to the right TS server.')
+                return
 
-        Logger.info('TS: Teamspeak process found running but NOT connected to the right TS server.')
+        Logger.info('TS: Teamspeak process found running but NOT connected to any of the right TS server(s).')
+    else:
+        Logger.info('TS: Running Teamspeak process not found.')
 
-
-    full_url = 'ts3server://{}'.format(_sanitize_url(url))
+    full_url = 'ts3server://{}'.format(_sanitize_url(url_to_open))
     Logger.info('TS: Connecting to teamspeak server: {} using the executable: {}'.format(full_url, get_executable_path()))
     call_args = [get_executable_path(), full_url]
     process_launcher.run(call_args, shell=True)

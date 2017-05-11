@@ -142,14 +142,14 @@ class ModManager(object):
                                              ip=server.ip,
                                              port=server.port,
                                              password=server.password,
-                                             teamspeak_url=teamspeak,
+                                             teamspeak_urls=teamspeak,
                                              battleye=server.battleye)
         else:
             third_party.helpers.run_the_game(mods,
                                              ip=None,
                                              port=None,
                                              password=None,
-                                             teamspeak_url=teamspeak)
+                                             teamspeak_urls=teamspeak)
 
     # Para functions below #####################################################
 
