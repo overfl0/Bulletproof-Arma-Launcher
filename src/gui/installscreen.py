@@ -301,6 +301,25 @@ class Controller(object):
             # Logger.info('Timer check: Re-enabling the Play button')
             self.enable_action_buttons()
 
+        else:
+            # This is a stupid Arma 3 bug workaround, which sometimes runs
+            # The BI launcher instead of Arma 3. Who knows why...
+            if not hasattr(self, 'arma3_launcher_workaround_show_once'):
+                if utils.system_processes.program_running('arma3launcher.exe'):
+
+                    self.arma3_launcher_workaround_show_once = True
+                    message = textwrap.dedent('''
+                        Uh, oh! Something went wrong!
+
+                        Arma 3 was supposed to be run...
+                        ...but Arma itself decided to run the Arma 3 launcher instead!
+
+                        It's an Arma 3 bug. Close the Arma 3 launcher, restart this launcher
+                        and try again.
+                        ''')
+                    ErrorPopup(message=message).chain_open()
+                    return
+
     def update_footer_label(self, dt):
         git_sha1 = get_git_sha1_auto()
         footer_text = 'Version: {}\nBuild: {}'.format(self.version,
