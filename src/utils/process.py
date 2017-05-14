@@ -123,17 +123,20 @@ class ConnectionWrapper(object):
         self._send_message(msg)
 
     def ping(self):
-        """Ping the parent to ensure that he is still alive"""
+        """Ping the parent to ensure that he is still alive
+
+        On lack of response, check the process for the presence of the parent.
+        If the parent is not present, mark the pipe as broken.
+        """
 
         # TODO: Return if this is a thread
-        # TODO: Remove the prints!
-
         if not self.received_ping_response and \
-            self.ping_sent_at + self.PING_MAX_TIMEOUT < time.time():
-            Logger.error('ConnectionWrapper: receive_message: Broken pipe! The remote process has not answered the ping request.')
-            self.broken_pipe = True
-            print "Ping timeout!"
-            return
+           self.ping_sent_at + self.PING_MAX_TIMEOUT < time.time():
+            if not system_processes.is_parent_running(retval_on_error=True):
+                Logger.error('ConnectionWrapper: receive_message: Broken pipe! The remote process has not answered the ping request.')
+                self.broken_pipe = True
+                Logger.debug('Ping timeout!')
+                return
 
         if not self.received_ping_response or \
            self.ping_sent_at + self.PING_SEND_INTERVAL >= time.time():
@@ -142,7 +145,7 @@ class ConnectionWrapper(object):
 
         msg = {'action':self.action_name, 'status': '__ping__'}
         self._send_message(msg)
-        print "Sending ping!"
+        Logger.debug('Sending ping!')
         self.ping_sent_at = time.time()
         self.received_ping_response = False
 
@@ -175,7 +178,7 @@ class ConnectionWrapper(object):
             message = self.con.recv()
 
             if message.get('command') == '__pong__':
-                print "Received pong!"
+                Logger.debug('Received pong!')
                 self.received_ping_response = True
                 return self.receive_message()
 
