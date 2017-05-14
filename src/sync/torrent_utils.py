@@ -191,7 +191,8 @@ def path_can_be_a_mod(path, mods_directory):
     path_casefold = unicode_helpers.casefold(os.path.realpath(path))
 
     # Loop to parent (infinite loop)
-    if launcher_moddir_casefold.startswith(path_casefold):
+    if launcher_moddir_casefold == path_casefold or \
+       launcher_moddir_casefold.startswith(path_casefold + os.path.sep):
         Logger.info("path_can_be_a_mod: Rejecting {}. Loop to parent.".format(path_casefold))
         return False
 
