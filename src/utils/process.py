@@ -195,7 +195,7 @@ class Para(object):
     JOIN_TIMEOUT_GRANULATION = 0.1
     HANDLE_MESSAGES_INTERVAL = 0.1
 
-    def __init__(self, func, args, action_name, use_threads=True):
+    def __init__(self, func, args, action_name, use_threads=False):
         """
         constructor of the Para
 
@@ -428,7 +428,7 @@ def _protected_call(messagequeue, function, action_name, *args, **kwargs):
         Logger.info('Para: Closing thread/process for: {}'.format(action_name))
 
 
-def protected_para(func, args, action_name, then=None, use_threads=True):
+def protected_para(func, args, action_name, then=None, use_threads=False):
     """Wrap a function with a catch-all try/except clause.
     On error a reject() is sent.
     """
