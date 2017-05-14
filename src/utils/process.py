@@ -179,7 +179,9 @@ class ConnectionWrapper(object):
 
         try:
             if not self.con.poll():
-                self.ping()  # ping() takes care of not sending the ping msg too often
+                # Note: disable pinging unless someone starts having problems
+                # with parents dying.
+                # self.ping()  # ping() takes care of not sending the ping msg too often
                 return None
 
             message = self.con.recv()
