@@ -78,3 +78,15 @@ def kill_program(executable_name):
 
         except psutil.Error:
             continue
+
+
+def is_parent_running(retval_on_error=True):
+    """Check if parent process is up and running"""
+
+    try:
+        return psutil.Process().parent() is not None
+
+    except Exception as ex:
+        Logger.error('is_parent_running: Got an exception while checking for the parent: {}. Returning: {}'.format(
+            ex, retval_on_error))
+        return retval_on_error

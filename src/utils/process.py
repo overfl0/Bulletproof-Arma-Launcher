@@ -29,12 +29,14 @@ import os
 import sys
 import textwrap
 import threading
+import time
 
 from multiprocessing.queues import SimpleQueue
 from multiprocessing import Lock, Pipe
 from kivy.clock import Clock
 from kivy.logger import Logger
 from utils.primitive_git import get_git_sha1_auto
+from utils import system_processes
 from utils.testtools_compat import _format_exc_info
 
 
@@ -69,21 +71,38 @@ class Process(multiprocessing.Process):
 
 
 class ConnectionWrapper(object):
+    PING_MAX_TIMEOUT = 10
+    PING_SEND_INTERVAL = 5
+
     def __init__(self, action_name, lock, con):
         super(ConnectionWrapper, self).__init__()
         self.action_name = action_name
         self.lock = lock
         self.con = con
         self.broken_pipe = False
+        self.received_ping_response = True
+        self.ping_sent_at = time.time()
 
     # the following methods have to be overwritten for the queue to work
     # under windows, since pickling is needed. Check link:
     # http://stackoverflow.com/questions/18906575/how-to-inherit-from-a-multiprocessing-queue
     def __getstate__(self):
-        return self.action_name, self.lock, self.con, self.broken_pipe
+        return (self.action_name,
+               self.lock,
+               self.con,
+               self.broken_pipe,
+               self.received_ping_response,  # Those two could be encapsulated into ping()
+               self.ping_sent_at,  # Those two could be encapsulated into ping()
+               )
 
     def __setstate__(self, state):
-        self.action_name, self.lock, self.con, self.broken_pipe = state
+        (self.action_name,
+        self.lock,
+        self.con,
+        self.broken_pipe,
+        self.received_ping_response,  # Those two could be encapsulated into ping()
+        self.ping_sent_at,  # Those two could be encapsulated into ping()
+        ) = state
 
     def _send_message(self, msg):
         '''Send message through the pipe and note the pipe is broken on error.'''
@@ -102,6 +121,31 @@ class ConnectionWrapper(object):
         msg = {'action': self.action_name, 'status': 'resolve',
                'data': data}
         self._send_message(msg)
+
+    def ping(self):
+        """Ping the parent to ensure that he is still alive"""
+
+        # TODO: Return if this is a thread
+        # TODO: Remove the prints!
+
+        if not self.received_ping_response and \
+            self.ping_sent_at + self.PING_MAX_TIMEOUT < time.time():
+            Logger.error('ConnectionWrapper: receive_message: Broken pipe! The remote process has not answered the ping request.')
+            self.broken_pipe = True
+            print "Ping timeout!"
+            return
+
+        if not self.received_ping_response or \
+           self.ping_sent_at + self.PING_SEND_INTERVAL >= time.time():
+            # Don't send the ping request yet
+            return
+
+        msg = {'action':self.action_name, 'status': '__ping__'}
+        self._send_message(msg)
+        print "Sending ping!"
+        self.ping_sent_at = time.time()
+        self.received_ping_response = False
+
 
     def progress(self, data=None, percentage=0.0):
         msg = {'action': self.action_name, 'status': 'progress',
@@ -125,9 +169,16 @@ class ConnectionWrapper(object):
 
         try:
             if not self.con.poll():
+                self.ping()  # ping() takes care of not sending the ping msg too often
                 return None
 
             message = self.con.recv()
+
+            if message.get('command') == '__pong__':
+                print "Received pong!"
+                self.received_ping_response = True
+                return self.receive_message()
+
             return message
 
         except (EOFError, IOError):
@@ -291,7 +342,7 @@ class Para(object):
         con = self.parent_conn
         progress = None
 
-        # handle closingphases first
+        # handle closing phases first
         # try to join the child process
         if self.state == 'closingforreject':
             self.current_child_process.join(self.JOIN_TIMEOUT_GRANULATION)
@@ -327,6 +378,9 @@ class Para(object):
                 # enter closingphase cause a process can take long to
                 # terminate
                 self.state = 'closingforreject'
+
+            elif progress['status'] == '__ping__':
+                self.send_message('__pong__')
         else:
             if not self.current_child_process.is_alive():
 
