@@ -74,7 +74,7 @@ class ConnectionWrapper(object):
     PING_MAX_TIMEOUT = 10
     PING_SEND_INTERVAL = 5
 
-    def __init__(self, action_name, lock, con):
+    def __init__(self, action_name, lock, con, use_threads):
         super(ConnectionWrapper, self).__init__()
         self.action_name = action_name
         self.lock = lock
@@ -82,6 +82,7 @@ class ConnectionWrapper(object):
         self.broken_pipe = False
         self.received_ping_response = True
         self.ping_sent_at = time.time()
+        self.use_threads = use_threads
 
     # the following methods have to be overwritten for the queue to work
     # under windows, since pickling is needed. Check link:
@@ -93,6 +94,7 @@ class ConnectionWrapper(object):
                self.broken_pipe,
                self.received_ping_response,  # Those two could be encapsulated into ping()
                self.ping_sent_at,  # Those two could be encapsulated into ping()
+               self.use_threads,
                )
 
     def __setstate__(self, state):
@@ -102,6 +104,7 @@ class ConnectionWrapper(object):
         self.broken_pipe,
         self.received_ping_response,  # Those two could be encapsulated into ping()
         self.ping_sent_at,  # Those two could be encapsulated into ping()
+        self.use_threads,
         ) = state
 
     def _send_message(self, msg):
@@ -128,6 +131,10 @@ class ConnectionWrapper(object):
         On lack of response, check the process for the presence of the parent.
         If the parent is not present, mark the pipe as broken.
         """
+
+        # We don't need to ping because we're in the same thread as the "parent"
+        if self.use_threads:
+            return
 
         # TODO: Return if this is a thread
         if not self.received_ping_response and \
@@ -329,7 +336,7 @@ class Para(object):
     def run(self):
         self.lock = Lock()
         self.parent_conn, child_conn = Pipe()
-        self.messagequeue = ConnectionWrapper(self.action_name, self.lock, child_conn)
+        self.messagequeue = ConnectionWrapper(self.action_name, self.lock, child_conn, use_threads=self.use_threads)
         Logger.debug('Para: {} spawning new {}'.format(self, 'thread' if self.use_threads else 'process'))
 
         if self.use_threads:
