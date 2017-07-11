@@ -82,6 +82,8 @@ class Settings(Model):
         {'name': 'run_facetracknoir', 'defaultValue': True},
         {'name': 'selected_optional_mods', 'defaultValue': []},
         {'name': 'last_custom_background', 'defaultValue': None},
+        {'name': 'auth_login', 'defaultValue': ''},
+        {'name': 'auth_password', 'defaultValue': ''},
 
         # Arma launching parameters ############################################
         {'name': 'arma_win32', 'defaultValue': False},

@@ -82,6 +82,20 @@
                 settings_name: 'arma_exThreads'
                 values: ['0', '1', '3', '5', '7']
 
+            # ==================================================================
+            Label:
+                text: 'Launcher authentication:'
+                size_hint: None, None
+                size: self.texture_size[0], 50
+
+            StringLabel:
+                text: 'Login:'
+                settings_name: 'auth_login'
+
+            StringLabel:
+                text: 'Password:'
+                settings_name: 'auth_password'
+
 # ==============================================================================
 # Note: These options are appended to `scrollview_content` if `devmode_options`
 # is set to true in devmode.conf
