@@ -79,7 +79,7 @@ def symlink_mod(message_queue, mod_location, real_location):
         message_queue.reject({'msg': ex.message})
 
 
-def _get_mod_descriptions(para):
+def _get_mod_descriptions(para, login, password):
     """
     helper function to get the moddescriptions from the server
 
@@ -93,7 +93,10 @@ def _get_mod_descriptions(para):
     url = 'http://{}{}'.format(domain, metadata_path)
 
     try:
-        res = download_url(domain, url, timeout=5)
+        if login and password:
+            res = download_url(domain, url, timeout=5, auth=(login, password))
+        else:
+            res = download_url(domain, url, timeout=5)
     except DownloadException as ex:
         para.reject({'msg': 'Downloading metadata: {}'.format(ex.args[0])})
 
