@@ -230,7 +230,7 @@ def update_metadata_json(metadata_json_orig, mods_created):
 
     for mod, _, _, timestamp in mods_created:
         # Perform the global mods update
-        for mod_leaf in tree['mods']:
+        for mod_leaf in tree.get('mods', []):
             if mod_leaf['foldername'] == mod.foldername:
                 mod_leaf['torrent-timestamp'] = timestamp
 
