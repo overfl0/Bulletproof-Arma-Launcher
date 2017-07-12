@@ -55,6 +55,7 @@
     orientation: 'horizontal'
     height: 30
     size_hint: 1, None
+    password: False
 
     Label:
         text: root.text
@@ -70,6 +71,7 @@
         multiline: False
         height: self.minimum_height
         size_hint_y: None
+        password: root.password
 
 <CheckDropdownLabel@BoxLayout>:
     text: ''
