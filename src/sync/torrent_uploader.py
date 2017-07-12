@@ -243,16 +243,11 @@ def update_metadata_json(metadata_json_orig, mods_created):
                 tree['launcher']['version'] = get_new_launcher_version(mod)
 
         # Perform the per-server mods update
-        for server in tree['servers']:
-            server_mods = server.get('mods')
-            if server_mods is None:
-                continue
-
-            for mod_leaf in server_mods:
+        # Note: update the hidden servers, if present
+        for server in tree.get('servers', []) + tree.get('hidden_servers', []):
+            for mod_leaf in server.get('mods', []):
                 if mod_leaf['foldername'] == mod.foldername:
                     mod_leaf['torrent-timestamp'] = timestamp
-
-
 
     metadata_json_modified = json.dumps(tree, indent=4, separators=(',', ': '))
     return metadata_json_modified
