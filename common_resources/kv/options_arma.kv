@@ -91,11 +91,13 @@
             StringLabel:
                 text: 'Login:'
                 settings_name: 'auth_login'
+                on_field_value: root.screen.controller.request_mods_recheck(force_download_new=True)
 
             StringLabel:
                 text: 'Password:'
                 settings_name: 'auth_password'
                 password: True
+                on_field_value: root.screen.controller.request_mods_recheck(force_download_new=True)
 
 # ==============================================================================
 # Note: These options are appended to `scrollview_content` if `devmode_options`
