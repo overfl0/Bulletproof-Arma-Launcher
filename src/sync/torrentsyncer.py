@@ -90,8 +90,9 @@ class TorrentSyncer(object):
         self.session = libtorrent.session(fingerprint=fingerprint)
         self.session.listen_on(6881, 6891)  # This is just a port suggestion. On failure, the port is automatically selected.
 
-        settings.download_rate_limit = max_download_speed * 1024
-        settings.upload_rate_limit = max_upload_speed * 1024
+        # Prevent conversion to C int error
+        settings.download_rate_limit = min(max_download_speed, 999999) * 1024
+        settings.upload_rate_limit = min(max_upload_speed, 999999) * 1024
 
         self.session.set_settings(settings)
 
@@ -451,10 +452,10 @@ class TorrentSyncer(object):
             max_download_speed = params.get('max_download_speed')
 
             if max_upload_speed is not None:
-                session_settings['upload_rate_limit'] = max_upload_speed * 1024
+                session_settings['upload_rate_limit'] = min(max_upload_speed, 999999) * 1024
 
             if max_download_speed is not None:
-                session_settings['download_rate_limit'] = max_download_speed * 1024
+                session_settings['download_rate_limit'] = min(max_download_speed, 999999) * 1024
 
             self.session.set_settings(session_settings)
 
