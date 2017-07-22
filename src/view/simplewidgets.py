@@ -74,6 +74,32 @@ class CheckStringLabel(BoxLayout):
         self.settings.set(self.settings_name, self.ids.textinput.text)
 
 
+class StringLabel(BoxLayout):
+
+    settings_name = StringProperty(None)
+    field_value = StringProperty(None)
+
+    def __init__(self, entries=None, on_manual_path=None, **kwargs):
+        self.settings = kivy.app.App.get_running_app().settings
+        super(StringLabel, self).__init__(**kwargs)
+
+        self.bind(settings_name=self.set_settings_name)
+
+    def set_settings_name(self, instance, value):
+        if not value:
+            return
+
+        settings_value = self.settings.get(value)
+        self.ids.textinput.text = settings_value
+
+    def save_settings(self, instance, value):
+        if not self.settings_name:
+            return
+
+        self.settings.set(self.settings_name, self.ids.textinput.text)
+        self.field_value = self.ids.textinput.text
+
+
 class CheckDropdownLabel(BoxLayout):
 
     settings_name = StringProperty(None)

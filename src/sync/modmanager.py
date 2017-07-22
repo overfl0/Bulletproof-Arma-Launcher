@@ -162,7 +162,12 @@ class ModManager(object):
                     self.on_download_mod_description_reject,
                     None)
 
-        para = protected_para(_get_mod_descriptions, (), 'download_description',
+        para = protected_para(_get_mod_descriptions,
+                              (
+                                  self.settings.get('auth_login'),
+                                  self.settings.get('auth_password'),
+                              ),
+                              'download_description',
                               then=then
                               )
         return para

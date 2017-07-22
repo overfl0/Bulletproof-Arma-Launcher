@@ -148,9 +148,10 @@ class Controller(object):
         if active:
             self.settings.set('seeding_type', radio_button.seeding_type)
 
-    def request_mods_recheck(self, *args):
+    def request_mods_recheck(self, *args, **kwargs):
+        force_download_new = kwargs.get('force_download_new', False)
         install_screen = self.view.manager.get_screen('install_screen')
-        install_screen.controller.restart_checking_mods()
+        install_screen.controller.restart_checking_mods(force_download_new=force_download_new)
 
     def disable_action_widgets(self):
         self.view.ids.mods_options.ids.mod_location_selection.disabled = True
