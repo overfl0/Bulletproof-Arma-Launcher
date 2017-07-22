@@ -73,6 +73,57 @@ def run_faceTrackNoIR():
     process_launcher.run([faceTrackNoIR_path])
 
 
+class OpentrackNotInstalled(SoftwareNotInstalled):
+    pass
+
+
+def get_opentrack_path():
+    """Get the path to Opentrack installation."""
+
+    fake_path = devmode.get_opentrack_path()
+    if fake_path:
+        return fake_path
+
+    try:
+        key = 'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{63F53541-A29E-4B53-825A-9B6F876A2BD6}_is1'
+        reg_val = Registry.ReadValueUserAndMachine(key, 'InstallLocation', True)
+
+        Logger.info('Opentrack: Install location: {}'.format(reg_val))
+
+        path = os.path.join(reg_val, 'opentrack.exe')
+        if not os.path.isfile(path):
+            Logger.info('Opentrack: Found install location but no expected exe file found: {}'.format(path))
+            raise OpentrackNotInstalled()
+
+        return path
+
+    except Registry.Error:
+        raise OpentrackNotInstalled()
+
+
+def is_opentrack_running():
+    """Check if there is a Opentrack process already running."""
+    return utils.system_processes.program_running('opentrack.exe')
+
+
+def run_opentrack():
+    """Run Opentrack if installed and not already running."""
+
+    try:
+        opentrack_path = get_opentrack_path()
+
+    except OpentrackNotInstalled:
+        Logger.info('Opentrack: No FaceTrackNoIR installation found.')
+        return
+
+    if is_opentrack_running():
+        Logger.info('Opentrack: FaceTrackNoIR found already running.')
+        return
+
+    Logger.info('Opentrack: Running file: {}'.format(opentrack_path))
+    process_launcher.run([opentrack_path])
+
+
 class TrackIRNotInstalled(SoftwareNotInstalled):
     pass
 

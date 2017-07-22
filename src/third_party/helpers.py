@@ -382,6 +382,10 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_urls=None, b
         Logger.info('Third party: Trying to run TrackIR...')
         headtracking.run_TrackIR()
 
+    if settings.get('run_opentrack'):
+        Logger.info('Third party: Trying to run Opentrack...')
+        headtracking.run_opentrack()
+
     Logger.info('Third party: Running the game')
     try:
         _ = Arma.run_game(mod_list=mods_paths,
