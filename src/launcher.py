@@ -1,6 +1,6 @@
 # Bulletproof Arma Launcher
 # Copyright (C) 2016 Sascha Ebert
-# Copyright (C) 2016 Lukasz Taczuk
+# Copyright (C) 2017 Lukasz Taczuk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
