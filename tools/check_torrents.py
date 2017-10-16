@@ -13,7 +13,7 @@ import time
 
 from collections import namedtuple
 
-WAIT_TIMEOUT = 6
+WAIT_TIMEOUT = 10
 
 
 def check_file(filename):
@@ -76,6 +76,8 @@ def wait_timeout():
 
 
 def update_torrents():
+    global args
+
     # Fetch the metadata
     json_url = args.bare_url + 'metadata.json'
     print 'Fetching {}...'.format(json_url)
@@ -93,6 +95,52 @@ def update_torrents():
     wait_timeout()
     save_files(files)
 
+    if args.initial_download:
+        download_files(f.path for f in files)
+
+
+def download_files(torrents, save_path='.'):
+    """Download the torrents using libtorrent"""
+
+    def all_seeding(handles):
+        """Are all torrents added to the session currently seeding."""
+
+        for handle in handles:
+            status = handle.status()
+            if not status.is_seeding:
+                return False
+
+        return True
+
+    # This is optional so we're importing libtorrent here so it's not mandatory
+    import libtorrent as lt
+    session = lt.session()
+
+    # Don't be nice with the bandwidth. We are a hardcore seedbox after all...
+    settings = lt.session_settings()
+    settings.mixed_mode_algorithm = 0
+    session.set_settings(settings)
+
+    handles = []
+    for torrent in torrents:
+        info = lt.torrent_info(torrent)
+        handle = session.add_torrent({'ti': info, 'save_path': save_path})
+        status = handle.status()
+        print('starting', status)
+        handles.append(handle)
+
+    while not all_seeding(handles):
+        status = session.status()
+
+        # Print alerts, just in case
+        alerts = session.pop_alerts()
+        for a in alerts:
+            if a.category() & lt.alert.category_t.error_notification:
+                print(a)
+
+        print('Download speed: {0:.2f}MB/s'.format(status.payload_download_rate / (1024 * 1024)))
+        time.sleep(1)
+
 
 def main():
     global args
@@ -101,6 +149,7 @@ def main():
     parser.add_argument('host', help='Domain of the launcher')
     parser.add_argument('-d', '--directory', default='.', help='Torrents directory')
     parser.add_argument('-w', '--wait', type=int, default=WAIT_TIMEOUT, help='Torrents directory')
+    parser.add_argument('-i', '--initial-download', action='store_true', help='Download files data using libtorrent')
 
     args = parser.parse_args()
     args.bare_url = 'http://{}/'.format(args.host)
