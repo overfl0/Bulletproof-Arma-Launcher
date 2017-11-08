@@ -331,6 +331,9 @@ def create_game_parameters():
     if settings.get('arma_exThreads') and settings.get('arma_exThreads_enabled'):
         args.append('-exThreads=' + settings.get('arma_exThreads'))
 
+    if settings.get('arma_additionalParameters'):
+        args.extend(settings.get('arma_additionalParameters').split())
+
     return args
 
 def get_mission_file_parameter():

@@ -103,6 +103,7 @@ class Settings(Model):
         {'name': 'arma_exThreads', 'defaultValue': '0'},
         {'name': 'arma_exThreads_enabled', 'defaultValue': False},
         {'name': 'arma_noSound', 'defaultValue': False},
+        {'name': 'arma_additionalParameters', 'defaultValue': ''},
     ]
 
     # path to the registry entry which holds the users document path
