@@ -13,18 +13,21 @@
 from __future__ import unicode_literals
 
 import errno
-import libtorrent
 import os
-import subprocess
 import stat
+import subprocess
 import textwrap
+from collections import OrderedDict
 
+import libtorrent
 from kivy.logger import Logger
+
+import yapbol
 from sync.integrity import check_mod_directories, check_files_mtime_correct, are_ts_plugins_installed, is_whitelisted
-from utils.metadatafile import MetadataFile
 from utils import paths
 from utils import unicode_helpers
 from utils import walker
+from utils.metadatafile import MetadataFile
 
 
 class AdminRequiredError(Exception):
@@ -466,8 +469,44 @@ def create_add_torrent_flags(just_seed=False):
 
     return flags
 
+def get_pbo_offsets(path):
+    offsets = OrderedDict()
+    pbo = yapbol.PBOFile.read_file(path)
+
+    for f in pbo:
+        # print(f.filename)
+        # print(f.offset)
+        offsets[f.filename.encode('utf8')] = f.offset
+
+    print(offsets)
+    return offsets
+
+def extend_metadata_for_pbo(torrent_metadata):
+    """Gets metadata about all the files inside each PBO file."""
+    # TODO: exception handling!
+    # TODO: Check if the path is a full path!
+
+    root = torrent_metadata['info']['name']
+    files = torrent_metadata['info']['files']
+    size = 0
+
+    for f in files:
+        file_path = os.path.join(root, *f['path'])
+
+        # Filter out the non-pbo files
+        if file_path[-4:].lower() != '.pbo':
+            continue
+
+        print(file_path)
+        offsets = get_pbo_offsets(file_path)
+        if offsets:
+            f[b'pbo_offsets'] = offsets
+            size += len(str(offsets))
+
+    print(size)
 
 def create_torrent(directory, announces=None, output=None, comment=None, web_seeds=None):
+    """Create a torrent file from a directory"""
     if not output:
         output = directory + ".torrent"
 
@@ -497,8 +536,10 @@ def create_torrent(directory, announces=None, output=None, comment=None, web_see
     # t.add_http_seed("http://...")
 
     libtorrent.set_piece_hashes(t, unicode_helpers.encode_utf8(os.path.dirname(directory)))
+    torrent_metadata = t.generate()
+    extend_metadata_for_pbo(torrent_metadata)
 
     with open(output, "wb") as file_handle:
-        file_handle.write(libtorrent.bencode(t.generate()))
+        file_handle.write(libtorrent.bencode(torrent_metadata))
 
     return output
