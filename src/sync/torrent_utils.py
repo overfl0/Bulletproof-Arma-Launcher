@@ -13,6 +13,7 @@
 from __future__ import unicode_literals
 
 import errno
+import hashlib
 import os
 import stat
 import subprocess
@@ -23,6 +24,7 @@ from kivy.logger import Logger
 
 from sync.integrity import check_mod_directories, check_files_mtime_correct, are_ts_plugins_installed, is_whitelisted
 from sync import pbo_patching
+from sync.pbo_patching import prepare_mod_pbos
 from utils import paths
 from utils import unicode_helpers
 from utils import walker
@@ -301,6 +303,7 @@ def remove_broken_junction(path):
         Logger.error(error_message)
         raise AdminRequiredError(error_message)
 
+
 def _replace_broken_junction_with_directory(path):
     """Perform a test whether the given path is a broken junction and fix it
     if it is.
@@ -350,6 +353,7 @@ def ensure_directory_structure_is_correct(mod_directory):
                 error_message = get_admin_error('file is not writable', node_path)
                 raise AdminRequiredError(error_message)
 
+
 def prepare_mod_directory(mod_full_path):
     """Prepare the mod with the correct permissions, etc...
     This should make sure the parent directories are present, the mod directory
@@ -382,6 +386,7 @@ def prepare_mod_directory(mod_full_path):
             error_message = get_admin_error('directory is not writable', parent_location)
             raise AdminRequiredError(error_message)
 
+
 def create_symlink(symlink_name, orig_path):
     """Create an NTFS Junction.
     For now, just use subprocess. Maybe switch to native libs later.
@@ -390,6 +395,7 @@ def create_symlink(symlink_name, orig_path):
     orig_path_fs = unicode_helpers.u_to_fs(orig_path)
 
     return subprocess.check_call([b'cmd', b'/c', b'mklink', b'/J', symlink_name_fs, orig_path_fs])
+
 
 def symlink_mod(mod_full_path, real_location):
     """Set a new location for a mod.
@@ -446,6 +452,72 @@ def symlink_mod(mod_full_path, real_location):
     except:
         os.rmdir(mod_full_path)
         raise
+
+
+def _get_file_data_async(file_path):
+    data_size = yield None
+
+    try:
+        with open(file_path, 'rb') as file_desc:
+            while (data_size):
+                data = file_desc.read(data_size)
+                if len(data) != data_size:
+                    data = None
+                data_size = yield data
+
+    except IOError as ex:
+        while (data_size):
+            data_size = yield None
+
+def _get_files_stream(mod_parent_path, files):
+    next_bytes_count = yield None
+    bytes_chunks = []
+
+    for file in files:
+        file_path = os.path.join(mod_parent_path, file.path)
+        #print(file_path)
+        file_available_data = file.size
+        file_data_generator = _get_file_data_async(file_path)
+        next(file_data_generator)
+
+        while file_available_data > 0:
+            requested_data_len = min(next_bytes_count, file_available_data)
+            data = file_data_generator.send(requested_data_len)
+            bytes_chunks.append(data)
+
+            file_available_data -= requested_data_len
+            next_bytes_count -= requested_data_len
+
+            if next_bytes_count == 0:
+                next_bytes_count = yield bytes_chunks
+                bytes_chunks = []
+
+
+def count_matching_pieces(mod_parent_path, torrent_info):
+    matching_pieces = 0
+    bytes_stream = _get_files_stream(mod_parent_path, torrent_info.files())
+    next(bytes_stream)  # Ignore the first call
+
+    for piece in range(torrent_info.num_pieces()):
+        if piece % 10 == 0:
+            print('Piece {}/{}'.format(piece, torrent_info.num_pieces()))
+        computed_hash = hashlib.sha1()
+        bytes_chunks = bytes_stream.send(torrent_info.piece_size(piece))
+
+        if not all(bytes_chunks):
+            #print('??? =?= %r (missing data on disk)' % (torrent_info.hash_for_piece(piece),))
+            continue
+
+        for chunk in bytes_chunks:
+            computed_hash.update(chunk)
+
+        #print('%r =?= %r' % (computed_hash.digest(), torrent_info.hash_for_piece(piece)))
+        if computed_hash.digest() == torrent_info.hash_for_piece(piece):
+            matching_pieces += 1
+
+    print('Matching pieces: {}/{}'.format(matching_pieces, torrent_info.num_pieces()))
+    return matching_pieces
+
 
 def create_add_torrent_flags(just_seed=False):
     """Create default flags for adding a new torrent to a syncer."""
@@ -511,5 +583,17 @@ def create_torrent(directory, announces=None, output=None, comment=None, web_see
 
 if __name__ == '__main__':
     #create_torrent('@Frontline', announces=['http://example.com/announce'], web_seeds=['http://example.com/webseed'])
-    a = get_torrent_info_from_file('@Frontline.torrent')
+
+    with open('@CUP Terrains - Core.torrent', 'rb') as f:
+        torrent_metadata = f.read()
+
+    info = get_torrent_info_from_bytestring(torrent_metadata)
+    matching_before = count_matching_pieces('.', info)
+    #prepare_mod_pbos('@Frontline', libtorrent.bdecode(torrent_metadata))
+    matching_after = count_matching_pieces('.', info)
+
+    print('Matching pieces: Before: {}/{}, After: {}/{}'.format(
+        matching_before, info.num_pieces(),
+        matching_after, info.num_pieces()
+    ))
     #import sys; sys.stdout, sys.stderr = sys.__stdout__, sys.__stderr__; import IPython; IPython.embed()
