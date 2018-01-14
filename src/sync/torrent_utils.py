@@ -584,12 +584,15 @@ def create_torrent(directory, announces=None, output=None, comment=None, web_see
 if __name__ == '__main__':
     #create_torrent('@Frontline', announces=['http://example.com/announce'], web_seeds=['http://example.com/webseed'])
 
-    with open('@CUP Terrains - Core.torrent', 'rb') as f:
+    #with open('@CUP Terrains - Core.torrent', 'rb') as f:
+    with open('@Frontline.torrent', 'rb') as f:
         torrent_metadata = f.read()
 
     info = get_torrent_info_from_bytestring(torrent_metadata)
     matching_before = count_matching_pieces('.', info)
-    #prepare_mod_pbos('@Frontline', libtorrent.bdecode(torrent_metadata))
+    #matching_before = -1
+    print(matching_before)
+    prepare_mod_pbos(info.name(), libtorrent.bdecode(torrent_metadata))
     matching_after = count_matching_pieces('.', info)
 
     print('Matching pieces: Before: {}/{}, After: {}/{}'.format(

@@ -1,5 +1,4 @@
 import os
-import shutil
 from collections import OrderedDict
 
 import libtorrent
@@ -9,7 +8,7 @@ import yapbol
 
 def get_pbo_offsets(path):
     offsets = OrderedDict()
-    pbo = yapbol.PBOFile.read_file(path)
+    pbo = yapbol.PBOFile.read_file(path, dont_read_data=True)
 
     for f in pbo:
         offsets[f.filename.encode('utf8')] = f.offset
@@ -59,7 +58,14 @@ def seek_and_extend(fileobject, absolute_offset):
 
     if absolute_offset > size:
         fileobject.seek(0, 2)  # move the cursor to the end of the file
-        fileobject.write('\0' * (absolute_offset - size))
+        towrite = absolute_offset - size
+
+        # Don't write too much at once
+        while towrite > 1024 * 10:
+            fileobject.write('\0' * 1024 * 10)
+            towrite -= 1024 * 10
+
+        fileobject.write('\0' * towrite)
 
     fileobject.seek(absolute_offset)
 
@@ -69,12 +75,9 @@ def fix_pbo_offsets(full_pbo_path, torrent_pbo_offsets):
     # if not os.path.isfile(full_pbo_path):
     #     return
 
-    tmp_pbo_path = full_pbo_path + '_tmp'
     pbo = yapbol.PBOFile.read_file(full_pbo_path)
 
-    shutil.copy2(full_pbo_path, tmp_pbo_path)
-
-    with open(tmp_pbo_path, 'ab+') as f:
+    with open(full_pbo_path, 'ab+') as f:
         for subfile in torrent_pbo_offsets:
             dest_offset = torrent_pbo_offsets[subfile]
 
@@ -87,9 +90,6 @@ def fix_pbo_offsets(full_pbo_path, torrent_pbo_offsets):
                 # Do copy the data
                 seek_and_extend(f, dest_offset)
                 f.write(subfile_entry.data)
-
-    os.unlink(full_pbo_path)
-    os.rename(tmp_pbo_path, full_pbo_path)
 
 
 def prepare_mod_pbos(mod_full_path, torrent_metadata):
