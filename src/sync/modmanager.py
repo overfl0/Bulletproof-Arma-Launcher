@@ -130,6 +130,7 @@ class ModManager(object):
     def run_the_game(self):
         server = self.get_selected_server()
         teamspeak = self.teamspeak
+        battleye = self.battleye
         mods = self.get_mods(only_selected=True)
 
         Logger.info('run_the_game: Running Arma 3 and connecting to server: {}'.format(server))
@@ -137,13 +138,15 @@ class ModManager(object):
         if server:
             if server.teamspeak:
                 teamspeak = server.teamspeak
+            if server.battleye is not None:
+                battleye = server.battleye
 
             third_party.helpers.run_the_game(mods,
                                              ip=server.ip,
                                              port=server.port,
                                              password=server.password,
                                              teamspeak_urls=teamspeak,
-                                             battleye=server.battleye)
+                                             battleye=battleye)
         else:
             third_party.helpers.run_the_game(mods,
                                              ip=None,
@@ -198,6 +201,7 @@ class ModManager(object):
         self.launcher = data['launcher']
         self.servers = data['servers']
         self.teamspeak = data['teamspeak']
+        self.battleye = data['battleye']
 
         Logger.info('ModManager: Got base mods:\n' + '\n'.join(repr(mod)for mod in self.mods))
         Logger.info('ModManager: Got servers:\n' + '\n'.join(repr(server) for server in self.servers))
@@ -207,6 +211,9 @@ class ModManager(object):
 
         if self.teamspeak:
             Logger.info('ModManager: Got base teamspeak:\n{}'.format(repr(self.teamspeak)))
+
+        if self.battleye is not None:
+            Logger.info('ModManager: Got base battleye:\n{}'.format(repr(self.battleye)))
 
     def sync_all(self, seed):
         synced_elements = self.get_mods(only_selected=True)  # Work on the copy
