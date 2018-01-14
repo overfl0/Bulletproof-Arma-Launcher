@@ -31,6 +31,7 @@ import textwrap
 import torrent_utils
 
 from kivy.logger import Logger
+from sync import pbo_patching
 from sync.integrity import check_mod_directories
 from utils import requests_wrapper
 from utils.eta import Eta
@@ -362,6 +363,7 @@ class TorrentSyncer(object):
             # This should have been already done with preparer.py but it doesn't
             # hurt to do that again in case something changed in the meantime.
             torrent_utils.prepare_mod_directory(mod.get_full_path())
+            pbo_patching.prepare_mod_pbos(mod.get_full_path(), torrent_content)
 
     def get_torrents_status(self):
         """Get the status of all torrents with valid handles and cache them in
