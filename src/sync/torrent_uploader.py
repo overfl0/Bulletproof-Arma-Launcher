@@ -138,6 +138,9 @@ def _make_torrent(message_queue, launcher_basedir, mods):
     announces = devmode.get_torrent_tracker_urls()
     web_seeds = devmode.get_torrent_web_seeds()
 
+    if web_seeds is None:
+        web_seeds = []
+
     if not announces:
         Logger.error('make_torrent: torrent_tracker_urls cannot be empty!')
         message_queue.reject({'msg': 'torrent_tracker_urls cannot be empty!'})
