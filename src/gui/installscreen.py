@@ -432,11 +432,18 @@ class Controller(object):
     def action_button_init(self):
         """Set all the callbacks for the dynamic action button."""
 
+        # This is a workaround because many people thought that INSTALL meant installing from scratch
+        # So we only show INSTALL during the first install. Then we show UPDATE
+        if self.settings.get('launcher_moddir') and os.path.exists(self.settings.get('launcher_moddir')):
+            install_text = 'UPDATE'
+        else:
+            install_text = 'INSTALL'
+
         button_states = [
             (DynamicButtonStates.play, 'PLAY', self.on_play_button_release),
             (DynamicButtonStates.checking, 'CHECKING...', None),
-            (DynamicButtonStates.install, 'INSTALL', self.on_install_button_click),
-            (DynamicButtonStates.self_upgrade, 'UPDATE', self.on_self_upgrade_button_release)
+            (DynamicButtonStates.install, install_text, self.on_install_button_click),
+            (DynamicButtonStates.self_upgrade, 'UPGRADE', self.on_self_upgrade_button_release)
         ]
 
         # Bind text and callbacks for button states
