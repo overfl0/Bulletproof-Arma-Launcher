@@ -792,7 +792,7 @@ class Controller(object):
 
     def on_checkmods_resolve(self, progress):
         self.para = None
-        Logger.debug('InstallScreen: checking mods finished')
+        Logger.debug('InstallScreen: Ready to play. Checking mods finished')
         self.view.ids.status_image.hide()
         self._set_status_label(progress.get('msg'))
         self.view.ids.options_button.disabled = False

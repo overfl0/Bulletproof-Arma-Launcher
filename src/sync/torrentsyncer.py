@@ -219,10 +219,13 @@ class TorrentSyncer(object):
                                'ETA: {}'.format(ETA) if ETA else '')
             progress_mods = unfinished_mods
         else:
-            progress_message = 'Ready to play. Uploading: {} connections ({:0.2f} KB/s). Total: {} MB'.format(
-                               session_actual_peers,
-                               status.payload_upload_rate / 1024,
-                               status.total_payload_upload / 1024 / 1024)
+            if status.payload_upload_rate / 1024 > 0:
+                progress_message = 'Ready to play. Seeding mods: {} connections ({:0.2f} KB/s). Total: {} MB'.format(
+                                   session_actual_peers,
+                                   status.payload_upload_rate / 1024,
+                                   status.total_payload_upload / 1024 / 1024)
+            else:
+                progress_message = 'Ready to play. Seeding mods...'
             progress_mods = []
 
         self.result_queue.progress({'msg': progress_message,
