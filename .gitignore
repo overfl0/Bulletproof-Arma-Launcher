@@ -12,3 +12,4 @@ pyinstaller.bat
 *.exe
 devmode.conf
 .settings
+.idea
