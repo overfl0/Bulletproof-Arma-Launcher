@@ -914,7 +914,11 @@ class Controller(object):
     def on_sync_progress(self, progress, percentage):
         # Logger.debug('InstallScreen: syncing in progress')
 
-        self.view.ids.status_image.show()
+        # Hide the status indicator when we are seeding because that was somehow confusing people :(
+        if percentage != 1:
+            self.view.ids.status_image.show()
+        else:
+            self.view.ids.status_image.hide()
         self._set_status_label(progress.get('msg'), progress.get('mods'))
 
         # By request: show an empty progress bar if seeding (progress == 100%)
