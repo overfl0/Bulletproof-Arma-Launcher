@@ -55,7 +55,11 @@ class ClientQuery(object):
 
         try:
             Logger.info('ClientQuery: Trying to connect to: {}'.format(host, port))
-            self.socket = socket.create_connection((host, port), timeout=3)
+            self.socket = socket.create_connection((host, port), timeout=5)
+
+        except socket.timeout:
+            Logger.error('ClientQuery: Connection refused! (timeout)')
+            return None
 
         except socket.error as ex:
             if ex.errno == 10061:
@@ -65,10 +69,6 @@ class ClientQuery(object):
             # socket.error: [Errno 10053] An established connection was aborted by the software in your host machine
 
             raise
-
-        except socket.timeout:
-            Logger.error('ClientQuery: Connection refused! (timeout)')
-            return None
 
         Logger.debug('ClientQuery: Connected successfully!')
         self.socket.settimeout(2)
