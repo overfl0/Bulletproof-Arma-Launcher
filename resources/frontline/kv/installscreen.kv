@@ -240,3 +240,128 @@
         padding: [20, 20]
         size_hint: None, None
         pos_hint: {'right': 1, 'top': 1}
+
+    Label:
+        # Hide the layer on click
+        on_touch_down: self.setter('opacity')(self, 0)
+
+        bcolor: 0.1, 0.1, 0.1, 0.9
+        border: 10
+        radius: [20]
+        segments: 30
+
+        canvas.before:
+            StencilPush
+            RoundedRectangle:
+                pos: options_button.x - self.border, options_button.y - self.border
+                size: options_button.width + 2*self.border, options_button.height + 2*self.border
+                segments: self.segments
+                radius: self.radius
+
+            RoundedRectangle:
+                pos: action_button.x - self.border, action_button.y - self.border
+                size: action_button.width + 2*self.border, action_button.height + 2*self.border
+                segments: self.segments
+                radius: self.radius
+
+            RoundedRectangle:
+                pos: server_list_scrolled.x - self.border, server_list_scrolled.y - self.border
+                size: server_list_scrolled.width + 2*self.border, server_list_scrolled.height + 2*self.border
+                segments: self.segments
+                radius: self.radius
+
+            StencilUse
+                func_op: 'notequal'
+            Color:
+                rgba: self.bcolor
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+            Color:
+                rgba: get_color_from_hex('#eca92d')
+
+            # options_button
+            RoundedRectangle:
+                pos: options_button.x - self.border - 2, options_button.y - self.border - 2
+                size: options_button.width + 2*self.border + 4, options_button.height + 2*self.border + 4
+                segments: self.segments
+                radius: self.radius
+
+            # action_button
+            RoundedRectangle:
+                pos: action_button.x - self.border - 2, action_button.y - self.border - 2
+                size: action_button.width + 2*self.border + 4, action_button.height + 2*self.border + 4
+                segments: self.segments
+                radius: self.radius
+
+            # server_list_scrolled
+            RoundedRectangle:
+                pos: server_list_scrolled.x - self.border - 2, server_list_scrolled.y - self.border - 2
+                size: server_list_scrolled.width + 2*self.border + 4, server_list_scrolled.height + 2*self.border + 4
+                segments: self.segments
+                radius: self.radius
+
+            StencilUnUse
+            StencilPop
+
+        Arrow:
+            o_x: server_list_scrolled_tutorial.right + self.parent.border
+            o_y: server_list_scrolled_tutorial.center_y
+            to_x: server_list_scrolled.x - self.parent.border - 7
+            to_y: server_list_scrolled.y + 20
+            fletching_radius: 0
+            main_color: get_color_from_hex('#eca92d')
+            head_angle: 25
+
+        Arrow:
+            o_x: options_button_tutorial.x - self.parent.border
+            o_y: options_button_tutorial.center_y
+            to_x: options_button.right - self.parent.border + 7
+            to_y: options_button.center_y
+            fletching_radius: 0
+            main_color: get_color_from_hex('#eca92d')
+            head_angle: 25
+
+        Arrow:
+            o_x: action_button_tutorial.right + self.parent.border
+            o_y: action_button_tutorial.center_y
+            to_x: action_button.x - self.parent.border - 7
+            to_y: action_button.center_y
+            fletching_radius: 0
+            main_color: get_color_from_hex('#eca92d')
+            head_angle: 25
+
+        Label:
+            id: server_list_scrolled_tutorial
+            text:
+                'Select the server'
+            x: server_list_scrolled.x - self.width - self.parent.border - 20 - 200
+            y : server_list_scrolled.center_y - self.height / 2 + 150
+            size: self.texture_size
+            font_name: app.resource_path("fonts/Nexa_Light.ttf")
+            outline_color: get_color_from_hex('#eca92d')
+            outline_width: 1
+
+        Label:
+            id: options_button_tutorial
+            text: 'Set additional\noptions here'
+            x: options_button.right + self.parent.border + 20 + 100
+            y: options_button.center_y - self.height / 2 + 100
+            size: self.texture_size
+            font_name: app.resource_path("fonts/Nexa_Light.ttf")
+            outline_color: get_color_from_hex('#eca92d')
+            outline_width: 1
+
+        Label:
+            id: action_button_tutorial
+            text:
+                'Click here to start the installation\n\n' \
+                'The launcher [color=#FF0000]WILL[/color] automatically\ndetect your Workshop mods!'
+            x: action_button.x - self.width - self.parent.border - 20 - 150
+            y: action_button.center_y - self.height / 2 + 50
+            size: self.texture_size
+            font_name: app.resource_path("fonts/Nexa_Light.ttf")
+            markup: True
+            outline_color: get_color_from_hex('#eca92d')
+            outline_width: 1

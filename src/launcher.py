@@ -107,6 +107,7 @@ def start():
         from kivy.base import ExceptionManager
 
         from utils.app import BaseApp
+        from view.arrow import Arrow
         from view.numberinput import NumberInput
         from view.dynamicbutton import DynamicButton
         from view.hoverbutton import HoverButton
