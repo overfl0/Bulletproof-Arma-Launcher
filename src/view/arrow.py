@@ -115,6 +115,7 @@ class Arrow(Widget, KVector):
     main_color = ListProperty([1, 1, 1, 0.7])
     outline_color = ListProperty([0, 0, 0, 0.7])
     outline_width = NumericProperty(cm(0.01))
+    head_angle = NumericProperty(45)
 
     def __init__(self, *args, **kwargs):
         Widget.__init__(self, *args, **kwargs)
@@ -163,10 +164,13 @@ class Arrow(Widget, KVector):
 
     def update_dims(self, *args):
         shaft_x1, shaft_y1 = move_point(self.o_x, self.o_y, self.angle, self.fletching_radius / math.sqrt(2))
-        shaft_x2, shaft_y2 = move_point(self.to_x, self.to_y, self.angle, -self.head_size / math.sqrt(2.0))
-        self.shaft.points = [
+        #shaft_x2, shaft_y2 = move_point(self.to_x, self.to_y, self.angle, -self.head_size / math.sqrt(2.0))
+        shaft_x2, shaft_y2 = move_point(self.to_x, self.to_y, self.angle, - math.cos(self.head_angle * piby180) * self.head_size)
+        self.shaft.bezier = [
             shaft_x1,
             shaft_y1,
+            (shaft_x1 + shaft_x2) / 2 + 0,
+            (shaft_y1 + shaft_y2) / 2 + 40,
             shaft_x2,
             shaft_y2
         ]
@@ -176,21 +180,25 @@ class Arrow(Widget, KVector):
         shaft_or_x1, shaft_or_y1 = move_point(shaft_x1, shaft_y1, self.angle + 90, self.shaft_width / 0.6)
         shaft_or_x2, shaft_or_y2 = move_point(shaft_x2, shaft_y2, self.angle + 90, self.shaft_width / 0.6)
 
-        self.shaft_outline_left.points = [
+        self.shaft_outline_left.bezier = [
             shaft_ol_x1,
             shaft_ol_y1,
+            (shaft_ol_x1 + shaft_ol_x2) / 2 + 0,
+            (shaft_ol_y1 + shaft_ol_y2) / 2 + 40,
             shaft_ol_x2,
             shaft_ol_y2,
         ]
 
-        self.shaft_outline_right.points = [
+        self.shaft_outline_right.bezier = [
             shaft_or_x1,
             shaft_or_y1,
+            (shaft_or_x1 + shaft_or_x2) / 2 + 0,
+            (shaft_or_y1 + shaft_or_y2) / 2 + 40,
             shaft_or_x2,
             shaft_or_y2,
         ]
-        head_x1, head_y1 = move_point(self.to_x, self.to_y, self.angle + 135, self.head_size)
-        head_x2, head_y2 = move_point(self.to_x, self.to_y, self.angle - 135, self.head_size)
+        head_x1, head_y1 = move_point(self.to_x, self.to_y, self.angle + (180 - self.head_angle), self.head_size)
+        head_x2, head_y2 = move_point(self.to_x, self.to_y, self.angle - (180 - self.head_angle), self.head_size)
         self.head.vertices = [
             self.to_x,
             self.to_y,
