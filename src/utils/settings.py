@@ -92,7 +92,7 @@ class Settings(Model):
         {'name': 'arma_name', 'defaultValue': ''},
         {'name': 'arma_name_enabled', 'defaultValue': False},
         {'name': 'arma_showScriptErrors', 'defaultValue': False},
-        {'name': 'arma_noPause', 'defaultValue': False},
+        {'name': 'arma_noPause', 'defaultValue': True},
         {'name': 'arma_window', 'defaultValue': False},
         {'name': 'arma_checkSignatures', 'defaultValue': False},
         {'name': 'arma_filePatching', 'defaultValue': False},
