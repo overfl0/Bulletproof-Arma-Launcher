@@ -312,16 +312,19 @@
             to_y: server_list_scrolled.y + 20
             fletching_radius: 0
             main_color: get_color_from_hex('#eca92d')
-            head_angle: 25
+            head_angle: 50
+            distortions: [0.125, 0.25, 0.025]
 
         Arrow:
             o_x: options_button_tutorial.x - self.parent.border
-            o_y: options_button_tutorial.center_y
-            to_x: options_button.right - self.parent.border + 7
+            o_y: options_button_tutorial.center_y - 12
+            to_x: options_button.right - self.parent.border + 15
             to_y: options_button.center_y
             fletching_radius: 0
             main_color: get_color_from_hex('#eca92d')
-            head_angle: 25
+            head_angle: 50
+            distortions: [0.25, 0.06]
+
 
         Arrow:
             o_x: action_button_tutorial.right + self.parent.border
@@ -330,12 +333,13 @@
             to_y: action_button.center_y
             fletching_radius: 0
             main_color: get_color_from_hex('#eca92d')
-            head_angle: 25
+            head_angle: 50
+            distortions: [0.23, 0.0]
+
 
         Label:
             id: server_list_scrolled_tutorial
-            text:
-                'Select the server'
+            text: 'Select the server'
             x: server_list_scrolled.x - self.width - self.parent.border - 20 - 200
             y : server_list_scrolled.center_y - self.height / 2 + 150
             size: self.texture_size
@@ -346,8 +350,8 @@
         Label:
             id: options_button_tutorial
             text: 'Set additional\noptions here'
-            x: options_button.right + self.parent.border + 20 + 100
-            y: options_button.center_y - self.height / 2 + 100
+            x: options_button.right + self.parent.border + 20 + 150
+            y: options_button.center_y - self.height / 2 - 50
             size: self.texture_size
             font_name: app.resource_path("fonts/Nexa_Light.ttf")
             outline_color: get_color_from_hex('#eca92d')
@@ -357,9 +361,10 @@
             id: action_button_tutorial
             text:
                 'Click here to start the installation\n\n' \
-                'The launcher [color=#FF0000]WILL[/color] automatically\ndetect your Workshop mods!'
+                'The launcher [color=#FF0000]WILL[/color] automatically\n' \
+                'detect all your Workshop mods!'
             x: action_button.x - self.width - self.parent.border - 20 - 150
-            y: action_button.center_y - self.height / 2 + 50
+            y: action_button.center_y - self.height / 2 + 150
             size: self.texture_size
             font_name: app.resource_path("fonts/Nexa_Light.ttf")
             markup: True
