@@ -15,5 +15,6 @@ bugtracker_url = 'https://github.com/overfl0/Bulletproof-Arma-Launcher/issues'
 settings_directory = 'Frontline Launcher'
 news_url = 'https://launcher.frontline.frl/news.md'
 dominant_color = '#eca92d'
+dominant_color_hover = '#ffc94d'
 donate_url = 'https://patreon.com/frontline'
 capitalize_status = True

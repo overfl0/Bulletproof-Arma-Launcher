@@ -90,8 +90,8 @@
 
         color_normal: [0, 0, 0, 1]
         color_hover: [0, 0, 0, 1]
-        bgcolor_normal: get_color_from_hex('#eca92d')
-        bgcolor_hover: get_color_from_hex('#ffc94d')
+        bgcolor_normal: get_color_from_hex(launcher_config.dominant_color)
+        bgcolor_hover: get_color_from_hex(launcher_config.dominant_color_hover)
 
 #= Menu ========================================================================
 
@@ -214,8 +214,8 @@
 
         color_normal: [0, 0, 0, 1]
         color_hover: [0, 0, 0, 1]
-        bgcolor_normal: get_color_from_hex('#eca92d')
-        bgcolor_hover: get_color_from_hex('#ffc94d')
+        bgcolor_normal: get_color_from_hex(launcher_config.dominant_color)
+        bgcolor_hover: get_color_from_hex(launcher_config.dominant_color_hover)
         size: 256, 64
 
     ServerListScrolled:
@@ -282,7 +282,7 @@
                 size: self.size
 
             Color:
-                rgba: get_color_from_hex('#eca92d')
+                rgba: get_color_from_hex(launcher_config.dominant_color)
 
             # options_button
             RoundedRectangle:
@@ -314,7 +314,7 @@
             to_x: server_list_scrolled.x - self.parent.border - 7
             to_y: server_list_scrolled.y + 20
             fletching_radius: 0
-            main_color: get_color_from_hex('#eca92d')
+            main_color: get_color_from_hex(launcher_config.dominant_color)
             head_angle: 50
             distortions: [0.125, 0.25, 0.025]
 
@@ -324,7 +324,7 @@
             to_x: options_button.right - self.parent.border + 15
             to_y: options_button.center_y
             fletching_radius: 0
-            main_color: get_color_from_hex('#eca92d')
+            main_color: get_color_from_hex(launcher_config.dominant_color)
             head_angle: 50
             distortions: [0.25, 0.06]
 
@@ -335,7 +335,7 @@
             to_x: action_button.x - self.parent.border - 7
             to_y: action_button.center_y
             fletching_radius: 0
-            main_color: get_color_from_hex('#eca92d')
+            main_color: get_color_from_hex(launcher_config.dominant_color)
             head_angle: 50
             distortions: [0.23, 0.0]
 
@@ -347,7 +347,7 @@
             y : server_list_scrolled.center_y - self.height / 2 + 150
             size: self.texture_size
             font_name: app.resource_path("fonts/Nexa_Light.ttf")
-            outline_color: get_color_from_hex('#eca92d')
+            outline_color: get_color_from_hex(launcher_config.dominant_color)
             outline_width: 1
 
         Label:
@@ -357,7 +357,7 @@
             y: options_button.center_y - self.height / 2 - 50
             size: self.texture_size
             font_name: app.resource_path("fonts/Nexa_Light.ttf")
-            outline_color: get_color_from_hex('#eca92d')
+            outline_color: get_color_from_hex(launcher_config.dominant_color)
             outline_width: 1
 
         Label:
@@ -371,5 +371,5 @@
             size: self.texture_size
             font_name: app.resource_path("fonts/Nexa_Light.ttf")
             markup: True
-            outline_color: get_color_from_hex('#eca92d')
+            outline_color: get_color_from_hex(launcher_config.dominant_color)
             outline_width: 1

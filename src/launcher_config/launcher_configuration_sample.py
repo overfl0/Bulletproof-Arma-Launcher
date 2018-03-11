@@ -53,5 +53,8 @@ news_url = 'https://launcher.tacbf.com/news.md'
 # The color of some icons and of the bar in popups
 dominant_color = '#eca92d'
 
+# The color of the main action button when hovered
+dominant_color_hover = '#ffc94d'
+
 # Whether the text on the status bar should ALL BE CAPITALIZED
 capitalize_status = True
