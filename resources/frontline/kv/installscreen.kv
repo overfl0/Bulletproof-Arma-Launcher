@@ -1,5 +1,6 @@
 # Section: Screen where install related stuff is
 
+#:import kivy kivy
 #:import launcher_config launcher_config
 #:import get_color_from_hex kivy.utils.get_color_from_hex
 
@@ -241,9 +242,11 @@
         size_hint: None, None
         pos_hint: {'right': 1, 'top': 1}
 
+    # Tutorial layer
     Label:
+        opacity: 0 if kivy.app.App.get_running_app().settings.get('tutorial_main_page_seen') else 1
         # Hide the layer on click
-        on_touch_down: self.setter('opacity')(self, 0)
+        on_touch_down: self.setter('opacity')(self, 0); kivy.app.App.get_running_app().settings.set('tutorial_main_page_seen', True)
 
         bcolor: 0.1, 0.1, 0.1, 0.9
         border: 10

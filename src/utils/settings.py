@@ -85,6 +85,7 @@ class Settings(Model):
         {'name': 'last_custom_background', 'defaultValue': None},
         {'name': 'auth_login', 'defaultValue': ''},
         {'name': 'auth_password', 'defaultValue': ''},
+        {'name': 'tutorial_main_page_seen', 'defaultValue': False},
 
         # Arma launching parameters ############################################
         {'name': 'arma_win32', 'defaultValue': False},
