@@ -78,6 +78,10 @@ MOD_MAPPING = CaseInsensitiveDict({
     '@rhs_afrf3': '@RHSAFRF',
     '@rhs_usf3': '@RHSUSAF',
     '@EricJ_Taliban': '@TalibanFighters',  # Really?!?
+    '@The_Unsung_Vietnam_War_mod': '@Unsung',
+    '@FRL - Frontline': '@Frontline',
+    '@FRL - Frontline IFA Compatibility': '@Frontline_compat_IFA',
+    '@FRL - Frontline RHS Compatibility': '@Frontline_compat_RHS',
 })
 
 
