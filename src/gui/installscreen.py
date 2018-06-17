@@ -832,7 +832,6 @@ class Controller(object):
         if self.try_enable_play_button() is not False:
             self.enable_action_buttons()
 
-
         if self.get_action_button_state() != DynamicButtonStates.self_upgrade:
             # Set server name label
             server_name = self.settings.get('selected_server')
@@ -840,6 +839,9 @@ class Controller(object):
 
             self.view.ids.server_list_scrolled.servers = self.mod_manager.get_servers()
             self.fold_server_list_scrolled()
+
+        if self.action_button_enabled() and self.get_action_button_state() == DynamicButtonStates.install:
+            self._set_status_label('You need to install or update mods. Your existing mods will be autodetected!')
 
         # Automatic launching of scheduled one-time actions
         if self.action_button_enabled():
