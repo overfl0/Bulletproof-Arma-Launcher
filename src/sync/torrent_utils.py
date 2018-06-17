@@ -13,18 +13,20 @@
 from __future__ import unicode_literals
 
 import errno
-import libtorrent
 import os
-import subprocess
 import stat
+import subprocess
+import sys
 import textwrap
 
+import libtorrent
 from kivy.logger import Logger
+
 from sync.integrity import check_mod_directories, check_files_mtime_correct, are_ts_plugins_installed, is_whitelisted
-from utils.metadatafile import MetadataFile
 from utils import paths
 from utils import unicode_helpers
 from utils import walker
+from utils.metadatafile import MetadataFile
 
 
 class AdminRequiredError(Exception):
@@ -348,7 +350,7 @@ def ensure_directory_structure_is_correct(mod_directory):
                 error_message = get_admin_error('file is not writable', node_path)
                 raise AdminRequiredError(error_message)
 
-def prepare_mod_directory(mod_full_path):
+def prepare_mod_directory(mod_full_path, check_writable=True):
     """Prepare the mod with the correct permissions, etc...
     This should make sure the parent directories are present, the mod directory
     is either not existing or it is present and has no broken symlinks.
@@ -372,8 +374,9 @@ def prepare_mod_directory(mod_full_path):
             os.unlink(mod_full_path)
 
     if os.path.lexists(mod_full_path):
-        # Read-write everything
-        ensure_directory_structure_is_correct(mod_full_path)
+        if check_writable:
+            # Read-write everything
+            ensure_directory_structure_is_correct(mod_full_path)
 
     else:
         if not paths.is_dir_writable(parent_location):
@@ -437,13 +440,21 @@ def symlink_mod(mod_full_path, real_location):
             else:
                 return
 
-    create_symlink(mod_full_path, real_location)
+
     try:
+        prepare_mod_directory(mod_full_path, check_writable=False)
+        create_symlink(mod_full_path, real_location)
         prepare_mod_directory(mod_full_path)
 
     except:
-        os.rmdir(mod_full_path)
-        raise
+        t, v, tb = sys.exc_info()
+
+        try:
+            os.rmdir(mod_full_path)
+        except Exception as ex:
+            Logger.error('symlink_mod: Error while deleting: {} {}'.format(mod_full_path, repr(ex)))
+
+        raise t, v, tb
 
 def create_add_torrent_flags(just_seed=False):
     """Create default flags for adding a new torrent to a syncer."""
