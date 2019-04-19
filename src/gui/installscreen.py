@@ -730,7 +730,7 @@ class Controller(object):
         if launcher_config.news_url:
             UrlRequest(launcher_config.news_url, on_success=partial(
                 self.on_news_success, self.view.ids.news_label))
-        UrlRequest('http://launcherstats.frontline.frl/launcher?domain=' +
+        UrlRequest('http://launcherstats.frontline-mod.com/launcher?domain=' +
                    urllib.quote(launcher_config.domain))
 
     def on_download_mod_description_reject(self, data):
