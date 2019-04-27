@@ -10,11 +10,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 import kivy.app
 
-from vresizablepopup import VResizablePopup
+from .vresizablepopup import VResizablePopup
 
 
 class ChainedPopup(VResizablePopup):
@@ -29,7 +28,7 @@ class ChainedPopup(VResizablePopup):
         super(ChainedPopup, self).__init__(*args, **kwargs)
 
     def chain_open(self):
-        '''Open this message box as soon as the previous box has been closed.'''
+        """Open this message box as soon as the previous box has been closed."""
         popup_chain = kivy.app.App.get_running_app().popup_chain
         popup_chain.append(self)
         popup_chain.try_open()

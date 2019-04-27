@@ -11,12 +11,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 import os
-import tkFileDialog
-import tkMessageBox
-import Tkinter
+import tkinter
+import tkinter.filedialog
+import tkinter.messagebox
 
 from kivy.logger import Logger
 from kivy.uix.modalview import ModalView
@@ -35,18 +34,18 @@ class FileChooser():
         self.open()
 
     def _tk_open(self, _):
-        root = Tkinter.Tk()
+        root = tkinter.Tk()
         root.withdraw()  # use to hide tkinter window
 
         while True:
 
             if self.select_dir:
-                tempnode = tkFileDialog.askdirectory(
+                tempnode = tkinter.filedialog.askdirectory(
                     parent=root,
                     initialdir=self.path,
                     title=self.title)
             else:
-                tempnode = tkFileDialog.askopenfilename(
+                tempnode = tkinter.filedialog.askopenfilename(
                     parent=root,
                     initialdir=self.path,
                     title=self.title,
@@ -73,7 +72,7 @@ class FileChooser():
             message = self.on_success(tempnode)
             if message:
                 Logger.error('FileChooser: {}'.format(message))
-                tkMessageBox.showinfo('Error', message)
+                tkinter.messagebox.showinfo('Error', message)
 
             else:
                 break

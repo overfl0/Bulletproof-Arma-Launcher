@@ -10,11 +10,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
-from kivy.properties import BooleanProperty
 from kivy.core.window import Window
+from kivy.properties import BooleanProperty
 from kivy.uix.scrollview import ScrollView
+
 
 class HoverBehavior(object):
     """This whole class is a joke. Any normal UI library would have this

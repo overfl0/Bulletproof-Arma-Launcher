@@ -13,3 +13,5 @@ pyinstaller.bat
 devmode.conf
 .settings
 .idea
+venv
+*.bak

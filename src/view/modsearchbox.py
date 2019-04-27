@@ -10,15 +10,15 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 import os
 
 from kivy.lang import Builder
 from kivy.uix.button import Button
+
 from utils.paths import is_dir_writable
-from view.chainedpopup import ChainedPopup
 from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior, HighlightBehavior
+from view.chainedpopup import ChainedPopup
 from view.filechooser import FileChooser
 
 default_title = ''

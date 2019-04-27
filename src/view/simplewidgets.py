@@ -10,22 +10,20 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
-import kivy.app
 import os
 
+import kivy.app
 from kivy.lang import Builder
-from kivy.logger import Logger
 from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
-from view.filechooser import FileChooser
+
 from view.errorpopup import ErrorPopup
+from view.filechooser import FileChooser
 
 
 class CheckLabel(BoxLayout):
-
     settings_name = StringProperty(None)
 
     def __init__(self, entries=None, on_manual_path=None, **kwargs):
@@ -48,7 +46,6 @@ class CheckLabel(BoxLayout):
 
 
 class CheckStringLabel(BoxLayout):
-
     settings_name = StringProperty(None)
 
     def __init__(self, entries=None, on_manual_path=None, **kwargs):
@@ -75,7 +72,6 @@ class CheckStringLabel(BoxLayout):
 
 
 class StringLabel(BoxLayout):
-
     settings_name = StringProperty(None)
     field_value = StringProperty(None)
 
@@ -101,7 +97,6 @@ class StringLabel(BoxLayout):
 
 
 class CheckDropdownLabel(BoxLayout):
-
     settings_name = StringProperty(None)
 
     def __init__(self, entries=None, on_manual_path=None, **kwargs):
@@ -129,7 +124,6 @@ class CheckDropdownLabel(BoxLayout):
 
 
 class CheckFileLabel(BoxLayout):
-
     settings_name = StringProperty(None)
 
     def __init__(self, entries=None, on_manual_path=None, **kwargs):
@@ -202,7 +196,6 @@ class Devmode_options(GridLayout):
             message = 'The torrent URLs have been copied to your clipboard. Press Ctrl+V to paste them.'
         else:
             message = 'No mods meeting the criteria were found.'
-
 
         ErrorPopup(details=details, message=message, title=title, size=(900, 400)).chain_open()
 

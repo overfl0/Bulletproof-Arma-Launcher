@@ -11,12 +11,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 import kivy.app
-
 from kivy.properties import BooleanProperty, ListProperty
 from kivy.uix.button import Button
+
 from view.behaviors import HoverBehavior
 
 

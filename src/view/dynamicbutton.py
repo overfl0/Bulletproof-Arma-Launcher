@@ -10,11 +10,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 from collections import namedtuple
-from hoverbutton import HoverButton
+
 from kivy.logger import Logger
+
+from .hoverbutton import HoverButton
 
 
 class DynamicButton(HoverButton):

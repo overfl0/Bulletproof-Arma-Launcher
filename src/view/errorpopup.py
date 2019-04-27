@@ -11,10 +11,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
-import launcher_config
 import sys
+import traceback
 
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
@@ -23,10 +22,11 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
+
+import launcher_config
 from utils import browser
-from utils.primitive_git import get_git_sha1_auto
 from utils.critical_messagebox import MessageBox
-from utils.testtools_compat import _format_exc_info
+from utils.primitive_git import get_git_sha1_auto
 from view.chainedpopup import ChainedPopup
 
 DEFAULT_ERROR_MESSAGE = """Critical Error.
@@ -62,7 +62,7 @@ class ErrorPopup(ChainedPopup):
         la.text_size = (550, None)  # Enable wrapping when text inside label is over 550px wide
         bl.add_widget(la)
 
-        button = Button(text="Ok", size_hint=(None, None), height=40, width=150, pos_hint={'center_x': 0.5})
+        button = Button(text='Ok', size_hint=(None, None), height=40, width=150, pos_hint={'center_x': 0.5})
         button.bind(on_release=self.dismiss)
 
         if details:
@@ -93,12 +93,12 @@ def error_popup_decorator(func):
                 func(*args, **kwargs)
 
             except (UnicodeEncodeError, UnicodeDecodeError) as ex:
-                error_message = "{}. Original exception: {} Text: {}".format(unicode(ex), type(ex).__name__, repr(ex.args[1]))
-                raise UnicodeError, UnicodeError(error_message), sys.exc_info()[2]
+                error_message = "{}. Original exception: {} Text: {}".format(str(ex), type(ex).__name__, repr(ex.args[1]))
+                raise UnicodeError(UnicodeError(error_message)).with_traceback(sys.exc_info()[2])
 
         except Exception:
             build = get_git_sha1_auto()
-            stacktrace = "".join(_format_exc_info(*sys.exc_info()))
+            stacktrace = traceback.format_exc()
             msg = 'Build: {}\n{}'.format(build, stacktrace)
             # p = ErrorPopup(details=msg)
             # p.open()
@@ -110,7 +110,7 @@ def error_popup_decorator(func):
 class PopupHandler(ExceptionHandler):
     def handle_exception(self, inst):
         build = get_git_sha1_auto()
-        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
+        stacktrace = traceback.format_exc()
         msg = 'Build: {}\n{}'.format(build, stacktrace)
         p = ErrorPopup(details=msg)
         p.chain_open()

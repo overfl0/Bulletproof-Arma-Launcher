@@ -11,14 +11,12 @@
 # GNU General Public License for more details.
 
 
-from __future__ import unicode_literals
-
-
 from kivy.lang import Builder
 from kivy.logger import Logger
 from kivy.properties import ListProperty, ObjectProperty
-from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.scrollview import ScrollView
+
 from sync.modmanager import ModManager
 from sync.server import Server
 from view.behaviors import HoverBehavior
@@ -69,7 +67,6 @@ class ServerListEntry(BoxLayout):
 
 
 class ServerListScrolled(ScrollView, HoverBehavior):
-
     selection_callback = ObjectProperty(None)
     servers = ListProperty()
     server_widgets = []

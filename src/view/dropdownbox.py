@@ -10,18 +10,18 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
-
-import launcher_config
-import kivy.utils
 
 from functools import partial
+
+import kivy.utils
 from kivy.properties import ListProperty, StringProperty
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.dropdown import DropDown
-from view.labelb import LabelB
+
+import launcher_config
 from view.behaviors import HoverBehavior
+from view.labelb import LabelB
 
 
 class DropdownBoxEntry(ButtonBehavior, HoverBehavior, LabelB):
@@ -60,7 +60,9 @@ class DropdownBox(HoverBox):
         if self.default:
             self.selected_text.text = self.default
 
-    def __init__(self, entries=[], **kwargs):
+    def __init__(self, entries=None, **kwargs):
+        if entries is None:
+            entries = []
         super(DropdownBox, self).__init__(orientation='horizontal', spacing=0, **kwargs)
 
         self.dropdown = DropDown()

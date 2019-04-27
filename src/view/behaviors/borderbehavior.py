@@ -10,13 +10,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.logger import Logger
 from kivy.uix.widget import Widget
-from kivy.uix.boxlayout import BoxLayout
 
 from kivy.properties import ObjectProperty, ReferenceListProperty
 from kivy.properties import NumericProperty

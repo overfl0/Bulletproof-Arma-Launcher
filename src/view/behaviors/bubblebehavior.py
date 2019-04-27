@@ -10,9 +10,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 from functools import partial
+
 from kivy.properties import StringProperty
 from kivy.uix.bubble import Bubble, BubbleButton
 

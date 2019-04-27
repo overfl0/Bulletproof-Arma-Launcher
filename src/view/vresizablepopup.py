@@ -10,13 +10,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
-
-import kivy
 
 from kivy.clock import Clock
 from kivy.logger import Logger
 from kivy.uix.widget import Widget
+
 from view.themedpopup import ThemedPopup
 
 

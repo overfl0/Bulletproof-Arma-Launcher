@@ -10,31 +10,30 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
-import launcher_config
-import kivy.utils
 import os
-import kivy.app
 import textwrap
 
-from utils import paths
-
+import kivy.app
+import kivy.utils
 from kivy.lang import Builder
 from kivy.logger import Logger
 from kivy.properties import ListProperty, ObjectProperty
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
-from kivy.uix.scrollview import ScrollView
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.scrollview import ScrollView
+
+import launcher_config
 from sync import manager_functions
 from sync.torrent_utils import path_can_be_a_mod, path_already_used_for_mod
-from utils.unicode_helpers import casefold
+from utils import paths
 from utils.paths import is_dir_writable
 from utils.process import protected_para
-from view.behaviors import HoverBehavior
+from utils.unicode_helpers import casefold
 from view.behaviors import BgcolorBehavior, BubbleBehavior
+from view.behaviors import HoverBehavior
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
 from view.filechooser import FileChooser
 
@@ -272,4 +271,6 @@ class ModListScrolled(ScrollView):
 
     def enable(self):
         self.disabled = False
+
+
 Builder.load_file('kv/modlist.kv')

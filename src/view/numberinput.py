@@ -11,9 +11,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
-"""The NumberInput field"""
 import re
 
 from kivy.logger import Logger
@@ -21,7 +19,7 @@ from kivy.uix.textinput import TextInput
 
 
 class NumberInput(TextInput):
-
+    """The NumberInput field"""
     # NOTE: The use of negative numbers is problematic now. It is possible to write "12-34"
     pat = re.compile('[0-9]+')
 
@@ -45,5 +43,5 @@ class NumberInput(TextInput):
             try:
                 return int(self.text)
             except ValueError:
-                Logger.warn('NumberImput: Could not convert text input. Returning 0')
+                Logger.warn('NumberInput: Could not convert text input. Returning 0')
                 return 0

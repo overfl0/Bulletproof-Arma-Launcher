@@ -10,18 +10,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 import textwrap
 
-from dropdownbox import DropdownBox
-from kivy.uix.label import Label
-from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.uix.widget import Widget
-from view.chainedpopup import ChainedPopup
-from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior, HighlightBehavior
 
+from view.behaviors import BubbleBehavior, HoverBehavior, DefaultButtonBehavior, HighlightBehavior
+from view.chainedpopup import ChainedPopup
+from view.dropdownbox import DropdownBox
 
 default_title = ''
 

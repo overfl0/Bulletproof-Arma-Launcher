@@ -10,7 +10,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 __all__ = (
            'BorderBehavior',
@@ -20,9 +19,9 @@ __all__ = (
            'HoverBehavior',
           )
 
-from borderbehavior import BorderBehavior
-from bubblebehavior import BubbleBehavior
-from defaultbuttonbehavior import DefaultButtonBehavior
-from highlightbehavior import HighlightBehavior
-from hoverbehavior import HoverBehavior
-from bgcolorbehavior import BgcolorBehavior
+from .bgcolorbehavior import BgcolorBehavior
+from .borderbehavior import BorderBehavior
+from .bubblebehavior import BubbleBehavior
+from .defaultbuttonbehavior import DefaultButtonBehavior
+from .highlightbehavior import HighlightBehavior
+from .hoverbehavior import HoverBehavior

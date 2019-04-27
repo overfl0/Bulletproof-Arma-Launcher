@@ -10,9 +10,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 from kivy.graphics import Color, Line
+
 
 class DefaultButtonBehavior(object):
     """Behavior that adds a border around the button much like a default choice.
@@ -32,6 +32,7 @@ class DefaultButtonBehavior(object):
     def update_default_border_line(self, *args):
         self.default_border_line.rectangle = \
             (self.x + 1, self.y + 1, self.width - 3, self.height - 1)
+
 
 '''
 # http://robertour.com/2015/07/15/kivy-label-or-widget-with-background-color-property/

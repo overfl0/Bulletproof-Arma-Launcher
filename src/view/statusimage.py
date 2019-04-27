@@ -11,13 +11,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
+from kivy.logger import Logger
+from kivy.properties import BooleanProperty, DictProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
-from kivy.uix.widget import Widget
-from kivy.properties import StringProperty, BooleanProperty, DictProperty
-from kivy.logger import Logger
 
 
 class StatusImage(BoxLayout):
@@ -85,9 +83,9 @@ class StatusImage(BoxLayout):
         self._hidden = hidden
 
     def hide(self, on_error=False):
-        '''Hide the status image widget.
+        """Hide the status image widget.
         on_error - hide the widget even if it is showing an error icon.
-        '''
+        """
         # This name is hardcoded for now. Probably should be rewritten in a better way
         if on_error is False and self.loaded_image_name == 'attention':
             return
@@ -95,5 +93,5 @@ class StatusImage(BoxLayout):
         self.hidden = True
 
     def show(self):
-        '''Show the status image widget.'''
+        """Show the status image widget."""
         self.hidden = False
