@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import socket
 import textwrap
@@ -325,4 +325,4 @@ def get_TS_servers_connected(api_key):
 
 
 if __name__ == '__main__':
-    print get_TS_servers_connected()
+    print(get_TS_servers_connected())

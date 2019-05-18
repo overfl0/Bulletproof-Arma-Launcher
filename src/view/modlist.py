@@ -249,7 +249,9 @@ class ModListScrolled(ScrollView):
     mod_selection_callback = ObjectProperty(None)
 
     def __init__(self, *args, **kwargs):
-        super(ModListScrolled, self).__init__(orientation='vertical', spacing=0, **kwargs)
+        # TODO: Check what's up py3
+        #super(ModListScrolled, self).__init__(orientation='vertical', spacing=0, **kwargs)
+        super(ModListScrolled, self).__init__(**kwargs)
 
         self.bind(directory_selection_callback=self.set_on_manual_path)
         self.bind(mod_selection_callback=self.set_on_select)

@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
@@ -98,7 +98,7 @@ def filter_out_whitelisted(elements):
     for whitelist_element in WHITELIST_NAME:
         file_match = os.path.sep + whitelist_element
         dir_match = os.path.sep + whitelist_element + os.path.sep
-        elements = set(itertools.ifilterfalse(lambda x: x.endswith(file_match) or dir_match in x, elements))
+        elements = set(itertools.filterfalse(lambda x: x.endswith(file_match) or dir_match in x, elements))
 
     return elements
 
@@ -150,7 +150,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='',
         top_dirs = set(casefold(top_dir) for top_dir in top_dirs)
 
         if checksums:
-            checksums = {casefold(key): value for (key, value) in checksums.iteritems()}
+            checksums = {casefold(key): value for (key, value) in checksums.items()}
 
         # Set conditional casefold function
         ccf = lambda x: casefold(x)
@@ -296,7 +296,7 @@ def parse_files_list(files_list, checksums, only_subdir=''):
         files_list = [f[subdir_len:] for f in files_list if f.startswith(only_subdir)]
         if checksums:
             # Do the same for checksums keys. Keep hashes intact
-            checksums = dict([(f[subdir_len:], hsh) for (f, hsh) in checksums.iteritems() if f.startswith(only_subdir)])
+            checksums = dict([(f[subdir_len:], hsh) for (f, hsh) in checksums.items() if f.startswith(only_subdir)])
 
     for torrent_file in files_list:
         file_paths.add(torrent_file)
@@ -356,7 +356,7 @@ def is_ts3_plugin_installed(ts3_plugin_full_path):
     for teamspeak_path in teamspeak_paths:
         Logger.debug('is_ts3_plugin_installed: Checking if TS3 plugin is installed in {}'.format(teamspeak_path))
         checksums = teamspeak.compute_checksums_for_ts3_plugin(ts3_plugin_full_path)
-        retval = check_mod_directories(checksums.keys(), base_directory=teamspeak_path,
+        retval = check_mod_directories(list(checksums.keys()), base_directory=teamspeak_path,
                                        on_superfluous='ignore', checksums=checksums)
 
         if retval:

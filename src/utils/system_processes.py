@@ -10,11 +10,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import os
 import psutil
-import unicode_helpers
+from . import unicode_helpers
 
 from kivy.logger import Logger
 

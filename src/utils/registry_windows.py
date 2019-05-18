@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 # import Windows registry package while ensuring cygwin compatibility
 try:
@@ -19,9 +19,9 @@ try:
     KEY_WOW64_32KEY = 0x200
 
 except ImportError:
-    import _winreg
-    KEY_WOW64_64KEY = _winreg.KEY_WOW64_64KEY
-    KEY_WOW64_32KEY = _winreg.KEY_WOW64_32KEY
+    import winreg
+    KEY_WOW64_64KEY = winreg.KEY_WOW64_64KEY
+    KEY_WOW64_32KEY = winreg.KEY_WOW64_32KEY
 
 
 class Registry(object):
@@ -36,14 +36,14 @@ class Registry(object):
         If force_64bit is True, it will force 64bit view of the registry.
         """
 
-        flags = _winreg.KEY_READ
+        flags = winreg.KEY_READ
         if force_32bit:
             flags = flags | KEY_WOW64_32KEY
         if force_64bit:
             flags = flags | KEY_WOW64_64KEY
 
-        key = _winreg.OpenKey(super_key_handle, key_path, 0, flags)
-        (value, valuetype) = _winreg.QueryValueEx(key, value_name)
+        key = winreg.OpenKey(super_key_handle, key_path, 0, flags)
+        (value, valuetype) = winreg.QueryValueEx(key, value_name)
         key.Close()
 
         return value
@@ -76,7 +76,7 @@ class Registry(object):
         and then for a 32bit key if no 64bit key is present.
         """
 
-        return Registry.ReadValue(_winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
+        return Registry.ReadValue(winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
 
     @staticmethod
     def ReadValueCurrentUser(key_path, value_name, check_both_architectures=False):
@@ -86,7 +86,7 @@ class Registry(object):
         and then for a 32bit key if no 64bit key is present.
         """
 
-        return Registry.ReadValue(_winreg.HKEY_CURRENT_USER, key_path, value_name, check_both_architectures)
+        return Registry.ReadValue(winreg.HKEY_CURRENT_USER, key_path, value_name, check_both_architectures)
 
     @staticmethod
     def ReadValueUserAndMachine(key_path, value_name, check_both_architectures=False):
@@ -98,10 +98,10 @@ class Registry(object):
         """
 
         try:
-            return Registry.ReadValue(_winreg.HKEY_CURRENT_USER, key_path, value_name, check_both_architectures)
+            return Registry.ReadValue(winreg.HKEY_CURRENT_USER, key_path, value_name, check_both_architectures)
         except Registry.Error as ex:
             if ex.errno == 2:  # Key/file not found
-                return Registry.ReadValue(_winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
+                return Registry.ReadValue(winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
 
             raise
 
@@ -115,9 +115,9 @@ class Registry(object):
         """
 
         try:
-            return Registry.ReadValue(_winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
+            return Registry.ReadValue(winreg.HKEY_LOCAL_MACHINE, key_path, value_name, check_both_architectures)
         except Registry.Error as ex:
             if ex.errno == 2:  # Key/file not found
-                return Registry.ReadValue(_winreg.HKEY_CURRENT_USER, key_path, value_name, check_both_architectures)
+                return Registry.ReadValue(winreg.HKEY_CURRENT_USER, key_path, value_name, check_both_architectures)
 
             raise

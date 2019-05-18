@@ -10,7 +10,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 import os
 import platform
@@ -74,7 +73,7 @@ def walk(top, topdown=True, onerror=None, followlinks=False):
     an infinite loop.
     """
 
-    if topdown == False:
+    if not topdown:
         raise Exception('You can\'t use topdown=False in this walker!')
 
     visited = set()

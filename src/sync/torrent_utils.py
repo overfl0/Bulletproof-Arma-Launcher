@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import errno
 import os
@@ -19,7 +19,7 @@ import subprocess
 import sys
 import textwrap
 
-import libtorrent
+# import libtorrent
 from kivy.logger import Logger
 
 from sync.integrity import check_mod_directories, check_files_mtime_correct, are_ts_plugins_installed, is_whitelisted
@@ -104,7 +104,7 @@ def is_complete_quick(mod):
     file_sizes = resume_data['file sizes']
     files = torrent_info.files()
     # file_path, size, mtime
-    files_data = map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files)
+    files_data = list(map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files))
 
     if not check_files_mtime_correct(mod.parent_location, files_data):
         Logger.info('Is_complete: Some files seem to have been modified in the meantime. Marking as not complete')
@@ -113,7 +113,7 @@ def is_complete_quick(mod):
     # (5) Check if there are no additional files in the directory
     # TODO: Check if these checksums are even needed now
     checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
-    files_list = checksums.keys()
+    files_list = list(checksums.keys())
     if not check_mod_directories(files_list, mod.parent_location, on_superfluous='warn'):
         Logger.info('Is_complete: Superfluous files in mod directory. Marking as not complete')
         return False
@@ -408,10 +408,10 @@ def symlink_mod(mod_full_path, real_location):
             # The directory is not empty
 
             # Really ugly workaround...
-            import tkMessageBox
-            import Tkinter
+            import tkinter.messagebox
+            import tkinter
 
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             root.withdraw()  # use to hide tkinter window
 
             message = textwrap.dedent('''\
@@ -421,7 +421,7 @@ def symlink_mod(mod_full_path, real_location):
             Are you sure you want to continue?
             '''.format(mod_full_path))
 
-            result = tkMessageBox.askquestion('Are you sure?', message, icon='warning', parent=root)
+            result = tkinter.messagebox.askquestion('Are you sure?', message, icon='warning', parent=root)
             if result == 'yes':
                 import shutil
                 try:
@@ -454,7 +454,7 @@ def symlink_mod(mod_full_path, real_location):
         except Exception as ex:
             Logger.error('symlink_mod: Error while deleting: {} {}'.format(mod_full_path, repr(ex)))
 
-        raise t, v, tb
+        raise t(v).with_traceback(tb)
 
 def create_add_torrent_flags(just_seed=False):
     """Create default flags for adding a new torrent to a syncer."""

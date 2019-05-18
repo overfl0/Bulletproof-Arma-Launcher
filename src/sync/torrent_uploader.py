@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import errno
 import inspect
@@ -23,7 +23,7 @@ import time
 from collections import OrderedDict
 from kivy.logger import Logger
 from kivy.config import Config
-from manager_functions import _torrent_url_base
+from .manager_functions import _torrent_url_base
 from sync import torrent_utils
 from sync import manager_functions
 from utils.devmode import devmode

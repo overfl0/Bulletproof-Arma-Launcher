@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
 import os
 import platform
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from kivy.logger import Logger
 from third_party import steam
@@ -135,7 +135,8 @@ class Arma(object):
                 # We need to convert the unquoted unicode python string to bytes
                 # so we use encode('latin-1') for that.
                 # Any error here indicates that this is not a valid profile
-                profile_name = urllib.unquote(filename).encode('latin-1').decode('utf-8')
+                # TODO: py3 check this
+                profile_name = urllib.parse.unquote(filename).encode('latin-1').decode('utf-8')
 
             except:
                 Logger.error('Arma: get_player_profiles: Error when converting {}'.format(repr(filename)))

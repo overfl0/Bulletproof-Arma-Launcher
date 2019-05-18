@@ -1,6 +1,6 @@
 # Put this file into your resources/<name>/launcher_configuration.py
 
-from __future__ import unicode_literals
+
 
 # Name that is written on the GUI window
 launcher_name = 'Tactical Battlefield'

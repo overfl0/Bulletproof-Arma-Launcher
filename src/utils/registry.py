@@ -11,11 +11,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import platform
 
 if platform.system() != 'Linux':
-    from registry_windows import *
+    from .registry_windows import *
 else:
-    from registry_linux import *
+    from .registry_linux import *

@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import random
 import time
@@ -39,12 +39,12 @@ def format_response_final(answers):
     return [answer if answer != RESPONSE_UNKNOWN else RESPONSE_DOWN for answer in answers]
 
 
-def query_server((server_id, server)):
+# TODO: py3 changeme
+def query_server(args):
     """Query a server for its player count.
     This function is run in a separate thread.
     """
-
-    # Sleep to prevent flooding the network
+    (server_id, server) = args
     time.sleep(random.random() * MAX_SLEEP_TIMEOUT)
 
     Logger.info('query_server: [{}] Querying server {} at {}:{}'.format(
@@ -120,7 +120,7 @@ def query_servers(message_queue, servers):
                 break
 
             try:
-                server_id, response = pool_generator.next()
+                server_id, response = next(pool_generator)
 
             except StopIteration:
                 break

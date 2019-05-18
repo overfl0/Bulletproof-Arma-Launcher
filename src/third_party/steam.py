@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 # Allow relative imports when the script is run from the command line
 if __name__ == "__main__":
@@ -112,4 +112,4 @@ if __name__ == '__main__':
     for library in libraries:
         tested_path = os.path.join(library, 'steamapps', 'common', 'Arma 3', 'Arma3.exe')
         if os.path.isfile(tested_path):
-            print 'Found in: {}'.format(tested_path)
+            print('Found in: {}'.format(tested_path))

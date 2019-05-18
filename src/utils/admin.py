@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 # TODO: Implement this for linux as well
 
@@ -62,7 +62,7 @@ def run_admin(executable, args):
     params = ' '.join('"{}"'.format(arg) for arg in args)
     params = unicode_helpers.u_to_fs(params)
 
-    if isinstance(executable, unicode):
+    if isinstance(executable, str):
         executable = unicode_helpers.u_to_fs(executable)
 
     try:
@@ -88,21 +88,21 @@ if __name__ == '__main__':
     # With wait
     task = run_admin(executable, args)
     if not task:
-        print "User cancelled the launch"
+        print("User cancelled the launch")
         sys.exit(1)
 
     retval = task.wait()
-    print retval
+    print(retval)
 
     # With poll
     task = run_admin(executable, args)
     if not task:
-        print "User cancelled the launch"
+        print("User cancelled the launch")
         sys.exit(1)
 
     while True:
         retval = task.poll()
-        print retval
+        print(retval)
 
         if retval is not None:
             break

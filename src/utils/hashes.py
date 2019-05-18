@@ -10,15 +10,15 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import hashlib
 
 
-def _hash_for_file(handle, algorithm=hashlib.algorithms[0], block_size=256 * 128, human_readable=True):
-    if algorithm not in hashlib.algorithms:
+def _hash_for_file(handle, algorithm='sha256', block_size=256 * 128, human_readable=True):
+    if algorithm not in hashlib.algorithms_available:
         raise NameError('The algorithm "{algorithm}" you specified is '
-                        'not a member of "hashlib.algorithms"'.format(algorithm=algorithm))
+                        'not a member of "hashlib.algorithms_available"'.format(algorithm=algorithm))
 
     hash_algo = hashlib.new(algorithm)  # According to hashlib documentation using new()
                                         # will be slower then calling using named
@@ -34,7 +34,7 @@ def _hash_for_file(handle, algorithm=hashlib.algorithms[0], block_size=256 * 128
     return file_hash
 
 
-def hash_for_file(handle, algorithm=hashlib.algorithms[0], block_size=256 * 128, human_readable=True):
+def hash_for_file(handle, algorithm='sha256', block_size=256 * 128, human_readable=True):
     """
     Block size directly depends on the block size of your filesystem
     to avoid performances issues

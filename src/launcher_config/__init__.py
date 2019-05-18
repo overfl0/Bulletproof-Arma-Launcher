@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 ################################################################################
 
@@ -31,7 +31,7 @@ import textwrap
 
 try:
     # Try importing the config dir and fail gracefully
-    from config_select import config_dir
+    from .config_select import config_dir
 
 except ImportError:
     message = textwrap.dedent('''
@@ -40,7 +40,7 @@ except ImportError:
         and filled it with the correct value.
         You can use config_select_sample.py as an example.''')
 
-    print message
+    print(message)
 
     from kivy.logger import Logger
     Logger.error('Config: {}'.format(message))

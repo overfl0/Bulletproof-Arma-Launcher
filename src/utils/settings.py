@@ -14,7 +14,7 @@
 Module to hold launcher specific model stuff
 """
 
-from __future__ import unicode_literals
+
 
 import argparse
 import launcher_config
@@ -28,9 +28,7 @@ from utils.data.jsonstore import JsonStore
 from utils.data.model import ModelInterceptorError, Model
 from utils.paths import mkdir_p, get_launcher_directory
 
-# str variant of the unicode string on_change
-# kivy's api only works with non unicode strings
-ON_CHANGE = b'on_change'
+ON_CHANGE = 'on_change'
 
 
 class Settings(Model):
@@ -131,7 +129,7 @@ class Settings(Model):
         self.parser = None
         self.parse_args(argv)
 
-        Logger.info('Settings: loaded args: ' + unicode(self.data))
+        Logger.info('Settings: loaded args: ' + str(self.data))
 
     @classmethod
     def launcher_default_basedir(cls):

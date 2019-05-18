@@ -10,14 +10,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
-import headtracking
+
+from . import headtracking
 import errno
 import kivy.app
 import launcher_config
 import os
-import teamspeak
+from . import teamspeak
 import textwrap
 import utils.system_processes
 import shlex
@@ -64,7 +64,7 @@ def check_requirements_troubleshooting(dummy_var):
     with ignore_exceptions(Exception):
         steam_path = steam.get_steam_exe_path()
 
-    for _ in xrange(10):
+    for _ in range(10):
         Logger.info('')
 
     message = textwrap.dedent('''
@@ -374,7 +374,7 @@ def run_the_game(mods, ip=None, port=None, password=None, teamspeak_urls=None, b
     ts_run_on_start = devmode.get_ts_run_on_start(default=True)
     if ts_run_on_start:
         if teamspeak_urls:
-            if isinstance(teamspeak_urls, basestring):
+            if isinstance(teamspeak_urls, str):
                 teamspeak.run_and_connect([teamspeak_urls])
             else:
                 teamspeak.run_and_connect(teamspeak_urls)

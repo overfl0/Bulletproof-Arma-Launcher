@@ -11,7 +11,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 from utils.paths import fix_unicode_paths
 fix_unicode_paths()
 
@@ -26,10 +26,11 @@ def start():
     It would be nice to refactor it one day.
     """
 
+    # TODO: py3 Reimplement this one day
     # Enforce all requirements so that the program doesn't crash in the middle of execution.
-    if __name__ == '__main__':
-        from utils.requirements import check_libraries_requirements
-        check_libraries_requirements()
+    # if __name__ == '__main__':
+    #     from utils.requirements import check_libraries_requirements
+    #     check_libraries_requirements()
 
     # Import multiprocessing and enable freeze_support which is needed on windows
     import multiprocessing
@@ -135,7 +136,7 @@ def start():
         class LauncherApp(BaseApp):
             """Main class for the normal app"""
 
-            title = launcher_config.launcher_name.encode('utf-8')
+            title = launcher_config.launcher_name
 
             def __init__(self, settings):
                 super(LauncherApp, self).__init__()
@@ -149,7 +150,7 @@ def start():
         class SelfUpdaterApp(BaseApp):
             """app which starts the self updater"""
 
-            title = '{} updater'.format(launcher_config.launcher_name).encode('utf-8')
+            title = '{} updater'.format(launcher_config.launcher_name)
 
             def __init__(self, settings):
                 super(SelfUpdaterApp, self).__init__()
@@ -164,7 +165,7 @@ def start():
             launcher_app = None
 
             if settings.get('update'):
-                print 'launching self updater'
+                print('launching self updater')
                 launcher_app = SelfUpdaterApp(settings).run()
 
             else:
@@ -183,10 +184,12 @@ try:
 
     except (UnicodeEncodeError, UnicodeDecodeError) as ex:
         import sys
-        error_message = "{}. Original exception: {} Text: {}".format(unicode(ex), type(ex).__name__, repr(ex.args[1]))
-        raise UnicodeError, UnicodeError(error_message), sys.exc_info()[2]
+        error_message = "{}. Original exception: {} Text: {}".format(str(ex), type(ex).__name__, repr(ex.args[1]))
+        raise UnicodeError(UnicodeError(error_message)).with_traceback(sys.exc_info()[2])
 
 except Exception:
+    # TODO: py3 fix this exception handling here
+    raise
     # Mega catch-all requirements
     # Try to catch all possible problems
     import sys
@@ -205,8 +208,7 @@ except Exception:
         )
 
     try:
-        from utils.testtools_compat import _format_exc_info
-        stacktrace = "".join(_format_exc_info(*exc_info))
+        stacktrace = traceback.format_exc()
 
     except:
         try:

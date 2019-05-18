@@ -20,10 +20,12 @@ http://stackoverflow.com/questions/24944558/pyinstaller-built-windows-exe-fails-
 They serve as workarounds, for windows issues regarding multiprocessing
 """
 
-from __future__ import unicode_literals
+
 
 import copy
-import multiprocessing.forking
+import traceback
+
+# import multiprocessing.forking
 import multiprocessing
 import os
 import sys
@@ -32,39 +34,38 @@ import threading
 import time
 
 from multiprocessing.queues import SimpleQueue
-from multiprocessing import Lock, Pipe
+from multiprocessing import Lock, Pipe, Process
 from kivy.clock import Clock
 from kivy.logger import Logger
 from utils.primitive_git import get_git_sha1_auto
 from utils import system_processes
-from utils.testtools_compat import _format_exc_info
 
-
-class _Popen(multiprocessing.forking.Popen):
-    def __init__(self, *args, **kw):
-        if hasattr(sys, 'frozen'):
-            # We have to set original _MEIPASS2 value from sys._MEIPASS
-            # to get --onefile mode working.
-            os.putenv('_MEIPASS2', sys._MEIPASS)
-        try:
-            super(_Popen, self).__init__(*args, **kw)
-        finally:
-            if hasattr(sys, 'frozen'):
-                # On some platforms (e.g. AIX) 'os.unsetenv()' is not
-                # available. In those cases we cannot delete the variable
-                # but only set it to the empty string. The bootloader
-                # can handle this case.
-                if hasattr(os, 'unsetenv'):
-                    os.unsetenv('_MEIPASS2')
-                else:
-                    os.putenv('_MEIPASS2', '')
-
-        # fix for request finding the certificates
-        # see http://stackoverflow.com/questions/17158529/fixing-ssl-certificate-error-in-exe-compiled-with-py2exe-or-pyinstaller
-
-
-class Process(multiprocessing.Process):
-    _Popen = _Popen
+# # TODO: py3: https://github.com/pyinstaller/pyinstaller/wiki/Recipe-Multiprocessing
+# class _Popen(multiprocessing.forking.Popen):
+#     def __init__(self, *args, **kw):
+#         if hasattr(sys, 'frozen'):
+#             # We have to set original _MEIPASS2 value from sys._MEIPASS
+#             # to get --onefile mode working.
+#             os.putenv('_MEIPASS2', sys._MEIPASS)
+#         try:
+#             super(_Popen, self).__init__(*args, **kw)
+#         finally:
+#             if hasattr(sys, 'frozen'):
+#                 # On some platforms (e.g. AIX) 'os.unsetenv()' is not
+#                 # available. In those cases we cannot delete the variable
+#                 # but only set it to the empty string. The bootloader
+#                 # can handle this case.
+#                 if hasattr(os, 'unsetenv'):
+#                     os.unsetenv('_MEIPASS2')
+#                 else:
+#                     os.putenv('_MEIPASS2', '')
+#
+#         # fix for request finding the certificates
+#         # see http://stackoverflow.com/questions/17158529/fixing-ssl-certificate-error-in-exe-compiled-with-py2exe-or-pyinstaller
+#
+#
+# class Process(multiprocessing.Process):
+#     _Popen = _Popen
 
 
 # TODO: comment and treat failure and join process
@@ -429,7 +430,7 @@ def _protected_call(messagequeue, function, action_name, *args, **kwargs):
         Logger.info('Para: Starting new thread/process for: {}'.format(action_name))
         return function(messagequeue, *args, **kwargs)
     except Exception:
-        stacktrace = "".join(_format_exc_info(*sys.exc_info()))
+        stacktrace = traceback.format_exc()
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
         messagequeue.reject({'details': error})
 

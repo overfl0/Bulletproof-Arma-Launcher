@@ -11,13 +11,13 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import external.junctions
 import os
 
 from kivy.logger import Logger
-from torrent_utils import is_complete_quick
+from .torrent_utils import is_complete_quick
 
 
 class Mod(object):

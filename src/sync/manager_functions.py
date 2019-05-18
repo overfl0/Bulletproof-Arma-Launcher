@@ -11,7 +11,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import launcher_config
 import os
@@ -117,7 +117,7 @@ def _get_mod_descriptions(para, login, password):
             HTTP error code: {}
 
             Contact the master server owner to fix this issue.
-            '''.format(unicode(res.status_code)))
+            '''.format(str(res.status_code)))
         para.reject({'msg': message})
 
     else:
@@ -132,7 +132,7 @@ def _get_mod_descriptions(para, login, password):
 
                 If you're the master server owner, consider checking your
                 metadata.json file with a JSON validator.
-                '''.format(unicode(res.status_code)))
+                '''.format(str(res.status_code)))
             para.reject({'msg': message})
 
         # Protection in case autoupdate is messed up and we have to force a manual update

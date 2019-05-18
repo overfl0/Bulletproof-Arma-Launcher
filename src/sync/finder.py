@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 # TODO: Ensure correct handling of directory loops!
 
@@ -33,7 +33,7 @@ def keep_meaningful_data(name):
     """
 
     no_case = casefold(name)
-    allowed_chars = string.letters + string.digits + '@'
+    allowed_chars = string.ascii_letters + string.digits + '@'
     filtered_name = re.sub('[^{}]'.format(re.escape(allowed_chars)), '', no_case)
 
     return filtered_name
@@ -43,7 +43,7 @@ class CaseInsensitiveDict(dict):
     """http://stackoverflow.com/questions/2082152/case-insensitive-dictionary"""
     @classmethod
     def _k(cls, key):
-        return keep_meaningful_data(key) if isinstance(key, basestring) else key
+        return keep_meaningful_data(key) if isinstance(key, str) else key
 
     def __init__(self, *args, **kwargs):
         super(CaseInsensitiveDict, self).__init__(*args, **kwargs)
@@ -57,7 +57,7 @@ class CaseInsensitiveDict(dict):
     def __contains__(self, key):
         return super(CaseInsensitiveDict, self).__contains__(self.__class__._k(key))
     def has_key(self, key):
-        return super(CaseInsensitiveDict, self).has_key(self.__class__._k(key))
+        return self.__class__._k(key) in super(CaseInsensitiveDict, self)
     def pop(self, key, *args, **kwargs):
         return super(CaseInsensitiveDict, self).pop(self.__class__._k(key), *args, **kwargs)
     def get(self, key, *args, **kwargs):

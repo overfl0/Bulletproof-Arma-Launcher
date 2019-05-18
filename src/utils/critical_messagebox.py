@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import ctypes
 
@@ -55,8 +55,8 @@ def MessageBox(message, title, flags=MB_ICONEXCLAMATION):
     goes so wrong that we cannot even be sure that kivy is running.
     """
     # Print to console if any present
-    print repr(title)
-    print repr(message)
+    print(repr(title))
+    print(repr(message))
 
     try:
         win32_msgbox = ctypes.windll.user32.MessageBoxW

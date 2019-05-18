@@ -10,11 +10,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import subprocess
 import textwrap
-import unicode_helpers
+from . import unicode_helpers
 
 from utils.critical_messagebox import MessageBox
 from utils import admin

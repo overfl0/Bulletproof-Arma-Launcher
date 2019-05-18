@@ -10,14 +10,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import errno
 import launcher_config
 import os
 import platform
 import sys
-import unicode_helpers
+from . import unicode_helpers
 
 
 def is_pyinstaller_bundle():
@@ -30,10 +30,10 @@ def fix_unicode_paths():
     Contains protection against multiple use.
     """
 
-    if not isinstance(sys.argv[0], unicode):
+    if not isinstance(sys.argv[0], str):
         sys.argv = unicode_helpers.fs_to_u_list(sys.argv)
 
-    if hasattr(sys, '_MEIPASS') and not isinstance(sys._MEIPASS, unicode):
+    if hasattr(sys, '_MEIPASS') and not isinstance(sys._MEIPASS, str):
         sys._MEIPASS = unicode_helpers.fs_to_u(sys._MEIPASS)
 
 
@@ -141,7 +141,9 @@ def get_local_user_directory(*relative):
 
     local_app_data = os.environ.get('LOCALAPPDATA')  # C:\Users\user\AppData\Local
     if local_app_data:
-        local_app_data = unicode_helpers.fs_to_u(local_app_data)
+        pass
+        # print(type(local_app_data))
+        # local_app_data = unicode_helpers.fs_to_u(local_app_data)
 
     else:
         # No LOCALAPPDATA variable? Try to build it yourself based on the user home

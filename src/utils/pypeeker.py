@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 
 
-from __future__ import unicode_literals
+
 
 
 import ast
@@ -82,4 +82,4 @@ def get_version(name, location=VERSION_LOCATION):
     raise PypeekerException('Version variable not found in the version file!')
 
 if __name__ == '__main__':
-    print get_version(sys.argv[1])
+    print(get_version(sys.argv[1]))

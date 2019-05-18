@@ -11,18 +11,18 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import third_party
 import third_party.steam_query
 
-from manager_functions import (
+from .manager_functions import (
     _get_mod_descriptions,
     _prepare_and_check,
     _sync_all,
 )
 
-from preparer import prepare_all
+from .preparer import prepare_all
 
 from kivy.logger import Logger
 from utils.process import protected_para
@@ -59,7 +59,7 @@ class ModManager(object):
                 mods.extend(server.mods)
 
         if only_selected:
-            mods = filter(lambda x: not x.optional or x.selected, mods)
+            mods = [x for x in mods if not x.optional or x.selected]
 
         return mods
 
@@ -224,7 +224,7 @@ class ModManager(object):
         # Note: the libtorrent seed-only flags prevent downloading data, but
         # still truncate the file anyway - something we want to prevent here
         if seed:
-            synced_elements = filter(lambda mod: mod.is_complete(), synced_elements)
+            synced_elements = [mod for mod in synced_elements if mod.is_complete()]
 
         para = protected_para(
             _sync_all,

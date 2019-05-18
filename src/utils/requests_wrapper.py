@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import requests
 
@@ -29,7 +29,7 @@ def download_url(*args, **kwargs):
 
     retries_total = 3
 
-    for retries_left in reversed(range(retries_total)):
+    for retries_left in reversed(list(range(retries_total))):
         try:
             return _download_url(*args, **kwargs)
 

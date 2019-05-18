@@ -11,7 +11,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 # Note: every std::string coming from libtorrent should be decoded from utf-8
 # like that: alert.message().decode('utf-8')
@@ -26,9 +26,9 @@ if __name__ == "__main__":
     site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
 
-import libtorrent
+# import libtorrent
 import textwrap
-import torrent_utils
+from . import torrent_utils
 
 from kivy.logger import Logger
 from sync.integrity import check_mod_directories
@@ -292,7 +292,7 @@ class TorrentSyncer(object):
                         HTTP error code: {}
 
                         Contact the master server owner to fix this issue.
-                        '''.format(unicode(res.status_code)))
+                        '''.format(str(res.status_code)))
                     raise PrepareParametersException(message)
 
                 try:
@@ -675,10 +675,10 @@ if __name__ == '__main__':
 
     class DummyQueue:
         def progress(self, d, frac):
-            Logger.info('Progress: {}'.format(unicode(d)))
+            Logger.info('Progress: {}'.format(str(d)))
 
         def reject(self, d):
-            Logger.error('Reject: {}'.format(unicode(d)))
+            Logger.error('Reject: {}'.format(str(d)))
 
         def receive_message(self):
             return None
@@ -704,9 +704,9 @@ if __name__ == '__main__':
     completed = []
     for mod in mods:
         is_complete = torrent_utils.is_complete_quick(mod)
-        print '{} is complete:'.format(mod.foldername), is_complete
+        print('{} is complete:'.format(mod.foldername), is_complete)
         completed.append(is_complete)
 
     if not all(completed):
-        print 'Syncing...'
+        print('Syncing...')
         ts.sync()

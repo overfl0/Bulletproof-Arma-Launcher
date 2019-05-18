@@ -11,12 +11,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
+
 
 import shutil
 import os
 import time
-import torrent_utils
+from . import torrent_utils
 
 from kivy.config import Config
 from kivy.logger import Logger
@@ -218,7 +218,7 @@ class Preparer(object):
 
             # Dropping all the mods that should not be shown here
             # (optional AND not selected)
-            self.mods = filter(lambda m: not m.optional or m.selected, self.mods)
+            self.mods = [m for m in self.mods if not m.optional or m.selected]
 
             for mod in self.mods:
                 # If directory does not exist

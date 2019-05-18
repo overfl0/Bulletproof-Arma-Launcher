@@ -192,8 +192,8 @@ class PyInstArchive:
             nameLen = struct.calcsize('!iiiiBc')
 
             (entryPos, cmprsdDataSize, uncmprsdDataSize, cmprsFlag, typeCmprsData, name) = \
-            struct.unpack( \
-                '!iiiBc{}s'.format(entrySize - nameLen), \
+            struct.unpack(
+                '!iiiBc{}s'.format(entrySize - nameLen),
                 self.fPtr.read(entrySize - 4))
             
             name = name.decode('utf-8').rstrip('\0')
@@ -201,14 +201,14 @@ class PyInstArchive:
                 name = str(uniquename())
                 print('[!] Warning: Found an unamed file in CArchive. Using random name {}'.format(name))
                 
-            self.tocList.append( \
-                                CTOCEntry(                      \
-                                    self.overlayPos + entryPos, \
-                                    cmprsdDataSize,             \
-                                    uncmprsdDataSize,           \
-                                    cmprsFlag,                  \
-                                    typeCmprsData,              \
-                                    name                        \
+            self.tocList.append(
+                                CTOCEntry(
+                                    self.overlayPos + entryPos,
+                                    cmprsdDataSize,
+                                    uncmprsdDataSize,
+                                    cmprsFlag,
+                                    typeCmprsData,
+                                    name,
                                 ))
 
             parsedLen += entrySize
@@ -288,7 +288,7 @@ class PyInstArchive:
             if type(toc) == list:
                 toc = dict(toc)            
 
-            for key in toc.keys():
+            for key in list(toc.keys()):
                 (ispkg, pos, length) = toc[key]
                 f.seek(pos, os.SEEK_SET)
                 

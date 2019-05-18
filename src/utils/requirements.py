@@ -10,14 +10,13 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
 import sys
-
-from critical_messagebox import MessageBox
+import traceback
 from distutils.version import LooseVersion
-from utils import paths
-from utils.testtools_compat import _format_exc_info
+
+from .critical_messagebox import MessageBox
+from . import paths
 
 if not paths.is_pyinstaller_bundle():
     from pkg_resources import \
@@ -61,9 +60,8 @@ def check_libraries_requirements():
     try:
         # Skip the check if we are running in a |PyInstaller| bundle. Assume everything is all right.
         if not paths.is_pyinstaller_bundle():
-            with file(file_path) as req_file:
+            with open(file_path) as req_file:
                 requirements = strip_requirements(req_file.readlines())
-                print('testing', requirements)
                 require(requirements)
 
         # Libtorrent requirements
@@ -94,7 +92,7 @@ def check_libraries_requirements():
         except Exception:
             # Kivy raises an Exception with a not-so-nicely formatted message
             # Just print it and exit
-            msg = "".join(_format_exc_info(*sys.exc_info())) + \
+            msg = traceback.format_exc() + \
                   "\nAvast DeepScreen is known to fail here."
             MessageBox(msg, 'Kivy error')
             sys.exit(1)

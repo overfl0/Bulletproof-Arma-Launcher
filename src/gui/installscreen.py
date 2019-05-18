@@ -10,9 +10,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
-from __future__ import unicode_literals
-
+from enum import Enum
 from multiprocessing import Queue
 
 import launcher_config
@@ -20,7 +18,7 @@ import kivy.app  # To keep PyDev from complaining
 import os
 import textwrap
 import third_party.helpers
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import utils.system_processes
 
 from autoupdater import autoupdater
@@ -35,7 +33,6 @@ from kivy.logger import Logger
 
 from sync.modmanager import ModManager
 from utils.devmode import devmode
-from utils.fake_enum import enum
 from utils.primitive_git import get_git_sha1_auto
 from utils.paths import is_pyinstaller_bundle
 from view.errorpopup import ErrorPopup, DEFAULT_ERROR_MESSAGE
@@ -54,7 +51,12 @@ class InstallScreen(Screen):
         self.controller = Controller(self)
 
 
-DynamicButtonStates = enum('play', 'checking', 'install', 'self_upgrade')
+# DynamicButtonStates = enum('play', 'checking', 'install', 'self_upgrade')
+class DynamicButtonStates(Enum):
+    play = 0
+    checking = 1
+    install = 2
+    self_upgrade = 3
 
 
 class Controller(object):
@@ -474,7 +476,7 @@ class Controller(object):
         if not secondary:
             self.view.ids.status_box.text = ''
         else:
-            if isinstance(secondary, basestring):
+            if isinstance(secondary, str):
                 self.view.ids.status_box.text = secondary
             else:
                 self.view.ids.status_box.text = ' / '.join(secondary).replace('@', '')
@@ -731,7 +733,7 @@ class Controller(object):
             UrlRequest(launcher_config.news_url, on_success=partial(
                 self.on_news_success, self.view.ids.news_label))
         UrlRequest('http://launcherstats.frontline-mod.com/launcher?domain=' +
-                   urllib.quote(launcher_config.domain))
+                   urllib.parse.quote(launcher_config.domain))
 
     def on_download_mod_description_reject(self, data):
         self.para = None

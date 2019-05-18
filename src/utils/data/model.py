@@ -14,13 +14,13 @@
 Module implementing a simple model
 """
 
-from __future__ import unicode_literals
+
 
 from kivy.event import EventDispatcher
 
 # str variant of the unicode string on_change
 # kivys api only works with non unicode strings
-ON_CHANGE = 'on_change'.encode('ascii')
+ON_CHANGE = 'on_change'
 
 class ModelInterceptorError(object):
     """

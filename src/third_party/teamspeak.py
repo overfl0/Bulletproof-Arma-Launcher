@@ -10,12 +10,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from __future__ import unicode_literals
 
-import ConfigParser
+
+import configparser
 import os
 import textwrap
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import zipfile
 
 from kivy.logger import Logger
@@ -197,7 +197,7 @@ def _sanitize_url(url):
     if not url:
         return url
 
-    return urllib.quote(urllib.unquote(url), ':')
+    return urllib.parse.quote(urllib.parse.unquote(url), ':')
 
 
 def run_and_connect(urls):
@@ -382,7 +382,7 @@ def get_api_key():
         return None
 
     try:
-        config = ConfigParser.RawConfigParser(allow_no_value=True)
+        config = configparser.RawConfigParser(allow_no_value=True)
         config.read(clientquery_ini)
         api_key = config.get('General', 'api_key')
 
@@ -394,4 +394,4 @@ def get_api_key():
 
 
 if __name__ == '__main__':
-    print get_api_key()
+    print(get_api_key())
