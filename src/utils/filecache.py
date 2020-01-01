@@ -27,7 +27,7 @@ def get_cache_directory():
 def map_file(url):
     """Get the path where the file should be stored in the cache."""
 
-    file_name = hashlib.sha256(url).hexdigest()
+    file_name = hashlib.sha256(url.encode('utf8')).hexdigest()
     return os.path.join(get_cache_directory(), file_name)
 
 
