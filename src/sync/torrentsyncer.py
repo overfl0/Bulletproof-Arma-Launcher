@@ -26,7 +26,7 @@ if __name__ == "__main__":
     site.addsitedir(os.path.abspath(os.path.join(file_directory, '..')))
 
 
-# import libtorrent
+import libtorrent
 import textwrap
 from . import torrent_utils
 

@@ -11,7 +11,6 @@
 # GNU General Public License for more details.
 
 
-
 import errno
 import os
 import stat
@@ -19,7 +18,7 @@ import subprocess
 import sys
 import textwrap
 
-# import libtorrent
+import libtorrent
 from kivy.logger import Logger
 
 from sync.integrity import check_mod_directories, check_files_mtime_correct, are_ts_plugins_installed, is_whitelisted
@@ -101,18 +100,17 @@ def is_complete_quick(mod):
     resume_data = libtorrent.bdecode(resume_data_bencoded)
 
     # (4)
-    file_sizes = resume_data['file sizes']
+    file_sizes = resume_data[b'file sizes']
     files = torrent_info.files()
     # file_path, size, mtime
-    files_data = list(map(lambda x, y: (y.path.decode('utf-8'), x[0], x[1]), file_sizes, files))
+    files_data = list(map(lambda x, y: (y.path, x[0], x[1]), file_sizes, files))
 
     if not check_files_mtime_correct(mod.parent_location, files_data):
         Logger.info('Is_complete: Some files seem to have been modified in the meantime. Marking as not complete')
         return False
 
     # (5) Check if there are no additional files in the directory
-    # TODO: Check if these checksums are even needed now
-    checksums = dict([(entry.path.decode('utf-8'), entry.filehash.to_bytes()) for entry in torrent_info.files()])
+    checksums = dict([(entry.path, entry.filehash.to_bytes()) for entry in torrent_info.files()])
     files_list = list(checksums.keys())
     if not check_mod_directories(files_list, mod.parent_location, on_superfluous='warn'):
         Logger.info('Is_complete: Superfluous files in mod directory. Marking as not complete')
