@@ -1,5 +1,24 @@
 pyinstaller
-futures
+paramiko
+pygame
+
 nose
 mock
+psutil
 python-valve==0.1.1
+git+https://github.com/overfl0/mockfs@windows_nosphinx # Mockfs patched to work on windows
+
+# pathlib2==2.1.0  # For ipython
+# ipython     # For development
+# pyreadline  # For development (better ipython integration on windows)
+
+# Kivy requirements as per https://kivy.org/doc/stable/installation/installation-windows.html
+docutils
+pygments
+pypiwin32
+kivy_deps.sdl2==0.1.*
+kivy_deps.glew==0.1.*
+
+kivy==1.11.0
+
+dependencies\libtorrent

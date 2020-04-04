@@ -44,7 +44,7 @@ def check_libraries_requirements():
     gracefully in case of an unmet dependency instead of crashing while performing
     important tasks."""
     file_path = paths.get_base_path('requirements.txt')
-
+    return
     try:
         # Skip the check if we are running in a |PyInstaller| bundle. Assume everything is all right.
         if not paths.is_pyinstaller_bundle():

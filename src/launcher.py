@@ -142,7 +142,7 @@ def start():
                 self.settings = settings
 
             def build(self):
-                logger = logging.getLogger('concurrent.futures')
+                logger = logging.getLogger(__name__)
                 logger.addHandler(logging.StreamHandler())
                 return MainWidget()
 
@@ -156,7 +156,7 @@ def start():
                 self.settings = settings
 
             def build(self):
-                logger = logging.getLogger('concurrent.futures')
+                logger = logging.getLogger(__name__)
                 logger.addHandler(logging.StreamHandler())
                 return UpdaterMainWidget()
 

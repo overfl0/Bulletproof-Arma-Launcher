@@ -33,11 +33,10 @@ def tests():
 
 def build():
     print_text('Building...')
-    subprocess.check_call(['c:\Python27\Scripts\pyinstaller.exe', 'launcher.spec'])
+    subprocess.check_call(['pyinstaller.exe', 'launcher.spec'])
 
 def post_build():
     print_text('Copying files...')
-    shutil.copy2(os.path.join('dist', full_executable), 'c:\\vagrant')
     shutil.copy2(os.path.join('dist', full_executable), '.')
 
 def main():

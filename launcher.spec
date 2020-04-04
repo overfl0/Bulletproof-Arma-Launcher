@@ -9,7 +9,7 @@ import launcher_config
 import os
 import primitive_git
 
-from kivy.deps import sdl2, glew
+from kivy_deps import sdl2, glew
 
 # Create the build number
 primitive_git.save_git_sha1_to_file('.', primitive_git.build_sha1_file)
