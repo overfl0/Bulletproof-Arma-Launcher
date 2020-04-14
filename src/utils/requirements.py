@@ -34,8 +34,21 @@ else:
     class VersionConflict(Exception):
         pass
 
-libtorrent_least_required_version = '0.16.18'
-kivy_least_required_version = '1.8.0'
+libtorrent_least_required_version = '1.0.9'
+kivy_least_required_version = '1.11.1'
+
+
+def strip_requirements(lines):
+    output = []
+    for line in lines:
+        if line.strip().startswith('#'):
+            continue
+        if 'libtorrent' in line:
+            continue
+        if 'mockfs' in line:
+            continue
+        output.append(line)
+    return output
 
 
 def check_libraries_requirements():
@@ -44,12 +57,13 @@ def check_libraries_requirements():
     gracefully in case of an unmet dependency instead of crashing while performing
     important tasks."""
     file_path = paths.get_base_path('requirements.txt')
-    return
+
     try:
         # Skip the check if we are running in a |PyInstaller| bundle. Assume everything is all right.
         if not paths.is_pyinstaller_bundle():
             with file(file_path) as req_file:
-                requirements = req_file.readlines()
+                requirements = strip_requirements(req_file.readlines())
+                print('testing', requirements)
                 require(requirements)
 
         # Libtorrent requirements
