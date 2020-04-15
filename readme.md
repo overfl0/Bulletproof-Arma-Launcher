@@ -3,20 +3,31 @@
 See the extensive [documentation on the wiki](https://github.com/overfl0/Bulletproof-Arma-Launcher/wiki/Launcher-management) for a step by step guide.
 The wiki is updated much more often than this readme file.
 
-# Install
+# Installation
 
-Manually installing the environment is now quite tricky as it involves, among other things, getting the right version of Kivy (1.9.1) and patching it with our own custom patches ([located in the Patches directory](https://github.com/overfl0/Bulletproof-Build-Environment/tree/master/Patches) of the `Bulletproof-Build-Environment` repository).
+First, make sure you have Python 2.7 installed (yes, work to porting to Python
+3 is under way, feel free to reach out, to help with that).
 
-We're trying to make it as easy as possible to start working on the launcher and we have created [a Vagrant configuration file that will create a virtual machine](https://github.com/overfl0/Bulletproof-Build-Environment) containing everything that is needed to code right away.
+Then install a virtualenv (preferably [virtualenvwrapper](https://pypi.org/project/virtualenvwrapper-win/))
+to contain all the dependencies in one place. The instructions below assume
+you've installed virtualenvwrapper.
 
-Until issues with Kivy are fixed and the right patches are included in the Kivy source code, this is the preferred method of working on the launcher.
+Create the a Python 2.7 virtualenv once and install the requirements:
+```
+mkvirtualenv bulletproof -p c:\Python27\python.exe
+workon bulletproof
+cd YourLauncherDirectory
+pip install -r requirements.txt
+```
+
 # Running
 
-##### LiClipse
-Open LiClipse, select the default workspace and run ```launcher.py```
-
-##### Manually
-Double click `src\launcher.py` or open a command prompt and execute `python src\launcher.py`
+Remember to always select the `bulletproof` virtualenv, before doing anything
+else, after opening a command prompt. You do that by calling:
+```
+workon bulletproof
+python src\launcher.py
+```
 
 ##### Fake Steam, Arma, TeamSpeak installation
 To fake Steam, Arma, TeamSpeak installation and set several other internal variables, copy ```devmode_sample.conf``` to ```devmode.conf``` and put it in the same directory as you're running the launcher from. Then, uncomment and/or modify its contents accordingly.
@@ -42,7 +53,7 @@ To create a <launcher_name>.exe executable do the following:
 
 ##### Automatically
 Make sure the config\config.py file is populated. Copy config_sample.py and modify its values otherwise.
-Execute the file ```build.bat```.
+Execute the file ```build.bat``` (after selecting the virtualenv, as usual).
 The script will first run tests and then create the executable if the tests pass.
 
 ##### Manually
