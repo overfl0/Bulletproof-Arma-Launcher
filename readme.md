@@ -26,11 +26,12 @@ Remember to always select the `bulletproof` virtualenv, before doing anything
 else, after opening a command prompt. You do that by calling:
 ```
 workon bulletproof
-python src\launcher.py
 ```
 
-##### Fake Steam, Arma, TeamSpeak installation
-To fake Steam, Arma, TeamSpeak installation and set several other internal variables, copy ```devmode_sample.conf``` to ```devmode.conf``` and put it in the same directory as you're running the launcher from. Then, uncomment and/or modify its contents accordingly.
+Then:
+```
+python src\launcher.py
+```
 
 # Running The Tests
 
@@ -52,11 +53,15 @@ quotes (") with single quotes (').
 To create a <launcher_name>.exe executable do the following:
 
 ##### Automatically
-Make sure the config\config.py file is populated. Copy config_sample.py and modify its values otherwise.
+
+Make sure the config\config.py file is populated. Copy config_sample.py and
+modify its values otherwise.
 Execute the file ```build.bat``` (after selecting the virtualenv, as usual).
-The script will first run tests and then create the executable if the tests pass.
+The script will first run tests and then create the executable if the tests
+pass.
 
 ##### Manually
+
 From the project root
 execute:
 
