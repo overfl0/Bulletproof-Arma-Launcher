@@ -3,6 +3,13 @@
 See the extensive [documentation on the wiki](https://github.com/overfl0/Bulletproof-Arma-Launcher/wiki/Launcher-management) for a step by step guide.
 The wiki is updated much more often than this readme file.
 
+# Disclaimer
+
+The launcher requires you to have both Steam and Arma correctly installed and
+will not work if it can't find them. That means that it will **not** work with
+cracked Arma versions.
+Do not ask me to help you with this.
+
 # Installation
 
 First, make sure you have Python 2.7 installed (yes, work to porting to Python
