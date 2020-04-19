@@ -4,9 +4,9 @@ from distutils.core import setup
 
 setup(
     name='libtorrent',
-    version='1.0.9',
-    packages=['libtorrent',],
-	data_files=[('Lib', ['libtorrent/libtorrent.pyd']),],
+    version='1.2.5',
+    packages=['libtorrent', ],
+    data_files=[('Lib', ['libtorrent/libtorrent.pyd']), ],
 )
 
 # Install in "editable mode" for development:

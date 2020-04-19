@@ -33,7 +33,7 @@ else:
     class VersionConflict(Exception):
         pass
 
-libtorrent_least_required_version = '1.0.9'
+libtorrent_least_required_version = '1.2.5'
 kivy_least_required_version = '1.11.1'
 
 
