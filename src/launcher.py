@@ -26,11 +26,11 @@ def start():
     It would be nice to refactor it one day.
     """
 
-    # TODO: py3 Reimplement this one day
-    # Enforce all requirements so that the program doesn't crash in the middle of execution.
-    # if __name__ == '__main__':
-    #     from utils.requirements import check_libraries_requirements
-    #     check_libraries_requirements()
+    # Enforce all requirements so that the program doesn't crash in the middle
+    # of the execution.
+    if __name__ == '__main__':
+        from utils.requirements import check_libraries_requirements
+        check_libraries_requirements()
 
     # Import multiprocessing and enable freeze_support which is needed on windows
     import multiprocessing
@@ -39,11 +39,9 @@ def start():
     # Import kivy as soon as possible to let it eat all the kivy args from sys.argv
     import kivy
 
-    #
-    # we have to protect the instantiation of the kivy app, cause
+    # We have to protect the instantiation of the kivy app, because
     # of the use of multiprocessing. If you spawn a new thread or process
     # it loads this file again. So there is the need of the __main__ guard.
-    #
     if __name__ == "__main__":
         import sys
 
