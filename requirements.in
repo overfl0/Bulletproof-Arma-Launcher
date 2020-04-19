@@ -1,0 +1,25 @@
+###########################################################################################
+# These are the expected requirements in with the required versions (or the lack of them) #
+# You can use them whenever you want to update the requirements.txt file.                 #
+###########################################################################################
+
+pyinstaller
+paramiko
+pygame
+
+nose
+mock
+psutil
+python-valve==0.1.1
+git+https://github.com/overfl0/mockfs@windows_nosphinx # Mockfs patched to work on windows
+
+Kivy requirements as per https://kivy.org/doc/stable/installation/installation-windows.html
+docutils
+pygments
+pypiwin32
+kivy_deps.sdl2==0.1.*
+kivy_deps.glew==0.1.*
+
+kivy==1.11.1
+
+dependencies\libtorrent
