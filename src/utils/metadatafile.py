@@ -47,8 +47,8 @@ class MetadataFile(object):
 
         self.data = {}
         try:
-            with open(self.get_file_name(), 'rb') as file_handle:
-                self.data = json.load(file_handle, encoding=MetadataFile._encoding)
+            with open(self.get_file_name(), 'r', encoding=self._encoding) as file_handle:
+                self.data = json.load(file_handle)
         except (IOError, ValueError):
             if ignore_open_errors:
                 pass
@@ -69,8 +69,8 @@ class MetadataFile(object):
         """Open the file and write the contents of the internal data variable to the file"""
         self._create_missing_directories(os.path.dirname(self.get_file_name()))
 
-        json_string = json.dumps(self.data, encoding=MetadataFile._encoding, indent=2)
-        with open(self.get_file_name(), 'wb') as file_handle:
+        json_string = json.dumps(self.data, indent=2)
+        with open(self.get_file_name(), 'w', encoding=self._encoding) as file_handle:
             file_handle.write(json_string)
 
     def set_base64_key(self, key_name, value):
