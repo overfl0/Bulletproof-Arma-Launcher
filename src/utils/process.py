@@ -430,6 +430,7 @@ def _protected_call(messagequeue, function, action_name, *args, **kwargs):
         Logger.info('Para: Starting new thread/process for: {}'.format(action_name))
         return function(messagequeue, *args, **kwargs)
     except Exception:
+        Logger.exception('An error occurred in a subprocess')
         stacktrace = traceback.format_exc()
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(get_git_sha1_auto(), stacktrace).rstrip()
         messagequeue.reject({'details': error})

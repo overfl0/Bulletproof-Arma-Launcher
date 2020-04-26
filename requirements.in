@@ -22,4 +22,6 @@ kivy_deps.glew==0.1.*
 
 kivy==1.11.1
 
+sentry-sdk
+
 dependencies\libtorrent

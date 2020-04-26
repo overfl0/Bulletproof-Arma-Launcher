@@ -55,3 +55,6 @@ dominant_color = '#eca92d'
 
 # Whether the text on the status bar should ALL BE CAPITALIZED
 capitalize_status = True
+
+# Sentry url for error reporting (if enabled)
+sentry_reporting_url = None

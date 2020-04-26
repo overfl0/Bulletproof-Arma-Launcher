@@ -17,3 +17,11 @@ news_url = 'http://launcher.tacbf.com/news.md'
 dominant_color = '#2FA7D4CC'
 donate_url = 'https://www.patreon.com/user?u=2944710'
 capitalize_status = False
+sentry_reporting_url = None
+
+try:
+    # In this file you can put values that you don't want to save in the git
+    # repository, like sentry.io keys
+    from custom_configuration import *
+except ImportError:
+    pass

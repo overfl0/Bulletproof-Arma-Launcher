@@ -17,3 +17,11 @@ news_url = 'https://launcher.frontline-mod.com/news.md'
 dominant_color = '#eca92d'
 donate_url = 'https://patreon.com/frontline'
 capitalize_status = True
+sentry_reporting_url = None
+
+try:
+    # In this file you can put values that you don't want to save in the git
+    # repository, like sentry.io keys
+    from custom_configuration import *
+except ImportError:
+    pass

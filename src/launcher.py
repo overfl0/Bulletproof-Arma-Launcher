@@ -39,18 +39,26 @@ def start():
     # Import kivy as soon as possible to let it eat all the kivy args from sys.argv
     import kivy
 
+    import sys
+
+    # initialize settings class
+    from utils.settings import Settings
+    settings = Settings(sys.argv[1:])
+
+    import launcher_config
+
+    import sentry_sdk
+    if settings.get('report_exceptions'):
+        if launcher_config.sentry_reporting_url:
+            sentry_sdk.init(
+                dsn=launcher_config.sentry_reporting_url,
+                ignore_errors=[KeyboardInterrupt],
+            )
+
     # We have to protect the instantiation of the kivy app, because
     # of the use of multiprocessing. If you spawn a new thread or process
     # it loads this file again. So there is the need of the __main__ guard.
     if __name__ == "__main__":
-        import sys
-
-        # initialize settings class
-        from utils.settings import Settings
-        settings = Settings(sys.argv[1:])
-
-        import launcher_config
-
         # HACK: clear sys.argv for kivy. Keep only the first element
         # sys.argv = sys.argv[0:1]
 

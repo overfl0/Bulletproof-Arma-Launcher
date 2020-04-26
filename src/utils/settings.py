@@ -15,7 +15,6 @@ Module to hold launcher specific model stuff
 """
 
 
-
 import argparse
 import launcher_config
 import os
@@ -83,6 +82,7 @@ class Settings(Model):
         {'name': 'last_custom_background', 'defaultValue': None},
         {'name': 'auth_login', 'defaultValue': ''},
         {'name': 'auth_password', 'defaultValue': ''},
+        {'name': 'report_exceptions', 'defaultValue': True},
 
         # Arma launching parameters ############################################
         {'name': 'arma_win32', 'defaultValue': False},

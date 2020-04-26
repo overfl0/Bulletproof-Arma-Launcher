@@ -33,6 +33,7 @@ python-valve==0.1.1
 pywin32==227
 pywin32-ctypes==0.2.0
 requests==2.23.0
+sentry-sdk==0.14.3
 six==1.14.0
 urllib3==1.25.9
 
