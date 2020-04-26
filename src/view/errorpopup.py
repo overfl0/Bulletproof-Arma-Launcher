@@ -103,7 +103,7 @@ def error_popup_decorator(func):
             msg = 'Build: {}\n{}'.format(build, stacktrace)
             # p = ErrorPopup(details=msg)
             # p.open()
-            Logger.exception('Exception in the wrapper for the app')
+            Logger.critical('Exception in the wrapper for the app', exc_info=True)
             MessageBox(msg, CRITICAL_POPUP_TITLE)
 
     return wrapper
@@ -114,7 +114,7 @@ class PopupHandler(ExceptionHandler):
         build = get_git_sha1_auto()
         stacktrace = traceback.format_exc()
         msg = 'Build: {}\n{}'.format(build, stacktrace)
-        Logger.exception('Exception in the PopupHandler')
+        Logger.critical('Exception in the PopupHandler', exc_info=True)
         p = ErrorPopup(details=msg)
         p.chain_open()
         return ExceptionManager.PASS

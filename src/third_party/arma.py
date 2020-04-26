@@ -78,7 +78,7 @@ class Arma(object):
             Arma.installation_path_cached = path
             return Arma.installation_path_cached
 
-        Logger.error('Arma: Could not find Arma3.exe in launcher directory')
+        Logger.info('Arma: Could not find Arma3.exe in launcher directory')
 
         # 2) Search the registry entry
         try:

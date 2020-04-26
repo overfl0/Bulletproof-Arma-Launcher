@@ -47,13 +47,25 @@ def start():
 
     import launcher_config
 
+    # SENTRY ==================================================================
+    import logging
     import sentry_sdk
+    from sentry_sdk.integrations.logging import LoggingIntegration
+
     if settings.get('report_exceptions'):
         if launcher_config.sentry_reporting_url:
+            sentry_logging = LoggingIntegration(
+                level=logging.INFO,  # Capture info and above as breadcrumbs
+                event_level=logging.CRITICAL  # Send errors as events
+            )
+
             sentry_sdk.init(
                 dsn=launcher_config.sentry_reporting_url,
                 ignore_errors=[KeyboardInterrupt],
+                integrations=[sentry_logging],
             )
+
+    # =========================================================================
 
     # We have to protect the instantiation of the kivy app, because
     # of the use of multiprocessing. If you spawn a new thread or process
@@ -232,7 +244,7 @@ except Exception:
 
     # TODO/FIXME: check if this even works, when run
     logger = logging.getLogger(__name__)
-    logger.exception('Global exception handler')
+    logger.critical('Global exception handler', exc_info=True)
 
     msg = 'Build: {}\n\n{}'.format(build, stacktrace)
     MessageBox(msg, CRITICAL_POPUP_TITLE)

@@ -432,7 +432,7 @@ def _protected_call(messagequeue, function, action_name, *args, **kwargs):
     except Exception:
         stacktrace = traceback.format_exc()
         build = get_git_sha1_auto()
-        Logger.exception('An error occurred in a subprocess')
+        Logger.critical('An error occurred in a subprocess', exc_info=True)
         error = 'An error occurred in a subprocess:\nBuild: {}\n{}'.format(build, stacktrace).rstrip()
         messagequeue.reject({'details': error})
 
