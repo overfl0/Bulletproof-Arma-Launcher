@@ -17,6 +17,7 @@ import traceback
 
 from kivy.base import ExceptionHandler
 from kivy.base import ExceptionManager
+from kivy.logger import Logger
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
@@ -102,6 +103,7 @@ def error_popup_decorator(func):
             msg = 'Build: {}\n{}'.format(build, stacktrace)
             # p = ErrorPopup(details=msg)
             # p.open()
+            Logger.exception('Exception in the wrapper for the app')
             MessageBox(msg, CRITICAL_POPUP_TITLE)
 
     return wrapper
@@ -112,6 +114,7 @@ class PopupHandler(ExceptionHandler):
         build = get_git_sha1_auto()
         stacktrace = traceback.format_exc()
         msg = 'Build: {}\n{}'.format(build, stacktrace)
+        Logger.exception('Exception in the PopupHandler')
         p = ErrorPopup(details=msg)
         p.chain_open()
         return ExceptionManager.PASS

@@ -230,5 +230,9 @@ except Exception:
             last_chance_traceback, repr(sys.exc_info()[1])
         )
 
+    # TODO/FIXME: check if this even works, when run
+    logger = logging.getLogger(__name__)
+    logger.exception('Global exception handler')
+
     msg = 'Build: {}\n\n{}'.format(build, stacktrace)
     MessageBox(msg, CRITICAL_POPUP_TITLE)
