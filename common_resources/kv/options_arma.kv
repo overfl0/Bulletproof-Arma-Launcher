@@ -111,6 +111,16 @@
                 password: True
                 on_field_value: root.screen.controller.request_mods_recheck(force_download_new=True)
 
+            # ==================================================================
+            Label:
+                text: 'Other:'
+                size_hint: None, None
+                size: self.texture_size[0], 50
+
+            CheckLabel:
+                text: 'Send reports to Sentry on exceptions (to help fix bugs)'
+                settings_name: 'report_exceptions'
+
 # ==============================================================================
 # Note: These options are appended to `scrollview_content` if `devmode_options`
 # is set to true in devmode.conf
