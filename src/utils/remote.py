@@ -11,7 +11,6 @@
 # GNU General Public License for more details.
 
 
-
 if __name__ == '__main__':
     import site
     import os
@@ -25,6 +24,7 @@ import posixpath
 import random
 import socket
 
+from binascii import hexlify
 from kivy.logger import Logger
 from paramiko.sftp import CMD_EXTENDED
 from utils.context import ignore_nosuchfile_ioerror
@@ -46,7 +46,7 @@ class RemoteMissingKeyPolicy(paramiko.client.MissingHostKeyPolicy):
         """
 
         Logger.info('RemoteConection: Missing key: {} {}'.format(
-            hostname, key.get_fingerprint().encode('hex')))
+            hostname, hexlify(key.get_fingerprint())))
         Logger.info('RemoteConection: Accepting it.')
 
         return

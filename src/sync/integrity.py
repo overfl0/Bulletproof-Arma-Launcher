@@ -24,6 +24,7 @@ import itertools
 import os
 import shutil
 
+from binascii import hexlify
 from kivy.logger import Logger
 from utils import walker
 from utils.context import ignore_exceptions
@@ -197,7 +198,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='',
 
                         if checksums and sha1(full_file_path) != checksums[relative_file_name_nocase]:
                             Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(relative_file_name_nocase))
-                            Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[relative_file_name_nocase].encode('hex'), sha1(full_file_path).encode('hex')))
+                            Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(hexlify(checksums[relative_file_name_nocase]), hexlify(sha1(full_file_path))))
                             return False
 
                         continue  # File present in the torrent, nothing to see here
@@ -262,7 +263,7 @@ def check_mod_directories(files_list, base_directory, check_subdir='',
 
             if checksums and sha1(full_path) != checksums[file_entry_nocase]:
                 Logger.debug('check_mod_directories: File {} exists but its hash differs from expected.'.format(file_entry_nocase))
-                Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(checksums[file_entry_nocase].encode('hex'), sha1(full_path).encode('hex')))
+                Logger.debug('check_mod_directories: Expected: {}, computed: {}'.format(hexlify(checksums[file_entry_nocase]), hexlify(sha1(full_path))))
                 success = False
                 break
 

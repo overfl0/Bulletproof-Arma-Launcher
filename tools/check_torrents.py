@@ -11,6 +11,7 @@ import json
 import urllib2
 import time
 
+from binascii import hexlify
 from collections import namedtuple
 
 WAIT_TIMEOUT = 10
@@ -28,7 +29,7 @@ def check_file(filename):
     torrent_info = libtorrent.torrent_info(torrent_metadata)
 
     for file_info in torrent_info.files():
-        print file_info.filehash.to_bytes().encode('hex')
+        print hexlify(file_info.filehash.to_bytes())
 
 
 def directory_cleanup(files_to_keep):
